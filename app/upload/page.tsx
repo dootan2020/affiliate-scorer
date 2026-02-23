@@ -86,18 +86,18 @@ export default function UploadPage(): React.ReactElement {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
           Upload Data
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Upload file CSV/Excel từ FastMoss, KaloData hoặc kết quả ads
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
         <div>
-          <h2 className="text-lg font-medium text-gray-900">Nghiên cứu sản phẩm</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">Nghiên cứu sản phẩm</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Upload file export từ FastMoss hoặc KaloData để AI phân tích
           </p>
         </div>
@@ -115,10 +115,10 @@ export default function UploadPage(): React.ReactElement {
         />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
         <div>
-          <h2 className="text-lg font-medium text-gray-900">Kết quả thật</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">Kết quả thật</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Upload kết quả từ FB Ads, TikTok Ads hoặc Shopee Affiliate
           </p>
         </div>

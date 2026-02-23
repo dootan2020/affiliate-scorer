@@ -32,9 +32,9 @@ export function ProductCard({ product }: ProductCardProps): React.ReactElement {
 
   return (
     <Link href={`/products/${product.id}`} className="block">
-      <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer h-full">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer h-full">
         <div className="flex items-start justify-between gap-2 mb-4">
-          <p className="font-medium text-sm text-gray-900 line-clamp-2 flex-1">
+          <p className="font-medium text-sm text-gray-900 dark:text-gray-50 line-clamp-2 flex-1">
             {product.name}
           </p>
           {score !== null && scoreStyle ? (
@@ -45,31 +45,31 @@ export function ProductCard({ product }: ProductCardProps): React.ReactElement {
               <span className="text-[10px] opacity-80">{scoreStyle.label}</span>
             </span>
           ) : (
-            <span className="shrink-0 rounded-xl bg-gray-100 px-2.5 py-1.5 text-xs text-gray-500">
+            <span className="shrink-0 rounded-xl bg-gray-100 dark:bg-slate-800 px-2.5 py-1.5 text-xs text-gray-500 dark:text-gray-400">
               Chưa chấm
             </span>
           )}
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm mb-3">
           <div>
-            <span className="text-gray-400">Giá: </span>
-            <span className="font-medium text-gray-900">{formatVND(product.price)}</span>
+            <span className="text-gray-400 dark:text-gray-500">Giá: </span>
+            <span className="font-medium text-gray-900 dark:text-gray-50">{formatVND(product.price)}</span>
           </div>
           <div>
-            <span className="text-gray-400">HH: </span>
-            <span className="font-medium text-emerald-600">
+            <span className="text-gray-400 dark:text-gray-500">HH: </span>
+            <span className="font-medium text-emerald-600 dark:text-emerald-400">
               {formatPercent(product.commissionRate)}/{formatVND(product.commissionVND)}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 font-medium text-gray-600">
+          <span className="rounded-full bg-gray-100 dark:bg-slate-800 px-2.5 py-0.5 font-medium text-gray-600 dark:text-gray-300">
             {product.platform}
           </span>
-          <span className="text-gray-400 truncate">{product.category}</span>
+          <span className="text-gray-400 dark:text-gray-500 truncate">{product.category}</span>
         </div>
         {product.shopName && (
-          <p className="text-xs text-gray-400 truncate mt-2">
+          <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-2">
             Shop: {product.shopName}
           </p>
         )}

@@ -23,10 +23,10 @@ export function AccuracyChart({ data }: AccuracyChartProps) {
   if (data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
-          <BarChart3 className="w-6 h-6 text-gray-400" />
+        <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+          <BarChart3 className="w-6 h-6 text-gray-400 dark:text-gray-500" />
         </div>
-        <p className="text-sm text-gray-500">Chưa có dữ liệu độ chính xác</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Chưa có dữ liệu độ chính xác</p>
       </div>
     );
   }

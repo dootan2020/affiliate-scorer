@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { FeedbackTable } from "@/components/feedback/feedback-table";
 import { FeedbackUpload } from "@/components/feedback/feedback-upload";
 import { MessageSquare } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Feedback Loop | AffiliateScorer",
+};
 
 async function getFeedbacks() {
   try {
@@ -43,36 +48,36 @@ export default async function FeedbackPage(): Promise<React.ReactElement> {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
             Feedback Loop
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Upload kết quả chiến dịch để AI học và cải thiện điểm số
           </p>
         </div>
         <Link
           href="/"
-          className="text-sm text-gray-400 hover:text-gray-900 transition-colors"
+          className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
         >
           ← Trang chủ
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-4">
           Upload Dữ Liệu Feedback
         </h2>
         <FeedbackUpload />
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-lg font-medium text-gray-900">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
           Lịch sử Feedback ({feedbacks.length} bản ghi)
         </h2>
         {feedbacks.length > 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-[600px]">
                 <FeedbackTable feedbacks={tableData} />
@@ -81,13 +86,13 @@ export default async function FeedbackPage(): Promise<React.ReactElement> {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-              <MessageSquare className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+              <MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
               Chưa có dữ liệu feedback
             </h3>
-            <p className="text-sm text-gray-500 mb-6 max-w-sm">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
               Upload file kết quả chiến dịch để bắt đầu.
             </p>
           </div>

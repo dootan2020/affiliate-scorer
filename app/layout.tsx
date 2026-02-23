@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { NavHeader } from "@/components/layout/nav-header";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,6 +19,12 @@ export const metadata: Metadata = {
   title: "AffiliateScorer — AI Chọn Sản Phẩm Affiliate",
   description:
     "Công cụ AI chấm điểm sản phẩm affiliate từ FastMoss/KaloData. Học từ kết quả thật để cải thiện scoring.",
+  openGraph: {
+    title: "AffiliateScorer — AI Chọn Sản Phẩm Affiliate",
+    description:
+      "Công cụ AI chấm điểm sản phẩm affiliate từ FastMoss/KaloData. Học từ kết quả thật để cải thiện scoring.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -26,15 +33,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>): React.ReactElement {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-gray-50 min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-gray-50 dark:bg-slate-950 min-h-screen`}
       >
-        <NavHeader />
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </main>
-        <Toaster richColors position="top-right" />
+        <ThemeProvider>
+          <NavHeader />
+          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 sm:pb-8">
+            {children}
+          </main>
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

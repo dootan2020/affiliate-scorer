@@ -44,7 +44,7 @@ export function TriggerLearningButton() {
     <button
       onClick={handleTrigger}
       disabled={loading}
-      className="inline-flex items-center bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
+      className="inline-flex items-center bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 disabled:opacity-50 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all w-full sm:w-auto justify-center"
     >
       {loading ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

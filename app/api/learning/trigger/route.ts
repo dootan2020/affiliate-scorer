@@ -6,6 +6,14 @@ const MIN_FEEDBACK_COUNT = 5;
 
 export async function POST(): Promise<NextResponse> {
   try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === "sk-ant-...") {
+      return NextResponse.json(
+        { error: "Chưa cấu hình ANTHROPIC_API_KEY. Xem .env.example", code: "MISSING_API_KEY" },
+        { status: 503 }
+      );
+    }
+
     const feedbackCount = await prisma.feedback.count();
 
     if (feedbackCount < MIN_FEEDBACK_COUNT) {

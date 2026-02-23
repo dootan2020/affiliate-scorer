@@ -26,8 +26,8 @@ function InfoRow({ label, value }: InfoRowProps): React.ReactElement | null {
   if (value === null || value === undefined || value === "") return null;
   return (
     <div className="flex justify-between py-3 text-sm">
-      <span className="text-gray-500">{label}</span>
-      <span className="font-medium text-gray-900">{value}</span>
+      <span className="text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="font-medium text-gray-900 dark:text-gray-50">{value}</span>
     </div>
   );
 }
@@ -73,7 +73,7 @@ export default async function ProductDetailPage({
     <div className="space-y-6 max-w-3xl">
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Quay lại
@@ -81,10 +81,10 @@ export default async function ProductDetailPage({
 
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 leading-tight">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50 leading-tight">
             {product.name}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {product.platform} · {product.category}
           </p>
         </div>
@@ -98,10 +98,10 @@ export default async function ProductDetailPage({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-3">Thông tin sản phẩm</p>
-          <div className="divide-y divide-gray-50">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Thông tin sản phẩm</p>
+          <div className="divide-y divide-gray-50 dark:divide-slate-800">
             <InfoRow label="Giá bán" value={formatVND(product.price)} />
             <InfoRow
               label="Hoa hồng"
@@ -116,9 +116,9 @@ export default async function ProductDetailPage({
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-3">Dữ liệu xu hướng</p>
-          <div className="divide-y divide-gray-50">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Dữ liệu xu hướng</p>
+          <div className="divide-y divide-gray-50 dark:divide-slate-800">
             {product.salesTotal !== null && product.salesTotal !== undefined && (
               <InfoRow label="Tổng bán" value={formatNumber(product.salesTotal)} />
             )}
@@ -149,8 +149,8 @@ export default async function ProductDetailPage({
       </div>
 
       {product.scoreBreakdown && (
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <p className="text-sm text-gray-500 mb-4">Phân tích điểm (6 tiêu chí)</p>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Phân tích điểm (6 tiêu chí)</p>
           <ScoreBreakdown breakdown={product.scoreBreakdown} />
         </div>
       )}
@@ -166,7 +166,7 @@ export default async function ProductDetailPage({
             href={product.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors w-full sm:w-auto justify-center sm:justify-start"
           >
             <ExternalLink className="w-4 h-4" />
             Xem sản phẩm trên {product.platform}

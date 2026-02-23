@@ -1,9 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -15,11 +11,20 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function getClient(): Anthropic {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey || apiKey === "sk-ant-...") {
+    throw new Error("Chưa cấu hình ANTHROPIC_API_KEY. Copy .env.example → .env rồi điền API key.");
+  }
+  return new Anthropic({ apiKey });
+}
+
 export async function callClaude(
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number
 ): Promise<string> {
+  const client = getClient();
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {

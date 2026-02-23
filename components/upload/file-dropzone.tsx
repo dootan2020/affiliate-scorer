@@ -69,19 +69,19 @@ export function FileDropzone({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all",
+        "cursor-pointer rounded-2xl border-2 border-dashed p-6 sm:p-8 text-center transition-all",
         isDragging
-          ? "border-blue-400 bg-blue-50/50"
-          : "border-gray-200 hover:border-blue-300 hover:bg-gray-50/50",
+          ? "border-blue-400 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-950/30"
+          : "border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gray-50/50 dark:hover:bg-slate-800/50",
         disabled && "cursor-not-allowed opacity-50"
       )}
     >
       <div className="flex flex-col items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
-          <Upload className="w-6 h-6 text-gray-400" />
+        <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
+          <Upload className="w-6 h-6 text-gray-400 dark:text-gray-500" />
         </div>
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        <p className="text-xs text-gray-400">{sublabel}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{label}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">{sublabel}</p>
       </div>
     </div>
   );

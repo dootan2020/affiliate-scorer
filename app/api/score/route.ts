@@ -19,6 +19,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === "sk-ant-...") {
+      return NextResponse.json(
+        { error: "Chưa cấu hình ANTHROPIC_API_KEY. Xem .env.example", code: "MISSING_API_KEY" },
+        { status: 503 }
+      );
+    }
+
     const results = await scoreProducts(parsed.data);
 
     return NextResponse.json({
@@ -27,9 +35,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     console.error("Lỗi khi chấm điểm sản phẩm:", error);
+    const message = error instanceof Error ? error.message : "Lỗi khi chấm điểm sản phẩm. Vui lòng thử lại.";
     return NextResponse.json(
       {
-        error: "Lỗi khi chấm điểm sản phẩm. Vui lòng thử lại.",
+        error: message,
         code: "SCORING_ERROR",
       },
       { status: 500 }

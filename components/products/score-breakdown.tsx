@@ -75,9 +75,9 @@ function CustomTooltip({ active, payload }: CustomTooltipProps): React.ReactElem
   if (!active || !payload?.length) return null;
   const entry = payload[0].payload;
   return (
-    <div className="rounded-xl bg-white px-3 py-2 text-sm shadow-md">
-      <p className="font-medium text-gray-900">{entry.label}</p>
-      <p className="text-gray-500">
+    <div className="rounded-xl bg-white dark:bg-slate-800 px-3 py-2 text-sm shadow-md">
+      <p className="font-medium text-gray-900 dark:text-gray-50">{entry.label}</p>
+      <p className="text-gray-500 dark:text-gray-400">
         {entry.score}/{entry.max} điểm
       </p>
     </div>
@@ -128,8 +128,8 @@ export function ScoreBreakdown({ breakdown }: ScoreBreakdownProps): React.ReactE
               className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-gray-400 truncate">{entry.label}:</span>
-            <span className="font-medium text-gray-900">{entry.display}</span>
+            <span className="text-gray-400 dark:text-gray-500 truncate">{entry.label}:</span>
+            <span className="font-medium text-gray-900 dark:text-gray-50">{entry.display}</span>
           </div>
         ))}
       </div>

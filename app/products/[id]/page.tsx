@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { ContentSuggestion } from "@/components/products/content-suggestion";
+import { SeasonalTagForm } from "@/components/products/seasonal-tag-form";
 import { formatVND, formatPercent, formatNumber } from "@/lib/utils/format";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { ArrowLeft, ExternalLink, Video, Radio, Users, History } from "lucide-react";
@@ -246,6 +247,16 @@ export default async function ProductDetailPage({
         suggestion={product.contentSuggestion ?? null}
         platformAdvice={product.platformAdvice ?? null}
       />
+
+      {/* Seasonal Tag (B4) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
+        <SeasonalTagForm
+          productId={product.id}
+          currentTag={product.seasonalTag}
+          sellWindowStart={product.sellWindowStart}
+          sellWindowEnd={product.sellWindowEnd}
+        />
+      </div>
 
       {/* Links */}
       <div className="flex flex-wrap gap-3 pt-2">

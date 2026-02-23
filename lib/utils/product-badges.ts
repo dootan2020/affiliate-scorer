@@ -4,7 +4,7 @@
  */
 
 export interface ProductBadge {
-  type: "new" | "sales_up" | "sales_down" | "competition_up" | "commission_change";
+  type: "new" | "sales_up" | "sales_down" | "competition_up" | "commission_change" | "negative" | "tested";
   emoji: string;
   label: string;
   detail?: string;
@@ -88,6 +88,68 @@ export function computeBadges(
   }
 
   return badges;
+}
+
+/** B5: Negative signal detection from multiple snapshots */
+export function detectNegativeSignals(
+  current: { totalKOL: number | null; commissionRate: number; sales7d: number | null },
+  snapshots: Array<{ totalKOL: number | null; commissionRate: number; sales7d: number | null }>
+): ProductBadge[] {
+  const badges: ProductBadge[] = [];
+
+  // KOL tripled in one period → "Sắp bão hòa"
+  if (snapshots.length >= 1 && current.totalKOL !== null) {
+    const prev = snapshots[0]?.totalKOL;
+    if (prev !== null && prev > 0 && current.totalKOL / prev >= 3) {
+      badges.push({
+        type: "negative",
+        emoji: "⛔",
+        label: "Sắp bão hòa",
+        detail: `KOL tăng x${(current.totalKOL / prev).toFixed(1)}`,
+      });
+    }
+  }
+
+  // Commission dropping across snapshots → "Shop cắt budget"
+  if (snapshots.length >= 2) {
+    const rates = [current.commissionRate, ...snapshots.map((s) => s.commissionRate)];
+    const consecutiveDrops = rates.slice(1).filter((r, i) => rates[i] > r).length;
+    if (consecutiveDrops >= 2) {
+      badges.push({
+        type: "negative",
+        emoji: "⛔",
+        label: "Shop cắt budget",
+        detail: "Commission giảm liên tục",
+      });
+    }
+  }
+
+  return badges;
+}
+
+/** B6: "Đã Test" badge based on feedback ROAS */
+export function getTestedBadge(
+  roas: number | null
+): ProductBadge | null {
+  if (roas === null) return null;
+  if (roas >= 2) {
+    return { type: "tested", emoji: "✅", label: "Đã test", detail: `ROAS ${roas.toFixed(1)}x` };
+  }
+  if (roas >= 1) {
+    return { type: "tested", emoji: "⚡", label: "TB", detail: `ROAS ${roas.toFixed(1)}x` };
+  }
+  return { type: "tested", emoji: "❌", label: "Test lỗ", detail: `ROAS ${roas.toFixed(1)}x` };
+}
+
+/** B8: Time decay weight for feedback learning */
+export function getTimeDecayWeight(feedbackDate: Date): number {
+  const now = new Date();
+  const daysDiff = (now.getTime() - feedbackDate.getTime()) / (1000 * 60 * 60 * 24);
+
+  if (daysDiff <= 14) return 1.0;     // ≤ 2 weeks
+  if (daysDiff <= 28) return 0.7;     // 2-4 weeks
+  if (daysDiff <= 60) return 0.4;     // 1-2 months
+  return 0.2;                          // > 2 months
 }
 
 /** Compute real trending score from two snapshots */

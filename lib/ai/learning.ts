@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { callClaude, MAX_TOKENS_LEARNING } from "@/lib/ai/claude";
 import { buildLearningPrompt } from "@/lib/ai/prompts";
 import { getWeights, saveWeights } from "@/lib/scoring/weights";
+import { getTimeDecayWeight } from "@/lib/utils/product-badges";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 export interface LearningResult {
@@ -26,13 +27,25 @@ function buildFeedbackSummary(
     aiScoreAtSelection: number;
     product: { category: string; name: string };
     adROAS: number | null;
+    feedbackDate: Date;
   }>
 ): string {
   if (feedbacks.length === 0) return "Chưa có dữ liệu feedback.";
 
   const total = feedbacks.length;
+
+  // B8: Apply time decay — count weighted successes
+  let weightedSuccesses = 0;
+  let totalWeight = 0;
+  for (const f of feedbacks) {
+    const w = getTimeDecayWeight(f.feedbackDate);
+    totalWeight += w;
+    if (f.overallSuccess === "success") weightedSuccesses += w;
+  }
   const successful = feedbacks.filter((f) => f.overallSuccess === "success").length;
-  const successRate = ((successful / total) * 100).toFixed(1);
+  const successRate = totalWeight > 0
+    ? ((weightedSuccesses / totalWeight) * 100).toFixed(1)
+    : ((successful / total) * 100).toFixed(1);
 
   // Avg ROAS by category
   const categoryMap: Record<string, { roas: number[]; count: number }> = {};

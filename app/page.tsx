@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ProductTable } from "@/components/products/product-table";
-import { computeBadges, type ProductBadge } from "@/lib/utils/product-badges";
+import { computeBadges } from "@/lib/utils/product-badges";
+import { groupDuplicateProducts } from "@/lib/utils/product-grouping";
 import { Upload, BarChart3, Lightbulb, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -10,10 +11,18 @@ export const metadata: Metadata = {
 };
 
 async function getTopProducts() {
+  const now = new Date();
   const products = await prisma.product.findMany({
-    where: { aiScore: { not: null } },
+    where: {
+      aiScore: { not: null },
+      // B4: Exclude products outside their seasonal sell window
+      OR: [
+        { sellWindowEnd: null },
+        { sellWindowEnd: { gte: now } },
+      ],
+    },
     orderBy: { aiScore: "desc" },
-    take: 10,
+    take: 20, // Fetch extra for grouping
     select: {
       id: true,
       name: true,
@@ -28,8 +37,10 @@ async function getTopProducts() {
       totalKOL: true,
       imageUrl: true,
       category: true,
+      shopName: true,
       firstSeenAt: true,
       lastSeenAt: true,
+      seasonalTag: true,
       snapshots: {
         orderBy: { snapshotDate: "desc" },
         take: 1,
@@ -44,7 +55,10 @@ async function getTopProducts() {
     },
   });
 
-  return products.map((p) => {
+  // B2: Group duplicates, keep best representative per group
+  const grouped = groupDuplicateProducts(products);
+
+  return grouped.slice(0, 10).map((p) => {
     const prev = p.snapshots[0] ?? null;
     const badges = computeBadges(
       {
@@ -58,7 +72,7 @@ async function getTopProducts() {
       },
       prev
     );
-    const { snapshots: _s, firstSeenAt: _f, lastSeenAt: _l, salesTotal: _st, ...rest } = p;
+    const { snapshots: _s, firstSeenAt: _f, lastSeenAt: _l, salesTotal: _st, shopName: _sn, alternatives: _a, ...rest } = p;
     return { ...rest, badges };
   });
 }

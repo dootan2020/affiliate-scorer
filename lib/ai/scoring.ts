@@ -3,6 +3,7 @@ import { callClaude, MAX_TOKENS_SCORING } from "@/lib/ai/claude";
 import { buildScoringPrompt } from "@/lib/ai/prompts";
 import { getWeights } from "@/lib/scoring/weights";
 import { calculateBaseScore } from "@/lib/scoring/formula";
+import { getPersonalizedScore, getFeedbackCount } from "@/lib/scoring/personalize";
 import type { Product as ProductModel } from "@/lib/types/product";
 
 export interface ScoredProduct extends ProductModel {
@@ -56,35 +57,62 @@ function parseClaudeResponse(text: string): ClaudeScoreItem[] {
   return JSON.parse(jsonMatch[0]) as ClaudeScoreItem[];
 }
 
-function mergeWithBaseScore(
+async function mergeWithBaseScore(
   product: ProductModel,
-  claudeItem: ClaudeScoreItem | undefined
-): {
+  claudeItem: ClaudeScoreItem | undefined,
+  usePersonalization: boolean
+): Promise<{
   aiScore: number;
   scoreBreakdown: string;
   contentSuggestion: string;
   platformAdvice: string;
-} {
+  scoringVersion: string;
+}> {
   const base = calculateBaseScore(product);
 
   if (!claudeItem) {
+    const baseTotal = base.total;
+    let finalScore = baseTotal;
+    let version = "v1";
+
+    if (usePersonalization) {
+      const personalized = await getPersonalizedScore(product, baseTotal);
+      if (personalized) {
+        finalScore = personalized.personalizedTotal;
+        version = "v2-personalized";
+      }
+    }
+
     return {
-      aiScore: base.total,
+      aiScore: finalScore,
       scoreBreakdown: JSON.stringify(base.breakdown),
       contentSuggestion: "Chưa có gợi ý nội dung.",
       platformAdvice: product.platform,
+      scoringVersion: version,
     };
   }
 
-  const finalScore = Math.round(
+  const blendedScore = Math.round(
     claudeItem.aiScore * 0.6 + base.total * 0.4
   );
+
+  let finalScore = blendedScore;
+  let version = "v1";
+
+  if (usePersonalization) {
+    const personalized = await getPersonalizedScore(product, blendedScore);
+    if (personalized) {
+      finalScore = personalized.personalizedTotal;
+      version = "v2-personalized";
+    }
+  }
 
   return {
     aiScore: Math.min(100, Math.max(0, finalScore)),
     scoreBreakdown: JSON.stringify(claudeItem.scoreBreakdown),
     contentSuggestion: claudeItem.contentSuggestion,
     platformAdvice: claudeItem.platformAdvice,
+    scoringVersion: version,
   };
 }
 
@@ -111,10 +139,16 @@ export async function scoreProducts(
 
   const claudeMap = new Map(claudeItems.map((item) => [item.id, item]));
 
-  const updates = products.map((product) => {
-    const claudeItem = claudeMap.get(product.id);
-    return { product, scores: mergeWithBaseScore(product, claudeItem) };
-  });
+  const fbCount = await getFeedbackCount();
+  const usePersonalization = fbCount >= 30;
+
+  const updates = await Promise.all(
+    products.map(async (product) => {
+      const claudeItem = claudeMap.get(product.id);
+      const scores = await mergeWithBaseScore(product, claudeItem, usePersonalization);
+      return { product, scores };
+    })
+  );
 
   await Promise.all(
     updates.map(({ product, scores }) =>
@@ -125,7 +159,7 @@ export async function scoreProducts(
           scoreBreakdown: scores.scoreBreakdown,
           contentSuggestion: scores.contentSuggestion,
           platformAdvice: scores.platformAdvice,
-          scoringVersion: "v1",
+          scoringVersion: scores.scoringVersion,
         },
       })
     )

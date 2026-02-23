@@ -69,7 +69,11 @@ export default async function FeedbackPage(): Promise<React.ReactElement> {
         <h2 className="text-sm font-semibold mb-3">
           Lịch sử Feedback ({feedbacks.length} bản ghi)
         </h2>
-        <FeedbackTable feedbacks={tableData} />
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="min-w-[600px] px-4 sm:px-0">
+            <FeedbackTable feedbacks={tableData} />
+          </div>
+        </div>
       </div>
     </div>
   );

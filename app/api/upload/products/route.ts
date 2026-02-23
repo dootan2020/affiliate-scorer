@@ -4,8 +4,10 @@ import { parseFile } from "@/lib/parsers/parse-file";
 import { detectFormat } from "@/lib/parsers/detect-format";
 import { parseFastMoss } from "@/lib/parsers/fastmoss";
 import { parseKaloData } from "@/lib/parsers/kalodata";
+import { parseWithMapping } from "@/lib/parsers/map-parser";
 import { deduplicateProducts } from "@/lib/utils/dedup";
 import type { NormalizedProduct } from "@/lib/utils/normalize";
+import type { ColumnMapping } from "@/lib/parsers/ai-detect";
 
 export async function POST(
   request: Request
@@ -13,6 +15,7 @@ export async function POST(
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const mappingJson = formData.get("mapping") as string | null;
 
     if (!file) {
       return NextResponse.json(
@@ -32,20 +35,34 @@ export async function POST(
     const { headers, rows } = await parseFile(file);
     const format = detectFormat(headers);
 
-    if (format !== "fastmoss" && format !== "kalodata") {
+    let products: NormalizedProduct[];
+    let sourceLabel: string;
+
+    if (mappingJson) {
+      // User confirmed a custom mapping
+      const mapping = JSON.parse(mappingJson) as ColumnMapping;
+      if (!mapping.name) {
+        return NextResponse.json(
+          { error: "Mapping phải có trường 'name' (tên sản phẩm)" },
+          { status: 400 }
+        );
+      }
+      const source = format === "kalodata" ? "kalodata" : "fastmoss";
+      products = parseWithMapping(rows, mapping, source);
+      sourceLabel = format === "unknown" ? "Custom" : (format === "fastmoss" ? "FastMoss" : "KaloData");
+    } else if (format === "fastmoss") {
+      products = parseFastMoss(rows);
+      sourceLabel = "FastMoss";
+    } else if (format === "kalodata") {
+      products = parseKaloData(rows);
+      sourceLabel = "KaloData";
+    } else {
       return NextResponse.json(
         {
-          error: `Không nhận diện được định dạng file. Vui lòng upload file từ FastMoss hoặc KaloData.`,
+          error: "Không nhận diện được định dạng file. Vui lòng dùng Preview để xem mapping trước khi import.",
         },
         { status: 400 }
       );
-    }
-
-    let products: NormalizedProduct[];
-    if (format === "fastmoss") {
-      products = parseFastMoss(rows);
-    } else {
-      products = parseKaloData(rows);
     }
 
     if (products.length === 0) {
@@ -59,7 +76,7 @@ export async function POST(
 
     const batch = await prisma.importBatch.create({
       data: {
-        source: format,
+        source: format === "unknown" ? "custom" : format,
         fileName: file.name,
         recordCount: deduplicated.length,
       },
@@ -93,12 +110,12 @@ export async function POST(
     return NextResponse.json({
       data: {
         batchId: batch.id,
-        format,
+        format: format === "unknown" ? "custom" : format,
         totalParsed: products.length,
         afterDedup: deduplicated.length,
         saved: created.count,
       },
-      message: `Đã import ${created.count} sản phẩm từ ${format === "fastmoss" ? "FastMoss" : "KaloData"}`,
+      message: `Đã import ${created.count} sản phẩm từ ${sourceLabel}`,
     });
   } catch (error) {
     const message =

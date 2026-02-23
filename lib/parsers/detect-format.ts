@@ -8,6 +8,11 @@ export type FileFormat =
 
 const FORMAT_SIGNATURES: Record<Exclude<FileFormat, "unknown">, string[][]> = {
   fastmoss: [
+    // Real FastMoss Vietnamese export (primary)
+    ["tên sản phẩm", "tỷ lệ hoa hồng", "lượng bán"],
+    ["tên sản phẩm", "giá bán", "tên cửa hàng"],
+    ["danh mục sản phẩm", "tổng lượng bán", "doanh thu"],
+    // FastMoss English / legacy
     ["commission_rate", "affiliate_count", "growth"],
     ["commission rate", "affiliate count", "growth rate"],
     ["tỷ lệ hoa hồng", "số affiliate", "tăng trưởng"],

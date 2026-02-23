@@ -3,11 +3,20 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { FeedbackTable } from "@/components/feedback/feedback-table";
 import { FeedbackUpload } from "@/components/feedback/feedback-upload";
+import { ManualFeedbackForm } from "@/components/feedback/manual-feedback-form";
 import { MessageSquare } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Feedback Loop | AffiliateScorer",
 };
+
+async function getProducts() {
+  return prisma.product.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+    take: 200,
+  });
+}
 
 async function getFeedbacks() {
   try {
@@ -32,7 +41,10 @@ async function getFeedbacks() {
 }
 
 export default async function FeedbackPage(): Promise<React.ReactElement> {
-  const feedbacks = await getFeedbacks();
+  const [feedbacks, products] = await Promise.all([
+    getFeedbacks(),
+    getProducts(),
+  ]);
 
   const tableData = feedbacks.map((fb) => ({
     id: fb.id,
@@ -65,11 +77,21 @@ export default async function FeedbackPage(): Promise<React.ReactElement> {
         </Link>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
           Upload Dữ Liệu Feedback
         </h2>
         <FeedbackUpload />
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-4">
+          Nhập Kết Quả Thủ Công
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Cho kết quả organic hoặc khi không có file export
+        </p>
+        <ManualFeedbackForm products={products} />
       </div>
 
       <div className="space-y-4">

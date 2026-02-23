@@ -75,9 +75,9 @@ function CustomTooltip({ active, payload }: CustomTooltipProps): React.ReactElem
   if (!active || !payload?.length) return null;
   const entry = payload[0].payload;
   return (
-    <div className="rounded border bg-background px-3 py-2 text-sm shadow">
-      <p className="font-medium">{entry.label}</p>
-      <p className="text-muted-foreground">
+    <div className="rounded-xl bg-white px-3 py-2 text-sm shadow-md">
+      <p className="font-medium text-gray-900">{entry.label}</p>
+      <p className="text-gray-500">
         {entry.score}/{entry.max} điểm
       </p>
     </div>
@@ -99,7 +99,7 @@ export function ScoreBreakdown({ breakdown }: ScoreBreakdownProps): React.ReactE
   });
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <ResponsiveContainer width="100%" height={220}>
         <BarChart
           layout="vertical"
@@ -114,22 +114,22 @@ export function ScoreBreakdown({ breakdown }: ScoreBreakdownProps): React.ReactE
             tick={{ fontSize: 12 }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+          <Bar dataKey="score" radius={[0, 6, 6, 0]}>
             {chartData.map((entry, index) => (
               <Cell key={index} fill={entry.color} />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 text-xs">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 text-xs">
         {chartData.map((entry) => (
-          <div key={entry.label} className="flex items-center gap-1.5">
+          <div key={entry.label} className="flex items-center gap-2">
             <span
-              className="inline-block h-2.5 w-2.5 rounded-sm shrink-0"
+              className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-muted-foreground truncate">{entry.label}:</span>
-            <span className="font-medium">{entry.display}</span>
+            <span className="text-gray-400 truncate">{entry.label}:</span>
+            <span className="font-medium text-gray-900">{entry.display}</span>
           </div>
         ))}
       </div>

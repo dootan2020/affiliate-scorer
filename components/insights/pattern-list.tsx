@@ -1,7 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Layers } from "lucide-react";
 
 interface PatternListProps {
   patterns: string[];
@@ -25,12 +24,12 @@ const CATEGORY_KEYWORDS: Record<PatternCategory, string[]> = {
 };
 
 const CATEGORY_COLORS: Record<PatternCategory, string> = {
-  Commission: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  Trending: "bg-orange-100 text-orange-700 border-orange-200",
-  Price: "bg-purple-100 text-purple-700 border-purple-200",
-  Content: "bg-blue-100 text-blue-700 border-blue-200",
-  Platform: "bg-pink-100 text-pink-700 border-pink-200",
-  General: "bg-gray-100 text-gray-700 border-gray-200",
+  Commission: "bg-emerald-50 text-emerald-700",
+  Trending: "bg-orange-50 text-orange-700",
+  Price: "bg-purple-50 text-purple-700",
+  Content: "bg-blue-50 text-blue-700",
+  Platform: "bg-pink-50 text-pink-700",
+  General: "bg-gray-100 text-gray-600",
 };
 
 function detectCategory(pattern: string): PatternCategory {
@@ -48,28 +47,28 @@ function detectCategory(pattern: string): PatternCategory {
 export function PatternList({ patterns }: PatternListProps) {
   if (patterns.length === 0) {
     return (
-      <div className="flex h-24 items-center justify-center text-muted-foreground text-sm">
-        Chưa có patterns được phát hiện
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
+          <Layers className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm text-gray-500">Chưa có patterns được phát hiện</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {patterns.map((pattern, idx) => {
         const category = detectCategory(pattern);
         return (
-          <Card key={idx} className="border border-border/60">
-            <CardContent className="flex items-start gap-3 py-3 px-4">
-              <Badge
-                variant="outline"
-                className={`shrink-0 text-xs font-medium ${CATEGORY_COLORS[category]}`}
-              >
-                {category}
-              </Badge>
-              <p className="text-sm text-foreground leading-relaxed">{pattern}</p>
-            </CardContent>
-          </Card>
+          <div key={idx} className="bg-white rounded-2xl shadow-sm p-4 flex items-start gap-3">
+            <span
+              className={`shrink-0 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${CATEGORY_COLORS[category]}`}
+            >
+              {category}
+            </span>
+            <p className="text-sm text-gray-600 leading-relaxed">{pattern}</p>
+          </div>
         );
       })}
     </div>

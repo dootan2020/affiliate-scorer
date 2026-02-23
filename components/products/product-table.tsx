@@ -1,15 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { formatVND, formatPercent } from "@/lib/utils/format";
+import { Upload } from "lucide-react";
 
 interface ProductRow {
   id: string;
@@ -28,23 +21,23 @@ interface ProductTableProps {
 }
 
 function getScoreBadgeClass(score: number): string {
-  if (score >= 85) return "bg-red-500 text-white";
-  if (score >= 70) return "bg-green-500 text-white";
-  if (score >= 50) return "bg-yellow-500 text-black";
-  return "bg-gray-400 text-white";
+  if (score >= 85) return "bg-rose-500 text-white";
+  if (score >= 70) return "bg-emerald-500 text-white";
+  if (score >= 50) return "bg-amber-500 text-white";
+  return "bg-gray-300 text-gray-600";
 }
 
 function ScoreBadge({ score }: { score: number | null }): React.ReactElement {
   if (score === null) {
     return (
-      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600">
+      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
         Chưa chấm
       </span>
     );
   }
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${getScoreBadgeClass(score)}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getScoreBadgeClass(score)}`}
     >
       {Math.round(score)}
     </span>
@@ -53,15 +46,15 @@ function ScoreBadge({ score }: { score: number | null }): React.ReactElement {
 
 function PlatformBadge({ platform }: { platform: string }): React.ReactElement {
   const colors: Record<string, string> = {
-    tiktok: "bg-pink-100 text-pink-700",
-    shopee: "bg-orange-100 text-orange-700",
-    lazada: "bg-blue-100 text-blue-700",
-    facebook: "bg-indigo-100 text-indigo-700",
+    tiktok: "bg-pink-50 text-pink-700",
+    shopee: "bg-orange-50 text-orange-700",
+    lazada: "bg-blue-50 text-blue-700",
+    facebook: "bg-indigo-50 text-indigo-700",
   };
   const key = platform.toLowerCase();
-  const cls = colors[key] ?? "bg-gray-100 text-gray-700";
+  const cls = colors[key] ?? "bg-gray-50 text-gray-700";
   return (
-    <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
       {platform}
     </span>
   );
@@ -70,64 +63,72 @@ function PlatformBadge({ platform }: { platform: string }): React.ReactElement {
 export function ProductTable({ products }: ProductTableProps): React.ReactElement {
   if (products.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-        Chưa có sản phẩm nào. Hãy upload CSV để bắt đầu.
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <Upload className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          Chưa có sản phẩm nào
+        </h3>
+        <p className="text-sm text-gray-500 max-w-sm">
+          Hãy upload CSV để bắt đầu.
+        </p>
       </div>
     );
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-12 text-center">#</TableHead>
-          <TableHead className="w-16 text-center">Điểm</TableHead>
-          <TableHead>Tên sản phẩm</TableHead>
-          <TableHead className="text-right">Giá</TableHead>
-          <TableHead className="text-right">Hoa hồng</TableHead>
-          <TableHead className="text-right">Tăng trưởng</TableHead>
-          <TableHead className="text-center">Nền tảng</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <table className="w-full">
+      <thead>
+        <tr className="border-b border-gray-100">
+          <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4 w-12">#</th>
+          <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4 w-16">Điểm</th>
+          <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Tên sản phẩm</th>
+          <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Giá</th>
+          <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Hoa hồng</th>
+          <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Tăng trưởng</th>
+          <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Nền tảng</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-50">
         {products.map((product, index) => (
-          <TableRow key={product.id} className="cursor-pointer hover:bg-muted/50">
-            <TableCell className="text-center font-medium text-muted-foreground">
+          <tr key={product.id} className="hover:bg-gray-50/50 transition-colors cursor-pointer">
+            <td className="py-4 px-4 text-sm text-gray-400 font-medium">
               {product.aiRank ?? index + 1}
-            </TableCell>
-            <TableCell className="text-center">
+            </td>
+            <td className="py-4 px-4 text-center">
               <ScoreBadge score={product.aiScore} />
-            </TableCell>
-            <TableCell>
+            </td>
+            <td className="py-4 px-4">
               <Link
                 href={`/products/${product.id}`}
-                className="font-medium hover:underline line-clamp-2 max-w-[280px] block"
+                className="text-sm font-medium text-gray-900 hover:text-blue-600 line-clamp-2 max-w-[280px] block transition-colors"
               >
                 {product.name}
               </Link>
-            </TableCell>
-            <TableCell className="text-right text-sm">
+            </td>
+            <td className="py-4 px-4 text-right text-sm text-gray-600">
               {formatVND(product.price)}
-            </TableCell>
-            <TableCell className="text-right text-sm">
+            </td>
+            <td className="py-4 px-4 text-right text-sm text-gray-600">
               {formatPercent(product.commissionRate)}/{formatVND(product.commissionVND)}
-            </TableCell>
-            <TableCell className="text-right text-sm">
+            </td>
+            <td className="py-4 px-4 text-right text-sm">
               {product.salesGrowth7d !== null && product.salesGrowth7d !== undefined ? (
-                <span className={product.salesGrowth7d >= 0 ? "text-green-600" : "text-red-600"}>
+                <span className={product.salesGrowth7d >= 0 ? "text-emerald-600" : "text-rose-600"}>
                   {product.salesGrowth7d >= 0 ? "+" : ""}
                   {formatPercent(product.salesGrowth7d)}
                 </span>
               ) : (
-                <span className="text-muted-foreground">—</span>
+                <span className="text-gray-300">—</span>
               )}
-            </TableCell>
-            <TableCell className="text-center">
+            </td>
+            <td className="py-4 px-4 text-center">
               <PlatformBadge platform={product.platform} />
-            </TableCell>
-          </TableRow>
+            </td>
+          </tr>
         ))}
-      </TableBody>
-    </Table>
+      </tbody>
+    </table>
   );
 }

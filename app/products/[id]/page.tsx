@@ -3,18 +3,17 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { ContentSuggestion } from "@/components/products/content-suggestion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatVND, formatPercent, formatNumber } from "@/lib/utils/format";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
 function getScoreBadgeClass(score: number): string {
-  if (score >= 85) return "bg-red-500 text-white";
-  if (score >= 70) return "bg-green-500 text-white";
-  if (score >= 50) return "bg-yellow-500 text-black";
+  if (score >= 85) return "bg-rose-500 text-white";
+  if (score >= 70) return "bg-emerald-500 text-white";
+  if (score >= 50) return "bg-amber-500 text-white";
   return "bg-gray-400 text-white";
 }
 
@@ -26,9 +25,9 @@ interface InfoRowProps {
 function InfoRow({ label, value }: InfoRowProps): React.ReactElement | null {
   if (value === null || value === undefined || value === "") return null;
   return (
-    <div className="flex justify-between py-1.5 border-b last:border-0 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value}</span>
+    <div className="flex justify-between py-3 text-sm">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-medium text-gray-900">{value}</span>
     </div>
   );
 }
@@ -72,22 +71,26 @@ export default async function ProductDetailPage({
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm" className="-ml-2">
-          <Link href="/">← Quay lại</Link>
-        </Button>
-      </div>
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Quay lại
+      </Link>
 
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold leading-tight">{product.name}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 leading-tight">
+            {product.name}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
             {product.platform} · {product.category}
           </p>
         </div>
         {score !== null && (
           <div
-            className={`shrink-0 flex flex-col items-center rounded-xl px-3 py-2 font-bold ${getScoreBadgeClass(score)}`}
+            className={`shrink-0 flex flex-col items-center rounded-2xl px-4 py-3 font-bold shadow-sm ${getScoreBadgeClass(score)}`}
           >
             <span className="text-2xl leading-none">{Math.round(score)}</span>
             <span className="text-xs mt-0.5 opacity-80">điểm AI</span>
@@ -95,12 +98,10 @@ export default async function ProductDetailPage({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Thông tin sản phẩm</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <p className="text-sm text-gray-500 mb-3">Thông tin sản phẩm</p>
+          <div className="divide-y divide-gray-50">
             <InfoRow label="Giá bán" value={formatVND(product.price)} />
             <InfoRow
               label="Hoa hồng"
@@ -112,14 +113,12 @@ export default async function ProductDetailPage({
             {product.shopRating !== null && product.shopRating !== undefined && (
               <InfoRow label="Đánh giá shop" value={`${product.shopRating.toFixed(1)}/5`} />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Dữ liệu xu hướng</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <p className="text-sm text-gray-500 mb-3">Dữ liệu xu hướng</p>
+          <div className="divide-y divide-gray-50">
             {product.salesTotal !== null && product.salesTotal !== undefined && (
               <InfoRow label="Tổng bán" value={formatNumber(product.salesTotal)} />
             )}
@@ -145,19 +144,15 @@ export default async function ProductDetailPage({
             {product.aiRank !== null && product.aiRank !== undefined && (
               <InfoRow label="Xếp hạng AI" value={`#${product.aiRank}`} />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {product.scoreBreakdown && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Phân tích điểm (6 tiêu chí)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScoreBreakdown breakdown={product.scoreBreakdown} />
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <p className="text-sm text-gray-500 mb-4">Phân tích điểm (6 tiêu chí)</p>
+          <ScoreBreakdown breakdown={product.scoreBreakdown} />
+        </div>
       )}
 
       <ContentSuggestion
@@ -167,11 +162,15 @@ export default async function ProductDetailPage({
 
       {product.url && (
         <div className="pt-2">
-          <Button asChild variant="outline" size="sm">
-            <a href={product.url} target="_blank" rel="noopener noreferrer">
-              Xem sản phẩm trên {product.platform} →
-            </a>
-          </Button>
+          <a
+            href={product.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Xem sản phẩm trên {product.platform}
+          </a>
         </div>
       )}
     </div>

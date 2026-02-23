@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ProductTable } from "@/components/products/product-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload, BarChart3, Sparkles, Lightbulb } from "lucide-react";
 
 async function getTopProducts() {
   return prisma.product.findMany({
@@ -63,14 +62,16 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+            Dashboard
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
             Top picks hôm nay và AI insights
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {latestLog && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-gray-400">
               AI Accuracy: {Math.round(latestLog.currentAccuracy * 100)}%
               {latestLog.currentAccuracy > latestLog.previousAccuracy && (
                 <span className="text-emerald-600 ml-1">
@@ -80,121 +81,131 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
             </span>
           )}
           {hasProducts && (
-            <Button asChild size="sm" variant="outline">
-              <Link href="/upload">Upload thêm</Link>
-            </Button>
+            <Link
+              href="/upload"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
+            >
+              Upload thêm
+            </Link>
           )}
         </div>
       </div>
 
       {!hasProducts ? (
-        <div className="rounded-lg border border-dashed p-8 sm:p-12 text-center space-y-4">
-          <div className="text-4xl">!</div>
-          <div>
-            <p className="font-medium text-lg">Chưa có dữ liệu sản phẩm</p>
-            <p className="text-muted-foreground text-sm mt-1">
-              Upload file CSV từ FastMoss hoặc KaloData để bắt đầu phân tích
-            </p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+            <Upload className="w-8 h-8 text-blue-400" />
           </div>
-          <Button asChild>
-            <Link href="/upload">Upload CSV ngay</Link>
-          </Button>
+          <h3 className="text-lg font-medium text-gray-900 mb-1">
+            Chưa có dữ liệu sản phẩm
+          </h3>
+          <p className="text-sm text-gray-500 mb-6 max-w-sm">
+            Upload file CSV từ FastMoss hoặc KaloData để bắt đầu phân tích
+          </p>
+          <Link
+            href="/upload"
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
+          >
+            Upload CSV ngay
+          </Link>
         </div>
       ) : (
         <>
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-medium text-gray-900">
                 Top sản phẩm{hasScored ? ` (${topProducts.length})` : ""}
               </h2>
               {!hasScored && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Có {totalProducts} SP — chưa chấm điểm
                 </p>
               )}
             </div>
 
             {hasScored ? (
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
-                <div className="min-w-[640px] px-4 sm:px-0">
-                  <ProductTable products={topProducts} />
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <div className="min-w-[640px]">
+                    <ProductTable products={topProducts} />
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed p-8 text-center space-y-3">
-                <p className="text-muted-foreground">
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mb-4">
+                  <BarChart3 className="w-8 h-8 text-amber-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  Chưa chấm điểm AI
+                </h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-sm">
                   Đã upload {totalProducts} sản phẩm nhưng chưa chấm điểm AI.
                 </p>
-                <Button asChild size="sm">
-                  <Link href="/upload">Chạy phân tích AI</Link>
-                </Button>
+                <Link
+                  href="/upload"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
+                >
+                  Chạy phân tích AI
+                </Link>
               </div>
             )}
           </section>
 
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">AI Insights tuần này</h2>
+              <h2 className="text-lg font-medium text-gray-900">
+                AI Insights tuần này
+              </h2>
               <Link
                 href="/insights"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-gray-400 hover:text-gray-900 transition-colors"
               >
                 Xem chi tiết →
               </Link>
             </div>
 
             {latestLog ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Tuần {latestLog.weekNumber}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {Math.round(latestLog.currentAccuracy * 100)}%
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Độ chính xác AI · {feedbackCount} feedback
-                    </p>
-                  </CardContent>
-                </Card>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="bg-white rounded-2xl shadow-sm p-6">
+                  <p className="text-sm text-gray-500 mb-1">
+                    Tuần {latestLog.weekNumber}
+                  </p>
+                  <p className="text-3xl font-semibold text-gray-900">
+                    {Math.round(latestLog.currentAccuracy * 100)}%
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Độ chính xác AI · {feedbackCount} feedback
+                  </p>
+                </div>
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Chiến lược đề xuất
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm leading-relaxed line-clamp-3">
-                      {latestLog.insights}
-                    </p>
-                  </CardContent>
-                </Card>
+                <div className="bg-white rounded-2xl shadow-sm p-6">
+                  <p className="text-sm text-gray-500 mb-1">
+                    Chiến lược đề xuất
+                  </p>
+                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+                    {latestLog.insights}
+                  </p>
+                </div>
 
                 {(() => {
                   try {
                     const patterns = JSON.parse(latestLog.patternsFound) as string[];
                     if (patterns.length === 0) return null;
                     return (
-                      <Card className="sm:col-span-2">
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Patterns phát hiện
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-1">
-                            {patterns.slice(0, 3).map((p, i) => (
-                              <li key={i} className="text-sm text-muted-foreground">
-                                · {p}
-                              </li>
-                            ))}
-                          </ul>
-                        </CardContent>
-                      </Card>
+                      <div className="bg-white rounded-2xl shadow-sm p-6 sm:col-span-2">
+                        <p className="text-sm text-gray-500 mb-3">
+                          Patterns phát hiện
+                        </p>
+                        <ul className="space-y-1.5">
+                          {patterns.slice(0, 3).map((p, i) => (
+                            <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                              {p}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     );
                   } catch {
                     return null;
@@ -202,12 +213,22 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
                 })()}
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground text-sm">
-                Chưa có insights. Hãy vào trang{" "}
-                <Link href="/insights" className="underline text-foreground">
-                  Insights
-                </Link>{" "}
-                để chạy phân tích AI learning.
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mb-4">
+                  <Lightbulb className="w-8 h-8 text-purple-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  Chưa có insights
+                </h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-sm">
+                  Hãy vào trang Insights để chạy phân tích AI learning.
+                </p>
+                <Link
+                  href="/insights"
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
+                >
+                  Xem Insights
+                </Link>
               </div>
             )}
           </section>

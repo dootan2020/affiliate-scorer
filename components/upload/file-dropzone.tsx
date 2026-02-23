@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FileDropzoneProps {
@@ -68,29 +69,19 @@ export function FileDropzone({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        "cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors",
+        "cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all",
         isDragging
-          ? "border-primary bg-primary/5"
-          : "border-muted-foreground/25 hover:border-primary/50",
+          ? "border-blue-400 bg-blue-50/50"
+          : "border-gray-200 hover:border-blue-300 hover:bg-gray-50/50",
         disabled && "cursor-not-allowed opacity-50"
       )}
     >
-      <div className="flex flex-col items-center gap-2">
-        <svg
-          className="h-10 w-10 text-muted-foreground"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-          />
-        </svg>
-        <p className="text-sm font-medium">{label}</p>
-        <p className="text-xs text-muted-foreground">{sublabel}</p>
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
+          <Upload className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm font-medium text-gray-900">{label}</p>
+        <p className="text-xs text-gray-400">{sublabel}</p>
       </div>
     </div>
   );

@@ -28,10 +28,12 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-gray-50 min-h-screen`}
       >
         <NavHeader />
-        <main className="container mx-auto px-4 py-6">{children}</main>
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {children}
+        </main>
         <Toaster richColors position="top-right" />
       </body>
     </html>

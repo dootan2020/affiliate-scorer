@@ -86,17 +86,21 @@ export default function UploadPage(): React.ReactElement {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Upload Data</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+          Upload Data
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
           Upload file CSV/Excel từ FastMoss, KaloData hoặc kết quả ads
         </p>
       </div>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Nghiên cứu sản phẩm</h2>
-        <p className="text-sm text-muted-foreground">
-          Upload file export từ FastMoss hoặc KaloData để AI phân tích
-        </p>
+      <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-medium text-gray-900">Nghiên cứu sản phẩm</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Upload file export từ FastMoss hoặc KaloData để AI phân tích
+          </p>
+        </div>
         <FileDropzone
           onFileSelect={handleProductUpload}
           label="Kéo thả file FastMoss/KaloData vào đây"
@@ -109,13 +113,15 @@ export default function UploadPage(): React.ReactElement {
           result={result}
           error={error}
         />
-      </section>
+      </div>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Kết quả thật</h2>
-        <p className="text-sm text-muted-foreground">
-          Upload kết quả từ FB Ads, TikTok Ads hoặc Shopee Affiliate
-        </p>
+      <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-medium text-gray-900">Kết quả thật</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Upload kết quả từ FB Ads, TikTok Ads hoặc Shopee Affiliate
+          </p>
+        </div>
         <FileDropzone
           onFileSelect={handleFeedbackUpload}
           label="Kéo thả file kết quả vào đây"
@@ -128,7 +134,7 @@ export default function UploadPage(): React.ReactElement {
           result={feedbackResult}
           error={feedbackError}
         />
-      </section>
+      </div>
     </div>
   );
 }

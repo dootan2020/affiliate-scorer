@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 
 interface LearningResult {
@@ -33,7 +32,6 @@ export function TriggerLearningButton() {
         `Learning tuần ${result?.weekNumber ?? "?"} hoàn thành — độ chính xác ${Math.round((result?.accuracy ?? 0) * 100)}%`
       );
 
-      // Reload to show updated data
       window.location.reload();
     } catch {
       toast.error("Lỗi kết nối khi chạy learning cycle");
@@ -43,13 +41,17 @@ export function TriggerLearningButton() {
   }
 
   return (
-    <Button onClick={handleTrigger} disabled={loading} size="sm">
+    <button
+      onClick={handleTrigger}
+      disabled={loading}
+      className="inline-flex items-center bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
+    >
       {loading ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : (
         <RefreshCw className="mr-2 h-4 w-4" />
       )}
       {loading ? "Đang chạy..." : "Chạy Learning"}
-    </Button>
+    </button>
   );
 }

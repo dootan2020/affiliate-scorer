@@ -2,9 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { FileDropzone } from "@/components/upload/file-dropzone";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface MappingPreview {
   entryName: string;
@@ -80,60 +77,67 @@ export function FeedbackUpload(): React.ReactElement {
       ) : null}
 
       {status === "uploading" && (
-        <p className="text-sm text-center text-muted-foreground">Đang xử lý file...</p>
+        <p className="text-sm text-center text-gray-500">Đang xử lý file...</p>
       )}
 
       {status === "error" && (
         <div className="space-y-3">
-          <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">
             {errorMsg}
           </div>
-          <Button variant="outline" size="sm" onClick={handleReset}>Thử lại</Button>
+          <button
+            onClick={handleReset}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
+          >
+            Thử lại
+          </button>
         </div>
       )}
 
       {status === "done" && result && (
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                Kết quả upload
-                <Badge variant="secondary">{FORMAT_LABELS[result.format] ?? result.format}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-1">
-              <p>Tổng dòng: <span className="font-medium">{result.totalParsed}</span></p>
-              <p>Tự động ghép sản phẩm: <span className="font-medium">{result.autoMapped}</span></p>
-              <p>Đã lưu: <span className="font-medium text-green-600">{result.saved}</span></p>
-            </CardContent>
-          </Card>
+          <div className="bg-gray-50 rounded-2xl p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-gray-900">Kết quả upload</p>
+              <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                {FORMAT_LABELS[result.format] ?? result.format}
+              </span>
+            </div>
+            <div className="text-sm space-y-1">
+              <p className="text-gray-600">Tổng dòng: <span className="font-medium text-gray-900">{result.totalParsed}</span></p>
+              <p className="text-gray-600">Tự động ghép sản phẩm: <span className="font-medium text-gray-900">{result.autoMapped}</span></p>
+              <p className="text-gray-600">Đã lưu: <span className="font-medium text-emerald-600">{result.saved}</span></p>
+            </div>
+          </div>
 
           {result.mappings.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Xem trước ghép sản phẩm</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {result.mappings.map((m, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs border-b pb-1.5 last:border-0">
-                      <span className="truncate max-w-[40%] text-muted-foreground">{m.entryName}</span>
-                      <span className="text-muted-foreground mx-1">→</span>
-                      <span className="truncate max-w-[35%] font-medium">{m.productName ?? "Chưa ghép"}</span>
-                      <Badge
-                        variant={m.autoMapped ? "default" : "secondary"}
-                        className="ml-2 shrink-0 text-xs"
-                      >
-                        {m.confidence}%
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="bg-gray-50 rounded-2xl p-6">
+              <p className="text-sm font-medium text-gray-900 mb-3">Xem trước ghép sản phẩm</p>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {result.mappings.map((m, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs py-2 border-b border-gray-100 last:border-0">
+                    <span className="truncate max-w-[40%] text-gray-500">{m.entryName}</span>
+                    <span className="text-gray-300 mx-2">→</span>
+                    <span className="truncate max-w-[35%] font-medium text-gray-900">{m.productName ?? "Chưa ghép"}</span>
+                    <span
+                      className={`ml-2 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        m.autoMapped ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {m.confidence}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
-          <Button variant="outline" size="sm" onClick={handleReset}>Upload thêm</Button>
+          <button
+            onClick={handleReset}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
+          >
+            Upload thêm
+          </button>
         </div>
       )}
     </div>

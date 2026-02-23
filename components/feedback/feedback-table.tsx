@@ -1,15 +1,5 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-
 interface FeedbackRow {
   id: string;
   productName: string;
@@ -26,10 +16,10 @@ interface FeedbackTableProps {
   feedbacks: FeedbackRow[];
 }
 
-const SUCCESS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-  success: { label: "Tốt", variant: "default" },
-  moderate: { label: "Trung bình", variant: "secondary" },
-  poor: { label: "Kém", variant: "destructive" },
+const SUCCESS_BADGE: Record<string, { label: string; cls: string }> = {
+  success: { label: "Tốt", cls: "bg-emerald-50 text-emerald-700" },
+  moderate: { label: "Trung bình", cls: "bg-gray-100 text-gray-600" },
+  poor: { label: "Kém", cls: "bg-rose-50 text-rose-700" },
 };
 
 function formatDate(dateStr: string): string {
@@ -49,55 +39,55 @@ function formatROASOrRevenue(roas: number | null, revenue: number | null): strin
 export function FeedbackTable({ feedbacks }: FeedbackTableProps): React.ReactElement {
   if (feedbacks.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground text-sm">
+      <div className="text-center py-12 text-gray-500 text-sm">
         Chưa có dữ liệu feedback. Upload file để bắt đầu.
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Sản phẩm</TableHead>
-            <TableHead className="text-right">Điểm AI lúc chọn</TableHead>
-            <TableHead>Platform</TableHead>
-            <TableHead>ROAS / Doanh thu</TableHead>
-            <TableHead>Kết quả</TableHead>
-            <TableHead>Ngày</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {feedbacks.map((fb) => {
-            const platform = fb.adPlatform ?? fb.salesPlatform ?? "—";
-            const successInfo = SUCCESS_BADGE[fb.overallSuccess] ?? SUCCESS_BADGE.moderate;
+    <table className="w-full">
+      <thead>
+        <tr className="border-b border-gray-100">
+          <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Sản phẩm</th>
+          <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Điểm AI lúc chọn</th>
+          <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Platform</th>
+          <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">ROAS / Doanh thu</th>
+          <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Kết quả</th>
+          <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">Ngày</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-50">
+        {feedbacks.map((fb) => {
+          const platform = fb.adPlatform ?? fb.salesPlatform ?? "—";
+          const successInfo = SUCCESS_BADGE[fb.overallSuccess] ?? SUCCESS_BADGE.moderate;
 
-            return (
-              <TableRow key={fb.id}>
-                <TableCell className="font-medium max-w-[200px] truncate">
-                  {fb.productName}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {fb.aiScoreAtSelection.toFixed(1)}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground capitalize">
-                  {platform}
-                </TableCell>
-                <TableCell className="text-sm tabular-nums">
-                  {formatROASOrRevenue(fb.adROAS, fb.revenue)}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={successInfo.variant}>{successInfo.label}</Badge>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDate(fb.feedbackDate)}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+          return (
+            <tr key={fb.id} className="hover:bg-gray-50/50 transition-colors">
+              <td className="py-4 px-4 text-sm font-medium text-gray-900 max-w-[200px] truncate">
+                {fb.productName}
+              </td>
+              <td className="py-4 px-4 text-right text-sm tabular-nums text-gray-600">
+                {fb.aiScoreAtSelection.toFixed(1)}
+              </td>
+              <td className="py-4 px-4 text-sm text-gray-500 capitalize">
+                {platform}
+              </td>
+              <td className="py-4 px-4 text-sm tabular-nums text-gray-600">
+                {formatROASOrRevenue(fb.adROAS, fb.revenue)}
+              </td>
+              <td className="py-4 px-4">
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${successInfo.cls}`}>
+                  {successInfo.label}
+                </span>
+              </td>
+              <td className="py-4 px-4 text-sm text-gray-400">
+                {formatDate(fb.feedbackDate)}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Lightbulb, Globe } from "lucide-react";
 
 interface ContentSuggestionProps {
   suggestion: string | null;
@@ -42,67 +42,68 @@ export function ContentSuggestion({
 
   if (!hasSuggestion && !hasAdvice) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Gợi ý nội dung</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Chưa có gợi ý nội dung. Hãy chạy phân tích AI để nhận đề xuất.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mb-4">
+          <Lightbulb className="w-8 h-8 text-amber-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">Chưa có gợi ý nội dung</h3>
+        <p className="text-sm text-gray-500 max-w-sm">
+          Hãy chạy phân tích AI để nhận đề xuất.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {hasSuggestion && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Gợi ý nội dung AI</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Lightbulb className="w-5 h-5 text-amber-500" />
+            <p className="text-sm text-gray-500">Gợi ý nội dung AI</p>
+          </div>
+          <div className="space-y-3">
             {parseSection(suggestion).map((section, i) => (
               <div key={i}>
                 {section.title && (
-                  <p className="text-sm font-semibold text-foreground mb-0.5">
+                  <p className="text-sm font-medium text-gray-900 mb-0.5">
                     {section.title}
                   </p>
                 )}
                 {section.body && (
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                     {section.body}
                   </p>
                 )}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {hasAdvice && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Chiến lược nền tảng</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Globe className="w-5 h-5 text-blue-500" />
+            <p className="text-sm text-gray-500">Chiến lược nền tảng</p>
+          </div>
+          <div className="space-y-3">
             {parseSection(platformAdvice).map((section, i) => (
               <div key={i}>
                 {section.title && (
-                  <p className="text-sm font-semibold text-foreground mb-0.5">
+                  <p className="text-sm font-medium text-gray-900 mb-0.5">
                     {section.title}
                   </p>
                 )}
                 {section.body && (
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                     {section.body}
                   </p>
                 )}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

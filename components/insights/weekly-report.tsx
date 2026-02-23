@@ -1,7 +1,6 @@
 "use client";
 
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 interface WeeklyReportProps {
@@ -26,9 +25,9 @@ function AccuracyTrend({
 
   if (Math.abs(diff) < 0.005) {
     return (
-      <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="flex items-center gap-2 text-gray-400">
         <Minus className="h-5 w-5" />
-        <span className="text-2xl font-bold">{currentPct}%</span>
+        <span className="text-3xl font-semibold text-gray-900">{currentPct}%</span>
         <span className="text-sm">Không thay đổi</span>
       </div>
     );
@@ -36,19 +35,19 @@ function AccuracyTrend({
 
   if (diff > 0) {
     return (
-      <div className="flex items-center gap-2 text-emerald-600">
-        <TrendingUp className="h-5 w-5" />
-        <span className="text-2xl font-bold">{currentPct}%</span>
-        <span className="text-sm">+{pct}% so với tuần trước</span>
+      <div className="flex items-center gap-2">
+        <TrendingUp className="h-5 w-5 text-emerald-600" />
+        <span className="text-3xl font-semibold text-gray-900">{currentPct}%</span>
+        <span className="text-xs text-emerald-600 mt-2">+{pct}% so với tuần trước</span>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 text-rose-600">
-      <TrendingDown className="h-5 w-5" />
-      <span className="text-2xl font-bold">{currentPct}%</span>
-      <span className="text-sm">{pct}% so với tuần trước</span>
+    <div className="flex items-center gap-2">
+      <TrendingDown className="h-5 w-5 text-rose-600" />
+      <span className="text-3xl font-semibold text-gray-900">{currentPct}%</span>
+      <span className="text-xs text-rose-600 mt-2">{pct}% so với tuần trước</span>
     </div>
   );
 }
@@ -79,58 +78,46 @@ export function WeeklyReport({
   );
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Độ chính xác — Tuần {weekNumber}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AccuracyTrend current={currentAccuracy} previous={previousAccuracy} />
-        </CardContent>
-      </Card>
+    <div className="grid gap-6 md:grid-cols-2">
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <p className="text-sm text-gray-500 mb-3">
+          Độ chính xác — Tuần {weekNumber}
+        </p>
+        <AccuracyTrend current={currentAccuracy} previous={previousAccuracy} />
+      </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Thay đổi trọng số
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {changedWeights.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Không có thay đổi trọng số</p>
-          ) : (
-            <ul className="space-y-1">
-              {changedWeights.map((key) => {
-                const diff = weightsAfter[key] - weightsBefore[key];
-                return (
-                  <li key={key} className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{WEIGHT_LABELS[key]}</span>
-                    <span className="font-medium">
-                      {formatWeight(weightsBefore[key])} →{" "}
-                      <span className={diff > 0 ? "text-emerald-600" : "text-rose-600"}>
-                        {formatWeight(weightsAfter[key])}
-                      </span>
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <p className="text-sm text-gray-500 mb-3">
+          Thay đổi trọng số
+        </p>
+        {changedWeights.length === 0 ? (
+          <p className="text-sm text-gray-400">Không có thay đổi trọng số</p>
+        ) : (
+          <ul className="space-y-2">
+            {changedWeights.map((key) => {
+              const diff = weightsAfter[key] - weightsBefore[key];
+              return (
+                <li key={key} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">{WEIGHT_LABELS[key]}</span>
+                  <span className="font-medium text-gray-900">
+                    {formatWeight(weightsBefore[key])} →{" "}
+                    <span className={diff > 0 ? "text-emerald-600" : "text-rose-600"}>
+                      {formatWeight(weightsAfter[key])}
                     </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
-      <Card className="md:col-span-2">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Chiến lược đề xuất
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm leading-relaxed">{insights}</p>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-2xl shadow-sm p-6 md:col-span-2">
+        <p className="text-sm text-gray-500 mb-3">
+          Chiến lược đề xuất
+        </p>
+        <p className="text-sm text-gray-600 leading-relaxed">{insights}</p>
+      </div>
     </div>
   );
 }

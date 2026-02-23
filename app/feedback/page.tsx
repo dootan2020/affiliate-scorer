@@ -2,8 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { FeedbackTable } from "@/components/feedback/feedback-table";
 import { FeedbackUpload } from "@/components/feedback/feedback-upload";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageSquare } from "lucide-react";
 
 async function getFeedbacks() {
   try {
@@ -43,37 +42,56 @@ export default async function FeedbackPage(): Promise<React.ReactElement> {
   }));
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Feedback Loop</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+            Feedback Loop
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
             Upload kết quả chiến dịch để AI học và cải thiện điểm số
           </p>
         </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/">← Trang chủ</Link>
-        </Button>
+        <Link
+          href="/"
+          className="text-sm text-gray-400 hover:text-gray-900 transition-colors"
+        >
+          ← Trang chủ
+        </Link>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Upload Dữ Liệu Feedback</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FeedbackUpload />
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">
+          Upload Dữ Liệu Feedback
+        </h2>
+        <FeedbackUpload />
+      </div>
 
-      <div>
-        <h2 className="text-sm font-semibold mb-3">
+      <div className="space-y-4">
+        <h2 className="text-lg font-medium text-gray-900">
           Lịch sử Feedback ({feedbacks.length} bản ghi)
         </h2>
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <div className="min-w-[600px] px-4 sm:px-0">
-            <FeedbackTable feedbacks={tableData} />
+        {feedbacks.length > 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <div className="min-w-[600px]">
+                <FeedbackTable feedbacks={tableData} />
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+              <MessageSquare className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">
+              Chưa có dữ liệu feedback
+            </h3>
+            <p className="text-sm text-gray-500 mb-6 max-w-sm">
+              Upload file kết quả chiến dịch để bắt đầu.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

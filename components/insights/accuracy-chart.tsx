@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { BarChart3 } from "lucide-react";
 
 interface DataPoint {
   weekNumber: number;
@@ -21,8 +22,11 @@ interface AccuracyChartProps {
 export function AccuracyChart({ data }: AccuracyChartProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center text-muted-foreground text-sm">
-        Chưa có dữ liệu độ chính xác
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
+          <BarChart3 className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm text-gray-500">Chưa có dữ liệu độ chính xác</p>
       </div>
     );
   }
@@ -51,8 +55,13 @@ export function AccuracyChart({ data }: AccuracyChartProps) {
         />
         <Tooltip
           formatter={(value: number | undefined) => [`${value ?? 0}%`, "Độ chính xác"]}
-          labelStyle={{ color: "#374151" }}
-          contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb" }}
+          labelStyle={{ color: "#111827" }}
+          contentStyle={{
+            borderRadius: "12px",
+            border: "none",
+            boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+            padding: "8px 12px",
+          }}
         />
         <Line
           type="monotone"

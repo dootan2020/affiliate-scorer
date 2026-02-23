@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AccuracyChart } from "@/components/insights/accuracy-chart";
 import { PatternList } from "@/components/insights/pattern-list";
 import { WeeklyReport } from "@/components/insights/weekly-report";
 import { TriggerLearningButton } from "@/components/insights/trigger-learning-button";
+import { Sparkles } from "lucide-react";
 import type { InsightsData } from "@/app/api/insights/route";
 
 async function getInsights(): Promise<InsightsData> {
@@ -28,34 +28,39 @@ export default async function InsightsPage() {
   const { latestLog, accuracyTrend, totalFeedbackCount } = insights;
 
   return (
-    <div className="max-w-5xl space-y-8">
-      {/* Header */}
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">AI Insights</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+            AI Insights
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
             Phân tích học máy từ {totalFeedbackCount} feedback thực tế
           </p>
         </div>
         <TriggerLearningButton />
       </div>
 
-      {/* No data state */}
       {!latestLog && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 space-y-3">
-            <p className="text-muted-foreground text-sm">
-              Chưa có dữ liệu learning. Thu thập ít nhất 5 feedback và nhấn &quot;Chạy Learning&quot;.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mb-4">
+            <Sparkles className="w-8 h-8 text-purple-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-1">
+            Chưa có dữ liệu learning
+          </h3>
+          <p className="text-sm text-gray-500 mb-6 max-w-sm">
+            Thu thập ít nhất 5 feedback và nhấn &quot;Chạy Learning&quot;.
+          </p>
+        </div>
       )}
 
       {latestLog && (
         <>
-          {/* Weekly Report */}
-          <section className="space-y-3">
-            <h2 className="text-base font-semibold">Báo cáo tuần {latestLog.weekNumber}</h2>
+          <section className="space-y-4">
+            <h2 className="text-lg font-medium text-gray-900">
+              Báo cáo tuần {latestLog.weekNumber}
+            </h2>
             <WeeklyReport
               currentAccuracy={latestLog.currentAccuracy}
               previousAccuracy={latestLog.previousAccuracy}
@@ -66,21 +71,15 @@ export default async function InsightsPage() {
             />
           </section>
 
-          {/* Accuracy Chart */}
-          <section className="space-y-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Xu hướng độ chính xác</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AccuracyChart data={accuracyTrend} />
-              </CardContent>
-            </Card>
+          <section className="space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <p className="text-sm text-gray-500 mb-4">Xu hướng độ chính xác</p>
+              <AccuracyChart data={accuracyTrend} />
+            </div>
           </section>
 
-          {/* Pattern List */}
-          <section className="space-y-3">
-            <h2 className="text-base font-semibold">
+          <section className="space-y-4">
+            <h2 className="text-lg font-medium text-gray-900">
               Patterns phát hiện ({latestLog.patternsFound.length})
             </h2>
             <PatternList patterns={latestLog.patternsFound} />

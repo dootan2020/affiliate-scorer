@@ -1,3 +1,5 @@
+approveBuilds: '@prisma/engines'
+
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver

@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  name           String
+  url            String?
+  category       String
+  price          Float
+  commissionRate Float
+  commissionVND  Float
+  platform       String
+
+  // Trending
+  salesTotal     Int?
+  salesGrowth7d  Float?
+  salesGrowth30d Float?
+  revenue7d      Float?
+  revenue30d     Float?
+
+  // Competition
+  affiliateCount Int?
+  creatorCount   Int?
+  topVideoViews  Int?
+
+  // Shop
+  shopName  String?
+  shopRating Float?
+
+  // AI Scoring
+  aiScore           Float?
+  aiRank            Int?
+  scoreBreakdown    String? // JSON
+  scoringVersion    String?
+  contentSuggestion String?
+  platformAdvice    String?
+
+  // Source
+  source        String
+  importBatchId String
+  dataDate      DateTime
+  createdAt     DateTime @default(now())
+
+  feedbacks Feedback[]
+
+  @@index([category])
+  @@index([aiScore])
+  @@index([dataDate])
+}
+
+model Feedback {
+  id                 String   @id @default(cuid())
+  productId          String
+  product            Product  @relation(fields: [productId], references: [id])
+  aiScoreAtSelection Float
+
+  // Ads
+  adPlatform    String?
+  adImpressions Int?
+  adClicks      Int?
+  adCTR         Float?
+  adCPC         Float?
+  adConversions Int?
+  adCostPerConv Float?
+  adROAS        Float?
+  adSpend       Float?
+
+  // Organic
+  orgPlatform    String?
+  orgViews       Int?
+  orgLikes       Int?
+  orgComments    Int?
+  orgShares      Int?
+  orgWatchTimeAvg Float?
+  orgLinkClicks  Int?
+
+  // Content
+  videoType     String?
+  videoDuration Int?
+  postDate      DateTime?
+  postTime      String?
+
+  // Sales
+  salesPlatform    String?
+  orders           Int?
+  revenue          Float?
+  commissionEarned Float?
+  conversionRate   Float?
+
+  // Overall
+  overallSuccess String
+  feedbackDate   DateTime @default(now())
+  notes          String?
+
+  @@index([productId])
+  @@index([overallSuccess])
+  @@index([feedbackDate])
+}
+
+model LearningLog {
+  id               String   @id @default(cuid())
+  weekNumber       Int
+  runDate          DateTime @default(now())
+  totalDataPoints  Int
+  newDataPoints    Int
+  currentAccuracy  Float
+  previousAccuracy Float
+  weightsBefore    String // JSON
+  weightsAfter     String // JSON
+  patternsFound    String // JSON
+  insights         String
+  scoringVersion   String
+
+  @@index([weekNumber])
+}
+
+model ImportBatch {
+  id          String   @id @default(cuid())
+  source      String
+  fileName    String
+  recordCount Int
+  importDate  DateTime @default(now())
+}

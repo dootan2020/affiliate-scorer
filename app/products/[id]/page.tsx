@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { ContentSuggestion } from "@/components/products/content-suggestion";
 import { formatVND, formatPercent, formatNumber } from "@/lib/utils/format";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Video, Radio, Users } from "lucide-react";
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
@@ -27,7 +28,9 @@ function InfoRow({ label, value }: InfoRowProps): React.ReactElement | null {
   return (
     <div className="flex justify-between py-3 text-sm">
       <span className="text-gray-500 dark:text-gray-400">{label}</span>
-      <span className="font-medium text-gray-900 dark:text-gray-50">{value}</span>
+      <span className="font-medium text-gray-900 dark:text-gray-50">
+        {value}
+      </span>
     </div>
   );
 }
@@ -37,34 +40,7 @@ export default async function ProductDetailPage({
 }: ProductDetailPageProps): Promise<React.ReactElement> {
   const { id } = await params;
 
-  const product = await prisma.product.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      url: true,
-      category: true,
-      price: true,
-      commissionRate: true,
-      commissionVND: true,
-      platform: true,
-      salesTotal: true,
-      salesGrowth7d: true,
-      salesGrowth30d: true,
-      revenue7d: true,
-      affiliateCount: true,
-      shopName: true,
-      shopRating: true,
-      aiScore: true,
-      aiRank: true,
-      scoreBreakdown: true,
-      contentSuggestion: true,
-      platformAdvice: true,
-      source: true,
-      dataDate: true,
-    },
-  });
-
+  const product = await prisma.product.findUnique({ where: { id } });
   if (!product) notFound();
 
   const score = product.aiScore;
@@ -79,28 +55,77 @@ export default async function ProductDetailPage({
         Quay lại
       </Link>
 
+      {/* Product Header with Image */}
       <div className="flex items-start gap-4">
+        {product.imageUrl && (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            width={80}
+            height={80}
+            className="w-20 h-20 rounded-xl object-cover shrink-0 bg-gray-100 dark:bg-slate-800"
+            unoptimized
+          />
+        )}
         <div className="flex-1 min-w-0">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50 leading-tight">
             {product.name}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {product.platform} · {product.category}
+            {product.category} · {product.shopName ?? product.platform}
+            {product.productStatus && (
+              <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400">
+                {product.productStatus}
+              </span>
+            )}
           </p>
         </div>
         {score !== null && (
           <div
             className={`shrink-0 flex flex-col items-center rounded-2xl px-4 py-3 font-bold shadow-sm ${getScoreBadgeClass(score)}`}
           >
-            <span className="text-2xl leading-none">{Math.round(score)}</span>
+            <span className="text-2xl leading-none">
+              {Math.round(score)}
+            </span>
             <span className="text-xs mt-0.5 opacity-80">điểm AI</span>
           </div>
         )}
       </div>
 
+      {/* KOL/Competition Stats */}
+      {(product.totalKOL !== null ||
+        product.totalVideos !== null ||
+        product.totalLivestreams !== null) && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-800/50 p-4 text-center">
+            <Users className="w-5 h-5 text-blue-500 mx-auto mb-1" />
+            <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+              {formatNumber(product.totalKOL ?? 0)}
+            </p>
+            <p className="text-xs text-gray-400">KOL</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-800/50 p-4 text-center">
+            <Video className="w-5 h-5 text-pink-500 mx-auto mb-1" />
+            <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+              {formatNumber(product.totalVideos ?? 0)}
+            </p>
+            <p className="text-xs text-gray-400">Video</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-800/50 p-4 text-center">
+            <Radio className="w-5 h-5 text-red-500 mx-auto mb-1" />
+            <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+              {formatNumber(product.totalLivestreams ?? 0)}
+            </p>
+            <p className="text-xs text-gray-400">Livestream</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Thông tin sản phẩm</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Thông tin sản phẩm
+          </p>
           <div className="divide-y divide-gray-50 dark:divide-slate-800">
             <InfoRow label="Giá bán" value={formatVND(product.price)} />
             <InfoRow
@@ -110,38 +135,46 @@ export default async function ProductDetailPage({
             <InfoRow label="Nền tảng" value={product.platform} />
             <InfoRow label="Danh mục" value={product.category} />
             <InfoRow label="Shop" value={product.shopName} />
-            {product.shopRating !== null && product.shopRating !== undefined && (
-              <InfoRow label="Đánh giá shop" value={`${product.shopRating.toFixed(1)}/5`} />
+            {product.kolOrderRate !== null && (
+              <InfoRow
+                label="Tỷ lệ chốt đơn KOL"
+                value={`${product.kolOrderRate.toFixed(1)}%`}
+              />
             )}
           </div>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Dữ liệu xu hướng</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Dữ liệu bán hàng
+          </p>
           <div className="divide-y divide-gray-50 dark:divide-slate-800">
-            {product.salesTotal !== null && product.salesTotal !== undefined && (
-              <InfoRow label="Tổng bán" value={formatNumber(product.salesTotal)} />
-            )}
-            {product.salesGrowth7d !== null && product.salesGrowth7d !== undefined && (
+            {product.sales7d !== null && (
               <InfoRow
-                label="Tăng trưởng 7 ngày"
-                value={`${product.salesGrowth7d >= 0 ? "+" : ""}${formatPercent(product.salesGrowth7d)}`}
+                label="Bán 7 ngày"
+                value={formatNumber(product.sales7d)}
               />
             )}
-            {product.salesGrowth30d !== null && product.salesGrowth30d !== undefined && (
+            {product.salesTotal !== null && (
               <InfoRow
-                label="Tăng trưởng 30 ngày"
-                value={`${product.salesGrowth30d >= 0 ? "+" : ""}${formatPercent(product.salesGrowth30d)}`}
+                label="Tổng bán"
+                value={formatNumber(product.salesTotal)}
               />
             )}
-            {product.revenue7d !== null && product.revenue7d !== undefined && (
-              <InfoRow label="Doanh thu 7 ngày" value={formatVND(product.revenue7d)} />
+            {product.revenue7d !== null && (
+              <InfoRow
+                label="Doanh thu 7 ngày"
+                value={formatVND(product.revenue7d)}
+              />
             )}
-            {product.affiliateCount !== null && product.affiliateCount !== undefined && (
-              <InfoRow label="Affiliate" value={formatNumber(product.affiliateCount)} />
+            {product.revenueTotal !== null && (
+              <InfoRow
+                label="Tổng doanh thu"
+                value={formatVND(product.revenueTotal)}
+              />
             )}
-            <InfoRow label="Nguồn dữ liệu" value={product.source} />
-            {product.aiRank !== null && product.aiRank !== undefined && (
+            <InfoRow label="Nguồn" value={product.source} />
+            {product.aiRank !== null && (
               <InfoRow label="Xếp hạng AI" value={`#${product.aiRank}`} />
             )}
           </div>
@@ -150,7 +183,9 @@ export default async function ProductDetailPage({
 
       {product.scoreBreakdown && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Phân tích điểm (6 tiêu chí)</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Phân tích điểm (6 tiêu chí)
+          </p>
           <ScoreBreakdown breakdown={product.scoreBreakdown} />
         </div>
       )}
@@ -160,19 +195,42 @@ export default async function ProductDetailPage({
         platformAdvice={product.platformAdvice ?? null}
       />
 
-      {product.url && (
-        <div className="pt-2">
+      {/* Links */}
+      <div className="flex flex-wrap gap-3 pt-2">
+        {product.tiktokUrl && (
           <a
-            href={product.url}
+            href={product.tiktokUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors w-full sm:w-auto justify-center sm:justify-start"
+            className="inline-flex items-center gap-2 bg-pink-50 dark:bg-pink-950 hover:bg-pink-100 dark:hover:bg-pink-900 text-pink-700 dark:text-pink-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
           >
             <ExternalLink className="w-4 h-4" />
-            Xem sản phẩm trên {product.platform}
+            TikTok Shop
           </a>
-        </div>
-      )}
+        )}
+        {product.fastmossUrl && (
+          <a
+            href={product.fastmossUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            FastMoss
+          </a>
+        )}
+        {product.shopFastmossUrl && (
+          <a
+            href={product.shopFastmossUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Cửa hàng
+          </a>
+        )}
+      </div>
     </div>
   );
 }

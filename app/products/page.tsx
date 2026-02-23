@@ -35,7 +35,7 @@ export default async function ProductsPage({
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const limit = 20;
   const skip = (page - 1) * limit;
-  const VALID_SORT_FIELDS = ["aiScore", "commissionRate", "price", "createdAt"] as const;
+  const VALID_SORT_FIELDS = ["aiScore", "commissionRate", "price", "sales7d", "createdAt"] as const;
   const sortBy = VALID_SORT_FIELDS.includes(params.sortBy as (typeof VALID_SORT_FIELDS)[number])
     ? params.sortBy!
     : "aiScore";
@@ -68,7 +68,9 @@ export default async function ProductsPage({
         platform: true,
         aiScore: true,
         aiRank: true,
-        salesGrowth7d: true,
+        sales7d: true,
+        totalKOL: true,
+        imageUrl: true,
         category: true,
       },
     }),

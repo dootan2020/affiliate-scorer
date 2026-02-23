@@ -31,6 +31,9 @@
     "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
+  },
   "pnpm": {
     "onlyBuiltDependencies": [
       "@prisma/engines",

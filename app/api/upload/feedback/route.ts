@@ -23,6 +23,28 @@ function isShopeeAffiliate(entry: FeedbackEntry): entry is ShopeeAffiliateFeedba
   return "salesPlatform" in entry && entry.salesPlatform === "shopee";
 }
 
+function calculateOverallSuccess(entry: FeedbackEntry): string {
+  if (isFbAds(entry) || isTikTokAds(entry)) {
+    const roas = "adROAS" in entry ? entry.adROAS : null;
+    const conversions = "adConversions" in entry ? entry.adConversions : null;
+    if (roas != null && roas >= 2) return "success";
+    if (roas != null && roas >= 1) return "moderate";
+    if (conversions != null && conversions > 0) return "moderate";
+    if (roas != null && roas < 1) return "poor";
+    return "moderate";
+  }
+
+  if (isShopeeAffiliate(entry)) {
+    const orders = entry.orders ?? 0;
+    const rate = entry.conversionRate ?? 0;
+    if (orders > 0 && rate >= 2) return "success";
+    if (orders > 0) return "moderate";
+    return "poor";
+  }
+
+  return "moderate";
+}
+
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const formData = await request.formData();
@@ -71,7 +93,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         const base = {
           productId,
           aiScoreAtSelection: aiScoreAtSelection ?? 0,
-          overallSuccess: "moderate" as const,
+          overallSuccess: calculateOverallSuccess(entry),
         };
 
         if (isFbAds(entry)) {

@@ -71,6 +71,31 @@ function scorePrice(priceVND: number): number {
   return 20;
 }
 
+const HOT_CATEGORIES = new Set([
+  "beauty", "health", "sức khỏe", "làm đẹp", "mỹ phẩm",
+  "thời trang", "fashion", "tech", "công nghệ", "điện tử",
+  "gia dụng", "home", "đồ gia dụng", "phụ kiện",
+]);
+
+function scoreContentFit(
+  category: string,
+  price: number,
+  growth7d: number | null
+): number {
+  let score = 50;
+
+  const lowerCat = category.toLowerCase();
+  if (HOT_CATEGORIES.has(lowerCat)) score += 20;
+
+  if (price >= 150000 && price <= 500000) score += 15;
+  else if (price >= 50000 && price < 150000) score += 5;
+
+  if (growth7d != null && growth7d >= 100) score += 15;
+  else if (growth7d != null && growth7d >= 50) score += 10;
+
+  return Math.min(100, score);
+}
+
 function scorePlatform(platform: string, commissionRate: number): number {
   const lower = platform.toLowerCase();
   if (lower === "both" || (lower.includes("shopee") && lower.includes("tiktok"))) {
@@ -92,7 +117,11 @@ export function calculateBaseScore(
   );
   const trendingScore = scoreTrending(product.salesGrowth7d);
   const competitionScore = scoreCompetition(product.affiliateCount);
-  const contentFitScore = 50;
+  const contentFitScore = scoreContentFit(
+    product.category,
+    product.price,
+    product.salesGrowth7d
+  );
   const priceScore = scorePrice(product.price);
   const platformScore = scorePlatform(product.platform, product.commissionRate);
 

@@ -121,11 +121,21 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
               <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
                 Top sản phẩm{hasScored ? ` (${topProducts.length})` : ""}
               </h2>
-              {!hasScored && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Có {totalProducts} SP — chưa chấm điểm
-                </p>
-              )}
+              <div className="flex items-center gap-3">
+                {hasScored && (
+                  <a
+                    href="/api/export/sheet"
+                    className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
+                  >
+                    Export CSV ↓
+                  </a>
+                )}
+                {!hasScored && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Có {totalProducts} SP — chưa chấm điểm
+                  </p>
+                )}
+              </div>
             </div>
 
             {hasScored ? (

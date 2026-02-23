@@ -1,36 +1,48 @@
 import type { Metadata } from "next";
+import { prisma } from "@/lib/db";
 import { AccuracyChart } from "@/components/insights/accuracy-chart";
 import { PatternList } from "@/components/insights/pattern-list";
 import { WeeklyReport } from "@/components/insights/weekly-report";
 import { TriggerLearningButton } from "@/components/insights/trigger-learning-button";
 import { Sparkles } from "lucide-react";
-import type { InsightsData } from "@/app/api/insights/route";
+import type { WeightMap } from "@/lib/ai/prompts";
 
 export const metadata: Metadata = {
   title: "AI Insights | AffiliateScorer",
 };
 
-async function getInsights(): Promise<InsightsData> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/insights`, {
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error("Fetch failed");
-    const json = (await res.json()) as { data: InsightsData };
-    return json.data;
-  } catch {
-    return {
-      latestLog: null,
-      accuracyTrend: [],
-      totalFeedbackCount: 0,
-    };
-  }
+async function getInsights() {
+  const [logs, feedbackCount] = await Promise.all([
+    prisma.learningLog.findMany({
+      orderBy: { runDate: "desc" },
+      take: 10,
+    }),
+    prisma.feedback.count(),
+  ]);
+
+  const latestLog = logs[0]
+    ? {
+        id: logs[0].id,
+        weekNumber: logs[0].weekNumber,
+        currentAccuracy: logs[0].currentAccuracy,
+        previousAccuracy: logs[0].previousAccuracy,
+        weightsBefore: JSON.parse(logs[0].weightsBefore) as WeightMap,
+        weightsAfter: JSON.parse(logs[0].weightsAfter) as WeightMap,
+        patternsFound: JSON.parse(logs[0].patternsFound) as string[],
+        insights: logs[0].insights,
+      }
+    : null;
+
+  const accuracyTrend = [...logs].reverse().map((log) => ({
+    weekNumber: log.weekNumber,
+    currentAccuracy: log.currentAccuracy,
+  }));
+
+  return { latestLog, accuracyTrend, totalFeedbackCount: feedbackCount };
 }
 
 export default async function InsightsPage() {
-  const insights = await getInsights();
-  const { latestLog, accuracyTrend, totalFeedbackCount } = insights;
+  const { latestLog, accuracyTrend, totalFeedbackCount } = await getInsights();
 
   return (
     <div className="space-y-8">

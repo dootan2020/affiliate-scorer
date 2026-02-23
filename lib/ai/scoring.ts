@@ -182,7 +182,7 @@ async function updateRankings(): Promise<void> {
     select: { id: true },
   });
 
-  await Promise.all(
+  await prisma.$transaction(
     all.map((p: { id: string }, index: number) =>
       prisma.product.update({
         where: { id: p.id },

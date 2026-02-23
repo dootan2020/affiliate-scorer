@@ -24,14 +24,23 @@ function isShopeeAffiliate(entry: FeedbackEntry): entry is ShopeeAffiliateFeedba
 }
 
 function calculateOverallSuccess(entry: FeedbackEntry): string {
-  if (isFbAds(entry) || isTikTokAds(entry)) {
-    const roas = "adROAS" in entry ? entry.adROAS : null;
-    const conversions = "adConversions" in entry ? entry.adConversions : null;
+  if (isFbAds(entry)) {
+    const roas = entry.adROAS;
+    const conversions = entry.adConversions;
     if (roas != null && roas >= 2) return "success";
     if (roas != null && roas >= 1) return "moderate";
     if (conversions != null && conversions > 0) return "moderate";
     if (roas != null && roas < 1) return "poor";
     return "moderate";
+  }
+
+  if (isTikTokAds(entry)) {
+    const conversions = entry.adConversions ?? 0;
+    const spend = entry.adSpend ?? 0;
+    if (conversions >= 5) return "success";
+    if (conversions > 0 && spend > 0 && (conversions / spend) * 100000 >= 2) return "success";
+    if (conversions > 0) return "moderate";
+    return "poor";
   }
 
   if (isShopeeAffiliate(entry)) {
@@ -54,6 +63,14 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json(
         { error: "Vui lòng chọn file để upload" },
         { status: 400 }
+      );
+    }
+
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "File quá lớn. Tối đa 10MB." },
+        { status: 413 }
       );
     }
 

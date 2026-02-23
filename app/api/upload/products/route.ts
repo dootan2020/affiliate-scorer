@@ -21,6 +21,14 @@ export async function POST(
       );
     }
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "File quá lớn. Tối đa 10MB." },
+        { status: 413 }
+      );
+    }
+
     const { headers, rows } = await parseFile(file);
     const format = detectFormat(headers);
 

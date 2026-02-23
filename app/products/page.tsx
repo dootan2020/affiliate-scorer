@@ -35,7 +35,10 @@ export default async function ProductsPage({
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const limit = 20;
   const skip = (page - 1) * limit;
-  const sortBy = params.sortBy ?? "aiScore";
+  const VALID_SORT_FIELDS = ["aiScore", "commissionRate", "price", "createdAt"] as const;
+  const sortBy = VALID_SORT_FIELDS.includes(params.sortBy as (typeof VALID_SORT_FIELDS)[number])
+    ? params.sortBy!
+    : "aiScore";
   const sortOrder = (params.sortOrder ?? "desc") as "asc" | "desc";
   const category = params.category;
   const scoredFilter = params.scored;

@@ -11,6 +11,15 @@ export const metadata: Metadata = {
   title: "AI Insights | AffiliateScorer",
 };
 
+const DEFAULT_WEIGHTS: WeightMap = {
+  commission: 0.2, trending: 0.2, competition: 0.2,
+  contentFit: 0.15, price: 0.15, platform: 0.1,
+};
+
+function safeJsonParse<T>(json: string, fallback: T): T {
+  try { return JSON.parse(json) as T; } catch { return fallback; }
+}
+
 async function getInsights() {
   const [logs, feedbackCount] = await Promise.all([
     prisma.learningLog.findMany({
@@ -26,9 +35,9 @@ async function getInsights() {
         weekNumber: logs[0].weekNumber,
         currentAccuracy: logs[0].currentAccuracy,
         previousAccuracy: logs[0].previousAccuracy,
-        weightsBefore: JSON.parse(logs[0].weightsBefore) as WeightMap,
-        weightsAfter: JSON.parse(logs[0].weightsAfter) as WeightMap,
-        patternsFound: JSON.parse(logs[0].patternsFound) as string[],
+        weightsBefore: safeJsonParse<WeightMap>(logs[0].weightsBefore, DEFAULT_WEIGHTS),
+        weightsAfter: safeJsonParse<WeightMap>(logs[0].weightsAfter, DEFAULT_WEIGHTS),
+        patternsFound: safeJsonParse<string[]>(logs[0].patternsFound, []),
         insights: logs[0].insights,
       }
     : null;

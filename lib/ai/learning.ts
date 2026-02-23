@@ -96,13 +96,19 @@ export async function runLearningCycle(): Promise<LearningResult> {
 
     const previousLog = await prisma.learningLog.findFirst({
       orderBy: { runDate: "desc" },
-      select: { patternsFound: true, currentAccuracy: true },
+      select: { patternsFound: true, currentAccuracy: true, runDate: true },
     });
 
     const previousAccuracy = previousLog?.currentAccuracy ?? 0;
     const previousPatterns: string[] = previousLog
       ? (JSON.parse(previousLog.patternsFound) as string[])
       : [];
+
+    const newDataPoints = previousLog?.runDate
+      ? await prisma.feedback.count({
+          where: { feedbackDate: { gt: previousLog.runDate } },
+        })
+      : feedbacks.length;
 
     const feedbackSummary = buildFeedbackSummary(feedbacks);
 
@@ -131,7 +137,7 @@ export async function runLearningCycle(): Promise<LearningResult> {
     await saveWeights(newWeights, {
       weekNumber,
       totalDataPoints: feedbacks.length,
-      newDataPoints: feedbacks.length,
+      newDataPoints,
       accuracy: parsed.accuracy,
       previousAccuracy,
       patterns: parsed.patterns,

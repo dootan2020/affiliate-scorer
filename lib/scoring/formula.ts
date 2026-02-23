@@ -101,7 +101,12 @@ function scorePlatform(platform: string, commissionRate: number): number {
   if (lower === "both" || (lower.includes("shopee") && lower.includes("tiktok"))) {
     return 100;
   }
-  if (commissionRate >= 7) return 70;
+  if (lower.includes("tiktok")) {
+    return commissionRate >= 7 ? 80 : 60;
+  }
+  if (lower.includes("shopee")) {
+    return commissionRate >= 7 ? 75 : 55;
+  }
   return 50;
 }
 

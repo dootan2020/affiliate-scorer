@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import type { WeightMap } from "@/lib/ai/prompts";
 
+const DEFAULT_WEIGHTS: WeightMap = {
+  commission: 0.2, trending: 0.2, competition: 0.2,
+  contentFit: 0.15, price: 0.15, platform: 0.1,
+};
+
+function safeJsonParse<T>(json: string, fallback: T): T {
+  try { return JSON.parse(json) as T; } catch { return fallback; }
+}
+
 interface LearningLogEntry {
   id: string;
   weekNumber: number;
@@ -31,9 +40,9 @@ export async function GET(): Promise<NextResponse> {
       newDataPoints: log.newDataPoints,
       currentAccuracy: log.currentAccuracy,
       previousAccuracy: log.previousAccuracy,
-      weightsBefore: JSON.parse(log.weightsBefore) as WeightMap,
-      weightsAfter: JSON.parse(log.weightsAfter) as WeightMap,
-      patternsFound: JSON.parse(log.patternsFound) as string[],
+      weightsBefore: safeJsonParse<WeightMap>(log.weightsBefore, DEFAULT_WEIGHTS),
+      weightsAfter: safeJsonParse<WeightMap>(log.weightsAfter, DEFAULT_WEIGHTS),
+      patternsFound: safeJsonParse<string[]>(log.patternsFound, []),
       insights: log.insights,
       scoringVersion: log.scoringVersion,
     }));

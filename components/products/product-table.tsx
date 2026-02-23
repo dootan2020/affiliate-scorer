@@ -5,6 +5,13 @@ import Image from "next/image";
 import { formatVND, formatPercent } from "@/lib/utils/format";
 import { Upload } from "lucide-react";
 
+interface ProductBadge {
+  type: string;
+  emoji: string;
+  label: string;
+  detail?: string;
+}
+
 interface ProductRow {
   id: string;
   name: string;
@@ -18,6 +25,7 @@ interface ProductRow {
   totalKOL: number | null;
   imageUrl: string | null;
   category: string;
+  badges?: ProductBadge[];
 }
 
 interface ProductTableProps {
@@ -171,9 +179,16 @@ export function ProductTable({
                   <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 shrink-0" />
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-50 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-1 transition-colors">
-                    {product.name}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-50 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-1 transition-colors">
+                      {product.name}
+                    </p>
+                    {product.badges && product.badges.length > 0 && (
+                      <span className="shrink-0 text-xs" title={product.badges.map((b) => `${b.emoji} ${b.label}`).join(", ")}>
+                        {product.badges.map((b) => b.emoji).join("")}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 dark:text-gray-500 line-clamp-1">
                     {product.category}
                   </p>

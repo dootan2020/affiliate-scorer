@@ -5,7 +5,8 @@ import { prisma } from "@/lib/db";
 import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { ContentSuggestion } from "@/components/products/content-suggestion";
 import { formatVND, formatPercent, formatNumber } from "@/lib/utils/format";
-import { ArrowLeft, ExternalLink, Video, Radio, Users } from "lucide-react";
+import { computeBadges } from "@/lib/utils/product-badges";
+import { ArrowLeft, ExternalLink, Video, Radio, Users, History } from "lucide-react";
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
@@ -40,10 +41,42 @@ export default async function ProductDetailPage({
 }: ProductDetailPageProps): Promise<React.ReactElement> {
   const { id } = await params;
 
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      snapshots: {
+        orderBy: { snapshotDate: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          price: true,
+          commissionRate: true,
+          sales7d: true,
+          salesTotal: true,
+          totalKOL: true,
+          totalVideos: true,
+          kolOrderRate: true,
+          snapshotDate: true,
+        },
+      },
+    },
+  });
   if (!product) notFound();
 
   const score = product.aiScore;
+  const prevSnapshot = product.snapshots[0] ?? null;
+  const badges = computeBadges(
+    {
+      price: product.price,
+      commissionRate: product.commissionRate,
+      sales7d: product.sales7d,
+      salesTotal: product.salesTotal,
+      totalKOL: product.totalKOL,
+      firstSeenAt: product.firstSeenAt,
+      lastSeenAt: product.lastSeenAt,
+    },
+    prevSnapshot
+  );
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -91,6 +124,25 @@ export default async function ProductDetailPage({
           </div>
         )}
       </div>
+
+      {/* Change Badges */}
+      {badges.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {badges.map((badge) => (
+            <span
+              key={badge.type}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-slate-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300"
+              title={badge.detail}
+            >
+              <span>{badge.emoji}</span>
+              {badge.label}
+              {badge.detail && (
+                <span className="text-gray-400 dark:text-gray-500">{badge.detail}</span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* KOL/Competition Stats */}
       {(product.totalKOL !== null ||
@@ -231,6 +283,40 @@ export default async function ProductDetailPage({
           </a>
         )}
       </div>
+
+      {/* Snapshot History */}
+      {product.snapshots.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <History className="w-4 h-4 text-gray-400" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Lịch sử thay đổi ({product.snapshots.length} lần cập nhật)
+            </p>
+          </div>
+          <div className="space-y-3">
+            {product.snapshots.map((snap) => (
+              <div
+                key={snap.id}
+                className="flex items-center justify-between text-sm border-b border-gray-50 dark:border-slate-800 pb-3 last:border-0"
+              >
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {new Date(snap.snapshotDate).toLocaleDateString("vi-VN")}
+                </span>
+                <div className="flex gap-4 text-xs text-gray-600 dark:text-gray-300">
+                  <span>{formatVND(snap.price)}</span>
+                  <span>{formatPercent(snap.commissionRate)}</span>
+                  {snap.sales7d !== null && (
+                    <span>{formatNumber(snap.sales7d)} bán/7d</span>
+                  )}
+                  {snap.totalKOL !== null && (
+                    <span>{snap.totalKOL} KOL</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

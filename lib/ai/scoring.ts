@@ -4,6 +4,7 @@ import { buildScoringPrompt } from "@/lib/ai/prompts";
 import { getWeights } from "@/lib/scoring/weights";
 import { calculateBaseScore } from "@/lib/scoring/formula";
 import { getPersonalizedScore, getFeedbackCount } from "@/lib/scoring/personalize";
+import { computeRealTrending } from "@/lib/utils/product-badges";
 import type { Product as ProductModel } from "@/lib/types/product";
 
 export interface ScoredProduct extends ProductModel {
@@ -32,21 +33,43 @@ interface ScoreOptions {
 }
 
 async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
+  let products: ProductModel[];
+
   if (options.productIds && options.productIds.length > 0) {
-    return prisma.product.findMany({
+    products = await prisma.product.findMany({
       where: { id: { in: options.productIds } },
     });
-  }
-  if (options.batchId) {
-    return prisma.product.findMany({
+  } else if (options.batchId) {
+    products = await prisma.product.findMany({
       where: { importBatchId: options.batchId },
     });
+  } else {
+    products = await prisma.product.findMany({
+      where: { aiScore: null },
+      take: 50,
+      orderBy: { createdAt: "desc" },
+    });
   }
-  return prisma.product.findMany({
-    where: { aiScore: null },
-    take: 50,
-    orderBy: { createdAt: "desc" },
-  });
+
+  // Enrich with real trending from historical snapshots
+  for (const product of products) {
+    if (product.salesGrowth7d !== null) continue; // already has growth data
+
+    const latestSnapshot = await prisma.productSnapshot.findFirst({
+      where: { productId: product.id },
+      orderBy: { snapshotDate: "desc" },
+      select: { sales7d: true },
+    });
+
+    if (latestSnapshot) {
+      const realTrending = computeRealTrending(product.sales7d, latestSnapshot.sales7d);
+      if (realTrending !== null) {
+        product.salesGrowth7d = realTrending;
+      }
+    }
+  }
+
+  return products;
 }
 
 function parseClaudeResponse(text: string): ClaudeScoreItem[] {

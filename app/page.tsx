@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ProductTable } from "@/components/products/product-table";
+import { computeBadges, type ProductBadge } from "@/lib/utils/product-badges";
 import { Upload, BarChart3, Lightbulb, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 async function getTopProducts() {
-  return prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where: { aiScore: { not: null } },
     orderBy: { aiScore: "desc" },
     take: 10,
@@ -23,10 +24,42 @@ async function getTopProducts() {
       aiScore: true,
       aiRank: true,
       sales7d: true,
+      salesTotal: true,
       totalKOL: true,
       imageUrl: true,
       category: true,
+      firstSeenAt: true,
+      lastSeenAt: true,
+      snapshots: {
+        orderBy: { snapshotDate: "desc" },
+        take: 1,
+        select: {
+          price: true,
+          commissionRate: true,
+          sales7d: true,
+          salesTotal: true,
+          totalKOL: true,
+        },
+      },
     },
+  });
+
+  return products.map((p) => {
+    const prev = p.snapshots[0] ?? null;
+    const badges = computeBadges(
+      {
+        price: p.price,
+        commissionRate: p.commissionRate,
+        sales7d: p.sales7d,
+        salesTotal: p.salesTotal,
+        totalKOL: p.totalKOL,
+        firstSeenAt: p.firstSeenAt,
+        lastSeenAt: p.lastSeenAt,
+      },
+      prev
+    );
+    const { snapshots: _s, firstSeenAt: _f, lastSeenAt: _l, salesTotal: _st, ...rest } = p;
+    return { ...rest, badges };
   });
 }
 

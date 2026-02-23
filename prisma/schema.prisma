@@ -17,21 +17,39 @@ model Product {
   commissionVND  Float
   platform       String
 
-  // Trending
+  // Sales & Trending
   salesTotal     Int?
+  sales7d        Int?
   salesGrowth7d  Float?
   salesGrowth30d Float?
   revenue7d      Float?
   revenue30d     Float?
+  revenueTotal   Float?
 
-  // Competition
+  // Competition (FastMoss KOL data)
+  totalKOL       Int?
+  kolOrderRate   Float?
+  totalVideos    Int?
+  totalLivestreams Int?
   affiliateCount Int?
   creatorCount   Int?
   topVideoViews  Int?
 
+  // Media & Links
+  imageUrl       String?
+  tiktokUrl      String?
+  fastmossUrl    String?
+  shopFastmossUrl String?
+
   // Shop
-  shopName  String?
-  shopRating Float?
+  shopName       String?
+  shopRating     Float?
+  productStatus  String?
+
+  // Listing & History
+  listingDate    DateTime?
+  firstSeenAt    DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
 
   // AI Scoring
   aiScore           Float?
@@ -41,17 +59,24 @@ model Product {
   contentSuggestion String?
   platformAdvice    String?
 
+  // Seasonal (B4)
+  seasonalTag       String?
+  sellWindowStart   DateTime?
+  sellWindowEnd     DateTime?
+
   // Source
   source        String
   importBatchId String
   dataDate      DateTime
   createdAt     DateTime @default(now())
 
-  feedbacks Feedback[]
+  feedbacks  Feedback[]
+  snapshots  ProductSnapshot[]
 
   @@index([category])
   @@index([aiScore])
   @@index([dataDate])
+  @@index([name, shopName])
 }
 
 model Feedback {
@@ -120,10 +145,36 @@ model LearningLog {
   @@index([weekNumber])
 }
 
+model ProductSnapshot {
+  id             String   @id @default(cuid())
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  importBatchId  String
+  importBatch    ImportBatch @relation(fields: [importBatchId], references: [id])
+
+  price          Float
+  commissionRate Float
+  sales7d        Int?
+  salesTotal     Int?
+  revenue7d      Float?
+  revenueTotal   Float?
+  totalKOL       Int?
+  totalVideos    Int?
+  kolOrderRate   Float?
+  productStatus  String?
+
+  snapshotDate   DateTime @default(now())
+
+  @@index([productId, snapshotDate])
+  @@index([importBatchId])
+}
+
 model ImportBatch {
   id          String   @id @default(cuid())
   source      String
   fileName    String
   recordCount Int
   importDate  DateTime @default(now())
+
+  snapshots   ProductSnapshot[]
 }

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { scoreProducts } from "@/lib/ai/scoring";
+import { scoreProducts, scoreAllProducts } from "@/lib/ai/scoring";
 
 const ScoreRequestSchema = z.object({
   batchId: z.string().optional(),
   productIds: z.array(z.string()).optional(),
+  scoreAll: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Dữ liệu đầu vào không hợp lệ", code: "INVALID_INPUT" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,11 +24,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!apiKey || apiKey === "sk-ant-...") {
       return NextResponse.json(
         { error: "Chưa cấu hình ANTHROPIC_API_KEY. Xem .env.example", code: "MISSING_API_KEY" },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
-    const results = await scoreProducts(parsed.data);
+    const results = parsed.data.scoreAll
+      ? await scoreAllProducts()
+      : await scoreProducts(parsed.data);
 
     return NextResponse.json({
       data: results,
@@ -37,11 +40,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error("Lỗi khi chấm điểm sản phẩm:", error);
     const message = error instanceof Error ? error.message : "Lỗi khi chấm điểm sản phẩm. Vui lòng thử lại.";
     return NextResponse.json(
-      {
-        error: message,
-        code: "SCORING_ERROR",
-      },
-      { status: 500 }
+      { error: message, code: "SCORING_ERROR" },
+      { status: 500 },
     );
   }
 }

@@ -315,7 +315,14 @@ export default async function ProductDetailPage({
               SP tương tự (cùng {product.category}, giá {formatVND(product.price * 0.5)}-{formatVND(product.price * 1.5)})
             </p>
           </div>
-          <table className="w-full">
+          <table className="w-full table-fixed">
+            <colgroup>
+              <col />
+              <col className="w-16" />
+              <col className="w-16" />
+              <col className="w-16 hidden sm:table-column" />
+              <col className="w-14" />
+            </colgroup>
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-800">
                 <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2 pr-2">Tên SP</th>
@@ -328,8 +335,9 @@ export default async function ProductDetailPage({
             <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
               {/* Current product row */}
               <tr className="bg-blue-50/50 dark:bg-blue-950/30">
-                <td className="py-2 pr-2 text-sm font-medium text-blue-700 dark:text-blue-300 line-clamp-1">
-                  {product.name} <span className="text-xs text-blue-400">← hiện tại</span>
+                <td className="py-2 pr-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+                  <span className="block truncate" title={product.name}>{product.name}</span>
+                  <span className="text-xs text-blue-400">← đang xem</span>
                 </td>
                 <td className="py-2 px-2 text-right text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatVND(product.price)}</td>
                 <td className="py-2 px-2 text-right text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatPercent(product.commissionRate)}</td>
@@ -338,8 +346,8 @@ export default async function ProductDetailPage({
               </tr>
               {similarProducts.map((sp) => (
                 <tr key={sp.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50">
-                  <td className="py-2 pr-2 text-sm text-gray-900 dark:text-gray-50 line-clamp-1">
-                    <Link href={`/products/${sp.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <td className="py-2 pr-2 text-sm text-gray-900 dark:text-gray-50">
+                    <Link href={`/products/${sp.id}`} className="block truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title={sp.name}>
                       {sp.name}
                     </Link>
                   </td>

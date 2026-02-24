@@ -32,6 +32,8 @@ interface ScoreOptions {
   productIds?: string[];
 }
 
+const CLAUDE_BATCH_SIZE = 30;
+
 async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
   let products: ProductModel[];
 
@@ -44,16 +46,16 @@ async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
       where: { importBatchId: options.batchId },
     });
   } else {
+    // Score ALL unscored products — no limit
     products = await prisma.product.findMany({
       where: { aiScore: null },
-      take: 50,
       orderBy: { createdAt: "desc" },
     });
   }
 
   // Enrich with real trending from historical snapshots
   for (const product of products) {
-    if (product.salesGrowth7d !== null) continue; // already has growth data
+    if (product.salesGrowth7d !== null) continue;
 
     const latestSnapshot = await prisma.productSnapshot.findFirst({
       where: { productId: product.id },
@@ -80,10 +82,25 @@ function parseClaudeResponse(text: string): ClaudeScoreItem[] {
   return JSON.parse(jsonMatch[0]) as ClaudeScoreItem[];
 }
 
+async function scoreBatchWithClaude(
+  batch: ProductModel[],
+  weights: ReturnType<typeof getWeights> extends Promise<infer T> ? T : never,
+): Promise<Map<string, ClaudeScoreItem>> {
+  try {
+    const { system, user } = buildScoringPrompt({ products: batch, weights });
+    const response = await callClaude(system, user, MAX_TOKENS_SCORING);
+    const items = parseClaudeResponse(response);
+    return new Map(items.map((item) => [item.id, item]));
+  } catch (error) {
+    console.error(`Claude batch scoring failed (${batch.length} products), using base score:`, error);
+    return new Map();
+  }
+}
+
 async function mergeWithBaseScore(
   product: ProductModel,
   claudeItem: ClaudeScoreItem | undefined,
-  usePersonalization: boolean
+  usePersonalization: boolean,
 ): Promise<{
   aiScore: number;
   scoreBreakdown: string;
@@ -109,14 +126,14 @@ async function mergeWithBaseScore(
     return {
       aiScore: finalScore,
       scoreBreakdown: JSON.stringify(base.breakdown),
-      contentSuggestion: "Chưa có gợi ý nội dung.",
-      platformAdvice: product.platform,
+      contentSuggestion: "",
+      platformAdvice: "",
       scoringVersion: version,
     };
   }
 
   const blendedScore = Math.round(
-    claudeItem.aiScore * 0.6 + base.total * 0.4
+    claudeItem.aiScore * 0.6 + base.total * 0.4,
   );
 
   let finalScore = blendedScore;
@@ -140,7 +157,7 @@ async function mergeWithBaseScore(
 }
 
 export async function scoreProducts(
-  options: ScoreOptions = {}
+  options: ScoreOptions = {},
 ): Promise<ScoredProduct[]> {
   const products = await fetchProducts(options);
 
@@ -149,28 +166,83 @@ export async function scoreProducts(
   }
 
   const weights = await getWeights();
-  const { system, user } = buildScoringPrompt({ products, weights });
-
-  let claudeItems: ClaudeScoreItem[] = [];
-
-  try {
-    const response = await callClaude(system, user, MAX_TOKENS_SCORING);
-    claudeItems = parseClaudeResponse(response);
-  } catch (error) {
-    console.error("Lỗi khi gọi Claude API, dùng base score:", error);
-  }
-
-  const claudeMap = new Map(claudeItems.map((item) => [item.id, item]));
-
   const fbCount = await getFeedbackCount();
   const usePersonalization = fbCount >= 30;
 
+  // Process in batches for Claude API
+  const allClaudeItems = new Map<string, ClaudeScoreItem>();
+
+  for (let i = 0; i < products.length; i += CLAUDE_BATCH_SIZE) {
+    const batch = products.slice(i, i + CLAUDE_BATCH_SIZE);
+    const batchResults = await scoreBatchWithClaude(batch, weights);
+    for (const [id, item] of batchResults) {
+      allClaudeItems.set(id, item);
+    }
+  }
+
+  // Merge Claude + base scores for all products
   const updates = await Promise.all(
     products.map(async (product) => {
-      const claudeItem = claudeMap.get(product.id);
+      const claudeItem = allClaudeItems.get(product.id);
       const scores = await mergeWithBaseScore(product, claudeItem, usePersonalization);
       return { product, scores };
-    })
+    }),
+  );
+
+  // Write all scores to DB
+  await Promise.all(
+    updates.map(({ product, scores }) =>
+      prisma.product.update({
+        where: { id: product.id },
+        data: {
+          aiScore: scores.aiScore,
+          scoreBreakdown: scores.scoreBreakdown,
+          contentSuggestion: scores.contentSuggestion,
+          platformAdvice: scores.platformAdvice,
+          scoringVersion: scores.scoringVersion,
+        },
+      }),
+    ),
+  );
+
+  await updateRankings();
+
+  const scored = await prisma.product.findMany({
+    where: { id: { in: products.map((p) => p.id) } },
+    orderBy: { aiScore: "desc" },
+  });
+
+  return scored as ScoredProduct[];
+}
+
+/** Score ALL products in database (including already-scored ones) */
+export async function scoreAllProducts(): Promise<ScoredProduct[]> {
+  const products = await prisma.product.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (products.length === 0) return [];
+
+  const weights = await getWeights();
+  const fbCount = await getFeedbackCount();
+  const usePersonalization = fbCount >= 30;
+
+  const allClaudeItems = new Map<string, ClaudeScoreItem>();
+
+  for (let i = 0; i < products.length; i += CLAUDE_BATCH_SIZE) {
+    const batch = products.slice(i, i + CLAUDE_BATCH_SIZE);
+    const batchResults = await scoreBatchWithClaude(batch, weights);
+    for (const [id, item] of batchResults) {
+      allClaudeItems.set(id, item);
+    }
+  }
+
+  const updates = await Promise.all(
+    products.map(async (product) => {
+      const claudeItem = allClaudeItems.get(product.id);
+      const scores = await mergeWithBaseScore(product, claudeItem, usePersonalization);
+      return { product, scores };
+    }),
   );
 
   await Promise.all(
@@ -184,18 +256,16 @@ export async function scoreProducts(
           platformAdvice: scores.platformAdvice,
           scoringVersion: scores.scoringVersion,
         },
-      })
-    )
+      }),
+    ),
   );
 
   await updateRankings();
 
-  const scored = await prisma.product.findMany({
+  return (await prisma.product.findMany({
     where: { id: { in: products.map((p) => p.id) } },
     orderBy: { aiScore: "desc" },
-  });
-
-  return scored as ScoredProduct[];
+  })) as ScoredProduct[];
 }
 
 async function updateRankings(): Promise<void> {
@@ -210,7 +280,7 @@ async function updateRankings(): Promise<void> {
       prisma.product.update({
         where: { id: p.id },
         data: { aiRank: index + 1 },
-      })
-    )
+      }),
+    ),
   );
 }

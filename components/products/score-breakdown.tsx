@@ -1,13 +1,12 @@
 "use client";
 
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Cell,
-  Tooltip,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  Radar,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 
 interface CriterionScore {
@@ -35,7 +34,7 @@ const CRITERIA = [
   { key: "commission", label: "Hoa hồng", max: 20, color: "#6366f1" },
   { key: "trending", label: "Xu hướng", max: 20, color: "#f59e0b" },
   { key: "competition", label: "Cạnh tranh", max: 20, color: "#10b981" },
-  { key: "contentFit", label: "Phù hợp nội dung", max: 15, color: "#3b82f6" },
+  { key: "contentFit", label: "Nội dung", max: 15, color: "#3b82f6" },
   { key: "price", label: "Giá", max: 15, color: "#ec4899" },
   { key: "platform", label: "Nền tảng", max: 10, color: "#8b5cf6" },
 ] as const;
@@ -62,7 +61,8 @@ interface ChartEntry {
   label: string;
   score: number;
   max: number;
-  color: string;
+  /** Normalized to 0-100 scale for radar display */
+  normalized: number;
   display: string;
 }
 
@@ -75,7 +75,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps): React.ReactElem
   if (!active || !payload?.length) return null;
   const entry = payload[0].payload;
   return (
-    <div className="rounded-xl bg-white dark:bg-slate-800 px-3 py-2 text-sm shadow-md">
+    <div className="rounded-xl bg-white dark:bg-slate-800 px-3 py-2 text-sm shadow-md border border-gray-100 dark:border-slate-700">
       <p className="font-medium text-gray-900 dark:text-gray-50">{entry.label}</p>
       <p className="text-gray-500 dark:text-gray-400">
         {entry.score}/{entry.max} điểm
@@ -93,40 +93,37 @@ export function ScoreBreakdown({ breakdown }: ScoreBreakdownProps): React.ReactE
       label: c.label,
       score: val,
       max: c.max,
-      color: c.color,
+      normalized: Math.round((val / c.max) * 100),
       display: `${val}/${c.max}`,
     };
   });
 
   return (
     <div className="space-y-4">
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart
-          layout="vertical"
-          data={chartData}
-          margin={{ top: 4, right: 60, bottom: 4, left: 110 }}
-        >
-          <XAxis type="number" domain={[0, 20]} tick={{ fontSize: 11 }} />
-          <YAxis
-            type="category"
+      <ResponsiveContainer width="100%" height={280}>
+        <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="75%">
+          <PolarGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+          <PolarAngleAxis
             dataKey="label"
-            width={105}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 12, fill: "#6b7280" }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="score" radius={[0, 6, 6, 0]}>
-            {chartData.map((entry, index) => (
-              <Cell key={index} fill={entry.color} />
-            ))}
-          </Bar>
-        </BarChart>
+          <Radar
+            dataKey="normalized"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            fill="#3b82f6"
+            fillOpacity={0.2}
+            dot={{ r: 4, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+          />
+        </RadarChart>
       </ResponsiveContainer>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 text-xs">
-        {chartData.map((entry) => (
+        {chartData.map((entry, i) => (
           <div key={entry.label} className="flex items-center gap-2">
             <span
               className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: entry.color }}
+              style={{ backgroundColor: CRITERIA[i].color }}
             />
             <span className="text-gray-400 dark:text-gray-500 truncate">{entry.label}:</span>
             <span className="font-medium text-gray-900 dark:text-gray-50">{entry.display}</span>

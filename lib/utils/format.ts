@@ -27,6 +27,16 @@ export function formatPlatform(platform: string): string {
   return PLATFORM_LABELS[platform.toLowerCase()] ?? platform;
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  fastmoss: "FastMoss",
+  kalodata: "KaloData",
+  manual: "Nhập tay",
+};
+
+export function formatSource(source: string): string {
+  return SOURCE_LABELS[source.toLowerCase()] ?? source;
+}
+
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("vi-VN", {

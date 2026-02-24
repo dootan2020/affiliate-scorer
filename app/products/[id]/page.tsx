@@ -5,7 +5,7 @@ import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { SeasonalTagForm } from "@/components/products/seasonal-tag-form";
 import { ProductImage } from "@/components/products/product-image";
 import { ProfitEstimator } from "@/components/products/profit-estimator";
-import { formatVND, formatPercent, formatNumber, formatPlatform } from "@/lib/utils/format";
+import { formatVND, formatPercent, formatNumber, formatPlatform, formatSource } from "@/lib/utils/format";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { generateContentTips, generatePlatformStrategy } from "@/lib/utils/content-suggestions";
 import {
@@ -112,7 +112,7 @@ export default async function ProductDetailPage({
   });
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       <Link
         href="/"
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
@@ -134,25 +134,30 @@ export default async function ProductDetailPage({
               <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400">{product.productStatus}</span>
             )}
           </p>
-          <div className="flex flex-wrap items-center gap-3 mt-2">
+          <div className="flex flex-wrap items-center gap-2 mt-2.5">
+            {/* Status badges */}
             {badges.map((badge) => (
-              <span key={badge.type} className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300" title={badge.detail}>
-                {badge.emoji} {badge.label}
+              <span key={badge.type} className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300" title={badge.detail}>
+                {badge.label}
               </span>
             ))}
+            {/* Link group */}
             {product.tiktokUrl && (
-              <a href={product.tiktokUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-pink-600 dark:text-pink-400 hover:underline">
-                <ExternalLink className="w-3 h-3" /> TikTok Shop
+              <a href={product.tiktokUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-slate-700 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                TikTok Shop <ExternalLink className="w-3 h-3" />
               </a>
             )}
             {product.fastmossUrl && (
-              <a href={product.fastmossUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-                <ExternalLink className="w-3 h-3" /> FastMoss
+              <a href={product.fastmossUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-slate-700 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                FastMoss <ExternalLink className="w-3 h-3" />
               </a>
             )}
             {product.shopFastmossUrl && (
-              <a href={product.shopFastmossUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:underline">
-                <ExternalLink className="w-3 h-3" /> Cửa hàng
+              <a href={product.shopFastmossUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-slate-700 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                Cửa hàng <ExternalLink className="w-3 h-3" />
               </a>
             )}
           </div>
@@ -369,7 +374,7 @@ export default async function ProductDetailPage({
             {product.salesTotal !== null && <InfoRow label="Tổng bán" value={formatNumber(product.salesTotal)} />}
             {product.revenue7d !== null && <InfoRow label="Doanh thu 7 ngày" value={formatVND(product.revenue7d)} />}
             {product.revenueTotal !== null && <InfoRow label="Tổng doanh thu" value={formatVND(product.revenueTotal)} />}
-            <InfoRow label="Nguồn" value={product.source} />
+            <InfoRow label="Nguồn" value={formatSource(product.source)} />
           </div>
         </div>
       </div>

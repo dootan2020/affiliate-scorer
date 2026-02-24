@@ -4,8 +4,10 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
+
+// ─── PHASE 1: EXISTING TABLES (with data) ───
 
 model Product {
   id             String   @id @default(cuid())
@@ -27,42 +29,49 @@ model Product {
   revenueTotal   Float?
 
   // Competition (FastMoss KOL data)
-  totalKOL       Int?
-  kolOrderRate   Float?
-  totalVideos    Int?
+  totalKOL         Int?
+  kolOrderRate     Float?
+  totalVideos      Int?
   totalLivestreams Int?
-  affiliateCount Int?
-  creatorCount   Int?
-  topVideoViews  Int?
+  affiliateCount   Int?
+  creatorCount     Int?
+  topVideoViews    Int?
 
   // Media & Links
-  imageUrl       String?
-  tiktokUrl      String?
-  fastmossUrl    String?
+  imageUrl        String?
+  tiktokUrl       String?
+  fastmossUrl     String?
   shopFastmossUrl String?
 
   // Shop
-  shopName       String?
-  shopRating     Float?
-  productStatus  String?
+  shopName      String?
+  shopRating    Float?
+  productStatus String?
 
   // Listing & History
-  listingDate    DateTime?
-  firstSeenAt    DateTime  @default(now())
-  lastSeenAt     DateTime  @default(now())
+  listingDate DateTime?
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
 
   // AI Scoring
   aiScore           Float?
   aiRank            Int?
-  scoreBreakdown    String? // JSON
+  scoreBreakdown    String?
   scoringVersion    String?
   contentSuggestion String?
   platformAdvice    String?
 
-  // Seasonal (B4)
-  seasonalTag       String?
-  sellWindowStart   DateTime?
-  sellWindowEnd     DateTime?
+  // Seasonal
+  seasonalTag     String?
+  sellWindowStart DateTime?
+  sellWindowEnd   DateTime?
+
+  // Future extensibility (ROADMAP #9, #10, #13)
+  personalNotes       String?
+  personalRating      Int?
+  affiliateLink       String?
+  affiliateLinkStatus String?
+  shopTrustScore      Int?
 
   // Source
   source        String
@@ -72,6 +81,7 @@ model Product {
 
   feedbacks  Feedback[]
   snapshots  ProductSnapshot[]
+  campaigns  Campaign[]
 
   @@index([category])
   @@index([aiScore])
@@ -97,13 +107,13 @@ model Feedback {
   adSpend       Float?
 
   // Organic
-  orgPlatform    String?
-  orgViews       Int?
-  orgLikes       Int?
-  orgComments    Int?
-  orgShares      Int?
+  orgPlatform     String?
+  orgViews        Int?
+  orgLikes        Int?
+  orgComments     Int?
+  orgShares       Int?
   orgWatchTimeAvg Float?
-  orgLinkClicks  Int?
+  orgLinkClicks   Int?
 
   // Content
   videoType     String?
@@ -123,6 +133,12 @@ model Feedback {
   feedbackDate   DateTime @default(now())
   notes          String?
 
+  // Future extensibility (ROADMAP)
+  campaignId   String?
+  campaign     Campaign? @relation(fields: [campaignId], references: [id])
+  dataImportId String?
+  dataImport   DataImport? @relation(fields: [dataImportId], references: [id])
+
   @@index([productId])
   @@index([overallSuccess])
   @@index([feedbackDate])
@@ -136,9 +152,9 @@ model LearningLog {
   newDataPoints    Int
   currentAccuracy  Float
   previousAccuracy Float
-  weightsBefore    String // JSON
-  weightsAfter     String // JSON
-  patternsFound    String // JSON
+  weightsBefore    String
+  weightsAfter     String
+  patternsFound    String
   insights         String
   scoringVersion   String
 
@@ -146,11 +162,11 @@ model LearningLog {
 }
 
 model ProductSnapshot {
-  id             String   @id @default(cuid())
-  productId      String
-  product        Product  @relation(fields: [productId], references: [id])
-  importBatchId  String
-  importBatch    ImportBatch @relation(fields: [importBatchId], references: [id])
+  id            String      @id @default(cuid())
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id])
+  importBatchId String
+  importBatch   ImportBatch @relation(fields: [importBatchId], references: [id])
 
   price          Float
   commissionRate Float
@@ -163,7 +179,7 @@ model ProductSnapshot {
   kolOrderRate   Float?
   productStatus  String?
 
-  snapshotDate   DateTime @default(now())
+  snapshotDate DateTime @default(now())
 
   @@index([productId, snapshotDate])
   @@index([importBatchId])
@@ -176,5 +192,120 @@ model ImportBatch {
   recordCount Int
   importDate  DateTime @default(now())
 
-  snapshots   ProductSnapshot[]
+  snapshots ProductSnapshot[]
+}
+
+// ─── GENERIC DATA IMPORTS (ROADMAP: 13 source types) ───
+
+model DataImport {
+  id           String   @id @default(cuid())
+  sourceType   String   // "fastmoss" | "kalodata" | "fb_ads" | "tiktok_ads" | "shopee_affiliate" | "manual" | ...
+  fileName     String?
+  fileUrl      String?
+  recordsCount Int      @default(0)
+  status       String   @default("processing") // "processing" | "completed" | "failed"
+  metadata     Json?
+  importedAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  feedbacks Feedback[]
+
+  @@index([sourceType])
+  @@index([status])
+}
+
+// ─── PHASE 2-4: FUTURE TABLES (empty, ready for expansion) ───
+
+model Campaign {
+  id           String  @id @default(cuid())
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id])
+  platform     String  // "tiktok" | "facebook" | "shopee" | "instagram"
+  campaignType String  // "paid_ads" | "organic" | "livestream"
+  contentUrl   String?
+  contentType  String? // "video" | "image" | "carousel" | "livestream"
+
+  // Metrics
+  spend       Float?
+  revenue     Float?
+  orders      Int?
+  clicks      Int?
+  impressions Int?
+  roas        Float?
+  cpc         Float?
+  ctr         Float?
+
+  // Content metadata (Phase 2)
+  hookType             String?
+  videoDurationSeconds Int?
+  thumbnailUrl         String?
+  caption              String?
+  hashtags             String[]
+  postedAt             DateTime?
+
+  // A/B test (Phase 4)
+  abTestGroup String?
+  abTestId    String?
+
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  feedbacks Feedback[]
+
+  @@index([productId])
+  @@index([platform])
+}
+
+model Shop {
+  id       String @id @default(cuid())
+  name     String
+  platform String
+
+  // Trust metrics (ROADMAP #10)
+  commissionReliability Int?    // 1-5
+  supportQuality        Int?    // 1-5
+  samplePolicy          String? // "sends_free" | "paid_sample" | "no_sample"
+  commissionCutHistory  Json?
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([platform])
+}
+
+model FinancialRecord {
+  id          String   @id @default(cuid())
+  type        String   // "commission_received" | "ads_spend" | "other_cost"
+  amount      Float
+  currency    String   @default("VND")
+  source      String   // "tiktok_shop" | "shopee" | "fb_ads" | ...
+  referenceId String?
+  productId   String?
+  campaignId  String?
+  date        DateTime @db.Date
+  notes       String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([type])
+  @@index([date])
+  @@index([source])
+}
+
+model CalendarEvent {
+  id            String   @id @default(cuid())
+  eventType     String   // "mega_sale" | "flash_sale" | "seasonal" | "custom"
+  name          String
+  startDate     DateTime @db.Date
+  endDate       DateTime @db.Date
+  prepStartDate DateTime? @db.Date
+  platforms     String[]
+  notes         String?
+  recurring     Boolean  @default(false)
+  recurrenceRule String?
+  createdAt     DateTime @default(now())
+
+  @@index([startDate])
+  @@index([eventType])
 }

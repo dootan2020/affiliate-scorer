@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import Link from "next/link";
 import { FileDropzone } from "@/components/upload/file-dropzone";
 import {
   UploadProgress,
   type UploadResult,
 } from "@/components/upload/upload-progress";
 import { ColumnMapping } from "@/components/upload/column-mapping";
-import { Search, Target } from "lucide-react";
+import { ManualFeedbackForm } from "@/components/feedback/manual-feedback-form";
+import { Search, Target, PenLine } from "lucide-react";
 
 interface PreviewData {
   headers: string[];
@@ -33,10 +35,20 @@ export default function UploadPage(): React.ReactElement {
   // Feedback upload states
   const [feedbackFileName, setFeedbackFileName] = useState<string | null>(null);
   const [isFeedbackUploading, setIsFeedbackUploading] = useState(false);
-  const [feedbackResult, setFeedbackResult] = useState<UploadResult | null>(
-    null
-  );
+  const [feedbackResult, setFeedbackResult] = useState<UploadResult | null>(null);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
+  // Manual feedback
+  const [products, setProducts] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    fetch("/api/products?limit=200&fields=id,name")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data) setProducts(d.data);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleProductUpload(selectedFile: File): Promise<void> {
     setFileName(selectedFile.name);
@@ -50,7 +62,6 @@ export default function UploadPage(): React.ReactElement {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      // Step 1: Preview - get column mapping
       const response = await fetch("/api/upload/products/preview", {
         method: "POST",
         body: formData,
@@ -74,7 +85,7 @@ export default function UploadPage(): React.ReactElement {
   }
 
   async function handleConfirmImport(
-    mapping: Record<string, string | null>
+    mapping: Record<string, string | null>,
   ): Promise<void> {
     if (!file) return;
 
@@ -154,10 +165,11 @@ export default function UploadPage(): React.ReactElement {
           Upload Data
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Upload file CSV/Excel từ FastMoss, KaloData hoặc kết quả ads
+          Upload tất cả dữ liệu để AI ngày càng thông minh hơn
         </p>
       </div>
 
+      {/* Zone 1: Nghiên cứu sản phẩm */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
@@ -168,7 +180,7 @@ export default function UploadPage(): React.ReactElement {
               Nghiên cứu sản phẩm
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Upload file export từ FastMoss hoặc KaloData để AI phân tích & chấm điểm
+              Upload file từ FastMoss, KaloData
             </p>
           </div>
         </div>
@@ -176,8 +188,8 @@ export default function UploadPage(): React.ReactElement {
         {!preview && (
           <FileDropzone
             onFileSelect={handleProductUpload}
-            label="Kéo thả file FastMoss/KaloData vào đây"
-            sublabel="Hỗ trợ .csv, .xlsx, .xls — AI sẽ tự nhận diện format"
+            label="Kéo thả file vào đây"
+            sublabel="Hỗ trợ .csv, .xlsx, .xls"
             disabled={isUploading}
           />
         )}
@@ -213,6 +225,7 @@ export default function UploadPage(): React.ReactElement {
         />
       </div>
 
+      {/* Zone 2: Kết quả chiến dịch */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center shrink-0">
@@ -220,17 +233,17 @@ export default function UploadPage(): React.ReactElement {
           </div>
           <div>
             <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-              Kết quả thật
+              Kết quả chiến dịch
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Upload kết quả từ FB Ads, TikTok Ads hoặc Shopee Affiliate — AI sẽ học từ data này
+              Upload kết quả từ FB Ads, TikTok Ads, Shopee Affiliate — AI sẽ học từ data này
             </p>
           </div>
         </div>
         <FileDropzone
           onFileSelect={handleFeedbackUpload}
           label="Kéo thả file kết quả vào đây"
-          sublabel="FB Ads, TikTok Ads, Shopee Affiliate (.csv, .xlsx)"
+          sublabel="FB Ads, TikTok Ads, Shopee (.csv, .xlsx)"
           disabled={isFeedbackUploading}
         />
         <UploadProgress
@@ -239,6 +252,30 @@ export default function UploadPage(): React.ReactElement {
           result={feedbackResult}
           error={feedbackError}
         />
+      </div>
+
+      {/* Zone 3: Nhập kết quả thủ công */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center shrink-0">
+            <PenLine className="w-5 h-5 text-amber-500" />
+          </div>
+          <div>
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+              Nhập kết quả thủ công
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Cho kết quả organic hoặc khi không có file
+            </p>
+          </div>
+        </div>
+        {products.length > 0 ? (
+          <ManualFeedbackForm products={products} />
+        ) : (
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            Chưa có sản phẩm. <Link href="/upload" className="text-blue-500 hover:underline">Upload sản phẩm trước</Link>.
+          </p>
+        )}
       </div>
     </div>
   );

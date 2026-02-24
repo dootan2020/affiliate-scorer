@@ -1,10 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { ContentSuggestion } from "@/components/products/content-suggestion";
 import { SeasonalTagForm } from "@/components/products/seasonal-tag-form";
+import { ProductImage } from "@/components/products/product-image";
 import { formatVND, formatPercent, formatNumber } from "@/lib/utils/format";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { ArrowLeft, ExternalLink, Video, Radio, Users, History } from "lucide-react";
@@ -91,16 +91,12 @@ export default async function ProductDetailPage({
 
       {/* Product Header with Image */}
       <div className="flex items-start gap-4">
-        {product.imageUrl && (
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            width={80}
-            height={80}
-            className="w-20 h-20 rounded-xl object-cover shrink-0 bg-gray-100 dark:bg-slate-800"
-            unoptimized
-          />
-        )}
+        <ProductImage
+          src={product.imageUrl}
+          alt={product.name}
+          size={80}
+          className="w-20 h-20 rounded-xl"
+        />
         <div className="flex-1 min-w-0">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50 leading-tight">
             {product.name}

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { ProductTable } from "@/components/products/product-table";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { groupDuplicateProducts } from "@/lib/utils/product-grouping";
+import { ScoreButton } from "@/components/products/score-button";
 import { Upload, BarChart3, Lightbulb, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -262,12 +263,7 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
             Đã upload {totalProducts} sản phẩm. Bấm để chạy AI scoring.
           </p>
-          <Link
-            href="/upload"
-            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all w-full sm:w-auto text-center"
-          >
-            Chạy phân tích AI
-          </Link>
+          <ScoreButton />
         </div>
       )}
 

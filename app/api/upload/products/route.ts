@@ -6,6 +6,7 @@ import { parseFastMoss } from "@/lib/parsers/fastmoss";
 import { parseKaloData } from "@/lib/parsers/kalodata";
 import { parseWithMapping } from "@/lib/parsers/map-parser";
 import { deduplicateProducts } from "@/lib/utils/dedup";
+import { scoreProducts } from "@/lib/ai/scoring";
 import type { NormalizedProduct } from "@/lib/utils/normalize";
 import type { ColumnMapping } from "@/lib/parsers/ai-detect";
 
@@ -205,6 +206,14 @@ export async function POST(
       }
     }
 
+    // Auto-trigger scoring in background (fire-and-forget)
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (apiKey && apiKey !== "sk-ant-...") {
+      scoreProducts({ batchId: batch.id }).catch((err) => {
+        console.error("Auto-scoring failed (non-blocking):", err);
+      });
+    }
+
     return NextResponse.json({
       data: {
         batchId: batch.id,
@@ -213,6 +222,7 @@ export async function POST(
         afterDedup: deduplicated.length,
         created,
         updated,
+        scoringTriggered: !!apiKey && apiKey !== "sk-ant-...",
       },
       message: `Đã import ${created + updated} sản phẩm từ ${sourceLabel} (${created} mới, ${updated} cập nhật)`,
     });

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { ProductImage } from "@/components/products/product-image";
 import { formatVND, formatPercent } from "@/lib/utils/format";
 import { Upload } from "lucide-react";
 
@@ -120,32 +120,42 @@ export function ProductTable({
   }
 
   return (
-    <table className="w-full">
+    <table className="w-full table-fixed">
+      <colgroup>
+        <col className="w-10" />
+        <col className="w-14" />
+        <col />
+        <col className="w-24 hidden sm:table-column" />
+        <col className="w-32 hidden md:table-column" />
+        <col className="w-20 hidden lg:table-column" />
+        <col className="w-16 hidden lg:table-column" />
+        <col className="w-20 hidden sm:table-column" />
+      </colgroup>
       <thead>
         <tr className="border-b border-gray-100 dark:border-slate-800">
-          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 w-12">
+          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 whitespace-nowrap">
             #
           </th>
-          <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 w-16">
+          <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-2 whitespace-nowrap">
             Điểm
           </th>
-          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4">
+          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 whitespace-nowrap">
             Sản phẩm
           </th>
-          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 hidden sm:table-cell">
+          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 hidden sm:table-cell whitespace-nowrap">
             Giá
           </th>
-          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 hidden md:table-cell">
+          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 hidden md:table-cell whitespace-nowrap">
             Hoa hồng
           </th>
-          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 hidden lg:table-cell">
-            Bán 7 ngày
+          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 hidden lg:table-cell whitespace-nowrap">
+            Bán 7d
           </th>
-          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 hidden lg:table-cell">
+          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 hidden lg:table-cell whitespace-nowrap">
             KOL
           </th>
-          <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 hidden sm:table-cell">
-            Nền tảng
+          <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-2 hidden sm:table-cell whitespace-nowrap">
+            Platform
           </th>
         </tr>
       </thead>
@@ -155,29 +165,22 @@ export function ProductTable({
             key={product.id}
             className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors"
           >
-            <td className="py-3 px-4 text-sm text-gray-400 dark:text-gray-500 font-medium">
+            <td className="py-3 px-3 text-sm text-gray-400 dark:text-gray-500 font-medium">
               {product.aiRank ?? index + 1}
             </td>
-            <td className="py-3 px-4 text-center">
+            <td className="py-3 px-2 text-center">
               <ScoreBadge score={product.aiScore} />
             </td>
-            <td className="py-3 px-4">
+            <td className="py-3 px-3">
               <Link
                 href={`/products/${product.id}`}
                 className="flex items-center gap-3 group"
               >
-                {product.imageUrl ? (
-                  <Image
-                    src={product.imageUrl}
-                    alt={product.name}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-lg object-cover shrink-0 bg-gray-100 dark:bg-slate-800"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 shrink-0" />
-                )}
+                <ProductImage
+                  src={product.imageUrl}
+                  alt={product.name}
+                  size={40}
+                />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-50 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-1 transition-colors">
@@ -195,22 +198,22 @@ export function ProductTable({
                 </div>
               </Link>
             </td>
-            <td className="py-3 px-4 text-right text-sm text-gray-600 dark:text-gray-300 hidden sm:table-cell">
+            <td className="py-3 px-3 text-right text-sm text-gray-600 dark:text-gray-300 hidden sm:table-cell whitespace-nowrap">
               {formatVND(product.price)}
             </td>
-            <td className="py-3 px-4 text-right text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">
+            <td className="py-3 px-3 text-right text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell whitespace-nowrap">
               <span>{formatPercent(product.commissionRate)}</span>
               <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
                 /{formatVND(product.commissionVND)}
               </span>
             </td>
-            <td className="py-3 px-4 text-right text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">
+            <td className="py-3 px-3 text-right text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell whitespace-nowrap">
               {formatNumber(product.sales7d)}
             </td>
-            <td className="py-3 px-4 text-right text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">
+            <td className="py-3 px-3 text-right text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell whitespace-nowrap">
               {formatNumber(product.totalKOL)}
             </td>
-            <td className="py-3 px-4 text-center hidden sm:table-cell">
+            <td className="py-3 px-2 text-center hidden sm:table-cell">
               <PlatformBadge platform={product.platform} />
             </td>
           </tr>

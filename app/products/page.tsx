@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 interface PageProps {
   searchParams: Promise<{
     page?: string;
+    limit?: string;
     category?: string;
     sortBy?: string;
     sortOrder?: string;
@@ -33,7 +34,9 @@ export default async function ProductsPage({
 }: PageProps): Promise<React.ReactElement> {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
-  const limit = 20;
+  const VALID_LIMITS = [20, 50, 100, 200] as const;
+  const parsedLimit = parseInt(params.limit ?? "50", 10);
+  const limit = VALID_LIMITS.includes(parsedLimit as (typeof VALID_LIMITS)[number]) ? parsedLimit : 50;
   const skip = (page - 1) * limit;
   const VALID_SORT_FIELDS = ["aiScore", "commissionRate", "price", "sales7d", "createdAt"] as const;
   const sortBy = VALID_SORT_FIELDS.includes(params.sortBy as (typeof VALID_SORT_FIELDS)[number])
@@ -83,6 +86,7 @@ export default async function ProductsPage({
   function buildUrl(overrides: Record<string, string | undefined>): string {
     const base: Record<string, string> = {};
     if (params.page) base.page = params.page;
+    if (params.limit) base.limit = params.limit;
     if (params.category) base.category = params.category;
     if (params.sortBy) base.sortBy = params.sortBy;
     if (params.sortOrder) base.sortOrder = params.sortOrder;
@@ -95,8 +99,8 @@ export default async function ProductsPage({
         base[k] = v;
       }
     }
-    // Reset to page 1 when changing filters
-    if ("category" in overrides || "scored" in overrides) {
+    // Reset to page 1 when changing filters or limit
+    if ("category" in overrides || "scored" in overrides || "limit" in overrides) {
       delete base.page;
     }
 
@@ -199,29 +203,71 @@ export default async function ProductsPage({
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              {page > 1 && (
-                <Link
-                  href={buildUrl({ page: String(page - 1) })}
-                  className="bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
-                >
-                  Trước
-                </Link>
-              )}
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Trang {page}/{totalPages}
-              </span>
-              {page < totalPages && (
-                <Link
-                  href={buildUrl({ page: String(page + 1) })}
-                  className="bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
-                >
-                  Tiếp
-                </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Hiển thị {skip + 1}-{Math.min(skip + limit, total)} / {total} sản phẩm
+            </p>
+
+            <div className="flex items-center gap-2">
+              {/* Per-page selector */}
+              <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-lg p-0.5">
+                {[20, 50, 100, 200].map((n) => (
+                  <Link
+                    key={n}
+                    href={buildUrl({ limit: String(n) })}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                      limit === n
+                        ? "bg-white dark:bg-slate-700 shadow-sm text-gray-900 dark:text-gray-50"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50"
+                    }`}
+                  >
+                    {n}
+                  </Link>
+                ))}
+              </div>
+
+              {/* Page navigation */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  {page > 1 && (
+                    <>
+                      <Link
+                        href={buildUrl({ page: "1" })}
+                        className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition-colors"
+                      >
+                        Đầu
+                      </Link>
+                      <Link
+                        href={buildUrl({ page: String(page - 1) })}
+                        className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition-colors"
+                      >
+                        ‹
+                      </Link>
+                    </>
+                  )}
+                  <span className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">
+                    {page}/{totalPages}
+                  </span>
+                  {page < totalPages && (
+                    <>
+                      <Link
+                        href={buildUrl({ page: String(page + 1) })}
+                        className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition-colors"
+                      >
+                        ›
+                      </Link>
+                      <Link
+                        href={buildUrl({ page: String(totalPages) })}
+                        className="px-2 py-1 rounded-lg text-xs font-medium bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition-colors"
+                      >
+                        Cuối
+                      </Link>
+                    </>
+                  )}
+                </div>
               )}
             </div>
-          )}
+          </div>
         </>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center">

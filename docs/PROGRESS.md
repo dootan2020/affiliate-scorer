@@ -3,7 +3,22 @@
 ## Project Info
 - **Project Size:** Medium
 - **Review Level:** Standard
-- **Status:** ✅ Phase 3A Complete
+- **Status:** ✅ Phase 3B Complete
+
+## Phase 3B: Data Parsers + Unified Import
+
+| Sub-phase | Nội dung | Status | Commit |
+|-----------|---------|--------|--------|
+| 3B.0 | Schema: DataImport expanded (detection, processing counts, error log) | ✅ Done | pending |
+| 3B.1 | Shared types: ImportParseResult, DetectionResult, ExtendedFileFormat | ✅ Done | pending |
+| 3B.2 | Enhanced detect-format with extended detection (shopee_ads, tiktok_affiliate, confidence scoring) | ✅ Done | pending |
+| 3B.3 | Campaign-level parsers: FB Ads, TikTok Ads, Shopee Ads → Campaign + FinancialRecord | ✅ Done | pending |
+| 3B.4 | Affiliate-level parsers: TikTok Affiliate, Shopee Affiliate → FinancialRecord | ✅ Done | pending |
+| 3B.5 | Fuzzy product matching for import (cached, 3-tier: exact, contains, word overlap) | ✅ Done | pending |
+| 3B.6 | Campaign merge logic (upsert existing, merge daily results, recalculate totals) | ✅ Done | pending |
+| 3B.7 | Unified import API: /api/upload/import + /detect + /history (3 routes) | ✅ Done | pending |
+| 3B.8 | Upload page redesign: detection card, import history table, campaign import zone | ✅ Done | pending |
+| 3B.9 | Build verification | ✅ Pass | pending |
 
 ## Phase 3A: Campaign Tracker + Morning Brief
 
@@ -29,4 +44,4 @@
 | 2.6 | Dashboard widget "Sắp tới" | ✅ Done | 6d14028 |
 | 2.7 | Build verification | ✅ Pass | 6d14028 |
 
-## Last Updated: 2026-02-24T20:00:00
+## Last Updated: 2026-02-24T20:10:00

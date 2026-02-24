@@ -202,20 +202,41 @@ model ImportBatch {
 // ─── GENERIC DATA IMPORTS (ROADMAP: 13 source types) ───
 
 model DataImport {
-  id           String   @id @default(cuid())
-  sourceType   String   // "fastmoss" | "kalodata" | "fb_ads" | "tiktok_ads" | "shopee_affiliate" | "manual" | ...
-  fileName     String?
-  fileUrl      String?
-  recordsCount Int      @default(0)
-  status       String   @default("processing") // "processing" | "completed" | "failed"
-  metadata     Json?
-  importedAt   DateTime?
-  createdAt    DateTime @default(now())
+  id         String @id @default(cuid())
+  sourceType String // "fastmoss" | "kalodata" | "fb_ads" | "tiktok_ads" | "shopee_ads" | "tiktok_affiliate" | "shopee_affiliate" | "generic" | "unknown"
+  fileName   String?
+  fileSize   Int?
+
+  // Detection
+  detectedType         String? // Auto-detected file type
+  detectionConfidence  String? // "high" | "medium" | "low"
+  userConfirmedType    String? // User override if detection wrong
+
+  // Processing
+  status       String @default("pending") // "pending" | "processing" | "completed" | "failed" | "partial"
+  rowsTotal    Int    @default(0)
+  rowsImported Int    @default(0)
+  rowsSkipped  Int    @default(0)
+  rowsError    Int    @default(0)
+
+  // Results
+  campaignsCreated       Int @default(0)
+  campaignsUpdated       Int @default(0)
+  productsCreated        Int @default(0)
+  productsUpdated        Int @default(0)
+  financialRecordsCreated Int @default(0)
+
+  errorLog    Json?
+  metadata    Json?
+  importedAt  DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
 
   feedbacks Feedback[]
 
   @@index([sourceType])
   @@index([status])
+  @@index([createdAt])
 }
 
 // ─── PHASE 3A: CAMPAIGN TRACKER ───

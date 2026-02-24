@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ProductImage } from "@/components/products/product-image";
-import { formatVND, formatPercent } from "@/lib/utils/format";
+import { formatVND, formatPercent, formatPlatform } from "@/lib/utils/format";
 import { Upload } from "lucide-react";
 
 interface ProductBadge {
@@ -78,12 +78,7 @@ function PlatformBadge({
   const cls =
     colors[key] ??
     "bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300";
-  const label =
-    key === "tiktok_shop"
-      ? "TikTok"
-      : key === "both"
-        ? "Cả hai"
-        : platform;
+  const label = formatPlatform(platform);
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
@@ -133,28 +128,28 @@ export function ProductTable({
       </colgroup>
       <thead>
         <tr className="border-b border-gray-100 dark:border-slate-800">
-          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 whitespace-nowrap">
+          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-3 px-3 whitespace-nowrap">
             #
           </th>
-          <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-2 whitespace-nowrap">
+          <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-3 px-2 whitespace-nowrap">
             Điểm
           </th>
-          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 whitespace-nowrap">
+          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-3 px-3 whitespace-nowrap">
             Sản phẩm
           </th>
-          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 hidden sm:table-cell whitespace-nowrap">
+          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-3 px-3 hidden sm:table-cell whitespace-nowrap">
             Giá
           </th>
-          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 hidden md:table-cell whitespace-nowrap">
+          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-3 px-3 hidden md:table-cell whitespace-nowrap">
             Hoa hồng
           </th>
-          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 hidden lg:table-cell whitespace-nowrap">
+          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-3 px-3 hidden lg:table-cell whitespace-nowrap">
             Bán 7d
           </th>
-          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-3 hidden lg:table-cell whitespace-nowrap">
+          <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-3 px-3 hidden lg:table-cell whitespace-nowrap">
             KOL
           </th>
-          <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-2 hidden sm:table-cell whitespace-nowrap">
+          <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-3 px-2 hidden sm:table-cell whitespace-nowrap">
             Platform
           </th>
         </tr>

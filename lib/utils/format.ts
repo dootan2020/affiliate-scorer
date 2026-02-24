@@ -16,6 +16,17 @@ export function formatNumber(value: number): string {
   return new Intl.NumberFormat("vi-VN").format(value);
 }
 
+const PLATFORM_LABELS: Record<string, string> = {
+  tiktok_shop: "TikTok Shop",
+  tiktok: "TikTok",
+  shopee: "Shopee",
+  both: "TikTok + Shopee",
+};
+
+export function formatPlatform(platform: string): string {
+  return PLATFORM_LABELS[platform.toLowerCase()] ?? platform;
+}
+
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("vi-VN", {

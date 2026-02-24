@@ -59,17 +59,16 @@ export default async function ProductDetailPage({
         },
       },
     }),
-    prisma.product.count({ where: { aiScore: { not: null } } }),
+    prisma.product.count(),
   ]);
   if (!product) notFound();
 
-  // B4: Similar products (same category, price ±50%)
-  const similarProducts = await prisma.product.findMany({
+  // B4: Similar products — same category, price ±50%, fallback to category-only
+  let similarProducts = await prisma.product.findMany({
     where: {
       category: product.category,
       id: { not: product.id },
       price: { gte: product.price * 0.5, lte: product.price * 1.5 },
-      aiScore: { not: null },
     },
     orderBy: { aiScore: "desc" },
     take: 5,
@@ -79,6 +78,22 @@ export default async function ProductDetailPage({
       sales7d: true, aiScore: true,
     },
   });
+  // Fallback: if price filter too restrictive, try category only
+  if (similarProducts.length === 0) {
+    similarProducts = await prisma.product.findMany({
+      where: {
+        category: product.category,
+        id: { not: product.id },
+      },
+      orderBy: { aiScore: "desc" },
+      take: 5,
+      select: {
+        id: true, name: true, price: true,
+        commissionRate: true, commissionVND: true,
+        sales7d: true, aiScore: true,
+      },
+    });
+  }
 
   const score = product.aiScore;
   const prevSnapshot = product.snapshots[0] ?? null;
@@ -336,11 +351,22 @@ export default async function ProductDetailPage({
               ))}
             </tbody>
           </table>
-          {score !== null && product.aiRank !== null && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-              SP này xếp #{product.aiRank} trong category — HH {formatPercent(product.commissionRate)}.
-            </p>
-          )}
+          {(() => {
+            const all = [{ commissionRate: product.commissionRate, sales7d: product.sales7d, aiScore: score }, ...similarProducts];
+            const highlights: string[] = [];
+            const hasHighestComm = all.every((s) => s.commissionRate <= product.commissionRate);
+            if (hasHighestComm) highlights.push(`HH cao nhất (${formatPercent(product.commissionRate)})`);
+            const hasHighestSales = product.sales7d !== null && all.every((s) => (s.sales7d ?? 0) <= (product.sales7d ?? 0));
+            if (hasHighestSales) highlights.push("Bán nhiều nhất");
+            const hasHighestScore = score !== null && all.every((s) => (s.aiScore ?? 0) <= score);
+            if (hasHighestScore) highlights.push("Điểm AI cao nhất");
+            if (highlights.length === 0) return null;
+            return (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                SP này {product.aiRank ? `xếp #${product.aiRank} trong category` : "nổi bật"} — {highlights.join(", ")}.
+              </p>
+            );
+          })()}
         </div>
       )}
 

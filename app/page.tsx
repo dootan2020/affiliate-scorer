@@ -6,6 +6,7 @@ import { computeBadges } from "@/lib/utils/product-badges";
 import { groupDuplicateProducts } from "@/lib/utils/product-grouping";
 import { ScoreButton } from "@/components/products/score-button";
 import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-widget";
+import { MorningBriefWidget } from "@/components/dashboard/morning-brief-widget";
 import { Upload, BarChart3, Lightbulb, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -196,6 +197,9 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
 
   return (
     <div className="space-y-8">
+      {/* Phase 3A: Morning Brief */}
+      <MorningBriefWidget />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>

@@ -81,9 +81,10 @@ model Product {
   dataDate      DateTime
   createdAt     DateTime @default(now())
 
-  feedbacks  Feedback[]
-  snapshots  ProductSnapshot[]
-  campaigns  Campaign[]
+  feedbacks    Feedback[]
+  snapshots    ProductSnapshot[]
+  campaigns    Campaign[]
+  contentPosts ContentPost[]
 
   @@unique([tiktokUrl])
   @@index([category])
@@ -217,46 +218,103 @@ model DataImport {
   @@index([status])
 }
 
-// ─── PHASE 2-4: FUTURE TABLES (empty, ready for expansion) ───
+// ─── PHASE 3A: CAMPAIGN TRACKER ───
 
 model Campaign {
-  id           String  @id @default(cuid())
-  productId    String?
-  product      Product? @relation(fields: [productId], references: [id])
-  platform     String  // "tiktok" | "facebook" | "shopee" | "instagram"
-  campaignType String  // "paid_ads" | "organic" | "livestream"
+  id        String   @id @default(cuid())
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  // Basic info
+  name     String
+  platform String  // "tiktok" | "facebook" | "shopee" | "youtube" | "google" | "organic" | "other"
+  status   String  @default("planning") // "planning" | "creating_content" | "running" | "paused" | "completed" | "cancelled"
+
+  // Planning
+  plannedBudgetDaily  Int?
+  plannedDurationDays Int?
+  affiliateLink       String?
+
+  // Content
   contentUrl   String?
-  contentType  String? // "video" | "image" | "carousel" | "livestream"
+  contentType  String? // "review" | "demo" | "unbox" | "lifestyle" | "livestream" | "other"
+  contentNotes String?
+  postedAt     DateTime?
 
-  // Metrics
-  spend       Float?
-  revenue     Float?
-  orders      Int?
-  clicks      Int?
-  impressions Int?
-  roas        Float?
-  cpc         Float?
-  ctr         Float?
+  // Daily results + checklist (JSONB)
+  dailyResults Json @default("[]")
+  checklist    Json @default("[]")
 
-  // Content metadata (Phase 2)
-  hookType             String?
-  videoDurationSeconds Int?
-  thumbnailUrl         String?
-  caption              String?
-  hashtags             String[]
-  postedAt             DateTime?
+  // Auto-calculated summary
+  totalSpend   Int   @default(0)
+  totalRevenue Int   @default(0)
+  totalOrders  Int   @default(0)
+  roas         Float?
+  profitLoss   Int   @default(0)
 
-  // A/B test (Phase 4)
-  abTestGroup String?
-  abTestId    String?
+  // Conclusion
+  verdict        String? // "profitable" | "break_even" | "loss"
+  lessonsLearned String?
 
+  // Source tracking
+  sourceType   String @default("manual")
+  dataImportId String?
+
+  // Timestamps
+  startedAt DateTime?
+  endedAt   DateTime?
   metadata  Json?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  feedbacks Feedback[]
+  feedbacks    Feedback[]
+  contentPosts ContentPost[]
 
   @@index([productId])
   @@index([platform])
+  @@index([status])
+}
+
+model ContentPost {
+  id         String    @id @default(cuid())
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  url         String
+  platform    String
+  contentType String? // "review" | "demo" | "unbox" | "lifestyle" | "livestream"
+
+  // Performance
+  views    Int?
+  likes    Int?
+  comments Int?
+  shares   Int?
+
+  notes    String?
+  postedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([campaignId])
+  @@index([productId])
+}
+
+model UserGoal {
+  id           String   @id @default(cuid())
+  type         String   @default("monthly_profit") // "monthly_profit" | "monthly_revenue" | "campaigns_count"
+  targetAmount Int
+  periodStart  DateTime @db.Date
+  periodEnd    DateTime @db.Date
+
+  // Auto-calculated
+  currentAmount   Int   @default(0)
+  progressPercent Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([periodStart])
 }
 
 model Shop {

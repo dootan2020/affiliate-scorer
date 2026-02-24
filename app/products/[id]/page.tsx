@@ -7,6 +7,7 @@ import { ProductImage } from "@/components/products/product-image";
 import { ProfitEstimator } from "@/components/products/profit-estimator";
 import { PersonalNotesSection } from "@/components/products/personal-notes-section";
 import { AffiliateLinkSection } from "@/components/products/affiliate-link-section";
+import { RunProductButton } from "@/components/campaigns/run-product-button";
 import { formatVND, formatPercent, formatNumber, formatPlatform, formatSource } from "@/lib/utils/format";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { generateContentTips, generatePlatformStrategy } from "@/lib/utils/content-suggestions";
@@ -101,6 +102,13 @@ export default async function ProductDetailPage({
   const shop = product.shopName
     ? await prisma.shop.findFirst({ where: { name: product.shopName }, select: { id: true } })
     : null;
+
+  // Phase 3A: Check for active campaign on this product
+  const activeCampaign = await prisma.campaign.findFirst({
+    where: { productId: product.id, status: { in: ["running", "creating_content", "planning"] } },
+    select: { id: true },
+    orderBy: { createdAt: "desc" },
+  });
 
   const score = product.aiScore;
   const prevSnapshot = product.snapshots[0] ?? null;
@@ -252,6 +260,14 @@ export default async function ProductDetailPage({
           </div>
         </div>
       )}
+
+      {/* Phase 3A: Run Product Button */}
+      <RunProductButton
+        productId={product.id}
+        productName={product.name}
+        affiliateLink={product.affiliateLink ?? undefined}
+        activeCampaignId={activeCampaign?.id}
+      />
 
       {/* B2: Content Tips (template-based) */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Sun, Moon, LayoutDashboard, Upload, Sparkles, ShoppingBag } from "lucide-react";
+import { Sun, Moon, LayoutDashboard, Upload, Sparkles, ShoppingBag, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -16,6 +16,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Sản phẩm", icon: ShoppingBag },
+  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/upload", label: "Upload", icon: Upload },
   { href: "/insights", label: "Insights", icon: Sparkles },
 ];

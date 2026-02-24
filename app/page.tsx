@@ -5,6 +5,7 @@ import { ProductTable } from "@/components/products/product-table";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { groupDuplicateProducts } from "@/lib/utils/product-grouping";
 import { ScoreButton } from "@/components/products/score-button";
+import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-widget";
 import { Upload, BarChart3, Lightbulb, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -79,8 +80,9 @@ async function getTopProducts() {
 }
 
 async function getStats() {
-  const [totalProducts, feedbackCount, latestLog] = await Promise.all([
+  const [totalProducts, scoredProducts, feedbackCount, latestLog] = await Promise.all([
     prisma.product.count(),
+    prisma.product.count({ where: { aiScore: { not: null } } }),
     prisma.feedback.count(),
     prisma.learningLog.findFirst({
       orderBy: { runDate: "desc" },
@@ -93,59 +95,103 @@ async function getStats() {
       },
     }),
   ]);
-  return { totalProducts, feedbackCount, latestLog };
+  return { totalProducts, scoredProducts, feedbackCount, latestLog };
+}
+
+async function getUpcomingEvents() {
+  const now = new Date();
+  const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  const events = await prisma.calendarEvent.findMany({
+    where: {
+      startDate: { gte: now, lte: thirtyDaysLater },
+    },
+    orderBy: { startDate: "asc" },
+    take: 5,
+  });
+
+  return events.map((e) => ({
+    id: e.id,
+    name: e.name,
+    eventType: e.eventType,
+    startDate: e.startDate.toISOString(),
+    endDate: e.endDate.toISOString(),
+    daysUntil: Math.ceil(
+      (e.startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    ),
+  }));
 }
 
 /** Confidence level based on feedback count (B7) */
 function getConfidence(feedbackCount: number): {
   label: string;
-  color: string;
+  badgeBg: string;
+  badgeText: string;
+  barColor: string;
+  percent: number;
   message: string;
 } {
+  const percent = Math.min(Math.round((feedbackCount / 100) * 100), 100);
   if (feedbackCount >= 100) {
     return {
-      label: "CAO",
-      color: "text-emerald-600 dark:text-emerald-400",
+      label: "Cao",
+      badgeBg: "bg-emerald-50 dark:bg-emerald-950",
+      badgeText: "text-emerald-700 dark:text-emerald-400",
+      barColor: "bg-emerald-500",
+      percent,
       message: "Scoring cá nhân hóa",
     };
   }
   if (feedbackCount >= 50) {
     return {
-      label: "KHÁ",
-      color: "text-blue-600 dark:text-blue-400",
+      label: "Khá",
+      badgeBg: "bg-blue-50 dark:bg-blue-950",
+      badgeText: "text-blue-700 dark:text-blue-400",
+      barColor: "bg-blue-500",
+      percent,
       message: "Weights đã personalize",
     };
   }
   if (feedbackCount >= 20) {
     return {
-      label: "TRUNG BÌNH",
-      color: "text-amber-600 dark:text-amber-400",
+      label: "TB",
+      badgeBg: "bg-amber-50 dark:bg-amber-950",
+      badgeText: "text-amber-700 dark:text-amber-400",
+      barColor: "bg-amber-500",
+      percent,
       message: "AI đang học",
     };
   }
   if (feedbackCount >= 10) {
     return {
-      label: "THẤP",
-      color: "text-orange-600 dark:text-orange-400",
-      message: `Cần thêm ${20 - feedbackCount} SP nữa`,
+      label: "Thấp",
+      badgeBg: "bg-orange-50 dark:bg-orange-950",
+      badgeText: "text-orange-700 dark:text-orange-400",
+      barColor: "bg-orange-500",
+      percent,
+      message: `Cần thêm ${20 - feedbackCount} feedback nữa`,
     };
   }
   return {
-    label: "RẤT THẤP",
-    color: "text-rose-600 dark:text-rose-400",
-    message: `Scoring dùng formula mặc định (${feedbackCount}/20 SP đã test)`,
+    label: "Rất thấp",
+    badgeBg: "bg-rose-50 dark:bg-rose-950",
+    badgeText: "text-rose-700 dark:text-rose-400",
+    barColor: "bg-rose-400",
+    percent,
+    message: `Formula mặc định · ${feedbackCount}/100`,
   };
 }
 
 export default async function DashboardPage(): Promise<React.ReactElement> {
-  const [topProducts, stats] = await Promise.all([
+  const [topProducts, stats, upcomingEvents] = await Promise.all([
     getTopProducts(),
     getStats(),
+    getUpcomingEvents(),
   ]);
 
-  const { totalProducts, feedbackCount, latestLog } = stats;
+  const { totalProducts, scoredProducts, feedbackCount, latestLog } = stats;
   const hasProducts = totalProducts > 0;
-  const hasScored = topProducts.length > 0;
+  const hasScored = scoredProducts > 0;
   const confidence = getConfidence(feedbackCount);
 
   return (
@@ -158,7 +204,7 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {hasProducts
-              ? `${totalProducts} sản phẩm · ${hasScored ? `${topProducts.length} được xếp hạng` : "Chưa chấm điểm AI"}`
+              ? `${totalProducts} sản phẩm · ${hasScored ? `${scoredProducts} đã chấm điểm AI` : "Chưa chấm điểm AI"}`
               : "Upload file FastMoss để bắt đầu"}
           </p>
         </div>
@@ -183,16 +229,24 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
       {/* Confidence + Quick Stats */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
-          <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck className="w-4 h-4 text-gray-400" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Độ tin cậy
-            </p>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Độ tin cậy
+              </p>
+            </div>
+            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${confidence.badgeBg} ${confidence.badgeText}`}>
+              {confidence.label}
+            </span>
           </div>
-          <p className={`text-lg font-semibold ${confidence.color}`}>
-            {confidence.label}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-slate-800">
+            <div
+              className={`h-2 rounded-full ${confidence.barColor} transition-all`}
+              style={{ width: `${confidence.percent}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
             {confidence.message}
           </p>
         </div>
@@ -222,6 +276,11 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
         </div>
       </div>
 
+      {/* Upcoming Events */}
+      {upcomingEvents.length > 0 && (
+        <UpcomingEventsWidget events={upcomingEvents} />
+      )}
+
       {/* TOP PICKS — Phần CHÍNH */}
       {!hasProducts ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -247,7 +306,7 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-[640px]">
-                <ProductTable products={topProducts} />
+                <ProductTable products={topProducts} startRank={1} />
               </div>
             </div>
           </div>

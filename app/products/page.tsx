@@ -197,7 +197,7 @@ export default async function ProductsPage({
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
             <div className="overflow-x-auto">
               <div className="min-w-[640px]">
-                <ProductTable products={products} />
+                <ProductTable products={products} startRank={skip + 1} />
               </div>
             </div>
           </div>

@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { AccuracyChart } from "@/components/insights/accuracy-chart";
-import { PatternList } from "@/components/insights/pattern-list";
-import { WeeklyReport } from "@/components/insights/weekly-report";
+import { InsightsPageClient } from "@/components/insights/insights-page-client";
 import { TriggerLearningButton } from "@/components/insights/trigger-learning-button";
-import { FeedbackTable } from "@/components/feedback/feedback-table";
-import { Sparkles, MessageSquare, Upload } from "lucide-react";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 export const metadata: Metadata = {
@@ -86,18 +81,80 @@ async function getInsights() {
   };
 }
 
-export default async function InsightsPage() {
-  const { latestLog, accuracyTrend, totalFeedbackCount, feedbackTable, scoredCount } =
-    await getInsights();
+async function getOverviewData() {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  const confidenceLabel =
-    totalFeedbackCount === 0
-      ? "RẤT THẤP"
-      : totalFeedbackCount < 10
-        ? "THẤP"
-        : totalFeedbackCount < 30
-          ? "TRUNG BÌNH"
-          : "CAO";
+  const [
+    totalProducts,
+    productsWithNotes,
+    shopsReviewed,
+    incomeRecords,
+    expenseRecords,
+    upcomingEventsRaw,
+  ] = await Promise.all([
+    prisma.product.count(),
+    prisma.product.count({ where: { personalNotes: { not: null } } }),
+    prisma.shop.count({ where: { commissionReliability: { not: null } } }),
+    prisma.financialRecord.aggregate({
+      _sum: { amount: true },
+      where: {
+        type: { in: ["commission_received"] },
+        date: { gte: monthStart, lte: monthEnd },
+      },
+    }),
+    prisma.financialRecord.aggregate({
+      _sum: { amount: true },
+      where: {
+        type: { in: ["ads_spend", "other_cost"] },
+        date: { gte: monthStart, lte: monthEnd },
+      },
+    }),
+    prisma.calendarEvent.findMany({
+      where: {
+        startDate: { gte: now, lte: thirtyDaysLater },
+      },
+      orderBy: { startDate: "asc" },
+      take: 5,
+    }),
+  ]);
+
+  const upcomingEvents = upcomingEventsRaw.map((e) => ({
+    id: e.id,
+    name: e.name,
+    startDate: e.startDate.toISOString(),
+    daysUntil: Math.ceil(
+      (e.startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    ),
+  }));
+
+  return {
+    totalProducts,
+    productsWithNotes,
+    shopsReviewed,
+    monthIncome: incomeRecords._sum.amount ?? 0,
+    monthExpense: expenseRecords._sum.amount ?? 0,
+    upcomingEvents,
+  };
+}
+
+function getConfidenceLabel(feedbackCount: number): string {
+  if (feedbackCount >= 100) return "Cao";
+  if (feedbackCount >= 50) return "Kha";
+  if (feedbackCount >= 20) return "TB";
+  if (feedbackCount >= 10) return "Thap";
+  return "Rat thap";
+}
+
+export default async function InsightsPage(): Promise<React.ReactElement> {
+  const [insights, overview] = await Promise.all([
+    getInsights(),
+    getOverviewData(),
+  ]);
+
+  const confidenceLabel = getConfidenceLabel(insights.totalFeedbackCount);
 
   return (
     <div className="space-y-8">
@@ -107,112 +164,26 @@ export default async function InsightsPage() {
             AI Insights
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Phân tích từ {totalFeedbackCount} feedback thực tế
+            Phan tich tu {insights.totalFeedbackCount} feedback thuc te
           </p>
         </div>
         <TriggerLearningButton />
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Feedback</p>
-          <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">
-            {totalFeedbackCount}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">bản ghi</p>
-        </div>
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Độ tin cậy</p>
-          <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">
-            {confidenceLabel}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            {totalFeedbackCount}/{scoredCount > 20 ? 20 : scoredCount} SP
-          </p>
-        </div>
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Lần học gần nhất</p>
-          <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">
-            {latestLog ? `W${latestLog.weekNumber}` : "—"}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            {latestLog
-              ? `Accuracy: ${(latestLog.currentAccuracy * 100).toFixed(0)}%`
-              : "Chưa chạy"}
-          </p>
-        </div>
-      </div>
-
-      {/* Learning results */}
-      {latestLog && (
-        <>
-          <section className="space-y-4">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-              Kết quả Learning — Tuần {latestLog.weekNumber}
-            </h2>
-            <WeeklyReport
-              currentAccuracy={latestLog.currentAccuracy}
-              previousAccuracy={latestLog.previousAccuracy}
-              insights={latestLog.insights}
-              weightsBefore={latestLog.weightsBefore}
-              weightsAfter={latestLog.weightsAfter}
-              weekNumber={latestLog.weekNumber}
-            />
-          </section>
-
-          <section className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Xu hướng độ chính xác
-              </p>
-              <AccuracyChart data={accuracyTrend} />
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-              Patterns phát hiện ({latestLog.patternsFound.length})
-            </h2>
-            <PatternList patterns={latestLog.patternsFound} />
-          </section>
-        </>
-      )}
-
-      {/* Feedback history (moved from /feedback) */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-          Lịch sử Feedback ({feedbackTable.length} bản ghi)
-        </h2>
-        {feedbackTable.length > 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
-            <div className="overflow-x-auto">
-              <div className="min-w-[600px]">
-                <FeedbackTable feedbacks={feedbackTable} />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-              <MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-              Chưa có dữ liệu
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-              Upload kết quả chiến dịch tại trang Upload để AI bắt đầu học.
-            </p>
-            <Link
-              href="/upload"
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all text-sm"
-            >
-              <Upload className="w-4 h-4" />
-              Đi tới Upload
-            </Link>
-          </div>
-        )}
-      </section>
+      <InsightsPageClient
+        totalProducts={overview.totalProducts}
+        productsWithNotes={overview.productsWithNotes}
+        shopsReviewed={overview.shopsReviewed}
+        totalFeedbackCount={insights.totalFeedbackCount}
+        scoredCount={insights.scoredCount}
+        monthIncome={overview.monthIncome}
+        monthExpense={overview.monthExpense}
+        upcomingEvents={overview.upcomingEvents}
+        confidenceLabel={confidenceLabel}
+        latestLog={insights.latestLog}
+        accuracyTrend={insights.accuracyTrend}
+        feedbackTable={insights.feedbackTable}
+      />
     </div>
   );
 }

@@ -91,34 +91,48 @@ export async function POST(
     let created = 0;
     let updated = 0;
 
+    const SNAPSHOT_FIELDS = {
+      id: true, price: true, commissionRate: true, sales7d: true,
+      salesTotal: true, revenue7d: true, revenueTotal: true,
+      totalKOL: true, totalVideos: true, kolOrderRate: true,
+      productStatus: true, importBatchId: true,
+    } as const;
+
     for (const p of deduplicated) {
-      // Try to find existing product by name + shopName
-      const existing = await prisma.product.findFirst({
-        where: {
-          name: p.name,
-          shopName: p.shopName ?? undefined,
-        },
-        select: {
-          id: true,
-          price: true,
-          commissionRate: true,
-          sales7d: true,
-          salesTotal: true,
-          revenue7d: true,
-          revenueTotal: true,
-          totalKOL: true,
-          totalVideos: true,
-          kolOrderRate: true,
-          productStatus: true,
-          importBatchId: true,
-        },
-      });
+      // 1) Primary: match by tiktokUrl (most reliable unique key)
+      // 2) Fallback: match by name + shopName
+      const existing = await findExistingProduct(p);
 
       if (existing) {
-        // Save old data as snapshot before updating
-        await prisma.productSnapshot.create({
-          data: {
-            productId: existing.id,
+        // Only create snapshot when data actually changed
+        const dataChanged =
+          existing.price !== p.price ||
+          existing.commissionRate !== p.commissionRate ||
+          existing.sales7d !== p.sales7d ||
+          existing.salesTotal !== p.salesTotal ||
+          existing.revenue7d !== p.revenue7d ||
+          existing.revenueTotal !== p.revenueTotal ||
+          existing.totalKOL !== p.totalKOL ||
+          existing.totalVideos !== p.totalVideos ||
+          existing.kolOrderRate !== p.kolOrderRate ||
+          existing.productStatus !== p.productStatus;
+
+        if (dataChanged) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+
+          // Max 1 snapshot per product per day
+          const todaySnap = await prisma.productSnapshot.findFirst({
+            where: {
+              productId: existing.id,
+              snapshotDate: { gte: today, lt: tomorrow },
+            },
+            select: { id: true },
+          });
+
+          const snapData = {
             importBatchId: existing.importBatchId,
             price: existing.price,
             commissionRate: existing.commissionRate,
@@ -130,17 +144,29 @@ export async function POST(
             totalVideos: existing.totalVideos,
             kolOrderRate: existing.kolOrderRate,
             productStatus: existing.productStatus,
-          },
-        });
+          };
 
-        // Update product with new data
+          if (todaySnap) {
+            await prisma.productSnapshot.update({
+              where: { id: todaySnap.id },
+              data: snapData,
+            });
+          } else {
+            await prisma.productSnapshot.create({
+              data: { productId: existing.id, ...snapData },
+            });
+          }
+        }
+
         await prisma.product.update({
           where: { id: existing.id },
           data: {
+            name: p.name,
+            url: p.url,
+            category: p.category,
             price: p.price,
             commissionRate: p.commissionRate,
             commissionVND: p.commissionVND,
-            category: p.category,
             salesTotal: p.salesTotal,
             sales7d: p.sales7d,
             salesGrowth7d: p.salesGrowth7d,
@@ -156,6 +182,7 @@ export async function POST(
             tiktokUrl: p.tiktokUrl,
             fastmossUrl: p.fastmossUrl,
             shopFastmossUrl: p.shopFastmossUrl,
+            shopName: p.shopName ?? undefined,
             productStatus: p.productStatus,
             listingDate: p.listingDate,
             lastSeenAt: new Date(),
@@ -165,7 +192,6 @@ export async function POST(
         });
         updated++;
       } else {
-        // Create new product
         await prisma.product.create({
           data: {
             name: p.name,
@@ -204,6 +230,29 @@ export async function POST(
         });
         created++;
       }
+    }
+
+    async function findExistingProduct(p: NormalizedProduct) {
+      // Primary: tiktokUrl is the most reliable unique identifier
+      if (p.tiktokUrl) {
+        const byUrl = await prisma.product.findFirst({
+          where: { tiktokUrl: p.tiktokUrl },
+          select: SNAPSHOT_FIELDS,
+        });
+        if (byUrl) return byUrl;
+      }
+
+      // Fallback: name + shopName (case-insensitive)
+      const byName = await prisma.product.findFirst({
+        where: {
+          name: { equals: p.name, mode: "insensitive" },
+          ...(p.shopName
+            ? { shopName: { equals: p.shopName, mode: "insensitive" } }
+            : { shopName: null }),
+        },
+        select: SNAPSHOT_FIELDS,
+      });
+      return byName;
     }
 
     // Auto-trigger scoring in background (fire-and-forget)

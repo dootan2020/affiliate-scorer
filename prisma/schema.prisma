@@ -66,12 +66,14 @@ model Product {
   sellWindowStart DateTime?
   sellWindowEnd   DateTime?
 
-  // Future extensibility (ROADMAP #9, #10, #13)
-  personalNotes       String?
-  personalRating      Int?
-  affiliateLink       String?
-  affiliateLinkStatus String?
-  shopTrustScore      Int?
+  // Phase 2: Personal Layer
+  personalNotes          String?
+  personalRating         Int?
+  personalTags           String[]
+  affiliateLink          String?
+  affiliateLinkStatus    String?
+  affiliateLinkCreatedAt DateTime?
+  shopTrustScore         Int?
 
   // Source
   source        String
@@ -83,6 +85,7 @@ model Product {
   snapshots  ProductSnapshot[]
   campaigns  Campaign[]
 
+  @@unique([tiktokUrl])
   @@index([category])
   @@index([aiScore])
   @@index([dataDate])

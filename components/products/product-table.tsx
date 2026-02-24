@@ -30,6 +30,7 @@ interface ProductRow {
 
 interface ProductTableProps {
   products: ProductRow[];
+  startRank?: number;
 }
 
 function getScoreBadgeClass(score: number): string {
@@ -97,6 +98,7 @@ function formatNumber(n: number | null): string {
 
 export function ProductTable({
   products,
+  startRank,
 }: ProductTableProps): React.ReactElement {
   if (products.length === 0) {
     return (
@@ -161,7 +163,7 @@ export function ProductTable({
             className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors"
           >
             <td className="py-3 px-3 text-sm text-gray-400 dark:text-gray-500 font-medium">
-              {product.aiRank ?? index + 1}
+              {startRank !== undefined ? startRank + index : (product.aiRank ?? index + 1)}
             </td>
             <td className="py-3 px-2 text-center">
               <ScoreBadge score={product.aiScore} />

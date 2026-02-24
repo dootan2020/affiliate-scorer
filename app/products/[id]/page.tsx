@@ -5,6 +5,8 @@ import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { SeasonalTagForm } from "@/components/products/seasonal-tag-form";
 import { ProductImage } from "@/components/products/product-image";
 import { ProfitEstimator } from "@/components/products/profit-estimator";
+import { PersonalNotesSection } from "@/components/products/personal-notes-section";
+import { AffiliateLinkSection } from "@/components/products/affiliate-link-section";
 import { formatVND, formatPercent, formatNumber, formatPlatform, formatSource } from "@/lib/utils/format";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { generateContentTips, generatePlatformStrategy } from "@/lib/utils/content-suggestions";
@@ -95,6 +97,11 @@ export default async function ProductDetailPage({
     });
   }
 
+  // Phase 2: Lookup shop for clickable shopName link
+  const shop = product.shopName
+    ? await prisma.shop.findFirst({ where: { name: product.shopName }, select: { id: true } })
+    : null;
+
   const score = product.aiScore;
   const prevSnapshot = product.snapshots[0] ?? null;
   const badges = computeBadges(
@@ -144,7 +151,14 @@ export default async function ProductDetailPage({
             {product.name}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {product.category} · {product.shopName ?? formatPlatform(product.platform)}
+            {product.category} ·{" "}
+            {shop ? (
+              <Link href={`/shops/${shop.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                {product.shopName}
+              </Link>
+            ) : (
+              product.shopName ?? formatPlatform(product.platform)
+            )}
             {product.productStatus && (
               <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400">{product.productStatus}</span>
             )}
@@ -302,6 +316,24 @@ export default async function ProductDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Phase 2: Personal Notes */}
+      <PersonalNotesSection
+        productId={product.id}
+        initialNotes={product.personalNotes}
+        initialRating={product.personalRating}
+        initialTags={product.personalTags}
+        affiliateLink={product.affiliateLink}
+        affiliateLinkStatus={product.affiliateLinkStatus}
+      />
+
+      {/* Phase 2: Affiliate Link */}
+      <AffiliateLinkSection
+        productId={product.id}
+        initialLink={product.affiliateLink}
+        initialStatus={product.affiliateLinkStatus}
+        initialCreatedAt={product.affiliateLinkCreatedAt?.toISOString() ?? null}
+      />
 
       {/* B3: Profit Estimator */}
       <ProfitEstimator commissionVND={product.commissionVND} />

@@ -24,16 +24,35 @@ export function parseWithMapping(
       return {
         name,
         url: strOrNull(col(row, mapping.url)),
-        category: normalizeString(col(row, mapping.category)) || "Khác",
+        category:
+          normalizeString(col(row, mapping.category)) || "Khác",
         price,
         commissionRate,
         commissionVND: price * (commissionRate / 100),
         platform: detectPlatformFromRow(row, mapping),
+
         salesTotal: normalizeNumber(col(row, mapping.salesTotal)),
-        salesGrowth7d: normalizeNumber(col(row, mapping.salesGrowth7d)),
-        salesGrowth30d: normalizeNumber(col(row, mapping.salesGrowth30d)),
+        sales7d: normalizeNumber(col(row, mapping.sales7d)),
+        salesGrowth7d: normalizeNumber(
+          col(row, mapping.salesGrowth7d)
+        ),
+        salesGrowth30d: normalizeNumber(
+          col(row, mapping.salesGrowth30d)
+        ),
         revenue7d: normalizeNumber(col(row, mapping.revenue7d)),
         revenue30d: normalizeNumber(col(row, mapping.revenue30d)),
+        revenueTotal: normalizeNumber(col(row, mapping.revenueTotal)),
+
+        totalKOL: normalizeNumber(
+          col(row, mapping.totalKOL)
+        ) as number | null,
+        kolOrderRate: normalizeNumber(col(row, mapping.kolOrderRate)),
+        totalVideos: normalizeNumber(
+          col(row, mapping.totalVideos)
+        ) as number | null,
+        totalLivestreams: normalizeNumber(
+          col(row, mapping.totalLivestreams)
+        ) as number | null,
         affiliateCount: normalizeNumber(
           col(row, mapping.affiliateCount)
         ) as number | null,
@@ -43,8 +62,17 @@ export function parseWithMapping(
         topVideoViews: normalizeNumber(
           col(row, mapping.topVideoViews)
         ) as number | null,
+
+        imageUrl: strOrNull(col(row, mapping.imageUrl)),
+        tiktokUrl: strOrNull(col(row, mapping.tiktokUrl)),
+        fastmossUrl: strOrNull(col(row, mapping.fastmossUrl)),
+        shopFastmossUrl: strOrNull(col(row, mapping.shopFastmossUrl)),
+
         shopName: strOrNull(col(row, mapping.shopName)),
         shopRating: normalizeNumber(col(row, mapping.shopRating)),
+        productStatus: strOrNull(col(row, mapping.productStatus)),
+        listingDate: null,
+
         source,
         dataDate: new Date(),
       };
@@ -52,7 +80,7 @@ export function parseWithMapping(
     .filter((p): p is NormalizedProduct => p !== null);
 }
 
-function col(row: ParsedRow, header: string | null): unknown {
+function col(row: ParsedRow, header: string | null | undefined): unknown {
   if (!header) return null;
   return row[header] ?? null;
 }

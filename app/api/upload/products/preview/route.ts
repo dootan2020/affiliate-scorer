@@ -4,82 +4,136 @@ import { detectFormat } from "@/lib/parsers/detect-format";
 import { aiDetectMapping, TARGET_FIELDS } from "@/lib/parsers/ai-detect";
 import type { ColumnMapping } from "@/lib/parsers/ai-detect";
 
-/** Build a default mapping for known formats based on header fuzzy match */
+/** Null mapping base — all fields null except name */
+function emptyMapping(name: string): ColumnMapping {
+  return {
+    name,
+    url: null,
+    category: null,
+    price: null,
+    commissionRate: null,
+    platform: null,
+    salesTotal: null,
+    sales7d: null,
+    salesGrowth7d: null,
+    salesGrowth30d: null,
+    revenue7d: null,
+    revenue30d: null,
+    revenueTotal: null,
+    totalKOL: null,
+    kolOrderRate: null,
+    totalVideos: null,
+    totalLivestreams: null,
+    imageUrl: null,
+    tiktokUrl: null,
+    fastmossUrl: null,
+    shopFastmossUrl: null,
+    affiliateCount: null,
+    creatorCount: null,
+    topVideoViews: null,
+    shopName: null,
+    shopRating: null,
+    productStatus: null,
+  };
+}
+
 function buildFastMossMapping(headers: string[]): ColumnMapping {
   return {
-    name: findBest(headers, ["Tên sản phẩm", "product_name", "name"]) ?? headers[0] ?? "",
+    ...emptyMapping(
+      findBest(headers, ["Tên sản phẩm", "product_name", "name"]) ??
+        headers[0] ??
+        ""
+    ),
     url: findBest(headers, [
       "Địa chỉ trang đích sản phẩm TikTok",
-      "Địa chỉ trang chi tiết sản phẩm FastMoss",
-      "url", "product_url",
+      "url",
+      "product_url",
     ]),
     category: findBest(headers, ["Danh mục sản phẩm", "category"]),
     price: findBest(headers, ["Giá bán", "price"]),
-    commissionRate: findBest(headers, ["Tỷ lệ hoa hồng", "commission_rate"]),
-    platform: null,
+    commissionRate: findBest(headers, [
+      "Tỷ lệ hoa hồng",
+      "commission_rate",
+    ]),
     salesTotal: findBest(headers, ["Tổng lượng bán", "sales_total"]),
-    salesGrowth7d: null,
-    salesGrowth30d: null,
+    sales7d: findBest(headers, ["Lượng bán (7 ngày)", "sales_7d"]),
     revenue7d: findBest(headers, ["Doanh thu (7 ngày)", "revenue_7d"]),
-    revenue30d: findBest(headers, ["Tổng doanh thu", "revenue"]),
-    affiliateCount: findBest(headers, [
+    revenueTotal: findBest(headers, ["Tổng doanh thu", "revenue"]),
+    totalKOL: findBest(headers, [
       "Tổng số người có ảnh hưởng bán hàng (KOL)",
-      "affiliate_count",
     ]),
-    creatorCount: findBest(headers, [
-      "Tổng số video bán hàng",
-      "creator_count",
+    kolOrderRate: findBest(headers, [
+      "Tỷ lệ tạo đơn của người có ảnh hưởng (KOL) / Tỷ lệ chốt đơn KOL",
     ]),
-    topVideoViews: findBest(headers, [
-      "Tổng số livestream bán hàng",
-      "top_video_views",
+    totalVideos: findBest(headers, ["Tổng số video bán hàng"]),
+    totalLivestreams: findBest(headers, ["Tổng số livestream bán hàng"]),
+    imageUrl: findBest(headers, ["Hình ảnh sản phẩm"]),
+    tiktokUrl: findBest(headers, [
+      "Địa chỉ trang đích sản phẩm TikTok",
+    ]),
+    fastmossUrl: findBest(headers, [
+      "Địa chỉ trang chi tiết sản phẩm FastMoss",
+    ]),
+    shopFastmossUrl: findBest(headers, [
+      "Địa chỉ trang chi tiết cửa hàng FastMoss",
     ]),
     shopName: findBest(headers, ["Tên cửa hàng", "shop_name"]),
-    shopRating: findBest(headers, [
-      "Tỷ lệ tạo đơn của người có ảnh hưởng (KOL)",
-      "shop_rating",
-    ]),
+    productStatus: findBest(headers, ["Tình trạng sản phẩm"]),
   };
 }
 
 function buildKaloDataMapping(headers: string[]): ColumnMapping {
   return {
-    name: findBest(headers, ["product_name", "Tên sản phẩm", "name"]) ?? headers[0] ?? "",
+    ...emptyMapping(
+      findBest(headers, ["product_name", "Tên sản phẩm", "name"]) ??
+        headers[0] ??
+        ""
+    ),
     url: findBest(headers, ["url", "product_url", "link"]),
     category: findBest(headers, ["category", "Danh mục", "danh_mục"]),
     price: findBest(headers, ["price", "Giá", "giá_bán"]),
-    commissionRate: findBest(headers, ["commission_rate", "commission"]),
+    commissionRate: findBest(headers, [
+      "commission_rate",
+      "commission",
+    ]),
     platform: findBest(headers, ["platform", "nền_tảng"]),
     salesTotal: findBest(headers, ["units_sold", "số_lượng_bán"]),
     salesGrowth7d: findBest(headers, ["growth_rate", "growth_7d"]),
     salesGrowth30d: findBest(headers, ["growth_30d"]),
     revenue7d: findBest(headers, ["revenue_7d", "doanh_thu_7d"]),
     revenue30d: findBest(headers, ["revenue", "revenue_30d"]),
-    affiliateCount: findBest(headers, ["affiliate_count", "affiliates"]),
+    affiliateCount: findBest(headers, [
+      "affiliate_count",
+      "affiliates",
+    ]),
     creatorCount: findBest(headers, ["related_videos", "creators"]),
-    topVideoViews: findBest(headers, ["top_video_views", "video_views"]),
+    topVideoViews: findBest(headers, [
+      "top_video_views",
+      "video_views",
+    ]),
     shopName: findBest(headers, ["shop_name", "shop"]),
     shopRating: findBest(headers, ["shop_rating", "rating"]),
   };
 }
 
-function findBest(headers: string[], candidates: string[]): string | null {
-  // Exact match first
+function findBest(
+  headers: string[],
+  candidates: string[]
+): string | null {
   for (const c of candidates) {
     if (headers.includes(c)) return c;
   }
-  // Case-insensitive match
   for (const c of candidates) {
     const lower = c.toLowerCase();
     const found = headers.find((h) => h.toLowerCase() === lower);
     if (found) return found;
   }
-  // Substring match
   for (const c of candidates) {
     const lower = c.toLowerCase();
     const found = headers.find(
       (h) =>
-        h.toLowerCase().includes(lower) || lower.includes(h.toLowerCase())
+        h.toLowerCase().includes(lower) ||
+        lower.includes(h.toLowerCase())
     );
     if (found) return found;
   }
@@ -109,7 +163,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     const { headers, rows } = await parseFile(file);
     const format = detectFormat(headers);
 
-    // Filter out empty columns (__EMPTY, __EMPTY_1, etc.)
     const cleanHeaders = headers.filter(
       (h) => !h.startsWith("__EMPTY") && h.trim() !== ""
     );
@@ -122,40 +175,22 @@ export async function POST(request: Request): Promise<NextResponse> {
     } else if (format === "kalodata") {
       mapping = buildKaloDataMapping(cleanHeaders);
     } else {
-      // AI fallback
       try {
         mapping = await aiDetectMapping(cleanHeaders, rows);
         aiDetected = true;
       } catch {
-        // Return headers for manual mapping
-        mapping = {
-          name: cleanHeaders[0] ?? "",
-          url: null,
-          category: null,
-          price: null,
-          commissionRate: null,
-          platform: null,
-          salesTotal: null,
-          salesGrowth7d: null,
-          salesGrowth30d: null,
-          revenue7d: null,
-          revenue30d: null,
-          affiliateCount: null,
-          creatorCount: null,
-          topVideoViews: null,
-          shopName: null,
-          shopRating: null,
-        };
+        mapping = emptyMapping(cleanHeaders[0] ?? "");
       }
     }
 
-    // Build sample data (first 5 rows, clean columns only)
     const sampleRows = rows.slice(0, 5).map((row) => {
       const clean: Record<string, string> = {};
       for (const h of cleanHeaders) {
         const val = row[h];
         clean[h] =
-          val !== null && val !== undefined ? String(val).slice(0, 120) : "";
+          val !== null && val !== undefined
+            ? String(val).slice(0, 120)
+            : "";
       }
       return clean;
     });
@@ -165,7 +200,12 @@ export async function POST(request: Request): Promise<NextResponse> {
         headers: cleanHeaders,
         sampleRows,
         totalRows: rows.length,
-        format: format === "unknown" ? (aiDetected ? "ai_detected" : "unknown") : format,
+        format:
+          format === "unknown"
+            ? aiDetected
+              ? "ai_detected"
+              : "unknown"
+            : format,
         mapping,
         aiDetected,
         targetFields: TARGET_FIELDS,

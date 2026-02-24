@@ -6,16 +6,40 @@ export interface NormalizedProduct {
   commissionRate: number;
   commissionVND: number;
   platform: "shopee" | "tiktok_shop" | "both";
+
+  // Sales & Trending
   salesTotal: number | null;
+  sales7d: number | null;
   salesGrowth7d: number | null;
   salesGrowth30d: number | null;
   revenue7d: number | null;
   revenue30d: number | null;
+  revenueTotal: number | null;
+
+  // Competition (KOL data from FastMoss)
+  totalKOL: number | null;
+  kolOrderRate: number | null;
+  totalVideos: number | null;
+  totalLivestreams: number | null;
   affiliateCount: number | null;
   creatorCount: number | null;
   topVideoViews: number | null;
+
+  // Media & Links
+  imageUrl: string | null;
+  tiktokUrl: string | null;
+  fastmossUrl: string | null;
+  shopFastmossUrl: string | null;
+
+  // Shop
   shopName: string | null;
   shopRating: number | null;
+  productStatus: string | null;
+
+  // Listing
+  listingDate: Date | null;
+
+  // Source
   source: "fastmoss" | "kalodata";
   dataDate: Date;
 }
@@ -41,12 +65,10 @@ export function normalizeNumber(value: unknown): number | null {
     // Percentage: "38,45%" → 38.45, "2%" → 2
     str = str.replace(/%/g, "").replace(",", ".");
   } else {
-    // General: strip non-numeric except dots and minus
+    // General: strip non-numeric except dots, commas, and minus
     str = str.replace(/[^\d.\-,]/g, "");
     // If has both dots and commas, determine which is decimal
     if (str.includes(",") && str.includes(".")) {
-      // "1.234,56" → comma is decimal (European/VN)
-      // "1,234.56" → dot is decimal (US)
       const lastDot = str.lastIndexOf(".");
       const lastComma = str.lastIndexOf(",");
       if (lastComma > lastDot) {
@@ -55,8 +77,6 @@ export function normalizeNumber(value: unknown): number | null {
         str = str.replace(/,/g, "");
       }
     } else if (str.includes(",")) {
-      // Could be thousand sep or decimal — check pattern
-      // "1,234" likely thousand sep, "3,5" likely decimal
       const parts = str.split(",");
       if (parts.length === 2 && parts[1].length === 3) {
         str = str.replace(",", ""); // thousand separator

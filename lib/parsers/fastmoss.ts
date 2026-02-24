@@ -6,156 +6,144 @@ interface FastMossRow {
 }
 
 /**
- * Fuzzy column lookup: tries exact match first, then substring match
- * on lowercased, underscore-normalized keys.
+ * Exact column names from real FastMoss Vietnamese export (20 columns).
+ * Maps each column name → NormalizedProduct field.
  */
-function findColumn(row: FastMossRow, candidates: string[]): unknown {
-  const keys = Object.keys(row);
-  // Pass 1: exact lowercase match
-  for (const candidate of candidates) {
-    const lower = candidate.toLowerCase();
-    for (const key of keys) {
-      if (key.toLowerCase() === lower) return row[key];
-    }
+const COLUMN_MAP = {
+  name: "Tên sản phẩm",
+  productStatus: "Tình trạng sản phẩm",
+  shopName: "Tên cửa hàng",
+  country: "Quốc gia / Khu vực",
+  category: "Danh mục sản phẩm",
+  price: "Giá bán",
+  commissionRate: "Tỷ lệ hoa hồng",
+  sales7d: "Lượng bán (7 ngày)",
+  revenue7d: "Doanh thu (7 ngày)",
+  salesTotal: "Tổng lượng bán",
+  revenueTotal: "Tổng doanh thu",
+  totalKOL: "Tổng số người có ảnh hưởng bán hàng (KOL)",
+  kolOrderRate:
+    "Tỷ lệ tạo đơn của người có ảnh hưởng (KOL) / Tỷ lệ chốt đơn KOL",
+  totalVideos: "Tổng số video bán hàng",
+  totalLivestreams: "Tổng số livestream bán hàng",
+  imageUrl: "Hình ảnh sản phẩm",
+  fastmossUrl: "Địa chỉ trang chi tiết sản phẩm FastMoss",
+  tiktokUrl: "Địa chỉ trang đích sản phẩm TikTok",
+  shopFastmossUrl: "Địa chỉ trang chi tiết cửa hàng FastMoss",
+  listingDate: "Ngày dự kiến niêm yết",
+} as const;
+
+/**
+ * Get column value from row using exact match first, then fuzzy match.
+ */
+function getCol(row: FastMossRow, columnName: string): unknown {
+  // Exact key match
+  if (columnName in row) return row[columnName];
+
+  // Case-insensitive match
+  const lower = columnName.toLowerCase();
+  for (const key of Object.keys(row)) {
+    if (key.toLowerCase() === lower) return row[key];
   }
-  // Pass 2: substring match (normalized with underscores)
-  for (const candidate of candidates) {
-    const lower = candidate.toLowerCase().replace(/\s+/g, "_");
-    for (const key of keys) {
-      const normalized = key.toLowerCase().replace(/\s+/g, "_");
-      if (normalized.includes(lower) || lower.includes(normalized)) {
-        return row[key];
-      }
-    }
+
+  // Substring match as fallback
+  for (const key of Object.keys(row)) {
+    const kl = key.toLowerCase();
+    if (kl.includes(lower) || lower.includes(kl)) return row[key];
   }
+
   return null;
 }
 
-function parseListingDate(row: FastMossRow): Date {
-  const raw = normalizeString(
-    findColumn(row, [
-      "Ngày dự kiến niêm yết", "ngày_niêm_yết",
-      "listing_date", "date",
-    ])
-  );
-  if (raw) {
-    const parsed = new Date(raw);
-    if (!isNaN(parsed.getTime())) return parsed;
-  }
-  return new Date();
+function parseDate(raw: unknown): Date | null {
+  const str = normalizeString(raw);
+  if (!str) return null;
+  const parsed = new Date(str);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function strOrNull(value: unknown): string | null {
+  const s = normalizeString(value);
+  return s || null;
 }
 
 export function parseFastMoss(rows: FastMossRow[]): NormalizedProduct[] {
   return rows
     .map((row): NormalizedProduct | null => {
-      const name = normalizeString(
-        findColumn(row, [
-          "Tên sản phẩm", "product_name", "name", "tên_sp",
-        ])
-      );
+      const name = normalizeString(getCol(row, COLUMN_MAP.name));
       if (!name) return null;
 
       const price =
-        normalizeNumber(
-          findColumn(row, ["Giá bán", "price", "giá", "giá_bán"])
-        ) ?? 0;
-
+        normalizeNumber(getCol(row, COLUMN_MAP.price)) ?? 0;
       const commissionRate =
-        normalizeNumber(
-          findColumn(row, [
-            "Tỷ lệ hoa hồng", "commission_rate", "commission",
-          ])
-        ) ?? 0;
+        normalizeNumber(getCol(row, COLUMN_MAP.commissionRate)) ?? 0;
 
-      const url =
-        normalizeString(
-          findColumn(row, [
-            "Địa chỉ trang đích sản phẩm TikTok",
-            "Địa chỉ trang chi tiết sản phẩm FastMoss",
-            "url", "link", "product_url",
-          ])
-        ) || null;
+      const tiktokUrl = strOrNull(getCol(row, COLUMN_MAP.tiktokUrl));
 
       return {
         name,
-        url,
+        url: tiktokUrl,
         category:
-          normalizeString(
-            findColumn(row, [
-              "Danh mục sản phẩm", "category", "danh_mục", "ngành_hàng",
-            ])
-          ) || "Khác",
+          normalizeString(getCol(row, COLUMN_MAP.category)) || "Khác",
         price,
         commissionRate,
         commissionVND: price * (commissionRate / 100),
-        platform: detectPlatform(row),
+        platform: "tiktok_shop",
+
+        // Sales
         salesTotal: normalizeNumber(
-          findColumn(row, [
-            "Tổng lượng bán", "sales_total", "total_sales", "tổng_bán",
-          ])
+          getCol(row, COLUMN_MAP.salesTotal)
         ),
-        salesGrowth7d: null, // FastMoss exports sales count, not growth rate
+        sales7d: normalizeNumber(getCol(row, COLUMN_MAP.sales7d)),
+        salesGrowth7d: null,
         salesGrowth30d: null,
-        revenue7d: normalizeNumber(
-          findColumn(row, [
-            "Doanh thu (7 ngày)", "revenue_7d", "doanh_thu_7d",
-          ])
+        revenue7d: normalizeNumber(getCol(row, COLUMN_MAP.revenue7d)),
+        revenue30d: null,
+        revenueTotal: normalizeNumber(
+          getCol(row, COLUMN_MAP.revenueTotal)
         ),
-        revenue30d: normalizeNumber(
-          findColumn(row, [
-            "Tổng doanh thu", "revenue_30d", "doanh_thu", "revenue",
-          ])
+
+        // Competition
+        totalKOL: normalizeNumber(
+          getCol(row, COLUMN_MAP.totalKOL)
+        ) as number | null,
+        kolOrderRate: normalizeNumber(
+          getCol(row, COLUMN_MAP.kolOrderRate)
         ),
+        totalVideos: normalizeNumber(
+          getCol(row, COLUMN_MAP.totalVideos)
+        ) as number | null,
+        totalLivestreams: normalizeNumber(
+          getCol(row, COLUMN_MAP.totalLivestreams)
+        ) as number | null,
         affiliateCount: normalizeNumber(
-          findColumn(row, [
-            "Tổng số người có ảnh hưởng bán hàng (KOL)",
-            "affiliate_count", "affiliates", "số_affiliate", "KOL",
-          ])
+          getCol(row, COLUMN_MAP.totalKOL)
         ) as number | null,
-        creatorCount: normalizeNumber(
-          findColumn(row, [
-            "Tổng số video bán hàng",
-            "creator_count", "creators", "số_creator",
-          ])
-        ) as number | null,
-        topVideoViews: normalizeNumber(
-          findColumn(row, [
-            "Tổng số livestream bán hàng",
-            "top_video_views", "views", "lượt_xem",
-          ])
-        ) as number | null,
-        shopName:
-          normalizeString(
-            findColumn(row, [
-              "Tên cửa hàng", "shop_name", "shop", "tên_shop",
-            ])
-          ) || null,
-        shopRating: normalizeNumber(
-          findColumn(row, [
-            "Tỷ lệ tạo đơn của người có ảnh hưởng (KOL)",
-            "shop_rating", "rating", "đánh_giá",
-          ])
+        creatorCount: null,
+        topVideoViews: null,
+
+        // Media & Links
+        imageUrl: strOrNull(getCol(row, COLUMN_MAP.imageUrl)),
+        tiktokUrl,
+        fastmossUrl: strOrNull(getCol(row, COLUMN_MAP.fastmossUrl)),
+        shopFastmossUrl: strOrNull(
+          getCol(row, COLUMN_MAP.shopFastmossUrl)
         ),
+
+        // Shop
+        shopName: strOrNull(getCol(row, COLUMN_MAP.shopName)),
+        shopRating: null,
+        productStatus: strOrNull(
+          getCol(row, COLUMN_MAP.productStatus)
+        ),
+
+        // Listing
+        listingDate: parseDate(getCol(row, COLUMN_MAP.listingDate)),
+
+        // Source
         source: "fastmoss",
-        dataDate: parseListingDate(row),
+        dataDate: parseDate(getCol(row, COLUMN_MAP.listingDate)) ?? new Date(),
       };
     })
     .filter((p): p is NormalizedProduct => p !== null);
-}
-
-function detectPlatform(
-  row: FastMossRow
-): "shopee" | "tiktok_shop" | "both" {
-  // Check if there's a TikTok product URL → it's TikTok Shop data
-  const tiktokUrl = normalizeString(
-    findColumn(row, [
-      "Địa chỉ trang đích sản phẩm TikTok",
-      "platform", "nền_tảng", "sàn",
-    ])
-  ).toLowerCase();
-  if (tiktokUrl.includes("tiktok")) return "tiktok_shop";
-  if (tiktokUrl.includes("shopee")) return "shopee";
-
-  // FastMoss is primarily TikTok Shop data
-  return "tiktok_shop";
 }

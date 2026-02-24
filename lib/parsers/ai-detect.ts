@@ -13,15 +13,26 @@ export interface ColumnMapping {
   commissionRate: string | null;
   platform: string | null;
   salesTotal: string | null;
+  sales7d: string | null;
   salesGrowth7d: string | null;
   salesGrowth30d: string | null;
   revenue7d: string | null;
   revenue30d: string | null;
+  revenueTotal: string | null;
   affiliateCount: string | null;
   creatorCount: string | null;
   topVideoViews: string | null;
+  totalKOL: string | null;
+  kolOrderRate: string | null;
+  totalVideos: string | null;
+  totalLivestreams: string | null;
+  imageUrl: string | null;
+  tiktokUrl: string | null;
+  fastmossUrl: string | null;
+  shopFastmossUrl: string | null;
   shopName: string | null;
   shopRating: string | null;
+  productStatus: string | null;
 }
 
 const TARGET_FIELDS: Array<{ key: keyof ColumnMapping; label: string }> = [
@@ -32,15 +43,26 @@ const TARGET_FIELDS: Array<{ key: keyof ColumnMapping; label: string }> = [
   { key: "commissionRate", label: "Tỷ lệ hoa hồng (%)" },
   { key: "platform", label: "Nền tảng (shopee/tiktok)" },
   { key: "salesTotal", label: "Tổng lượng bán" },
+  { key: "sales7d", label: "Lượng bán 7 ngày" },
   { key: "salesGrowth7d", label: "Tăng trưởng 7 ngày (%)" },
   { key: "salesGrowth30d", label: "Tăng trưởng 30 ngày (%)" },
   { key: "revenue7d", label: "Doanh thu 7 ngày" },
-  { key: "revenue30d", label: "Doanh thu 30 ngày / tổng" },
-  { key: "affiliateCount", label: "Số affiliate / KOL" },
-  { key: "creatorCount", label: "Số creator / video" },
+  { key: "revenue30d", label: "Doanh thu 30 ngày" },
+  { key: "revenueTotal", label: "Tổng doanh thu" },
+  { key: "totalKOL", label: "Tổng số KOL" },
+  { key: "kolOrderRate", label: "Tỷ lệ chốt đơn KOL (%)" },
+  { key: "totalVideos", label: "Tổng video bán hàng" },
+  { key: "totalLivestreams", label: "Tổng livestream bán hàng" },
+  { key: "imageUrl", label: "Hình ảnh sản phẩm" },
+  { key: "tiktokUrl", label: "Link TikTok Shop" },
+  { key: "fastmossUrl", label: "Link FastMoss" },
+  { key: "shopFastmossUrl", label: "Link cửa hàng FastMoss" },
+  { key: "affiliateCount", label: "Số affiliate" },
+  { key: "creatorCount", label: "Số creator" },
   { key: "topVideoViews", label: "Lượt xem video top" },
   { key: "shopName", label: "Tên shop" },
   { key: "shopRating", label: "Đánh giá shop" },
+  { key: "productStatus", label: "Tình trạng sản phẩm" },
 ];
 
 export { TARGET_FIELDS };
@@ -49,31 +71,20 @@ const SYSTEM_PROMPT = `Bạn là chuyên gia phân tích dữ liệu affiliate m
 Nhiệm vụ: nhận danh sách tên cột (headers) và dữ liệu mẫu từ file CSV/Excel,
 rồi map các cột vào schema chuẩn.
 
-Trả về JSON object duy nhất, KHÔNG có text khác. Format:
-{
-  "name": "Tên cột nguồn chứa tên sản phẩm",
-  "url": "Tên cột chứa URL hoặc null",
-  "category": "Tên cột danh mục hoặc null",
-  "price": "Tên cột giá hoặc null",
-  "commissionRate": "Tên cột hoa hồng hoặc null",
-  "platform": "Tên cột nền tảng hoặc null",
-  "salesTotal": "Tên cột tổng bán hoặc null",
-  "salesGrowth7d": "Tên cột tăng trưởng 7d hoặc null",
-  "salesGrowth30d": "Tên cột tăng trưởng 30d hoặc null",
-  "revenue7d": "Tên cột doanh thu 7d hoặc null",
-  "revenue30d": "Tên cột doanh thu 30d/tổng hoặc null",
-  "affiliateCount": "Tên cột số affiliate/KOL hoặc null",
-  "creatorCount": "Tên cột số creator/video hoặc null",
-  "topVideoViews": "Tên cột lượt xem hoặc null",
-  "shopName": "Tên cột tên shop hoặc null",
-  "shopRating": "Tên cột đánh giá shop hoặc null"
-}
+Trả về JSON object duy nhất, KHÔNG có text khác. Các key bắt buộc:
+name, url, category, price, commissionRate, platform, salesTotal, sales7d,
+salesGrowth7d, salesGrowth30d, revenue7d, revenue30d, revenueTotal,
+totalKOL, kolOrderRate, totalVideos, totalLivestreams, imageUrl, tiktokUrl,
+fastmossUrl, shopFastmossUrl, affiliateCount, creatorCount, topVideoViews,
+shopName, shopRating, productStatus
 
 Quy tắc:
 - "name" là bắt buộc, phải tìm được cột chứa tên sản phẩm
 - Các trường khác: null nếu không có cột phù hợp
 - Giá trị phải chính xác tên cột gốc (case-sensitive)
-- Cột chứa URL, hình ảnh, ID nội bộ → chỉ map vào "url" nếu là link sản phẩm`;
+- Cột chứa URL hình ảnh → map vào "imageUrl"
+- Cột chứa link TikTok → map vào "tiktokUrl"
+- Cột chứa link FastMoss → map vào "fastmossUrl"`;
 
 export async function aiDetectMapping(
   headers: string[],
@@ -83,7 +94,8 @@ export async function aiDetectMapping(
     const obj: Record<string, string> = {};
     for (const h of headers) {
       const val = row[h];
-      obj[h] = val !== null && val !== undefined ? String(val).slice(0, 100) : "";
+      obj[h] =
+        val !== null && val !== undefined ? String(val).slice(0, 100) : "";
     }
     return obj;
   });
@@ -100,14 +112,15 @@ Hãy map các cột vào schema. Trả về JSON duy nhất.`;
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("AI không trả về JSON hợp lệ");
 
-    const parsed = JSON.parse(jsonMatch[0]) as Record<string, string | null>;
+    const parsed = JSON.parse(jsonMatch[0]) as Record<
+      string,
+      string | null
+    >;
 
-    // Validate: "name" must exist and be a real header
     if (!parsed.name || !headers.includes(parsed.name)) {
       throw new Error("AI không xác định được cột tên sản phẩm");
     }
 
-    // Build mapping, only keep values that are actual headers
     const mapping: ColumnMapping = {
       name: parsed.name,
       url: validHeader(parsed.url, headers),
@@ -116,15 +129,26 @@ Hãy map các cột vào schema. Trả về JSON duy nhất.`;
       commissionRate: validHeader(parsed.commissionRate, headers),
       platform: validHeader(parsed.platform, headers),
       salesTotal: validHeader(parsed.salesTotal, headers),
+      sales7d: validHeader(parsed.sales7d, headers),
       salesGrowth7d: validHeader(parsed.salesGrowth7d, headers),
       salesGrowth30d: validHeader(parsed.salesGrowth30d, headers),
       revenue7d: validHeader(parsed.revenue7d, headers),
       revenue30d: validHeader(parsed.revenue30d, headers),
+      revenueTotal: validHeader(parsed.revenueTotal, headers),
+      totalKOL: validHeader(parsed.totalKOL, headers),
+      kolOrderRate: validHeader(parsed.kolOrderRate, headers),
+      totalVideos: validHeader(parsed.totalVideos, headers),
+      totalLivestreams: validHeader(parsed.totalLivestreams, headers),
+      imageUrl: validHeader(parsed.imageUrl, headers),
+      tiktokUrl: validHeader(parsed.tiktokUrl, headers),
+      fastmossUrl: validHeader(parsed.fastmossUrl, headers),
+      shopFastmossUrl: validHeader(parsed.shopFastmossUrl, headers),
       affiliateCount: validHeader(parsed.affiliateCount, headers),
       creatorCount: validHeader(parsed.creatorCount, headers),
       topVideoViews: validHeader(parsed.topVideoViews, headers),
       shopName: validHeader(parsed.shopName, headers),
       shopRating: validHeader(parsed.shopRating, headers),
+      productStatus: validHeader(parsed.productStatus, headers),
     };
 
     return mapping;

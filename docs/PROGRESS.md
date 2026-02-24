@@ -3,7 +3,24 @@
 ## Project Info
 - **Project Size:** Medium
 - **Review Level:** Standard
-- **Status:** ✅ Phase 3B Complete
+- **Status:** ✅ Phase 4 Complete
+
+## Phase 4: AI Intelligence Engine
+
+| Sub-phase | Nội dung | Status | Commit |
+|-----------|---------|--------|--------|
+| 4.0 | Schema: WinPattern + WeeklyReport models | ✅ Done | ecd0b66 |
+| 4.1 | Confidence Level system (5 levels, 8 metrics) | ✅ Done | ecd0b66 |
+| 4.2 | Win Probability Score (market + personal fit + timing - risk) | ✅ Done | ecd0b66 |
+| 4.3 | Product Lifecycle tracking (6 stages from snapshots) | ✅ Done | ecd0b66 |
+| 4.4 | Win/Loss Analysis (6 factors per campaign) | ✅ Done | ecd0b66 |
+| 4.5 | Pattern Library / Playbook (auto-generate from campaigns) | ✅ Done | ecd0b66 |
+| 4.6 | Channel + Content recommendations + Budget Portfolio | ✅ Done | ecd0b66 |
+| 4.7 | Anomaly Detection (5 types: loss, ROAS decline, overspend, KOL spike, sales drop) | ✅ Done | ecd0b66 |
+| 4.8 | Weekly Report generator | ✅ Done | ecd0b66 |
+| 4.9 | API routes: 7 new + Morning Brief V2 enhanced | ✅ Done | ecd0b66 |
+| 4.10 | UI: 6 components + product detail + insights page updates | ✅ Done | ecd0b66 |
+| 4.11 | Build verification | ✅ Pass | ecd0b66 |
 
 ## Phase 3B: Data Parsers + Unified Import
 
@@ -44,4 +61,4 @@
 | 2.6 | Dashboard widget "Sắp tới" | ✅ Done | 6d14028 |
 | 2.7 | Build verification | ✅ Pass | 6d14028 |
 
-## Last Updated: 2026-02-24T20:10:00
+## Last Updated: 2026-02-25T00:30:00

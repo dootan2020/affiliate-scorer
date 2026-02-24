@@ -8,6 +8,12 @@ import { ProfitEstimator } from "@/components/products/profit-estimator";
 import { PersonalNotesSection } from "@/components/products/personal-notes-section";
 import { AffiliateLinkSection } from "@/components/products/affiliate-link-section";
 import { RunProductButton } from "@/components/campaigns/run-product-button";
+import { WinProbabilityCard } from "@/components/ai/win-probability-card";
+import { LifecycleBadge } from "@/components/ai/lifecycle-badge";
+import { ChannelRecommendations } from "@/components/ai/channel-recommendations";
+import { getProductLifecycle } from "@/lib/ai/lifecycle";
+import { getChannelRecommendations } from "@/lib/ai/recommendations";
+import { calculateConfidence } from "@/lib/ai/confidence";
 import { formatVND, formatPercent, formatNumber, formatPlatform, formatSource } from "@/lib/utils/format";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { generateContentTips, generatePlatformStrategy } from "@/lib/utils/content-suggestions";
@@ -109,6 +115,13 @@ export default async function ProductDetailPage({
     select: { id: true },
     orderBy: { createdAt: "desc" },
   });
+
+  // Phase 4: AI Intelligence — server-side data fetching
+  const [lifecycle, confidence] = await Promise.all([
+    getProductLifecycle(product.id),
+    calculateConfidence(),
+  ]);
+  const recommendations = await getChannelRecommendations(product.id, confidence.level);
 
   const score = product.aiScore;
   const prevSnapshot = product.snapshots[0] ?? null;
@@ -332,6 +345,16 @@ export default async function ProductDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Phase 4: AI Intelligence */}
+      <WinProbabilityCard productId={product.id} />
+      <LifecycleBadge
+        stage={lifecycle.stage}
+        salesChange={lifecycle.salesChange}
+        kolChange={lifecycle.kolChange}
+        message={lifecycle.message}
+      />
+      <ChannelRecommendations recommendations={recommendations} />
 
       {/* Phase 2: Personal Notes */}
       <PersonalNotesSection

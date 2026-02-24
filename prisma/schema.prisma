@@ -391,3 +391,33 @@ model CalendarEvent {
   @@index([startDate])
   @@index([eventType])
 }
+
+// ─── PHASE 4: AI INTELLIGENCE ───
+
+model WinPattern {
+  id          String @id @default(cuid())
+  label       String
+  patternType String // "winning" | "losing"
+  conditions  Json   // { category, priceRange, platform, contentType }
+  campaignIds Json   @default("[]")
+
+  winRate     Float
+  avgROAS     Float
+  totalProfit Int
+  sampleSize  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patternType])
+}
+
+model WeeklyReport {
+  id         String   @id @default(cuid())
+  weekStart  DateTime @db.Date
+  weekEnd    DateTime @db.Date
+  reportData Json
+  createdAt  DateTime @default(now())
+
+  @@index([weekStart])
+}

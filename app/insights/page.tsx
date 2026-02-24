@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { InsightsPageClient } from "@/components/insights/insights-page-client";
 import { TriggerLearningButton } from "@/components/insights/trigger-learning-button";
+import { ConfidenceWidget } from "@/components/ai/confidence-widget";
+import { WeeklyReportCard } from "@/components/ai/weekly-report-card";
+import { PlaybookSection } from "@/components/ai/playbook-section";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 export const metadata: Metadata = {
@@ -184,6 +187,16 @@ export default async function InsightsPage(): Promise<React.ReactElement> {
         accuracyTrend={insights.accuracyTrend}
         feedbackTable={insights.feedbackTable}
       />
+
+      {/* Phase 4: AI Intelligence */}
+      <div className="space-y-6 mt-8">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">AI Intelligence</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ConfidenceWidget />
+          <WeeklyReportCard />
+        </div>
+        <PlaybookSection />
+      </div>
     </div>
   );
 }

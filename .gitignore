@@ -51,3 +51,8 @@ dev.db
 screenshot-*.png
 
 .vercel
+
+# local tool configs
+.claude/settings.local.json
+.opencode/
+supabase/.temp/

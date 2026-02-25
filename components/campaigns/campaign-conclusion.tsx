@@ -63,12 +63,12 @@ export function CampaignConclusion({
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Luu that bai");
+        throw new Error(data.error ?? "Lưu thất bại");
       }
 
       setSaved(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ export function CampaignConclusion({
       {saved && (
         <p className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
           <CheckCircle2 className="w-4 h-4" />
-          Da luu ket luan va danh dau Hoan thanh
+          Đã lưu kết luận và đánh dấu Hoàn thành
         </p>
       )}
 
@@ -146,7 +146,7 @@ export function CampaignConclusion({
         ) : (
           <CheckCircle2 className="w-4 h-4" />
         )}
-        Luu ket luan + Danh dau Completed
+        Lưu kết luận + Đánh dấu Completed
       </button>
     </div>
   );

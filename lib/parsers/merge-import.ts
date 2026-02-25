@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { toJsonValue } from "@/lib/utils/typed-json";
 import type {
   ImportedCampaign,
   ImportedDailyResult,
@@ -31,8 +32,7 @@ export async function mergeImportedData(
 
     if (existing) {
       // Merge daily results — imported overrides existing
-      const existingResults =
-        (existing.dailyResults as unknown as ImportedDailyResult[]) || [];
+      const existingResults = (Array.isArray(existing.dailyResults) ? existing.dailyResults : []) as unknown as ImportedDailyResult[];
       const merged = mergeDailyResults(existingResults, campaign.dailyResults);
 
       const totalSpend = merged.reduce((s, r) => s + r.spend, 0);
@@ -42,7 +42,7 @@ export async function mergeImportedData(
       await prisma.campaign.update({
         where: { id: existing.id },
         data: {
-          dailyResults: JSON.parse(JSON.stringify(merged)),
+          dailyResults: toJsonValue(merged),
           totalSpend: Math.round(totalSpend),
           totalRevenue: Math.round(totalRevenue),
           totalOrders,
@@ -75,7 +75,7 @@ export async function mergeImportedData(
           platform: campaign.platform,
           status: "completed",
           productId: campaign.productId,
-          dailyResults: JSON.parse(JSON.stringify(campaign.dailyResults)),
+          dailyResults: toJsonValue(campaign.dailyResults),
           totalSpend: Math.round(totalSpend),
           totalRevenue: Math.round(totalRevenue),
           totalOrders,
@@ -105,7 +105,7 @@ export async function mergeImportedData(
         date: record.date,
         notes: record.notes,
         metadata: record.metadata
-          ? JSON.parse(JSON.stringify(record.metadata))
+          ? toJsonValue(record.metadata)
           : undefined,
       },
     });

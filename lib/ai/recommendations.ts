@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { parseDailyResults } from "@/lib/utils/typed-json";
 
 export interface ChannelRec {
   channel: string;
@@ -62,8 +63,8 @@ export async function getChannelRecommendations(
   if (totalVideos < 10 && totalKOL < 20) {
     recs.push({
       channel: "TikTok Organic",
-      reason: `Chi co ${totalVideos} video va ${totalKOL} KOL — thi truong con trong`,
-      contentSuggestion: "Review ngan 30-60s, focus vao diem noi bat san pham",
+      reason: `Chỉ có ${totalVideos} video và ${totalKOL} KOL — thị trường còn trống`,
+      contentSuggestion: "Review ngắn 30-60s, focus vào điểm nổi bật sản phẩm",
       budgetSuggestion: null,
       confidence: "goi_y",
     });
@@ -77,13 +78,13 @@ export async function getChannelRecommendations(
       const fbRoas = await getUserPlatformRoas("facebook");
       if (fbRoas !== null) {
         fbConf = "data";
-        extraReason = ` (ROAS FB cua ban: ${fbRoas.toFixed(1)}x)`;
+        extraReason = ` (ROAS FB của bạn: ${fbRoas.toFixed(1)}x)`;
       }
     }
     recs.push({
       channel: "Facebook Ads",
-      reason: `Gia ${Math.round(product.price / 1000)}K phu hop chay ads${extraReason}`,
-      contentSuggestion: "Video review 1-3 phut hoac carousel anh truoc/sau",
+      reason: `Giá ${Math.round(product.price / 1000)}K phù hợp chạy ads${extraReason}`,
+      contentSuggestion: "Video review 1-3 phút hoặc carousel ảnh trước/sau",
       budgetSuggestion: Math.round(product.price * 0.5 / 1000) * 1000,
       confidence: fbConf,
     });
@@ -93,8 +94,8 @@ export async function getChannelRecommendations(
   if (totalLivestreams > 50) {
     recs.push({
       channel: "Livestream",
-      reason: `${totalLivestreams} livestream truoc do — san pham phu hop livestream`,
-      contentSuggestion: "Livestream demo truc tiep + khuyen mai doc quyen",
+      reason: `${totalLivestreams} livestream trước đó — sản phẩm phù hợp livestream`,
+      contentSuggestion: "Livestream demo trực tiếp + khuyến mãi độc quyền",
       budgetSuggestion: null,
       confidence: "goi_y",
     });
@@ -113,8 +114,8 @@ export async function getChannelRecommendations(
     }
     recs.push({
       channel: "Shopee Ads",
-      reason: `San pham tren Shopee — day ads de tang thu hang${extraReason}`,
-      contentSuggestion: "Toi uu keyword + discovery ads voi anh dep",
+      reason: `Sản phẩm trên Shopee — đẩy ads để tăng thứ hạng${extraReason}`,
+      contentSuggestion: "Tối ưu keyword + discovery ads với ảnh đẹp",
       budgetSuggestion: 50_000,
       confidence: shopeeConf,
     });
@@ -124,8 +125,8 @@ export async function getChannelRecommendations(
   if (recs.length === 0) {
     recs.push({
       channel: "TikTok Organic",
-      reason: "Kenh co ban phu hop moi san pham affiliate",
-      contentSuggestion: "Thu video review ngan 30-60s de test phan hoi",
+      reason: "Kênh cơ bản phù hợp mọi sản phẩm affiliate",
+      contentSuggestion: "Thử video review ngắn 30-60s để test phản hồi",
       budgetSuggestion: null,
       confidence: "goi_y",
     });
@@ -155,7 +156,7 @@ export async function getBudgetPortfolio(): Promise<BudgetAllocation[]> {
   const allocations: BudgetAllocation[] = [];
 
   for (const campaign of activeCampaigns) {
-    const dailyResults = (campaign.dailyResults as unknown as DailyResult[]) ?? [];
+    const dailyResults = parseDailyResults(campaign.dailyResults);
     const recent = dailyResults.slice(-3);
     const currentSpend = campaign.plannedBudgetDaily ?? 0;
 
@@ -168,22 +169,22 @@ export async function getBudgetPortfolio(): Promise<BudgetAllocation[]> {
     }
 
     let suggestedSpend = currentSpend;
-    let reason = "Giu nguyen budget hien tai";
+    let reason = "Giữ nguyên budget hiện tại";
 
     if (recentRoas !== null && recentRoas > 2) {
       suggestedSpend = Math.round(currentSpend * 1.5);
-      reason = `ROAS ${recentRoas.toFixed(1)}x tot — tang budget 50%`;
+      reason = `ROAS ${recentRoas.toFixed(1)}x tốt — tăng budget 50%`;
     } else if (recentRoas !== null && recentRoas >= 1) {
-      reason = `ROAS ${recentRoas.toFixed(1)}x on dinh — giu nguyen`;
+      reason = `ROAS ${recentRoas.toFixed(1)}x ổn định — giữ nguyên`;
     } else if (recentRoas !== null && recentRoas < 1) {
       suggestedSpend = Math.round(currentSpend * 0.5);
-      reason = `ROAS ${recentRoas.toFixed(1)}x lo — giam budget 50%`;
+      reason = `ROAS ${recentRoas.toFixed(1)}x lỗ — giảm budget 50%`;
     }
 
     // Cap at 50% of total budget
     if (suggestedSpend > maxPerCampaign) {
       suggestedSpend = Math.round(maxPerCampaign);
-      reason += " (gioi han 50% tong budget)";
+      reason += " (giới hạn 50% tổng budget)";
     }
 
     allocations.push({

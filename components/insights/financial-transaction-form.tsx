@@ -5,10 +5,10 @@ import { toast } from "sonner";
 import { X } from "lucide-react";
 
 const TYPE_OPTIONS = [
-  { value: "commission_received", label: "Hoa hong nhan" },
-  { value: "other_income", label: "Thu khac" },
-  { value: "ads_spend", label: "Chi quang cao" },
-  { value: "other_cost", label: "Chi khac" },
+  { value: "commission_received", label: "Hoa hồng nhận" },
+  { value: "other_income", label: "Thu khác" },
+  { value: "ads_spend", label: "Chi quảng cáo" },
+  { value: "other_cost", label: "Chi khác" },
 ] as const;
 
 const SOURCE_OPTIONS = [
@@ -17,7 +17,7 @@ const SOURCE_OPTIONS = [
   { value: "lazada", label: "Lazada" },
   { value: "fb_ads", label: "Facebook Ads" },
   { value: "tiktok_ads", label: "TikTok Ads" },
-  { value: "other", label: "Khac" },
+  { value: "other", label: "Khác" },
 ] as const;
 
 function isIncomeType(type: string): boolean {
@@ -53,7 +53,7 @@ export function FinancialTransactionForm({
     e.preventDefault();
     const amount = parseFloat(formAmount);
     if (!amount || amount <= 0) {
-      toast.error("Nhap so tien hop le");
+      toast.error("Nhập số tiền hợp lệ");
       return;
     }
     setSaving(true);
@@ -71,11 +71,11 @@ export function FinancialTransactionForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success("Da them giao dich");
+      toast.success("Đã thêm giao dịch");
       onSaved();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Loi khi them giao dich"
+        err instanceof Error ? err.message : "Lỗi khi thêm giao dịch"
       );
     } finally {
       setSaving(false);
@@ -89,7 +89,7 @@ export function FinancialTransactionForm({
     >
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          {mode === "income" ? "Them khoan thu" : "Them khoan chi"}
+          {mode === "income" ? "Thêm khoản thu" : "Thêm khoản chi"}
         </h3>
         <button
           type="button"
@@ -103,7 +103,7 @@ export function FinancialTransactionForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            Loai *
+            Loại *
           </label>
           <select
             value={formType}
@@ -119,7 +119,7 @@ export function FinancialTransactionForm({
         </div>
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            Nguon *
+            Nguồn *
           </label>
           <select
             value={formSource}
@@ -138,7 +138,7 @@ export function FinancialTransactionForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            So tien (VND) *
+            Số tiền (VND) *
           </label>
           <input
             type="number"
@@ -151,7 +151,7 @@ export function FinancialTransactionForm({
         </div>
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            Ngay *
+            Ngày *
           </label>
           <input
             type="date"
@@ -164,13 +164,13 @@ export function FinancialTransactionForm({
 
       <div>
         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-          Ghi chu
+          Ghi chú
         </label>
         <input
           type="text"
           value={formNotes}
           onChange={(e) => setFormNotes(e.target.value)}
-          placeholder="Ghi chu (tuy chon)"
+          placeholder="Ghi chú (tùy chọn)"
           className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
         />
       </div>
@@ -180,7 +180,7 @@ export function FinancialTransactionForm({
         disabled={saving}
         className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {saving ? "Dang luu..." : "Luu giao dich"}
+        {saving ? "Đang lưu..." : "Lưu giao dịch"}
       </button>
     </form>
   );

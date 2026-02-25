@@ -90,7 +90,7 @@ export function CampaignCreateModal({
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Tao campaign that bai");
+        throw new Error(data.error ?? "Tạo campaign thất bại");
       }
 
       const data = (await res.json()) as { id: string };
@@ -98,7 +98,7 @@ export function CampaignCreateModal({
       onCreated?.(data.id);
       router.push(`/campaigns/${data.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export function CampaignCreateModal({
                 Tao Campaign moi
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Nhap thong tin campaign de bat dau chay san pham
+                Nhập thông tin campaign để bắt đầu chạy sản phẩm
               </p>
             </div>
 
@@ -133,7 +133,7 @@ export function CampaignCreateModal({
                   className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="VD: Kem chong nang - TikTok"
+                  placeholder="VD: Kem chống nắng - TikTok"
                   required
                 />
               </div>

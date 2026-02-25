@@ -5,22 +5,14 @@ import { calculateReward } from "@/lib/learning/reward-score";
 import { updateLearningWeights } from "@/lib/learning/update-weights";
 import { analyzeAsset } from "@/lib/learning/win-loss-analysis";
 import { matchTikTokLink, extractPostId } from "@/lib/learning/match-tiktok-link";
-
-interface QuickLogInput {
-  tiktokUrl?: string;
-  assetId?: string; // Manual match nếu auto fail
-  views?: number;
-  likes?: number;
-  comments?: number;
-  shares?: number;
-  saves?: number;
-  orders?: number;
-  commissionAmount?: number;
-}
+import { validateBody } from "@/lib/validations/validate-body";
+import { quickLogSchema } from "@/lib/validations/schemas-content";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as QuickLogInput;
+    const validation = await validateBody(request, quickLogSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Resolve assetId
     let assetId = body.assetId;

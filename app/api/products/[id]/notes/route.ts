@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-
-interface NotesBody {
-  notes?: string;
-  rating?: number;
-  tags?: string[];
-  affiliateLink?: string;
-  affiliateLinkStatus?: string;
-}
+import { validateBody } from "@/lib/validations/validate-body";
+import { updateProductNotesSchema } from "@/lib/validations/schemas-content";
 
 export async function PATCH(
   request: NextRequest,
@@ -15,21 +9,10 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as NotesBody;
 
-    // Validate rating if provided
-    if (body.rating !== undefined) {
-      if (
-        !Number.isInteger(body.rating) ||
-        body.rating < 1 ||
-        body.rating > 5
-      ) {
-        return NextResponse.json(
-          { error: "Rating phải là số nguyên từ 1 đến 5", code: "INVALID_RATING" },
-          { status: 400 }
-        );
-      }
-    }
+    const validation = await validateBody(request, updateProductNotesSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Check product exists
     const existing = await prisma.product.findUnique({ where: { id } });

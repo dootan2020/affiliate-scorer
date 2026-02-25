@@ -76,7 +76,7 @@ export function CampaignContentList({
         }),
       });
 
-      if (!res.ok) throw new Error("Them bai viet that bai");
+      if (!res.ok) throw new Error("Thêm bài viết thất bại");
       const data = (await res.json()) as ContentPostData;
       setPosts((prev) => [...prev, data]);
       setFormUrl("");
@@ -97,7 +97,7 @@ export function CampaignContentList({
         body: JSON.stringify({ id: postId }),
       });
 
-      if (!res.ok) throw new Error("Cap nhat that bai");
+      if (!res.ok) throw new Error("Cập nhật thất bại");
       const updated = (await res.json()) as ContentPostData;
       setPosts((prev) =>
         prev.map((p) => (p.id === postId ? { ...p, ...updated } : p))
@@ -115,7 +115,7 @@ export function CampaignContentList({
       const res = await fetch(`/api/content-posts?id=${postId}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Xoa that bai");
+      if (!res.ok) throw new Error("Xóa thất bại");
       setPosts((prev) => prev.filter((p) => p.id !== postId));
     } catch {
       // silent fail
@@ -128,7 +128,7 @@ export function CampaignContentList({
     <div className="space-y-3">
       {posts.length === 0 && !showForm && (
         <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-          Chua co bai viet nao.
+          Chưa có bài viết nào.
         </p>
       )}
 
@@ -195,7 +195,7 @@ export function CampaignContentList({
                   onClick={() => handleDelete(post.id!)}
                   disabled={deletingId === post.id}
                   className="p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950 text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
-                  title="Xoa"
+                  title="Xóa"
                 >
                   {deletingId === post.id ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -14,10 +14,10 @@ export interface FinancialRecord {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  commission_received: "Hoa hong nhan",
-  other_income: "Thu khac",
-  ads_spend: "Chi quang cao",
-  other_cost: "Chi khac",
+  commission_received: "Hoa hồng nhận",
+  other_income: "Thu khác",
+  ads_spend: "Chi quảng cáo",
+  other_cost: "Chi khác",
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -61,11 +61,11 @@ export function FinancialRecordsTable({
         const data = await res.json();
         throw new Error(data.error);
       }
-      toast.success("Da xoa giao dich");
+      toast.success("Đã xóa giao dịch");
       onDeleted(id);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Loi khi xoa giao dich"
+        err instanceof Error ? err.message : "Lỗi khi xóa giao dịch"
       );
     } finally {
       setDeleting(null);
@@ -92,7 +92,7 @@ export function FinancialRecordsTable({
       ) : records.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Chua co giao dich trong thang nay
+            Chưa có giao dịch trong tháng này
           </p>
         </div>
       ) : (
@@ -151,7 +151,7 @@ export function FinancialRecordsTable({
                       onClick={() => handleDelete(record.id)}
                       disabled={deleting === record.id}
                       className="text-gray-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
-                      title="Xoa"
+                      title="Xóa"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { createContentPostSchema } from "@/lib/validations/schemas-campaigns";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -22,8 +24,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ data: posts });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi lay danh sach content posts:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi lay danh sach content posts:", error);
     return NextResponse.json(
       { error: message, code: "FETCH_ERROR" },
       { status: 500 }
@@ -31,31 +33,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-interface CreateContentPostBody {
-  url: string;
-  platform: string;
-  campaignId?: string;
-  productId?: string;
-  contentType?: string;
-  views?: number;
-  likes?: number;
-  comments?: number;
-  shares?: number;
-  notes?: string;
-  postedAt?: string;
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as CreateContentPostBody;
-
-    // Validate required fields
-    if (!body.url || !body.platform) {
-      return NextResponse.json(
-        { error: "url va platform la bat buoc", code: "MISSING_FIELDS" },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(request, createContentPostSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Parse postedAt if provided
     let postedAt: Date | null = null;
@@ -63,7 +45,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       postedAt = new Date(body.postedAt);
       if (isNaN(postedAt.getTime())) {
         return NextResponse.json(
-          { error: "postedAt khong hop le", code: "INVALID_DATE" },
+          { error: "postedAt không hợp lệ", code: "INVALID_DATE" },
           { status: 400 }
         );
       }
@@ -90,12 +72,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     return NextResponse.json(
-      { message: "Da tao content post", data: post },
+      { message: "Đã tạo content post", data: post },
       { status: 201 }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi tao content post:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi tao content post:", error);
     return NextResponse.json(
       { error: message, code: "CREATE_ERROR" },
       { status: 500 }

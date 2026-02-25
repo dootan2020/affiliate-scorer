@@ -46,12 +46,12 @@ export function WeeklyReportCard(): React.ReactElement {
   const fetchReport = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch("/api/ai/weekly-report");
-      if (!res.ok) throw new Error("Khong the tai bao cao");
+      if (!res.ok) throw new Error("Không thể tải báo cáo");
       const json = await res.json();
       setReport(json.data ?? null);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setLoading(false);
     }
@@ -65,12 +65,12 @@ export function WeeklyReportCard(): React.ReactElement {
     setGenerating(true);
     try {
       const res = await fetch("/api/ai/weekly-report", { method: "POST" });
-      if (!res.ok) throw new Error("Khong the tao bao cao");
+      if (!res.ok) throw new Error("Không thể tạo báo cáo");
       const json = await res.json();
       setReport(json.data ?? null);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setGenerating(false);
     }
@@ -98,7 +98,7 @@ export function WeeklyReportCard(): React.ReactElement {
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-blue-500" />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            {report ? `Bao cao tuan — ${formatDateRange(report.weekStart, report.weekEnd)}` : "Bao cao tuan"}
+            {report ? `Báo cáo tuần — ${formatDateRange(report.weekStart, report.weekEnd)}` : "Báo cáo tuần"}
           </span>
         </div>
         <button
@@ -107,7 +107,7 @@ export function WeeklyReportCard(): React.ReactElement {
           className="inline-flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 font-medium shadow-sm transition-all disabled:opacity-50"
         >
           <FileText className={`w-3.5 h-3.5 ${generating ? "animate-pulse" : ""}`} />
-          {generating ? "Dang tao..." : "Tao bao cao"}
+          {generating ? "Đang tạo..." : "Tạo báo cáo"}
         </button>
       </div>
 
@@ -119,7 +119,7 @@ export function WeeklyReportCard(): React.ReactElement {
             <BarChart3 className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Chua co bao cao. Bam &quot;Tao bao cao&quot; de bat dau.
+            Chưa có báo cáo. Bấm &quot;Tạo báo cáo&quot; để bắt đầu.
           </p>
         </div>
       ) : (
@@ -132,28 +132,28 @@ export function WeeklyReportCard(): React.ReactElement {
             </p>
             {data.campaigns.best && (
               <p className="text-emerald-600 dark:text-emerald-400">
-                Tot nhat: {data.campaigns.best.name} (ROAS {data.campaigns.best.roas.toFixed(1)}x, +{formatVND(data.campaigns.best.profit)})
+                Tốt nhất: {data.campaigns.best.name} (ROAS {data.campaigns.best.roas.toFixed(1)}x, +{formatVND(data.campaigns.best.profit)})
               </p>
             )}
             {data.campaigns.worst && (
               <p className="text-rose-600 dark:text-rose-400">
-                Te nhat: {data.campaigns.worst.name} (ROAS {data.campaigns.worst.roas.toFixed(1)}x, {formatVND(data.campaigns.worst.profit)})
+                Tệ nhất: {data.campaigns.worst.name} (ROAS {data.campaigns.worst.roas.toFixed(1)}x, {formatVND(data.campaigns.worst.profit)})
               </p>
             )}
           </div>
 
           {/* Financial */}
           <div className="space-y-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Tai chinh</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Tài chính</p>
             <p className="text-gray-600 dark:text-gray-400">
               Thu: {formatVND(data.financial.income)} | Chi: {formatVND(data.financial.expense)}
             </p>
             <p className={data.financial.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-rose-600 dark:text-rose-400 font-medium"}>
-              Lai rong: {data.financial.netProfit >= 0 ? "+" : ""}{formatVND(data.financial.netProfit)}
+              Lãi ròng: {data.financial.netProfit >= 0 ? "+" : ""}{formatVND(data.financial.netProfit)}
             </p>
             {data.financial.weekOverWeekChange !== null && (
               <p className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                So voi tuan truoc:
+                So với tuần trước:
                 {data.financial.weekOverWeekChange >= 0 ? (
                   <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                     +{Math.round(data.financial.weekOverWeekChange)}% <TrendingUp className="w-3 h-3" />
@@ -172,7 +172,7 @@ export function WeeklyReportCard(): React.ReactElement {
             <div className="space-y-1.5">
               <div className="flex items-center gap-1">
                 <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Goi y</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Gợi ý</p>
               </div>
               <ol className="list-decimal list-inside space-y-1 text-gray-600 dark:text-gray-400">
                 {data.suggestions.map((s, i) => (

@@ -11,10 +11,10 @@ interface ShopCreateModalProps {
 }
 
 const SAMPLE_POLICY_OPTIONS = [
-  { value: "", label: "-- Chon --" },
-  { value: "sends_free", label: "Gui free sample" },
+  { value: "", label: "-- Chọn --" },
+  { value: "sends_free", label: "Gửi free sample" },
   { value: "paid_sample", label: "Mua sample" },
-  { value: "no_sample", label: "Khong co sample" },
+  { value: "no_sample", label: "Không có sample" },
 ];
 
 function StarInput({
@@ -121,10 +121,10 @@ export function ShopCreateModal({
         onCreated(data.data.id);
       } else {
         const data = await res.json();
-        setError(data.error ?? "Loi khong xac dinh");
+        setError(data.error ?? "Lỗi không xác định");
       }
     } catch {
-      setError("Loi ket noi. Vui long thu lai.");
+      setError("Lỗi kết nối. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }

@@ -62,13 +62,13 @@ export function CampaignImportZone({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Loi nhan dang file");
+        throw new Error(data.error || "Lỗi nhận dạng file");
       }
 
       setDetection(data.data as DetectionData);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Loi khong xac dinh";
+        err instanceof Error ? err.message : "Lỗi không xác định";
       setImportError(message);
       toast.error(message);
       setImportFile(null);
@@ -96,7 +96,7 @@ export function CampaignImportZone({
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || "Loi import");
+          throw new Error(data.error || "Lỗi import");
         }
 
         setImportResult(data.data as ImportResult);
@@ -106,7 +106,7 @@ export function CampaignImportZone({
         onImportComplete?.();
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Loi khong xac dinh";
+          err instanceof Error ? err.message : "Lỗi không xác định";
         setImportError(message);
         toast.error(message);
       } finally {

@@ -1,3 +1,6 @@
+import type { JsonValue } from "@/app/generated/prisma/internal/prismaNamespace";
+import { parseDailyResults, parseChecklist } from "@/lib/utils/typed-json";
+
 interface BriefItem {
   priority: "urgent" | "opportunity" | "prepare" | "routine";
   icon: string;
@@ -5,29 +8,13 @@ interface BriefItem {
   actionHref: string;
 }
 
-interface DailyResultEntry {
-  date: string;
-  spend: number;
-  orders: number;
-  revenue: number;
-  clicks?: number;
-  notes?: string;
-}
-
-interface ChecklistItem {
-  label: string;
-  dueDay: number;
-  completed: boolean;
-  completedAt: string | null;
-}
-
 interface CampaignWithProduct {
   id: string;
   name: string;
   status: string;
   roas: number | null;
-  dailyResults: unknown;
-  checklist: unknown;
+  dailyResults: JsonValue;
+  checklist: JsonValue;
   startedAt: Date | null;
   product: { name: string } | null;
 }
@@ -41,8 +28,7 @@ export function analyzeCampaigns(
   const items: BriefItem[] = [];
 
   for (const campaign of campaigns) {
-    const results =
-      (campaign.dailyResults as unknown as DailyResultEntry[]) ?? [];
+    const results = parseDailyResults(campaign.dailyResults);
     const campaignHref = `/campaigns/${campaign.id}`;
 
     // URGENT: last 3 daily results all have spend > revenue
@@ -53,7 +39,7 @@ export function analyzeCampaigns(
         items.push({
           priority: "urgent",
           icon: "AlertTriangle",
-          text: `${campaign.name}: 3 ngay lien tuc lo — nen tam dung`,
+          text: `${campaign.name}: 3 ngày liên tục lỗ — nên tạm dừng`,
           actionHref: campaignHref,
         });
       }
@@ -68,7 +54,7 @@ export function analyzeCampaigns(
       items.push({
         priority: "opportunity",
         icon: "TrendingUp",
-        text: `${campaign.name}: ROAS ${campaign.roas} — co the tang budget`,
+        text: `${campaign.name}: ROAS ${campaign.roas} — có thể tăng budget`,
         actionHref: campaignHref,
       });
     }
@@ -79,14 +65,13 @@ export function analyzeCampaigns(
       items.push({
         priority: "routine",
         icon: "ClipboardList",
-        text: `${campaign.name}: chua nhap ket qua hom qua`,
+        text: `${campaign.name}: chưa nhập kết quả hôm qua`,
         actionHref: `${campaignHref}#daily-results`,
       });
     }
 
     // Due checklist items
-    const checklist =
-      (campaign.checklist as unknown as ChecklistItem[]) ?? [];
+    const checklist = parseChecklist(campaign.checklist);
     if (campaign.startedAt) {
       const startDate = new Date(campaign.startedAt);
       const daysSinceStart = Math.floor(
@@ -98,7 +83,7 @@ export function analyzeCampaigns(
           items.push({
             priority: "routine",
             icon: "CheckSquare",
-            text: `${campaign.name}: "${item.label}" da den han`,
+            text: `${campaign.name}: "${item.label}" đã đến hạn`,
             actionHref: campaignHref,
           });
         }

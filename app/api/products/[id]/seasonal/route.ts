@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { updateSeasonalSchema } from "@/lib/validations/schemas-content";
 
 /** B4: Seasonal tag presets */
 const SEASONAL_PRESETS: Record<string, { start: string; end: string; label: string }> = {
@@ -13,20 +15,16 @@ const SEASONAL_PRESETS: Record<string, { start: string; end: string; label: stri
   christmas: { start: "12-01", end: "12-25", label: "Giáng sinh" },
 };
 
-interface SeasonalBody {
-  tag: string | null;
-  preset?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as SeasonalBody;
+
+    const validation = await validateBody(request, updateSeasonalSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Clear seasonal tag
     if (body.tag === null) {

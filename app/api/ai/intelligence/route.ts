@@ -12,7 +12,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     if (!productId) {
       return NextResponse.json(
-        { error: "productId la bat buoc" },
+        { error: "productId là bắt buộc" },
         { status: 400 }
       );
     }
@@ -23,7 +23,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     if (!product) {
       return NextResponse.json(
-        { error: "Khong tim thay san pham" },
+        { error: "Không tìm thấy sản phẩm" },
         { status: 404 }
       );
     }
@@ -53,8 +53,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi lay AI intelligence:", error);
+      error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi lấy AI intelligence:", error);
     return NextResponse.json(
       { error: message, code: "INTELLIGENCE_ERROR" },
       { status: 500 }

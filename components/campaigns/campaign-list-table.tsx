@@ -39,7 +39,7 @@ export function CampaignListTable({
           <span className="text-2xl">📊</span>
         </div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-          Chua co campaign nao
+          Chưa có campaign nào
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
           Tao campaign dau tien de bat dau theo doi hieu qua quang cao.

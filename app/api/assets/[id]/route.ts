@@ -1,8 +1,8 @@
 // Phase 3: PATCH /api/assets/[id] — Update asset status, published_url
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-
-const VALID_STATUSES = ["draft", "produced", "rendered", "published", "logged", "archived", "failed"];
+import { validateBody } from "@/lib/validations/validate-body";
+import { updateAssetSchema } from "@/lib/validations/schemas-content";
 
 export async function PATCH(
   request: Request,
@@ -10,22 +10,10 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as {
-      status?: string;
-      publishedUrl?: string;
-      postId?: string;
-      scriptText?: string;
-      captionText?: string;
-      ctaText?: string;
-    };
 
-    // Validate status
-    if (body.status && !VALID_STATUSES.includes(body.status)) {
-      return NextResponse.json(
-        { error: `Status không hợp lệ. Cho phép: ${VALID_STATUSES.join(", ")}` },
-        { status: 400 },
-      );
-    }
+    const validation = await validateBody(request, updateAssetSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     const existing = await prisma.contentAsset.findUnique({ where: { id } });
     if (!existing) {

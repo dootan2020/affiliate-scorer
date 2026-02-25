@@ -1,19 +1,16 @@
 // Phase 3: POST /api/compliance/check — Check text cho TikTok VN rules
 import { NextResponse } from "next/server";
 import { checkCompliance } from "@/lib/content/compliance";
+import { validateBody } from "@/lib/validations/validate-body";
+import { complianceCheckSchema } from "@/lib/validations/schemas-content";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as { text?: string };
+    const validation = await validateBody(request, complianceCheckSchema);
+    if (validation.error) return validation.error;
+    const { text } = validation.data;
 
-    if (!body.text?.trim()) {
-      return NextResponse.json(
-        { error: "Thiếu text cần kiểm tra" },
-        { status: 400 },
-      );
-    }
-
-    const result = checkCompliance(body.text);
+    const result = checkCompliance(text);
 
     return NextResponse.json({ data: result });
   } catch (error) {

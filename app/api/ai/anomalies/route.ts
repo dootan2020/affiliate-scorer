@@ -8,8 +8,8 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ data: anomalies });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi phat hien anomalies:", error);
+      error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi phát hiện anomalies:", error);
     return NextResponse.json(
       { error: message, code: "ANOMALIES_ERROR" },
       { status: 500 }

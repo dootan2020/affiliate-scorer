@@ -97,16 +97,16 @@ async function getTopNewProducts(start: Date, end: Date): Promise<WeeklyReportDa
 
 function buildSuggestions(c: WeeklyReportData["campaigns"], f: WeeklyReportData["financial"]): string[] {
   const s: string[] = [];
-  if (f.profit < 0) s.push("Loi nhuan am tuan nay — uu tien giam chi tieu va ngung chien dich ROAS < 1");
+  if (f.profit < 0) s.push("Lợi nhuận âm tuần này — ưu tiên giảm chi tiêu và ngừng chiến dịch ROAS < 1");
   if (f.vsLastWeek !== null && f.vsLastWeek < -20)
-    s.push("Loi nhuan giam manh so voi tuan truoc — xem lai chien dich nao gay lo");
+    s.push("Lợi nhuận giảm mạnh so với tuần trước — xem lại chiến dịch nào gây lỗ");
   if (c.active === 0)
-    s.push("Khong co chien dich dang chay — bat dau chien dich moi voi san pham diem cao");
+    s.push("Không có chiến dịch đang chạy — bắt đầu chiến dịch mới với sản phẩm điểm cao");
   if (c.best && c.best.roas > 2)
-    s.push(`"${c.best.name}" chay tot (ROAS ${c.best.roas.toFixed(1)}x) — tang budget`);
+    s.push(`"${c.best.name}" chạy tốt (ROAS ${c.best.roas.toFixed(1)}x) — tăng budget`);
   if (c.worst && c.worst.profit < 0)
-    s.push(`"${c.worst.name}" dang lo — giam budget hoac dung`);
-  if (s.length === 0) s.push("Hoat dong on dinh — tiep tuc theo doi va toi uu");
+    s.push(`"${c.worst.name}" đang lỗ — giảm budget hoặc dừng`);
+  if (s.length === 0) s.push("Hoạt động ổn định — tiếp tục theo dõi và tối ưu");
   return s.slice(0, 4);
 }
 

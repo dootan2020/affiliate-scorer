@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { createFinancialSchema } from "@/lib/validations/schemas-financial";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -28,9 +30,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       where.type = type;
     }
 
+    const limit = Math.min(500, parseInt(searchParams.get("limit") || "200", 10));
+
     const records = await prisma.financialRecord.findMany({
       where,
       orderBy: { date: "desc" },
+      take: limit,
     });
 
     return NextResponse.json({ data: records });
@@ -44,35 +49,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-interface CreateFinancialBody {
-  type: string;
-  amount: number;
-  source: string;
-  productId?: string;
-  campaignId?: string;
-  date: string;
-  notes?: string;
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as CreateFinancialBody;
-
-    // Validate required fields
-    if (!body.type || body.amount === undefined || !body.source || !body.date) {
-      return NextResponse.json(
-        { error: "type, amount, source, và date là bắt buộc", code: "MISSING_FIELDS" },
-        { status: 400 }
-      );
-    }
-
-    // Validate amount is a number
-    if (typeof body.amount !== "number" || isNaN(body.amount)) {
-      return NextResponse.json(
-        { error: "amount phải là số hợp lệ", code: "INVALID_AMOUNT" },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(request, createFinancialSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Validate date
     const parsedDate = new Date(body.date);

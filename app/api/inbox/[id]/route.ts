@@ -1,6 +1,8 @@
 // Phase 2: GET/PUT /api/inbox/[id] — chi tiết + cập nhật product identity
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { updateInboxItemSchema } from "@/lib/validations/schemas-content";
 
 export async function GET(
   _request: NextRequest,
@@ -48,7 +50,10 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = await request.json();
+
+    const validation = await validateBody(request, updateInboxItemSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Chỉ cho phép update các fields sau
     const allowedFields = [
@@ -58,15 +63,16 @@ export async function PUT(
     ];
 
     const updateData: Record<string, unknown> = {};
+    const rawBody = body as Record<string, unknown>;
     for (const field of allowedFields) {
-      if (field in body) {
-        updateData[field] = body[field];
+      if (field in rawBody) {
+        updateData[field] = rawBody[field];
       }
     }
 
     // Nếu có metadata mới → chuyển state sang enriched (trừ khi đã cao hơn)
     const hasMetadata = ["title", "shopName", "category", "price", "commissionRate"].some(
-      (f) => f in body && body[f] !== null && body[f] !== "",
+      (f) => f in rawBody && rawBody[f] !== null && rawBody[f] !== "",
     );
 
     if (hasMetadata) {

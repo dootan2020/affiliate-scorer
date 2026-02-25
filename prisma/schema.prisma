@@ -150,6 +150,7 @@ model Feedback {
   @@index([productId])
   @@index([overallSuccess])
   @@index([feedbackDate])
+  @@index([campaignId])
 }
 
 model LearningLog {
@@ -292,8 +293,9 @@ model Campaign {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  feedbacks    Feedback[]
-  contentPosts ContentPost[]
+  feedbacks        Feedback[]
+  contentPosts     ContentPost[]
+  financialRecords FinancialRecord[]
 
   @@index([productId])
   @@index([platform])
@@ -361,22 +363,24 @@ model Shop {
 }
 
 model FinancialRecord {
-  id          String   @id @default(cuid())
-  type        String   // "commission_received" | "ads_spend" | "other_cost"
+  id          String    @id @default(cuid())
+  type        String    // "commission_received" | "ads_spend" | "other_cost"
   amount      Float
-  currency    String   @default("VND")
-  source      String   // "tiktok_shop" | "shopee" | "fb_ads" | ...
+  currency    String    @default("VND")
+  source      String    // "tiktok_shop" | "shopee" | "fb_ads" | ...
   referenceId String?
   productId   String?
   campaignId  String?
-  date        DateTime @db.Date
+  campaign    Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  date        DateTime  @db.Date
   notes       String?
   metadata    Json?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([type])
   @@index([date])
   @@index([source])
+  @@index([campaignId, type, date])
 }
 
 model CalendarEvent {

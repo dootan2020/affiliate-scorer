@@ -26,7 +26,7 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ data: imports });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Loi khong xac dinh";
+      error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("[import/history] Error:", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

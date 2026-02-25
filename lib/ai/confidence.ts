@@ -20,7 +20,7 @@ export interface ConfidenceLevel {
   nextLevel: { label: string; needs: string[] } | null;
 }
 
-const LABELS = ["Co ban", "So khoi", "Trung binh", "Cao", "Chuyen gia"] as const;
+const LABELS = ["Cơ bản", "Sơ khởi", "Trung bình", "Cao", "Chuyên gia"] as const;
 
 const THRESHOLDS = [15, 30, 55, 75] as const;
 
@@ -52,15 +52,15 @@ function buildNextLevel(
   if (level >= 4) return null;
 
   const needs: string[] = [];
-  if (metrics.productsCount < 50) needs.push(`Them ${50 - metrics.productsCount} san pham`);
-  if (metrics.productsWithNotes < 10) needs.push(`Ghi note cho ${10 - metrics.productsWithNotes} san pham`);
-  if (metrics.campaignsCompleted < 5) needs.push(`Hoan thanh ${5 - metrics.campaignsCompleted} chien dich`);
-  if (metrics.financialRecords < 20) needs.push(`Them ${20 - metrics.financialRecords} giao dich tai chinh`);
-  if (metrics.contentPosts < 5) needs.push(`Them ${5 - metrics.contentPosts} bai dang content`);
-  if (metrics.shopsRated < 5) needs.push(`Danh gia ${5 - metrics.shopsRated} shop`);
-  if (metrics.uploadsCount < 10) needs.push(`Upload ${10 - metrics.uploadsCount} file du lieu`);
+  if (metrics.productsCount < 50) needs.push(`Thêm ${50 - metrics.productsCount} sản phẩm`);
+  if (metrics.productsWithNotes < 10) needs.push(`Ghi note cho ${10 - metrics.productsWithNotes} sản phẩm`);
+  if (metrics.campaignsCompleted < 5) needs.push(`Hoàn thành ${5 - metrics.campaignsCompleted} chiến dịch`);
+  if (metrics.financialRecords < 20) needs.push(`Thêm ${20 - metrics.financialRecords} giao dịch tài chính`);
+  if (metrics.contentPosts < 5) needs.push(`Thêm ${5 - metrics.contentPosts} bài đăng content`);
+  if (metrics.shopsRated < 5) needs.push(`Đánh giá ${5 - metrics.shopsRated} shop`);
+  if (metrics.uploadsCount < 10) needs.push(`Upload ${10 - metrics.uploadsCount} file dữ liệu`);
 
-  return { label: LABELS[level + 1] ?? "Chuyen gia", needs: needs.slice(0, 3) };
+  return { label: LABELS[level + 1] ?? "Chuyên gia", needs: needs.slice(0, 3) };
 }
 
 export async function calculateConfidence(): Promise<ConfidenceLevel> {

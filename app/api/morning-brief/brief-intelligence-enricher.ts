@@ -63,7 +63,7 @@ export async function getNewProductItems(
     items.push({
       priority: "routine",
       icon: "Sparkles",
-      text: `${newProducts.length} SP moi: ${productNames}`,
+      text: `${newProducts.length} SP mới: ${productNames}`,
       actionHref: "/products?sort=newest",
     });
   }

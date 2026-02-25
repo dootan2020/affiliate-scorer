@@ -58,7 +58,7 @@ function generateLessons(factors: AnalysisFactor[], verdict: string): string[] {
 
   if (verdict === "profitable" && positives.length > 0) {
     const combo = positives.map((f) => f.factor).join(" + ");
-    lessons.push(`Combo chien thang: ${combo}`);
+    lessons.push(`Combo chiến thắng: ${combo}`);
   }
 
   if (verdict === "loss" && negatives.length > 0) {
@@ -68,18 +68,18 @@ function generateLessons(factors: AnalysisFactor[], verdict: string): string[] {
   }
 
   if (verdict === "break_even") {
-    lessons.push("Chien dich hoa von — can toi uu them content hoac budget");
+    lessons.push("Chiến dịch hòa vốn — cần tối ưu thêm content hoặc budget");
   }
 
   if (factors.some((f) => f.factor === "Timing" && f.impact === "positive")) {
-    lessons.push("Timing gan su kien sale giup tang hieu qua");
+    lessons.push("Timing gần sự kiện sale giúp tăng hiệu quả");
   }
 
-  if (factors.some((f) => f.factor === "Canh tranh" && f.impact === "negative")) {
-    lessons.push("Qua nhieu KOL canh tranh — chon san pham it doi thu hon");
+  if (factors.some((f) => f.factor === "Cạnh tranh" && f.impact === "negative")) {
+    lessons.push("Quá nhiều KOL cạnh tranh — chọn sản phẩm ít đối thủ hơn");
   }
 
-  return lessons.length > 0 ? lessons : ["Chua du du lieu de rut ra bai hoc cu the"];
+  return lessons.length > 0 ? lessons : ["Chưa đủ dữ liệu để rút ra bài học cụ thể"];
 }
 
 export async function analyzeWinLoss(campaignId: string): Promise<WinLossResult | null> {
@@ -107,10 +107,10 @@ export async function analyzeWinLoss(campaignId: string): Promise<WinLossResult 
         value: product.category,
         impact: diff > 0.5 ? "positive" : diff < -0.5 ? "negative" : "neutral",
         detail: diff > 0.5
-          ? `ROAS cao hon trung binh category (${catRoas.toFixed(1)}x)`
+          ? `ROAS cao hơn trung bình category (${catRoas.toFixed(1)}x)`
           : diff < -0.5
-            ? `ROAS thap hon trung binh category (${catRoas.toFixed(1)}x)`
-            : `ROAS gan trung binh category (${catRoas.toFixed(1)}x)`,
+            ? `ROAS thấp hơn trung bình category (${catRoas.toFixed(1)}x)`
+            : `ROAS gần trung bình category (${catRoas.toFixed(1)}x)`,
       });
     }
 
@@ -119,26 +119,26 @@ export async function analyzeWinLoss(campaignId: string): Promise<WinLossResult 
     if (priceRange) {
       const inRange = product.price >= priceRange.min && product.price <= priceRange.max;
       factors.push({
-        factor: "Gia san pham",
+        factor: "Giá sản phẩm",
         value: `${Math.round(product.price / 1000)}K VND`,
         impact: inRange ? "positive" : "negative",
         detail: inRange
-          ? `Gia nam trong khoang thanh cong (${Math.round(priceRange.min / 1000)}K-${Math.round(priceRange.max / 1000)}K)`
-          : `Gia ngoai khoang thanh cong (${Math.round(priceRange.min / 1000)}K-${Math.round(priceRange.max / 1000)}K)`,
+          ? `Giá nằm trong khoảng thành công (${Math.round(priceRange.min / 1000)}K-${Math.round(priceRange.max / 1000)}K)`
+          : `Giá ngoài khoảng thành công (${Math.round(priceRange.min / 1000)}K-${Math.round(priceRange.max / 1000)}K)`,
       });
     }
 
     // 4. Competition
     const kol = product.totalKOL ?? 0;
     factors.push({
-      factor: "Canh tranh",
+      factor: "Cạnh tranh",
       value: `${kol} KOL`,
       impact: kol < 20 ? "positive" : kol > 60 ? "negative" : "neutral",
       detail: kol < 20
-        ? "It canh tranh — co hoi tot"
+        ? "Ít cạnh tranh — cơ hội tốt"
         : kol > 60
-          ? "Qua nhieu KOL — thi truong bao hoa"
-          : "Muc canh tranh trung binh",
+          ? "Quá nhiều KOL — thị trường bão hòa"
+          : "Mức cạnh tranh trung bình",
     });
   }
 
@@ -150,7 +150,7 @@ export async function analyzeWinLoss(campaignId: string): Promise<WinLossResult 
       factor: "Platform",
       value: campaign.platform,
       impact: diff > 0.3 ? "positive" : diff < -0.3 ? "negative" : "neutral",
-      detail: `ROAS ${campaign.platform}: ${(campaign.roas ?? 0).toFixed(1)}x vs trung binh ${platRoas.toFixed(1)}x`,
+      detail: `ROAS ${campaign.platform}: ${(campaign.roas ?? 0).toFixed(1)}x vs trung bình ${platRoas.toFixed(1)}x`,
     });
   }
 
@@ -161,7 +161,7 @@ export async function analyzeWinLoss(campaignId: string): Promise<WinLossResult 
       factor: "Timing",
       value: eventName,
       impact: campaign.verdict === "profitable" ? "positive" : "neutral",
-      detail: `Chay gan su kien "${eventName}"`,
+      detail: `Chạy gần sự kiện "${eventName}"`,
     });
   }
 
@@ -174,7 +174,7 @@ export async function analyzeWinLoss(campaignId: string): Promise<WinLossResult 
       factor: "Content",
       value: topType,
       impact: totalViews > 1000 ? "positive" : totalViews > 0 ? "neutral" : "negative",
-      detail: `${types.length} bai dang, ${totalViews.toLocaleString()} luot xem`,
+      detail: `${types.length} bài đăng, ${totalViews.toLocaleString()} lượt xem`,
     });
   }
 

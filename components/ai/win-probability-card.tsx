@@ -11,18 +11,13 @@ interface ScoreRow {
 }
 
 interface WinProbabilityData {
-  totalScore: number;
-  maxScore: number;
-  percent: number;
-  breakdown: {
-    market: { score: number; max: number };
-    fit: { score: number; max: number };
-    timing: { score: number; max: number };
-    risk: { score: number; max: number };
-  };
+  total: number;
+  market: number;
+  personalFit: number;
+  timing: number;
+  risk: number;
   insights: string[];
   confidenceLevel: number;
-  campaignCount: number;
 }
 
 interface WinProbabilityCardProps {
@@ -51,11 +46,11 @@ export function WinProbabilityCard({ productId }: WinProbabilityCardProps): Reac
     async function fetchData(): Promise<void> {
       try {
         const res = await fetch(`/api/ai/intelligence?productId=${productId}`);
-        if (!res.ok) throw new Error("Khong the tai du lieu");
+        if (!res.ok) throw new Error("Không thể tải dữ liệu");
         const json = await res.json();
         if (!cancelled) setData(json.data?.winProbability ?? null);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+        if (!cancelled) setError(err instanceof Error ? err.message : "Lỗi không xác định");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -82,20 +77,20 @@ export function WinProbabilityCard({ productId }: WinProbabilityCardProps): Reac
     return (
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {error ?? "Khong co du lieu Win Probability"}
+          {error ?? "Không có dữ liệu Win Probability"}
         </p>
       </div>
     );
   }
 
   const rows: ScoreRow[] = [
-    { label: "Thi truong", score: data.breakdown.market.score, max: data.breakdown.market.max, icon: <BarChart3 className="w-4 h-4 text-blue-500" /> },
-    { label: "Phu hop ban", score: data.breakdown.fit.score, max: data.breakdown.fit.max, icon: <User className="w-4 h-4 text-purple-500" /> },
-    { label: "Timing", score: data.breakdown.timing.score, max: data.breakdown.timing.max, icon: <Calendar className="w-4 h-4 text-cyan-500" /> },
-    { label: "Rui ro", score: data.breakdown.risk.score, max: data.breakdown.risk.max, icon: <AlertTriangle className="w-4 h-4 text-amber-500" /> },
+    { label: "Thị trường", score: data.market, max: 40, icon: <BarChart3 className="w-4 h-4 text-blue-500" /> },
+    { label: "Phù hợp bạn", score: data.personalFit, max: 30, icon: <User className="w-4 h-4 text-purple-500" /> },
+    { label: "Timing", score: data.timing, max: 15, icon: <Calendar className="w-4 h-4 text-cyan-500" /> },
+    { label: "Rủi ro", score: data.risk, max: 15, icon: <AlertTriangle className="w-4 h-4 text-amber-500" /> },
   ];
 
-  const pct = Math.round(data.percent);
+  const pct = Math.round(data.total);
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-5">
@@ -156,7 +151,7 @@ export function WinProbabilityCard({ productId }: WinProbabilityCardProps): Reac
       <div className="flex items-center gap-2 pt-1 border-t border-gray-100 dark:border-slate-800">
         <Brain className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
         <span className="text-xs text-gray-400 dark:text-gray-500">
-          AI Level: {data.confidenceLevel} (dua tren {data.campaignCount} campaigns)
+          AI Level: {data.confidenceLevel}
         </span>
       </div>
     </div>

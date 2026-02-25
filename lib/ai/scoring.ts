@@ -269,18 +269,15 @@ export async function scoreAllProducts(): Promise<ScoredProduct[]> {
 }
 
 async function updateRankings(): Promise<void> {
-  const all = await prisma.product.findMany({
-    where: { aiScore: { not: null } },
-    orderBy: { aiScore: "desc" },
-    select: { id: true },
-  });
-
-  await prisma.$transaction(
-    all.map((p: { id: string }, index: number) =>
-      prisma.product.update({
-        where: { id: p.id },
-        data: { aiRank: index + 1 },
-      }),
-    ),
-  );
+  // Dùng raw SQL với ROW_NUMBER() thay vì N updates riêng lẻ
+  await prisma.$executeRaw`
+    UPDATE "Product"
+    SET "aiRank" = ranked.rn
+    FROM (
+      SELECT id, ROW_NUMBER() OVER (ORDER BY "aiScore" DESC) as rn
+      FROM "Product"
+      WHERE "aiScore" IS NOT NULL
+    ) ranked
+    WHERE "Product".id = ranked.id
+  `;
 }

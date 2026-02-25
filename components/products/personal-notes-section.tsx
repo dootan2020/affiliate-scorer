@@ -43,10 +43,10 @@ export function PersonalNotesSection({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setLastSaved(new Date());
-      toast.success("Da luu ghi chu");
+      toast.success("Đã lưu ghi chú");
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Loi khi luu ghi chu"
+        err instanceof Error ? err.message : "Lỗi khi lưu ghi chú"
       );
     } finally {
       setSaving(false);
@@ -84,7 +84,7 @@ export function PersonalNotesSection({
       <div className="flex items-center gap-2 mb-4">
         <Pencil className="w-5 h-5 text-blue-500" />
         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          Ghi chu cua toi
+          Ghi chú của tôi
         </h3>
       </div>
 
@@ -93,14 +93,14 @@ export function PersonalNotesSection({
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         rows={3}
-        placeholder="VD: Ship cham 5 ngay, khach hay hoi ve size, shop tra loi nhanh..."
+        placeholder="VD: Ship chậm 5 ngày, khách hay hỏi về size, shop trả lời nhanh..."
         className="w-full rounded-xl border border-gray-200 dark:border-slate-700 dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
       />
 
       {/* Star Rating */}
       <div className="mt-4 flex items-center gap-2">
         <span className="text-xs text-gray-500 dark:text-gray-400">
-          Danh gia ca nhan:
+          Đánh giá cá nhân:
         </span>
         <div className="flex items-center gap-0.5">
           {[1, 2, 3, 4, 5].map((value) => (
@@ -146,7 +146,7 @@ export function PersonalNotesSection({
                 type="button"
                 onClick={() => handleRemoveTag(tag)}
                 className="text-blue-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors"
-                aria-label={`Xoa tag ${tag}`}
+                aria-label={`Xóa tag ${tag}`}
               >
                 <X className="w-3 h-3" />
               </button>
@@ -169,7 +169,7 @@ export function PersonalNotesSection({
               className="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 dark:border-slate-600 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
             >
               <Plus className="w-3 h-3" />
-              Them tag
+              Thêm tag
             </button>
           )}
         </div>
@@ -182,11 +182,11 @@ export function PersonalNotesSection({
           disabled={saving}
           className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? "Dang luu..." : "Luu"}
+          {saving ? "Đang lưu..." : "Lưu"}
         </button>
         {lastSaved && (
           <span className="text-xs text-gray-400 dark:text-gray-500">
-            Cap nhat: {lastSaved.toLocaleDateString("vi-VN")}
+            Cập nhật: {lastSaved.toLocaleDateString("vi-VN")}
           </span>
         )}
       </div>

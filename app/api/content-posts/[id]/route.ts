@@ -26,7 +26,7 @@ export async function PATCH(
     const existing = await prisma.contentPost.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
-        { error: "Khong tim thay content post", code: "NOT_FOUND" },
+        { error: "Không tìm thấy content post", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
@@ -51,7 +51,7 @@ export async function PATCH(
         const parsed = new Date(body.postedAt);
         if (isNaN(parsed.getTime())) {
           return NextResponse.json(
-            { error: "postedAt khong hop le", code: "INVALID_DATE" },
+            { error: "postedAt không hợp lệ", code: "INVALID_DATE" },
             { status: 400 }
           );
         }
@@ -69,12 +69,12 @@ export async function PATCH(
     });
 
     return NextResponse.json({
-      message: "Da cap nhat content post",
+      message: "Đã cập nhật content post",
       data: updated,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi cap nhat content post:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi cap nhat content post:", error);
     return NextResponse.json(
       { error: message, code: "UPDATE_ERROR" },
       { status: 500 }
@@ -92,17 +92,17 @@ export async function DELETE(
     const existing = await prisma.contentPost.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
-        { error: "Khong tim thay content post", code: "NOT_FOUND" },
+        { error: "Không tìm thấy content post", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
     await prisma.contentPost.delete({ where: { id } });
 
-    return NextResponse.json({ message: "Da xoa content post" });
+    return NextResponse.json({ message: "Đã xóa content post" });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi xoa content post:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi xoa content post:", error);
     return NextResponse.json(
       { error: message, code: "DELETE_ERROR" },
       { status: 500 }

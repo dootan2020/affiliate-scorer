@@ -23,26 +23,26 @@ function scoreMarket(p: ProductWithRelations, ins: string[]): number {
   const rate = p.commissionRate;
   const commPts = rate >= 10 ? 10 : rate >= 7 ? 7 : rate >= 4 ? 4 : 2;
   t += commPts;
-  ins.push(`Hoa hong ${rate}% → +${commPts} diem`);
+  ins.push(`Hoa hồng ${rate}% → +${commPts} điểm`);
 
   const s7d = p.sales7d ?? 0;
   const sTotal = p.salesTotal ?? 1;
   const ratio = sTotal > 0 ? s7d / sTotal : 0;
   const momPts = ratio > 0.1 ? 10 : ratio > 0.05 ? 7 : ratio > 0.02 ? 4 : 2;
   t += momPts;
-  ins.push(`Da ban moi (${(ratio * 100).toFixed(1)}%) → +${momPts} diem`);
+  ins.push(`Đã bán mới (${(ratio * 100).toFixed(1)}%) → +${momPts} điểm`);
 
   const price = p.price;
   const pricePts = price >= 100_000 && price <= 500_000 ? 10
     : price >= 50_000 && price < 100_000 ? 6
     : price > 500_000 && price <= 1_000_000 ? 5 : 2;
   t += pricePts;
-  ins.push(`Gia ${Math.round(price / 1000)}K → +${pricePts} diem`);
+  ins.push(`Giá ${Math.round(price / 1000)}K → +${pricePts} điểm`);
 
   const kol = p.totalKOL ?? 0;
   const kolPts = kol < 10 ? 10 : kol < 30 ? 7 : kol < 60 ? 4 : 2;
   t += kolPts;
-  ins.push(`${kol} KOL canh tranh → +${kolPts} diem`);
+  ins.push(`${kol} KOL cạnh tranh → +${kolPts} điểm`);
   return Math.min(40, t);
 }
 
@@ -72,7 +72,7 @@ async function scorePersonalFit(
     const prices = profCamps.filter((c) => c.product).map((c) => c.product!.price);
     if (prices.length > 0) {
       const inRange = p.price >= Math.min(...prices) * 0.8 && p.price <= Math.max(...prices) * 1.2;
-      if (inRange) { t += 8; ins.push("Gia nam trong sweet spot cua ban → +8"); }
+      if (inRange) { t += 8; ins.push("Giá nằm trong sweet spot của bạn → +8"); }
     }
   }
 
@@ -85,7 +85,7 @@ async function scorePersonalFit(
   });
   if (topContent.length > 0 && topContent[0].contentType) {
     t += 5;
-    ins.push(`Content thanh cong nhat: "${topContent[0].contentType}" → +5`);
+    ins.push(`Content thành công nhất: "${topContent[0].contentType}" → +5`);
   }
   if (cl < 3) return Math.max(0, Math.min(30, t));
 
@@ -106,18 +106,18 @@ async function scoreTiming(p: ProductWithRelations, ins: string[]): Promise<numb
     where: { startDate: { gte: now, lte: in14d } },
     select: { name: true },
   });
-  if (event) { t += 5; ins.push(`Su kien "${event.name}" sap dien ra → +5`); }
+  if (event) { t += 5; ins.push(`Sự kiện "${event.name}" sắp diễn ra → +5`); }
 
   const lc = await getProductLifecycle(p.id);
   const lcPts = lc.stage === "rising" ? 5 : lc.stage === "hot" ? 3
     : lc.stage === "peak" ? 1 : lc.stage === "declining" ? -3 : 0;
   t += lcPts;
-  if (lcPts !== 0) ins.push(`Vong doi: ${lc.stage} → ${lcPts > 0 ? "+" : ""}${lcPts}`);
+  if (lcPts !== 0) ins.push(`Vòng đời: ${lc.stage} → ${lcPts > 0 ? "+" : ""}${lcPts}`);
 
   const g = p.salesGrowth7d ?? 0;
   const gPts = g > 50 ? 5 : g > 20 ? 3 : g < 0 ? -2 : 0;
   t += gPts;
-  if (gPts !== 0) ins.push(`Tang truong 7d: ${g.toFixed(0)}% → ${gPts > 0 ? "+" : ""}${gPts}`);
+  if (gPts !== 0) ins.push(`Tăng trưởng 7d: ${g.toFixed(0)}% → ${gPts > 0 ? "+" : ""}${gPts}`);
   return Math.max(0, Math.min(15, t));
 }
 
@@ -134,13 +134,13 @@ async function scoreRisk(p: ProductWithRelations, ins: string[]): Promise<number
     const cur = snaps[0].totalKOL ?? 0;
     if (prev > 0 && (cur - prev) / prev > 0.5) {
       d += 5;
-      ins.push("KOL tang dot bien > 50% → -5 (rui ro bao hoa)");
+      ins.push("KOL tăng đột biến > 50% → -5 (rủi ro bão hòa)");
     }
   }
 
   if ((p.shopRating ?? 5) < 3) {
     d += 5;
-    ins.push(`Shop rating thap (${p.shopRating}) → -5`);
+    ins.push(`Shop rating thấp (${p.shopRating}) → -5`);
   }
 
   const catProds = await prisma.product.findMany({
@@ -166,7 +166,7 @@ async function scoreRisk(p: ProductWithRelations, ins: string[]): Promise<number
     });
     if (tot >= 3 && dec / tot > 0.6) {
       d += 5;
-      ins.push("Category dang co xu huong giam → -5");
+      ins.push("Category đang có xu hướng giảm → -5");
     }
   }
   return Math.min(15, d);

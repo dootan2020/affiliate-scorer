@@ -69,7 +69,7 @@ export async function GET(): Promise<NextResponse> {
       items.push({
         priority: "prepare",
         icon: "Calendar",
-        text: `${event.name} trong ${daysUntil} ngay — chuan bi content`,
+        text: `${event.name} trong ${daysUntil} ngày — chuẩn bị content`,
         actionHref: "/calendar",
       });
     }
@@ -162,8 +162,8 @@ export async function GET(): Promise<NextResponse> {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi tao morning brief:", error);
+      error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi tạo morning brief:", error);
     return NextResponse.json(
       { error: message, code: "BRIEF_ERROR" },
       { status: 500 }

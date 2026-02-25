@@ -80,11 +80,11 @@ export async function processImport(
 
   if (PRODUCT_REDIRECT_TYPES.includes(detectedType)) {
     throw new RedirectError(
-      `File "${file.name}" la du lieu san pham (${detectedType}). Dung /api/upload/products.`
+      `File "${file.name}" là dữ liệu sản phẩm (${detectedType}). Dùng /api/upload/products.`
     );
   }
   if (UNRESOLVABLE_TYPES.includes(detectedType) && !fileTypeOverride) {
-    throw new DetectionError("Khong nhan dang duoc loai file. Chon fileType roi thu lai.");
+    throw new DetectionError("Không nhận dạng được loại file. Chọn fileType rồi thử lại.");
   }
 
   const dataImport = await prisma.dataImport.create({
@@ -142,8 +142,8 @@ export async function processImport(
 
     const typeLabel = formatTypeLabel(detectedType);
     const message =
-      `Da import ${rowsImported}/${rows.length} dong tu ${typeLabel}` +
-      ` (${mergeResult.campaignsCreated} campaigns moi, ${mergeResult.campaignsUpdated} cap nhat)`;
+      `Đã import ${rowsImported}/${rows.length} dòng từ ${typeLabel}` +
+      ` (${mergeResult.campaignsCreated} campaigns mới, ${mergeResult.campaignsUpdated} cập nhật)`;
 
     return { summary, message };
   } catch (error) {

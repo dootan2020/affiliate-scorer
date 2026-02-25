@@ -42,7 +42,7 @@ export function ChannelRecommendations({ recommendations }: ChannelRecommendatio
     return (
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Chua co goi y kenh phan phoi.
+          Chưa có gợi ý kênh phân phối.
         </p>
       </div>
     );
@@ -52,7 +52,7 @@ export function ChannelRecommendations({ recommendations }: ChannelRecommendatio
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-4">
       <div className="flex items-center gap-2">
         <Tv className="w-5 h-5 text-indigo-500" />
-        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Goi y kenh phan phoi</span>
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Gợi ý kênh phân phối</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -80,7 +80,7 @@ export function ChannelRecommendations({ recommendations }: ChannelRecommendatio
                   ) : (
                     <HelpCircle className="w-3 h-3" />
                   )}
-                  {isDataBased ? "dua tren data" : "goi y chung"}
+                  {isDataBased ? "dựa trên data" : "gợi ý chung"}
                 </span>
               </div>
 

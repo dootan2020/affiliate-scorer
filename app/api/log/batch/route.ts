@@ -4,17 +4,8 @@ import { prisma } from "@/lib/db";
 import { calculateReward } from "@/lib/learning/reward-score";
 import { updateLearningWeights } from "@/lib/learning/update-weights";
 import { extractPostId } from "@/lib/learning/match-tiktok-link";
-
-interface BatchItem {
-  assetId: string;
-  tiktokUrl?: string;
-  views?: number;
-  likes?: number;
-  comments?: number;
-  shares?: number;
-  saves?: number;
-  orders?: number;
-}
+import { validateBody } from "@/lib/validations/validate-body";
+import { batchLogSchema } from "@/lib/validations/schemas-content";
 
 interface BatchResult {
   assetId: string;
@@ -26,15 +17,13 @@ interface BatchResult {
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as { items?: BatchItem[] };
-
-    if (!body.items || body.items.length === 0) {
-      return NextResponse.json({ error: "Thiếu danh sách items" }, { status: 400 });
-    }
+    const validation = await validateBody(request, batchLogSchema);
+    if (validation.error) return validation.error;
+    const { items } = validation.data;
 
     const results: BatchResult[] = [];
 
-    for (const item of body.items) {
+    for (const item of items) {
       try {
         const asset = await prisma.contentAsset.findUnique({
           where: { id: item.assetId },
@@ -106,7 +95,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json({
       data: results,
-      message: `${success}/${body.items.length} đã log thành công`,
+      message: `${success}/${items.length} đã log thành công`,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Lỗi không xác định";

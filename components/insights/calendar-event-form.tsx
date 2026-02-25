@@ -95,7 +95,7 @@ export function CalendarEventForm({
       if (!res.ok) throw new Error(data.error);
 
       toast.success(
-        editingEvent ? "Da cap nhat su kien" : "Da them su kien"
+        editingEvent ? "Đã cập nhật sự kiện" : "Đã thêm sự kiện"
       );
       onSaved();
     } catch (err) {

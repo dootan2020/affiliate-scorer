@@ -18,8 +18,8 @@ interface GoalSettingModalProps {
 }
 
 const GOAL_TYPES = [
-  { value: "monthly_profit", label: "Loi nhuan thang" },
-  { value: "monthly_revenue", label: "Doanh thu thang" },
+  { value: "monthly_profit", label: "Lợi nhuận tháng" },
+  { value: "monthly_revenue", label: "Doanh thu tháng" },
 ];
 
 function getCurrentMonth(): string {
@@ -75,13 +75,13 @@ export function GoalSettingModal({
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Luu muc tieu that bai");
+        throw new Error(data.error ?? "Lưu mục tiêu thất bại");
       }
 
       setSaved(true);
       setTimeout(() => setOpen(false), 1200);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setLoading(false);
     }
@@ -109,10 +109,10 @@ export function GoalSettingModal({
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50 flex items-center gap-2">
                 <Target className="w-5 h-5 text-blue-500" />
-                Dat muc tieu
+                Đặt mục tiêu
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Thiet lap muc tieu doanh thu hoac loi nhuan hang thang
+                Thiết lập mục tiêu doanh thu hoặc lợi nhuận hàng tháng
               </p>
             </div>
 
@@ -120,7 +120,7 @@ export function GoalSettingModal({
               <div className="rounded-xl bg-gray-50 dark:bg-slate-800 p-4 space-y-2 mb-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">
-                    Muc tieu hien tai
+                    Mục tiêu hiện tại
                   </span>
                   <span className="font-medium text-gray-900 dark:text-gray-50">
                     {formatVND(currentGoal.currentAmount ?? 0)} /{" "}
@@ -142,7 +142,7 @@ export function GoalSettingModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Loai muc tieu
+                  Loại mục tiêu
                 </label>
                 <select
                   value={type}
@@ -159,7 +159,7 @@ export function GoalSettingModal({
 
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  So tien muc tieu (VND)
+                  Số tiền mục tiêu (VND)
                 </label>
                 <input
                   className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
@@ -174,7 +174,7 @@ export function GoalSettingModal({
 
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Thang
+                  Tháng
                 </label>
                 <input
                   className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
@@ -193,7 +193,7 @@ export function GoalSettingModal({
 
               {saved && (
                 <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                  Da luu muc tieu thanh cong!
+                  Đã lưu mục tiêu thành công!
                 </p>
               )}
 
@@ -212,7 +212,7 @@ export function GoalSettingModal({
                   disabled={loading || !targetAmount}
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Luu muc tieu
+                  Lưu mục tiêu
                 </button>
               </div>
             </form>

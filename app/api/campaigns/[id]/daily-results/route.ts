@@ -1,32 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-
-interface DailyResultEntry {
-  date: string;
-  spend: number;
-  orders: number;
-  revenue: number;
-  clicks?: number;
-  notes?: string;
-}
-
-interface AddDailyResultBody {
-  date: string;
-  spend: number;
-  orders: number;
-  revenue?: number;
-  clicks?: number;
-  notes?: string;
-}
-
-interface PatchDailyResultBody {
-  date: string;
-  spend?: number;
-  orders?: number;
-  revenue?: number;
-  clicks?: number;
-  notes?: string;
-}
+import { validateBody } from "@/lib/validations/validate-body";
+import { addDailyResultSchema, patchDailyResultSchema } from "@/lib/validations/schemas-campaigns";
+import { parseDailyResults, toJsonValue, type DailyResultEntry } from "@/lib/utils/typed-json";
 
 /**
  * Recalculate campaign totals from dailyResults array.
@@ -53,21 +29,16 @@ export async function POST(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as AddDailyResultBody;
 
-    // Validate required fields
-    if (!body.date || body.spend === undefined || body.orders === undefined) {
-      return NextResponse.json(
-        { error: "date, spend, va orders la bat buoc", code: "MISSING_FIELDS" },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(request, addDailyResultSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Validate date format
     const parsedDate = new Date(body.date);
     if (isNaN(parsedDate.getTime())) {
       return NextResponse.json(
-        { error: "date khong hop le. Dung format YYYY-MM-DD", code: "INVALID_DATE" },
+        { error: "date không hợp lệ. Dùng format YYYY-MM-DD", code: "INVALID_DATE" },
         { status: 400 }
       );
     }
@@ -79,7 +50,7 @@ export async function POST(
 
     if (!campaign) {
       return NextResponse.json(
-        { error: "Khong tim thay campaign", code: "NOT_FOUND" },
+        { error: "Không tìm thấy campaign", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
@@ -105,7 +76,7 @@ export async function POST(
     };
 
     // Append to existing dailyResults
-    const existingResults = (campaign.dailyResults as unknown as DailyResultEntry[]) ?? [];
+    const existingResults = parseDailyResults(campaign.dailyResults);
     const updatedResults = [...existingResults, newEntry];
     const totals = recalcTotals(updatedResults);
 
@@ -113,7 +84,7 @@ export async function POST(
     const updated = await prisma.campaign.update({
       where: { id },
       data: {
-        dailyResults: JSON.parse(JSON.stringify(updatedResults)),
+        dailyResults: toJsonValue(updatedResults),
         ...totals,
       },
     });
@@ -128,7 +99,7 @@ export async function POST(
           campaignId: id,
           productId: campaign.productId ?? undefined,
           date: parsedDate,
-          notes: `Chi phi quang cao campaign: ${campaign.name}`,
+          notes: `Chi phí quảng cáo campaign: ${campaign.name}`,
         },
       });
     }
@@ -143,18 +114,18 @@ export async function POST(
           campaignId: id,
           productId: campaign.productId ?? undefined,
           date: parsedDate,
-          notes: `Hoa hong tu campaign: ${campaign.name}`,
+          notes: `Hoa hồng từ campaign: ${campaign.name}`,
         },
       });
     }
 
     return NextResponse.json(
-      { message: "Da them ket qua ngay", data: updated },
+      { message: "Đã thêm kết quả ngày", data: updated },
       { status: 201 }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi them daily result:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi thêm daily result:", error);
     return NextResponse.json(
       { error: message, code: "CREATE_ERROR" },
       { status: 500 }
@@ -168,29 +139,25 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as PatchDailyResultBody;
 
-    if (!body.date) {
-      return NextResponse.json(
-        { error: "date la bat buoc de xac dinh ket qua can cap nhat", code: "MISSING_DATE" },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(request, patchDailyResultSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     const campaign = await prisma.campaign.findUnique({ where: { id } });
     if (!campaign) {
       return NextResponse.json(
-        { error: "Khong tim thay campaign", code: "NOT_FOUND" },
+        { error: "Không tìm thấy campaign", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
-    const existingResults = (campaign.dailyResults as unknown as DailyResultEntry[]) ?? [];
+    const existingResults = parseDailyResults(campaign.dailyResults);
     const entryIndex = existingResults.findIndex((r) => r.date === body.date);
 
     if (entryIndex === -1) {
       return NextResponse.json(
-        { error: `Khong tim thay ket qua ngay ${body.date}`, code: "ENTRY_NOT_FOUND" },
+        { error: `Không tìm thấy kết quả ngày ${body.date}`, code: "ENTRY_NOT_FOUND" },
         { status: 404 }
       );
     }
@@ -214,7 +181,7 @@ export async function PATCH(
     const updated = await prisma.campaign.update({
       where: { id },
       data: {
-        dailyResults: JSON.parse(JSON.stringify(existingResults)),
+        dailyResults: toJsonValue(existingResults),
         ...totals,
       },
     });
@@ -261,12 +228,12 @@ export async function PATCH(
     }
 
     return NextResponse.json({
-      message: "Da cap nhat ket qua ngay",
+      message: "Đã cập nhật kết quả ngày",
       data: updated,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi cap nhat daily result:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi cập nhật daily result:", error);
     return NextResponse.json(
       { error: message, code: "UPDATE_ERROR" },
       { status: 500 }

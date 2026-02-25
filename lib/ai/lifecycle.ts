@@ -21,13 +21,13 @@ const STAGE_INDEX: Record<LifecycleStage, number> = {
 };
 
 const MESSAGES: Record<LifecycleStage, string> = {
-  new: "San pham moi — chua du du lieu de danh gia xu huong.",
-  rising: "Doanh so tang manh, it canh tranh — cua so vang de tham gia!",
-  hot: "San pham dang hot voi nhieu KOL tham gia — canh tranh cao.",
-  peak: "San pham da bao hoa — tang truong cham lai.",
-  declining: "Doanh so dang giam — can xem xet tiep tuc hay dung.",
-  dead: "San pham suy giam manh — nen ngung quang ba.",
-  unknown: "Chua du du lieu lich su de phan tich vong doi.",
+  new: "Sản phẩm mới — chưa đủ dữ liệu để đánh giá xu hướng.",
+  rising: "Doanh số tăng mạnh, ít cạnh tranh — cửa sổ vàng để tham gia!",
+  hot: "Sản phẩm đang hot với nhiều KOL tham gia — cạnh tranh cao.",
+  peak: "Sản phẩm đã bão hòa — tăng trưởng chậm lại.",
+  declining: "Doanh số đang giảm — cần xem xét tiếp tục hay dừng.",
+  dead: "Sản phẩm suy giảm mạnh — nên ngừng quảng bá.",
+  unknown: "Chưa đủ dữ liệu lịch sử để phân tích vòng đời.",
 };
 
 function pctChange(current: number | null, previous: number | null): number {

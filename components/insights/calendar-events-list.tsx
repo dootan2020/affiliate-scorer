@@ -26,9 +26,9 @@ const EVENT_TYPE_BADGE: Record<string, { bg: string; text: string }> = {
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   mega_sale: "Mega Sale",
-  seasonal: "Mua vu",
+  seasonal: "Mùa vụ",
   flash_sale: "Flash Sale",
-  custom: "Tu dinh nghia",
+  custom: "Tự định nghĩa",
 };
 
 function formatDateRange(start: string, end: string): string {
@@ -46,7 +46,7 @@ function getMonthGroupKey(dateStr: string): string {
 
 function getMonthGroupLabel(key: string): string {
   const [y, m] = key.split("-");
-  return `Thang ${parseInt(m)}/${y}`;
+  return `Tháng ${parseInt(m)}/${y}`;
 }
 
 interface CalendarEventsListProps {
@@ -73,11 +73,11 @@ export function CalendarEventsList({
         const data = await res.json();
         throw new Error(data.error);
       }
-      toast.success("Da xoa su kien");
+      toast.success("Đã xóa sự kiện");
       onDeleted(id);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Loi khi xoa su kien"
+        err instanceof Error ? err.message : "Lỗi khi xóa sự kiện"
       );
     } finally {
       setDeleting(null);
@@ -116,10 +116,10 @@ export function CalendarEventsList({
           <CalendarDays className="w-8 h-8 text-gray-400 dark:text-gray-500" />
         </div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-          Chua co su kien
+          Chưa có sự kiện
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-          Them su kien sale, mua vu de khong bo lo co hoi.
+          Thêm sự kiện sale, mùa vụ để không bỏ lỡ cơ hội.
         </p>
       </div>
     );

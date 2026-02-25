@@ -104,7 +104,7 @@ function InsightsPageClientInner(
       {activeTab === "feedback" && (
         <section className="space-y-4">
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-            Lich su Feedback ({props.feedbackTable.length} ban ghi)
+            Lịch sử Feedback ({props.feedbackTable.length} bản ghi)
           </h2>
           {props.feedbackTable.length > 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
@@ -123,7 +123,7 @@ function InsightsPageClientInner(
                 Chua co du lieu
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-                Upload ket qua chien dich tai trang Upload de AI bat dau hoc.
+                Upload kết quả chiến dịch tại trang Upload để AI bắt đầu học.
               </p>
               <Link
                 href="/upload"
@@ -143,7 +143,7 @@ function InsightsPageClientInner(
             <>
               <section className="space-y-4">
                 <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-                  Ket qua Learning — Tuan {props.latestLog.weekNumber}
+                  Kết quả Learning — Tuần {props.latestLog.weekNumber}
                 </h2>
                 <WeeklyReport
                   currentAccuracy={props.latestLog.currentAccuracy}
@@ -158,7 +158,7 @@ function InsightsPageClientInner(
               <section className="space-y-4">
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Xu huong do chinh xac
+                    Xu hướng độ chính xác
                   </p>
                   <AccuracyChart data={props.accuracyTrend} />
                 </div>
@@ -166,7 +166,7 @@ function InsightsPageClientInner(
 
               <section className="space-y-4">
                 <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-                  Patterns phat hien ({props.latestLog.patternsFound.length})
+                  Patterns phát hiện ({props.latestLog.patternsFound.length})
                 </h2>
                 <PatternList patterns={props.latestLog.patternsFound} />
               </section>
@@ -177,10 +177,10 @@ function InsightsPageClientInner(
                 <MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-                Chua co du lieu learning
+                Chưa có dữ liệu learning
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
-                Can co feedback de AI bat dau hoc va cai thien scoring.
+                Cần có feedback để AI bắt đầu học và cải thiện scoring.
               </p>
             </div>
           )}

@@ -54,7 +54,7 @@ export function OverviewTab({
           <div className="flex items-center gap-2 mb-2">
             <ShoppingBag className="w-4 h-4 text-blue-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              San pham
+              Sản phẩm
             </p>
           </div>
           <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">
@@ -69,7 +69,7 @@ export function OverviewTab({
           <div className="flex items-center gap-2 mb-2">
             <Store className="w-4 h-4 text-purple-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Shop danh gia
+              Shop đánh giá
             </p>
           </div>
           <p className="text-2xl font-semibold text-gray-900 dark:text-gray-50">
@@ -81,7 +81,7 @@ export function OverviewTab({
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Thu thang
+              Thu tháng
             </p>
           </div>
           <p className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
@@ -93,7 +93,7 @@ export function OverviewTab({
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown className="w-4 h-4 text-rose-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Chi thang
+              Chi tháng
             </p>
           </div>
           <p className="text-2xl font-semibold text-rose-600 dark:text-rose-400">
@@ -106,7 +106,7 @@ export function OverviewTab({
                 : "text-rose-600 dark:text-rose-400"
             }`}
           >
-            Lai: {profit >= 0 ? "+" : ""}
+            Lợi nhuận: {profit >= 0 ? "+" : ""}
             {formatVNDFull(profit)}
           </p>
         </div>
@@ -117,7 +117,7 @@ export function OverviewTab({
         <div className="flex items-center gap-2 mb-4">
           <CalendarDays className="w-5 h-5 text-blue-500" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            Su kien sap toi
+            Sự kiện sắp tới
           </h3>
         </div>
         {upcomingEvents.length > 0 ? (
@@ -149,7 +149,7 @@ export function OverviewTab({
           </div>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Khong co su kien sap toi
+            Không có sự kiện sắp tới
           </p>
         )}
       </div>
@@ -159,7 +159,7 @@ export function OverviewTab({
         <div className="flex items-center gap-2 mb-4">
           <Brain className="w-5 h-5 text-purple-500" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            Du lieu AI
+            Dữ liệu AI
           </h3>
         </div>
         <div className="flex items-center gap-6 text-sm">
@@ -187,7 +187,7 @@ export function OverviewTab({
         <div className="flex items-center gap-2 mb-4">
           <Lightbulb className="w-5 h-5 text-amber-500" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            Goi y
+            Gợi ý
           </h3>
         </div>
         <ul className="space-y-2.5">
@@ -195,22 +195,22 @@ export function OverviewTab({
             <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
               <Pencil className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
               <span>
-                Them ghi chu cho Top 10 SP de theo doi kinh nghiem ca
-                nhan
+                Thêm ghi chú cho Top 10 SP để theo dõi kinh nghiệm cá
+                nhân
               </span>
             </li>
           )}
           <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
             <Link2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
             <span>
-              Them link affiliate cho SP muon promote de theo doi
+              Thêm link affiliate cho SP muốn promote để theo dõi
             </span>
           </li>
           {feedbackCount === 0 && (
             <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
               <Upload className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
               <span>
-                Upload ket qua chien dich dau tien de AI bat dau hoc
+                Upload kết quả chiến dịch đầu tiên để AI bắt đầu học
               </span>
             </li>
           )}
@@ -218,7 +218,7 @@ export function OverviewTab({
             <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
               <CalendarDays className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
               <span>
-                Chuan bi content cho{" "}
+                Chuẩn bị content cho{" "}
                 <strong>{upcomingEvents[0].name}</strong> (con{" "}
                 {upcomingEvents[0].daysUntil} ngay)
               </span>
@@ -230,7 +230,7 @@ export function OverviewTab({
             href="/products"
             className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
-            Xem danh sach san pham →
+            Xem danh sách sản phẩm →
           </Link>
         </div>
       </div>

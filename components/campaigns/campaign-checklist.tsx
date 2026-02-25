@@ -66,12 +66,12 @@ export function CampaignChecklist({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {completedCount}/{checklist.length} hoan thanh
-          {startedAt && ` — Ngay thu ${daysSinceStart}`}
+          {completedCount}/{checklist.length} hoàn thành
+          {startedAt && ` — Ngày thứ ${daysSinceStart}`}
         </p>
         {saving && (
           <span className="text-xs text-gray-400 dark:text-gray-500 animate-pulse">
-            Dang luu...
+            Đang lưu...
           </span>
         )}
       </div>
@@ -130,7 +130,7 @@ export function CampaignChecklist({
                     : "text-gray-400 dark:text-gray-500"
                 }`}
               >
-                Ngay {item.dueDay}
+                Ngày {item.dueDay}
               </span>
             </button>
           );

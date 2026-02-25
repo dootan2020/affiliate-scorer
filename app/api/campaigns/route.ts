@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { createCampaignSchema } from "@/lib/validations/schemas-campaigns";
+import { toJsonValue } from "@/lib/utils/typed-json";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -27,64 +30,44 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         break;
     }
 
-    const campaigns = await prisma.campaign.findMany({
-      where,
-      orderBy,
-      select: {
-        id: true,
-        name: true,
-        platform: true,
-        status: true,
-        totalSpend: true,
-        totalRevenue: true,
-        totalOrders: true,
-        roas: true,
-        profitLoss: true,
-        productId: true,
-        product: { select: { name: true } },
-        startedAt: true,
-        createdAt: true,
-      },
-    });
+    const limit = Math.min(100, parseInt(searchParams.get("limit") || "50", 10));
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json({ data: campaigns });
+    const [campaigns, total] = await Promise.all([
+      prisma.campaign.findMany({
+        where,
+        orderBy,
+        take: limit,
+        skip,
+        select: {
+          id: true,
+          name: true,
+          platform: true,
+          status: true,
+          totalSpend: true,
+          totalRevenue: true,
+          totalOrders: true,
+          roas: true,
+          profitLoss: true,
+          productId: true,
+          product: { select: { name: true } },
+          startedAt: true,
+          createdAt: true,
+        },
+      }),
+      prisma.campaign.count({ where }),
+    ]);
+
+    return NextResponse.json({ data: campaigns, total, page, limit });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi lay danh sach campaigns:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi lấy danh sách campaigns:", error);
     return NextResponse.json(
       { error: message, code: "FETCH_ERROR" },
       { status: 500 }
     );
   }
-}
-
-interface CreateCampaignBody {
-  name: string;
-  platform: string;
-  productId?: string;
-  plannedBudgetDaily?: number;
-  plannedDurationDays?: number;
-  affiliateLink?: string;
-  contentUrl?: string;
-  contentType?: string;
-  contentNotes?: string;
-  status?: string;
-}
-
-function buildDefaultChecklist(
-  platform: string,
-  plannedDurationDays: number | undefined
-): ChecklistItem[] {
-  const duration = plannedDurationDays ?? 7;
-  return [
-    { label: "Lay link affiliate", dueDay: 0, completed: false, completedAt: null },
-    { label: "Quay video content", dueDay: 0, completed: false, completedAt: null },
-    { label: `Dang content len ${platform}`, dueDay: 1, completed: false, completedAt: null },
-    { label: "Bat quang cao", dueDay: 1, completed: false, completedAt: null },
-    { label: "Review ket qua ngay 3", dueDay: 3, completed: false, completedAt: null },
-    { label: "Quyet dinh tang/giam budget", dueDay: 5, completed: false, completedAt: null },
-    { label: `Ket luan sau ${duration} ngay`, dueDay: duration, completed: false, completedAt: null },
-  ];
 }
 
 interface ChecklistItem {
@@ -94,17 +77,27 @@ interface ChecklistItem {
   completedAt: string | null;
 }
 
+function buildDefaultChecklist(
+  platform: string,
+  plannedDurationDays: number | undefined
+): ChecklistItem[] {
+  const duration = plannedDurationDays ?? 7;
+  return [
+    { label: "Lấy link affiliate", dueDay: 0, completed: false, completedAt: null },
+    { label: "Quay video content", dueDay: 0, completed: false, completedAt: null },
+    { label: `Đăng content lên ${platform}`, dueDay: 1, completed: false, completedAt: null },
+    { label: "Bật quảng cáo", dueDay: 1, completed: false, completedAt: null },
+    { label: "Review kết quả ngày 3", dueDay: 3, completed: false, completedAt: null },
+    { label: "Quyết định tăng/giảm budget", dueDay: 5, completed: false, completedAt: null },
+    { label: `Kết luận sau ${duration} ngày`, dueDay: duration, completed: false, completedAt: null },
+  ];
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as CreateCampaignBody;
-
-    // Validate required fields
-    if (!body.name || !body.platform) {
-      return NextResponse.json(
-        { error: "name va platform la bat buoc", code: "MISSING_FIELDS" },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(request, createCampaignSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     const checklist = buildDefaultChecklist(body.platform, body.plannedDurationDays);
     const isRunning = body.status === "running";
@@ -121,7 +114,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         contentType: body.contentType ?? null,
         contentNotes: body.contentNotes ?? null,
         status: body.status ?? "planning",
-        checklist: JSON.parse(JSON.stringify(checklist)),
+        checklist: toJsonValue(checklist),
         dailyResults: [],
         startedAt: isRunning ? new Date() : null,
       },
@@ -129,12 +122,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     return NextResponse.json(
-      { message: "Da tao campaign", data: campaign },
+      { message: "Đã tạo campaign", data: campaign },
       { status: 201 }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi tao campaign:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi tạo campaign:", error);
     return NextResponse.json(
       { error: message, code: "CREATE_ERROR" },
       { status: 500 }

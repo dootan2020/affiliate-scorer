@@ -8,8 +8,8 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ data: portfolio });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi lay budget portfolio:", error);
+      error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi lấy budget portfolio:", error);
     return NextResponse.json(
       { error: message, code: "BUDGET_ERROR" },
       { status: 500 }

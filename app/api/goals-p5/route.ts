@@ -1,25 +1,14 @@
 // Phase 5: POST /api/goals-p5 — Set goal (weekly/monthly)
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { createGoalP5Schema } from "@/lib/validations/schemas-financial";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as {
-      periodType?: string;
-      periodStart?: string;
-      periodEnd?: string;
-      targetVideos?: number;
-      targetCommission?: number;
-      targetViews?: number;
-      notes?: string;
-    };
-
-    if (!body.periodType || !body.periodStart || !body.periodEnd) {
-      return NextResponse.json(
-        { error: "Cần periodType, periodStart, periodEnd" },
-        { status: 400 },
-      );
-    }
+    const validation = await validateBody(request, createGoalP5Schema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     const goal = await prisma.goalP5.upsert({
       where: {

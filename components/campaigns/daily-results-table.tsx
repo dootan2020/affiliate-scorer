@@ -49,7 +49,7 @@ export function DailyResultsTable({
   if (sorted.length === 0) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">
-        Chua co ket qua nao. Them ket qua hang ngay de theo doi.
+        Chưa có kết quả nào. Thêm kết quả hàng ngày để theo dõi.
       </p>
     );
   }

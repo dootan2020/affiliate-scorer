@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { createGoalSchema } from "@/lib/validations/schemas-financial";
 
 export async function GET(): Promise<NextResponse> {
   try {
@@ -70,8 +72,8 @@ export async function GET(): Promise<NextResponse> {
 
     return NextResponse.json({ data: updatedGoal });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi lay goal:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi lay goal:", error);
     return NextResponse.json(
       { error: message, code: "FETCH_ERROR" },
       { status: 500 }
@@ -79,37 +81,24 @@ export async function GET(): Promise<NextResponse> {
   }
 }
 
-interface CreateGoalBody {
-  type: string;
-  targetAmount: number;
-  periodStart: string;
-  periodEnd: string;
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as CreateGoalBody;
-
-    // Validate required fields
-    if (!body.type || body.targetAmount === undefined || !body.periodStart || !body.periodEnd) {
-      return NextResponse.json(
-        { error: "type, targetAmount, periodStart, va periodEnd la bat buoc", code: "MISSING_FIELDS" },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(request, createGoalSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     const periodStart = new Date(body.periodStart);
     const periodEnd = new Date(body.periodEnd);
     if (isNaN(periodStart.getTime()) || isNaN(periodEnd.getTime())) {
       return NextResponse.json(
-        { error: "periodStart hoac periodEnd khong hop le", code: "INVALID_DATE" },
+        { error: "periodStart hoặc periodEnd không hợp lệ", code: "INVALID_DATE" },
         { status: 400 }
       );
     }
 
     if (periodEnd <= periodStart) {
       return NextResponse.json(
-        { error: "periodEnd phai sau periodStart", code: "INVALID_DATE_RANGE" },
+        { error: "periodEnd phải sau periodStart", code: "INVALID_DATE_RANGE" },
         { status: 400 }
       );
     }
@@ -141,12 +130,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.json(
-      { message: existing ? "Da cap nhat goal" : "Da tao goal", data: goal },
+      { message: existing ? "Đã cập nhật goal" : "Đã tạo goal", data: goal },
       { status: existing ? 200 : 201 }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi tao/cap nhat goal:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi tao/cap nhat goal:", error);
     return NextResponse.json(
       { error: message, code: "UPSERT_ERROR" },
       { status: 500 }

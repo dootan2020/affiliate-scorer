@@ -3,11 +3,14 @@ import { NextResponse } from "next/server";
 import { parseLinks } from "@/lib/parsers/link-parser";
 import { processInboxItem } from "@/lib/inbox/process-inbox-item";
 import type { ProcessResult } from "@/lib/inbox/process-inbox-item";
+import { validateBody } from "@/lib/validations/validate-body";
+import { inboxPasteSchema } from "@/lib/validations/schemas-content";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as { text?: string };
-    const text = body.text?.trim();
+    const validation = await validateBody(request, inboxPasteSchema);
+    if (validation.error) return validation.error;
+    const text = validation.data.text.trim();
 
     if (!text) {
       return NextResponse.json(

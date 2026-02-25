@@ -29,32 +29,32 @@ const SOURCE_LABELS: Record<string, string> = {
   fastmoss: "FastMoss",
   kalodata: "KaloData",
   generic: "Chung",
-  unknown: "Khong ro",
+  unknown: "Không rõ",
 };
 
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   completed: {
-    label: "Hoan thanh",
+    label: "Hoàn thành",
     className:
       "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
   },
   partial: {
-    label: "1 phan",
+    label: "1 phần",
     className:
       "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
   },
   failed: {
-    label: "Loi",
+    label: "Lỗi",
     className:
       "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
   },
   processing: {
-    label: "Dang xu ly",
+    label: "Đang xử lý",
     className:
       "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
   },
   pending: {
-    label: "Cho",
+    label: "Chờ",
     className:
       "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-gray-400",
   },
@@ -110,7 +110,7 @@ export function ImportHistoryTable({
   if (records.length === 0) {
     return (
       <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">
-        Chua co lich su import
+        Chưa có lịch sử import
       </p>
     );
   }

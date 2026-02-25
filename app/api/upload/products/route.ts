@@ -102,10 +102,33 @@ export async function POST(
       productStatus: true, importBatchId: true,
     } as const;
 
+    // Batch pre-fetch: tránh N+1 queries
+    const allUrls = deduplicated.map((p) => p.tiktokUrl).filter(Boolean) as string[];
+    const allNames = deduplicated.map((p) => p.name.toLowerCase());
+    const [existingByUrl, existingByName] = await Promise.all([
+      allUrls.length > 0
+        ? prisma.product.findMany({
+            where: { tiktokUrl: { in: allUrls } },
+            select: { ...SNAPSHOT_FIELDS, tiktokUrl: true, name: true, shopName: true },
+          })
+        : Promise.resolve([]),
+      prisma.product.findMany({
+        where: { name: { in: allNames, mode: "insensitive" } },
+        select: { ...SNAPSHOT_FIELDS, tiktokUrl: true, name: true, shopName: true },
+      }),
+    ]);
+
+    // Build lookup maps
+    const urlMap = new Map(existingByUrl.map((p) => [p.tiktokUrl, p]));
+    const nameShopMap = new Map(
+      existingByName.map((p) => [`${p.name.toLowerCase()}|${(p.shopName || "").toLowerCase()}`, p]),
+    );
+
     for (const p of deduplicated) {
-      // 1) Primary: match by tiktokUrl (most reliable unique key)
-      // 2) Fallback: match by name + shopName
-      const existing = await findExistingProduct(p);
+      // Batch lookup thay vì query từng SP
+      const existing = (p.tiktokUrl && urlMap.get(p.tiktokUrl))
+        || nameShopMap.get(`${p.name.toLowerCase()}|${(p.shopName || "").toLowerCase()}`)
+        || null;
 
       if (existing) {
         // Only create snapshot when data actually changed
@@ -260,29 +283,6 @@ export async function POST(
 
         created++;
       }
-    }
-
-    async function findExistingProduct(p: NormalizedProduct) {
-      // Primary: tiktokUrl is the most reliable unique identifier
-      if (p.tiktokUrl) {
-        const byUrl = await prisma.product.findFirst({
-          where: { tiktokUrl: p.tiktokUrl },
-          select: SNAPSHOT_FIELDS,
-        });
-        if (byUrl) return byUrl;
-      }
-
-      // Fallback: name + shopName (case-insensitive)
-      const byName = await prisma.product.findFirst({
-        where: {
-          name: { equals: p.name, mode: "insensitive" },
-          ...(p.shopName
-            ? { shopName: { equals: p.shopName, mode: "insensitive" } }
-            : { shopName: null }),
-        },
-        select: SNAPSHOT_FIELDS,
-      });
-      return byName;
     }
 
     // Auto-trigger scoring in background (fire-and-forget)

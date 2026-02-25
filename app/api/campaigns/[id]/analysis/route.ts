@@ -12,7 +12,7 @@ export async function GET(
 
     if (!analysis) {
       return NextResponse.json(
-        { error: "Khong tim thay campaign hoac campaign chua hoan thanh" },
+        { error: "Không tìm thấy campaign hoặc campaign chưa hoàn thành" },
         { status: 404 }
       );
     }
@@ -20,8 +20,8 @@ export async function GET(
     return NextResponse.json({ data: analysis });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi phan tich win/loss:", error);
+      error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi phân tích win/loss:", error);
     return NextResponse.json(
       { error: message, code: "ANALYSIS_ERROR" },
       { status: 500 }

@@ -16,7 +16,7 @@ interface ShopDetailPageProps {
 
 const SAMPLE_POLICY_LABELS: Record<string, { label: string; className: string }> = {
   sends_free: {
-    label: "Gui free",
+    label: "Gửi free",
     className: "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300",
   },
   paid_sample: {
@@ -24,7 +24,7 @@ const SAMPLE_POLICY_LABELS: Record<string, { label: string; className: string }>
     className: "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300",
   },
   no_sample: {
-    label: "Khong sample",
+    label: "Không sample",
     className: "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400",
   },
 };
@@ -50,7 +50,7 @@ function StarDisplay({ value, label }: { value: number | null; label: string }):
           </span>
         </span>
       ) : (
-        <span className="text-xs text-gray-400 dark:text-gray-500">Chua danh gia</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">Chưa đánh giá</span>
       )}
     </div>
   );
@@ -99,7 +99,7 @@ export default async function ShopDetailPage({
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Quay lai
+        Quay lại
       </Link>
 
       {/* Shop header */}
@@ -112,7 +112,7 @@ export default async function ShopDetailPage({
             {shop.name}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {formatPlatform(shop.platform)} · {products.length} san pham
+            {formatPlatform(shop.platform)} · {products.length} sản phẩm
           </p>
         </div>
       </div>
@@ -120,8 +120,8 @@ export default async function ShopDetailPage({
       {/* Ratings & info card */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
         <div className="divide-y divide-gray-50 dark:divide-slate-800">
-          <StarDisplay value={shop.commissionReliability} label="Tra commission dung hen" />
-          <StarDisplay value={shop.supportQuality} label="Ho tro affiliate" />
+          <StarDisplay value={shop.commissionReliability} label="Trả commission đúng hẹn" />
+          <StarDisplay value={shop.supportQuality} label="Hỗ trợ affiliate" />
 
           {/* Sample policy */}
           <div className="flex items-center justify-between py-3 text-sm">
@@ -133,14 +133,14 @@ export default async function ShopDetailPage({
                 {policyInfo.label}
               </span>
             ) : (
-              <span className="text-xs text-gray-400 dark:text-gray-500">Chua co thong tin</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">Chưa có thông tin</span>
             )}
           </div>
 
           {/* Notes */}
           {shop.notes && (
             <div className="py-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ghi chu</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ghi chú</p>
               <p className="text-sm text-gray-900 dark:text-gray-50 whitespace-pre-wrap">
                 {shop.notes}
               </p>
@@ -163,7 +163,7 @@ export default async function ShopDetailPage({
       {/* Products from this shop */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          San pham tu shop nay ({products.length})
+          Sản phẩm từ shop này ({products.length})
         </p>
 
         {products.length > 0 ? (
@@ -232,7 +232,7 @@ export default async function ShopDetailPage({
           </div>
         ) : (
           <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
-            Chua co san pham nao tu shop nay.
+            Chưa có sản phẩm nào từ shop này.
           </p>
         )}
       </div>

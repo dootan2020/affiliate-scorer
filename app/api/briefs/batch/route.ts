@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateBrief } from "@/lib/content/generate-brief";
+import { validateBody } from "@/lib/validations/validate-body";
+import { batchBriefSchema } from "@/lib/validations/schemas-content";
 
 interface BatchResult {
   productIdentityId: string;
@@ -14,25 +16,13 @@ interface BatchResult {
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as { productIdentityIds?: string[] };
-
-    if (!body.productIdentityIds || body.productIdentityIds.length === 0) {
-      return NextResponse.json(
-        { error: "Thiếu danh sách productIdentityIds" },
-        { status: 400 },
-      );
-    }
-
-    if (body.productIdentityIds.length > 10) {
-      return NextResponse.json(
-        { error: "Tối đa 10 sản phẩm mỗi lần" },
-        { status: 400 },
-      );
-    }
+    const validation = await validateBody(request, batchBriefSchema);
+    if (validation.error) return validation.error;
+    const { productIdentityIds } = validation.data;
 
     // Lấy tất cả identities
     const identities = await prisma.productIdentity.findMany({
-      where: { id: { in: body.productIdentityIds } },
+      where: { id: { in: productIdentityIds } },
     });
 
     if (identities.length === 0) {

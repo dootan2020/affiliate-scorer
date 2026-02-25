@@ -1,24 +1,14 @@
 // Phase 5: POST + GET /api/commissions — Commission tracking
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { createCommissionSchema } from "@/lib/validations/schemas-financial";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as {
-      amount?: number;
-      platform?: string;
-      earnedDate?: string;
-      productIdentityId?: string;
-      contentAssetId?: string;
-      notes?: string;
-    };
-
-    if (!body.amount || !body.earnedDate) {
-      return NextResponse.json(
-        { error: "Cần nhập số tiền và ngày" },
-        { status: 400 },
-      );
-    }
+    const validation = await validateBody(request, createCommissionSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     const commission = await prisma.commission.create({
       data: {

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { updateCampaignSchema } from "@/lib/validations/schemas-campaigns";
 
 export async function GET(
   _request: NextRequest,
@@ -18,36 +20,20 @@ export async function GET(
 
     if (!campaign) {
       return NextResponse.json(
-        { error: "Khong tim thay campaign", code: "NOT_FOUND" },
+        { error: "Không tìm thấy campaign", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
     return NextResponse.json({ data: campaign });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi lay chi tiet campaign:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi lay chi tiet campaign:", error);
     return NextResponse.json(
       { error: message, code: "FETCH_ERROR" },
       { status: 500 }
     );
   }
-}
-
-interface UpdateCampaignBody {
-  name?: string;
-  platform?: string;
-  productId?: string | null;
-  plannedBudgetDaily?: number | null;
-  plannedDurationDays?: number | null;
-  affiliateLink?: string | null;
-  contentUrl?: string | null;
-  contentType?: string | null;
-  contentNotes?: string | null;
-  status?: string;
-  checklist?: unknown;
-  verdict?: string | null;
-  lessonsLearned?: string | null;
 }
 
 export async function PATCH(
@@ -56,12 +42,15 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as UpdateCampaignBody;
+
+    const validation = await validateBody(request, updateCampaignSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     const existing = await prisma.campaign.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
-        { error: "Khong tim thay campaign", code: "NOT_FOUND" },
+        { error: "Không tìm thấy campaign", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
@@ -106,12 +95,12 @@ export async function PATCH(
     });
 
     return NextResponse.json({
-      message: "Da cap nhat campaign",
+      message: "Đã cập nhật campaign",
       data: updated,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi cap nhat campaign:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi cap nhat campaign:", error);
     return NextResponse.json(
       { error: message, code: "UPDATE_ERROR" },
       { status: 500 }
@@ -129,17 +118,17 @@ export async function DELETE(
     const existing = await prisma.campaign.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
-        { error: "Khong tim thay campaign", code: "NOT_FOUND" },
+        { error: "Không tìm thấy campaign", code: "NOT_FOUND" },
         { status: 404 }
       );
     }
 
     await prisma.campaign.delete({ where: { id } });
 
-    return NextResponse.json({ message: "Da xoa campaign" });
+    return NextResponse.json({ message: "Đã xóa campaign" });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Loi khong xac dinh";
-    console.error("Loi khi xoa campaign:", error);
+    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    console.error("Lỗi khi xoa campaign:", error);
     return NextResponse.json(
       { error: message, code: "DELETE_ERROR" },
       { status: 500 }

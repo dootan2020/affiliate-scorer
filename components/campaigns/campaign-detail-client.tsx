@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils";
 // import { CampaignConclusion } from "./campaign-conclusion";
 
 const TABS = [
-  { key: "daily", label: "Ket qua hang ngay" },
+  { key: "daily", label: "Kết quả hàng ngày" },
   { key: "checklist", label: "Checklist" },
   { key: "content", label: "Content" },
-  { key: "conclusion", label: "Ket luan" },
+  { key: "conclusion", label: "Kết luận" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -111,7 +111,7 @@ function CampaignDetailClientInner(
       {activeTab === "daily" && (
         <section className="space-y-4">
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-            Ket qua hang ngay
+            Kết quả hàng ngày
           </h2>
           {/* DailyResultForm and DailyResultsTable will be rendered here */}
           {props.dailyResults.length > 0 ? (
@@ -172,8 +172,8 @@ function CampaignDetailClientInner(
             </div>
           ) : (
             <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
-              Chua co du lieu hang ngay. Them ket qua de theo doi hieu qua
-              chien dich.
+              Chưa có dữ liệu hàng ngày. Thêm kết quả để theo dõi hiệu quả
+              chiến dịch.
             </p>
           )}
         </section>
@@ -226,7 +226,7 @@ function CampaignDetailClientInner(
             </div>
           ) : (
             <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
-              Chua co checklist nao.
+              Chưa có checklist nào.
             </p>
           )}
         </section>
@@ -285,7 +285,7 @@ function CampaignDetailClientInner(
             </div>
           ) : (
             <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
-              Chua co content nao.
+              Chưa có content nào.
             </p>
           )}
         </section>
@@ -295,7 +295,7 @@ function CampaignDetailClientInner(
       {activeTab === "conclusion" && (
         <section className="space-y-4">
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-            Ket luan
+            Kết luận
           </h2>
           {props.status !== "planning" ? (
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
@@ -335,14 +335,14 @@ function CampaignDetailClientInner(
                 </div>
               ) : (
                 <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">
-                  Chua co ket luan. Hoan thanh chien dich de them ket luan.
+                  Chưa có kết luận. Hoàn thành chiến dịch để thêm kết luận.
                 </p>
               )}
             </div>
           ) : (
             <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
-              Chien dich dang o trang thai Planning. Bat dau chay de xem ket
-              luan.
+              Chiến dịch đang ở trạng thái Planning. Bắt đầu chạy để xem kết
+              luận.
             </p>
           )}
         </section>

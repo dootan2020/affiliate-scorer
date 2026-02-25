@@ -108,7 +108,7 @@ export default async function CampaignsPage({
             Campaigns
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Quan ly cac chien dich quang cao va organic
+            Quản lý các chiến dịch quảng cáo và organic
           </p>
         </div>
         <Link
@@ -116,7 +116,7 @@ export default async function CampaignsPage({
           className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all w-full sm:w-auto justify-center"
         >
           <Plus className="w-4 h-4" />
-          Tao moi
+          Tạo mới
         </Link>
       </div>
 
@@ -132,7 +132,7 @@ export default async function CampaignsPage({
       {/* Summary bar */}
       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
         <span>
-          Tong:{" "}
+          Tổng:{" "}
           <span className="font-medium text-gray-900 dark:text-gray-50">
             {totalCampaigns}
           </span>{" "}
@@ -147,7 +147,7 @@ export default async function CampaignsPage({
         </span>
         <span className="text-gray-300 dark:text-slate-700">|</span>
         <span>
-          Lai rong:{" "}
+          Lợi nhuận:{" "}
           <span
             className={
               totalProfit >= 0
@@ -169,25 +169,25 @@ export default async function CampaignsPage({
               <thead>
                 <tr className="border-b border-gray-100 dark:border-slate-800">
                   <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
-                    Ten
+                    Tên
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4 hidden sm:table-cell">
-                    San pham
+                    Sản phẩm
                   </th>
                   <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4 hidden md:table-cell">
                     Platform
                   </th>
                   <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
-                    Trang thai
+                    Trạng thái
                   </th>
                   <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4 hidden sm:table-cell">
-                    Chi phi
+                    Chi phí
                   </th>
                   <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
                     ROAS
                   </th>
                   <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
-                    Lai/Lo
+                    Lãi/Lỗ
                   </th>
                 </tr>
               </thead>
@@ -264,12 +264,12 @@ export default async function CampaignsPage({
             <Megaphone className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-            Chua co campaign nao
+            Chưa có campaign nào
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
             {statusFilter || platformFilter
-              ? "Thu bo bo loc de xem tat ca campaigns"
-              : "Tao campaign dau tien de bat dau theo doi hieu qua"}
+              ? "Thử bỏ bộ lọc để xem tất cả campaigns"
+              : "Tạo campaign đầu tiên để bắt đầu theo dõi hiệu quả"}
           </p>
           <Link
             href={
@@ -279,7 +279,7 @@ export default async function CampaignsPage({
             }
             className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
           >
-            {statusFilter || platformFilter ? "Xoa bo loc" : "Tao campaign"}
+            {statusFilter || platformFilter ? "Xóa bộ lọc" : "Tạo campaign"}
           </Link>
         </div>
       )}

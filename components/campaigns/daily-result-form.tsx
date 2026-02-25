@@ -72,7 +72,7 @@ export function DailyResultForm({
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Luu ket qua that bai");
+        throw new Error(data.error ?? "Lưu kết quả thất bại");
       }
 
       onSaved?.();
@@ -85,7 +85,7 @@ export function DailyResultForm({
         setDate(todayString());
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ export function DailyResultForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2 sm:col-span-1">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-            Ngay
+            Ngày
           </label>
           <input
             className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
@@ -122,7 +122,7 @@ export function DailyResultForm({
         </div>
         <div>
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-            Don hang
+            Đơn hàng
           </label>
           <input
             className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
@@ -179,7 +179,7 @@ export function DailyResultForm({
         ) : (
           <Save className="w-4 h-4" />
         )}
-        {isEdit ? "Cap nhat" : "Luu ket qua"}
+        {isEdit ? "Cập nhật" : "Lưu kết quả"}
       </button>
     </form>
   );

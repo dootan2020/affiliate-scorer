@@ -17,146 +17,142 @@ interface DailyResult {
   orders: number;
 }
 
+interface CampaignData {
+  id: string;
+  name: string;
+  dailyResults: unknown;
+  plannedBudgetDaily: number | null;
+  productId: string | null;
+  product: { name: string } | null;
+}
+
+interface SnapshotData {
+  productId: string;
+  totalKOL: number | null;
+  sales7d: number | null;
+}
+
 const SEVERITY_ORDER: Record<Anomaly["severity"], number> = { urgent: 0, warning: 1, info: 2 };
 
 function getRecentDays(dailyResults: DailyResult[], count: number): DailyResult[] {
   return dailyResults.slice(-count);
 }
 
-async function checkRoasDeclining(anomalies: Anomaly[]): Promise<void> {
-  const campaigns = await prisma.campaign.findMany({
-    where: { status: "running" },
-    select: { id: true, name: true, dailyResults: true },
-  });
+function getDailyResults(campaign: CampaignData): DailyResult[] {
+  return (campaign.dailyResults as DailyResult[] | null) ?? [];
+}
 
+// Fetch tất cả data 1 lần, truyền vào từng check function
+function checkRoasDeclining(campaigns: CampaignData[]): Anomaly[] {
+  const results: Anomaly[] = [];
   for (const campaign of campaigns) {
-    const days = getRecentDays((campaign.dailyResults as unknown as DailyResult[]) ?? [], 3);
+    const days = getRecentDays(getDailyResults(campaign), 3);
     if (days.length < 3) continue;
 
     const roasValues = days.map((d) => (d.spend > 0 ? d.revenue / d.spend : 0));
     const isDecl = roasValues[0] > roasValues[1] && roasValues[1] > roasValues[2];
 
     if (isDecl && roasValues[2] < 1) {
-      anomalies.push({
+      results.push({
         type: "roas_declining",
         severity: "warning",
         campaignName: campaign.name,
         productName: null,
-        message: `ROAS giam lien tuc 3 ngay (${roasValues.map((v) => v.toFixed(1)).join(" → ")})`,
-        suggestion: "Xem xet dieu chinh content hoac target audience",
+        message: `ROAS giảm liên tục 3 ngày (${roasValues.map((v) => v.toFixed(1)).join(" → ")})`,
+        suggestion: "Xem xét điều chỉnh content hoặc target audience",
         campaignId: campaign.id,
       });
     }
   }
+  return results;
 }
 
-async function checkConsecutiveLoss(anomalies: Anomaly[]): Promise<void> {
-  const campaigns = await prisma.campaign.findMany({
-    where: { status: "running" },
-    select: { id: true, name: true, dailyResults: true },
-  });
-
+function checkConsecutiveLoss(campaigns: CampaignData[]): Anomaly[] {
+  const results: Anomaly[] = [];
   for (const campaign of campaigns) {
-    const days = getRecentDays((campaign.dailyResults as unknown as DailyResult[]) ?? [], 3);
+    const days = getRecentDays(getDailyResults(campaign), 3);
     if (days.length < 3) continue;
 
     const allLosing = days.every((d) => d.spend > d.revenue);
     if (allLosing) {
       const totalLoss = days.reduce((s, d) => s + (d.spend - d.revenue), 0);
-      anomalies.push({
+      results.push({
         type: "consecutive_loss",
         severity: "urgent",
         campaignName: campaign.name,
         productName: null,
-        message: `Lo lien tuc 3 ngay (tong lo: ${totalLoss.toLocaleString()} VND)`,
-        suggestion: "Tam dung chien dich va danh gia lai chien luoc",
+        message: `Lỗ liên tục 3 ngày (tổng lỗ: ${totalLoss.toLocaleString()} VND)`,
+        suggestion: "Tạm dừng chiến dịch và đánh giá lại chiến lược",
         campaignId: campaign.id,
       });
     }
   }
+  return results;
 }
 
-async function checkOverspend(anomalies: Anomaly[]): Promise<void> {
-  const campaigns = await prisma.campaign.findMany({
-    where: { status: "running", plannedBudgetDaily: { not: null } },
-    select: { id: true, name: true, plannedBudgetDaily: true, dailyResults: true },
-  });
-
+function checkOverspend(campaigns: CampaignData[]): Anomaly[] {
+  const results: Anomaly[] = [];
   for (const campaign of campaigns) {
     const planned = campaign.plannedBudgetDaily ?? 0;
     if (planned <= 0) continue;
 
-    const days = getRecentDays((campaign.dailyResults as unknown as DailyResult[]) ?? [], 1);
+    const days = getRecentDays(getDailyResults(campaign), 1);
     if (days.length === 0) continue;
 
     const latestSpend = days[0].spend;
     if (latestSpend > planned * 1.5) {
-      anomalies.push({
+      results.push({
         type: "overspend",
         severity: "warning",
         campaignName: campaign.name,
         productName: null,
-        message: `Chi tieu ${latestSpend.toLocaleString()} VND vuot ${Math.round((latestSpend / planned - 1) * 100)}% so voi ke hoach`,
-        suggestion: `Dat lai budget gioi han ${planned.toLocaleString()} VND/ngay`,
+        message: `Chi tiêu ${latestSpend.toLocaleString()} VND vượt ${Math.round((latestSpend / planned - 1) * 100)}% so với kế hoạch`,
+        suggestion: `Đặt lại budget giới hạn ${planned.toLocaleString()} VND/ngày`,
         campaignId: campaign.id,
       });
     }
   }
+  return results;
 }
 
-async function checkCompetitionSpike(anomalies: Anomaly[]): Promise<void> {
-  const campaigns = await prisma.campaign.findMany({
-    where: { status: "running", productId: { not: null } },
-    select: { id: true, name: true, productId: true, product: { select: { name: true } } },
-  });
-
+function checkCompetitionSpike(
+  campaigns: CampaignData[],
+  snapshotMap: Map<string, SnapshotData[]>,
+): Anomaly[] {
+  const results: Anomaly[] = [];
   for (const campaign of campaigns) {
     if (!campaign.productId) continue;
-
-    const snapshots = await prisma.productSnapshot.findMany({
-      where: { productId: campaign.productId },
-      orderBy: { snapshotDate: "desc" },
-      take: 2,
-      select: { totalKOL: true },
-    });
-
-    if (snapshots.length < 2) continue;
+    const snapshots = snapshotMap.get(campaign.productId);
+    if (!snapshots || snapshots.length < 2) continue;
 
     const [latest, prev] = snapshots;
     const prevKOL = prev.totalKOL ?? 0;
     const latestKOL = latest.totalKOL ?? 0;
 
     if (prevKOL > 0 && ((latestKOL - prevKOL) / prevKOL) > 0.5) {
-      anomalies.push({
+      results.push({
         type: "competition_spike",
         severity: "warning",
         campaignName: campaign.name,
         productName: campaign.product?.name ?? null,
-        message: `KOL tang tu ${prevKOL} len ${latestKOL} (+${Math.round(((latestKOL - prevKOL) / prevKOL) * 100)}%)`,
-        suggestion: "Canh tranh tang — xem xet tang chat luong content de khac biet hoa",
+        message: `KOL tăng từ ${prevKOL} lên ${latestKOL} (+${Math.round(((latestKOL - prevKOL) / prevKOL) * 100)}%)`,
+        suggestion: "Cạnh tranh tăng — xem xét tăng chất lượng content để khác biệt hóa",
         campaignId: campaign.id,
       });
     }
   }
+  return results;
 }
 
-async function checkSalesDrop(anomalies: Anomaly[]): Promise<void> {
-  const campaigns = await prisma.campaign.findMany({
-    where: { status: "running", productId: { not: null } },
-    select: { id: true, name: true, productId: true, product: { select: { name: true } } },
-  });
-
+function checkSalesDrop(
+  campaigns: CampaignData[],
+  snapshotMap: Map<string, SnapshotData[]>,
+): Anomaly[] {
+  const results: Anomaly[] = [];
   for (const campaign of campaigns) {
     if (!campaign.productId) continue;
-
-    const snapshots = await prisma.productSnapshot.findMany({
-      where: { productId: campaign.productId },
-      orderBy: { snapshotDate: "desc" },
-      take: 2,
-      select: { sales7d: true },
-    });
-
-    if (snapshots.length < 2) continue;
+    const snapshots = snapshotMap.get(campaign.productId);
+    if (!snapshots || snapshots.length < 2) continue;
 
     const [latest, prev] = snapshots;
     const prevSales = prev.sales7d ?? 0;
@@ -164,29 +160,66 @@ async function checkSalesDrop(anomalies: Anomaly[]): Promise<void> {
 
     if (prevSales > 0 && ((latestSales - prevSales) / prevSales) < -0.3) {
       const dropPct = Math.round(((prevSales - latestSales) / prevSales) * 100);
-      anomalies.push({
+      results.push({
         type: "sales_drop",
         severity: "warning",
         campaignName: campaign.name,
         productName: campaign.product?.name ?? null,
-        message: `Doanh so 7 ngay giam ${dropPct}% (${prevSales} → ${latestSales})`,
-        suggestion: "San pham dang suy giam — xem xet chuyen sang san pham khac",
+        message: `Doanh số 7 ngày giảm ${dropPct}% (${prevSales} → ${latestSales})`,
+        suggestion: "Sản phẩm đang suy giảm — xem xét chuyển sang sản phẩm khác",
         campaignId: campaign.id,
       });
     }
   }
+  return results;
 }
 
 export async function detectAnomalies(): Promise<Anomaly[]> {
-  const anomalies: Anomaly[] = [];
+  // Fetch tất cả campaigns 1 lần duy nhất
+  const campaigns = await prisma.campaign.findMany({
+    where: { status: "running" },
+    select: {
+      id: true,
+      name: true,
+      dailyResults: true,
+      plannedBudgetDaily: true,
+      productId: true,
+      product: { select: { name: true } },
+    },
+  });
 
-  await Promise.all([
-    checkConsecutiveLoss(anomalies),
-    checkRoasDeclining(anomalies),
-    checkOverspend(anomalies),
-    checkCompetitionSpike(anomalies),
-    checkSalesDrop(anomalies),
-  ]);
+  // Fetch snapshots cho tất cả products liên quan (1 query thay vì N)
+  const productIds = campaigns
+    .map((c) => c.productId)
+    .filter((id): id is string => id !== null);
+
+  const allSnapshots = productIds.length > 0
+    ? await prisma.productSnapshot.findMany({
+        where: { productId: { in: productIds } },
+        orderBy: { snapshotDate: "desc" },
+        select: { productId: true, totalKOL: true, sales7d: true },
+      })
+    : [];
+
+  // Group snapshots by productId (max 2 per product)
+  const snapshotMap = new Map<string, SnapshotData[]>();
+  for (const snap of allSnapshots) {
+    const existing = snapshotMap.get(snap.productId);
+    if (!existing) {
+      snapshotMap.set(snap.productId, [snap]);
+    } else if (existing.length < 2) {
+      existing.push(snap);
+    }
+  }
+
+  // Chạy tất cả checks synchronously, mỗi function trả về mảng riêng
+  const anomalies: Anomaly[] = [
+    ...checkRoasDeclining(campaigns),
+    ...checkConsecutiveLoss(campaigns),
+    ...checkOverspend(campaigns),
+    ...checkCompetitionSpike(campaigns, snapshotMap),
+    ...checkSalesDrop(campaigns, snapshotMap),
+  ];
 
   return anomalies.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
 }

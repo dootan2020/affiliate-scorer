@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { createCalendarSchema } from "@/lib/validations/schemas-financial";
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
+    const { searchParams } = request.nextUrl;
+    const limit = Math.min(200, parseInt(searchParams.get("limit") || "100", 10));
+
     const events = await prisma.calendarEvent.findMany({
       orderBy: { startDate: "asc" },
+      take: limit,
     });
 
     return NextResponse.json({ data: events });
@@ -18,28 +24,11 @@ export async function GET(): Promise<NextResponse> {
   }
 }
 
-interface CreateCalendarBody {
-  name: string;
-  eventType: string;
-  startDate: string;
-  endDate: string;
-  prepStartDate?: string;
-  platforms?: string[];
-  notes?: string;
-  recurring?: boolean;
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as CreateCalendarBody;
-
-    // Validate required fields
-    if (!body.name || !body.eventType || !body.startDate || !body.endDate) {
-      return NextResponse.json(
-        { error: "name, eventType, startDate, và endDate là bắt buộc", code: "MISSING_FIELDS" },
-        { status: 400 }
-      );
-    }
+    const validation = await validateBody(request, createCalendarSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Validate dates
     const start = new Date(body.startDate);

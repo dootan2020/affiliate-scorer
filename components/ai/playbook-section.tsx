@@ -23,12 +23,12 @@ export function PlaybookSection(): React.ReactElement {
   const fetchPatterns = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch("/api/ai/patterns");
-      if (!res.ok) throw new Error("Khong the tai du lieu");
+      if (!res.ok) throw new Error("Không thể tải dữ liệu");
       const json = await res.json();
       setPatterns(json.data ?? []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setLoading(false);
     }
@@ -42,12 +42,12 @@ export function PlaybookSection(): React.ReactElement {
     setRefreshing(true);
     try {
       const res = await fetch("/api/ai/patterns", { method: "POST" });
-      if (!res.ok) throw new Error("Khong the refresh");
+      if (!res.ok) throw new Error("Không thể refresh");
       const json = await res.json();
       setPatterns(json.data ?? []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setRefreshing(false);
     }
@@ -96,9 +96,9 @@ export function PlaybookSection(): React.ReactElement {
           <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
             <BookOpen className="w-7 h-7 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Chua co playbook</h3>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Chưa có playbook</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
-            Can it nhat 3 campaigns hoan thanh de tao playbook.
+            Cần ít nhất 3 campaigns hoàn thành để tạo playbook.
           </p>
         </div>
       ) : (

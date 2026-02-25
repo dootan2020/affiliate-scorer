@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { createShopSchema } from "@/lib/validations/schemas-shops";
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const shops = await prisma.shop.findMany({
-      orderBy: { updatedAt: "desc" },
-    });
+    const { searchParams } = request.nextUrl;
+    const limit = Math.min(100, parseInt(searchParams.get("limit") || "50", 10));
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
 
-    return NextResponse.json({ data: shops });
+    const [shops, total] = await Promise.all([
+      prisma.shop.findMany({
+        orderBy: { updatedAt: "desc" },
+        take: limit,
+        skip: (page - 1) * limit,
+      }),
+      prisma.shop.count(),
+    ]);
+
+    return NextResponse.json({ data: shops, total, page, limit });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("Lỗi khi lấy danh sách shop:", error);
@@ -18,54 +29,11 @@ export async function GET(): Promise<NextResponse> {
   }
 }
 
-interface CreateShopBody {
-  name: string;
-  platform: string;
-  commissionReliability?: number;
-  supportQuality?: number;
-  samplePolicy?: string;
-  notes?: string;
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as CreateShopBody;
-
-    // Validate required fields
-    if (!body.name || !body.platform) {
-      return NextResponse.json(
-        { error: "Tên shop và platform là bắt buộc", code: "MISSING_FIELDS" },
-        { status: 400 }
-      );
-    }
-
-    // Validate commissionReliability if provided
-    if (body.commissionReliability !== undefined) {
-      if (
-        !Number.isInteger(body.commissionReliability) ||
-        body.commissionReliability < 1 ||
-        body.commissionReliability > 5
-      ) {
-        return NextResponse.json(
-          { error: "commissionReliability phải là số nguyên từ 1 đến 5", code: "INVALID_RATING" },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validate supportQuality if provided
-    if (body.supportQuality !== undefined) {
-      if (
-        !Number.isInteger(body.supportQuality) ||
-        body.supportQuality < 1 ||
-        body.supportQuality > 5
-      ) {
-        return NextResponse.json(
-          { error: "supportQuality phải là số nguyên từ 1 đến 5", code: "INVALID_RATING" },
-          { status: 400 }
-        );
-      }
-    }
+    const validation = await validateBody(request, createShopSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     const shop = await prisma.shop.create({
       data: {

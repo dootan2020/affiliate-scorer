@@ -30,10 +30,10 @@ interface MetricRow {
 
 const METRIC_THRESHOLDS: { key: keyof ConfidenceMetrics; label: string; required: number }[] = [
   { key: "productsCount", label: "Products", required: 50 },
-  { key: "productsWithNotes", label: "Ghi chu", required: 10 },
-  { key: "campaignsCompleted", label: "Campaigns hoan thanh", required: 5 },
+  { key: "productsWithNotes", label: "Ghi chú", required: 10 },
+  { key: "campaignsCompleted", label: "Campaigns hoàn thành", required: 5 },
   { key: "financialRecords", label: "Thu chi", required: 20 },
-  { key: "daysActive", label: "Ngay active", required: 30 },
+  { key: "daysActive", label: "Ngày active", required: 30 },
 ];
 
 function getLevelColor(level: number): string {
@@ -59,11 +59,11 @@ export function ConfidenceWidget(): React.ReactElement {
     async function fetchData(): Promise<void> {
       try {
         const res = await fetch("/api/ai/confidence");
-        if (!res.ok) throw new Error("Khong the tai du lieu");
+        if (!res.ok) throw new Error("Không thể tải dữ liệu");
         const json = await res.json();
         if (!cancelled) setData(json.data ?? null);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+        if (!cancelled) setError(err instanceof Error ? err.message : "Lỗi không xác định");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -90,7 +90,7 @@ export function ConfidenceWidget(): React.ReactElement {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {error ?? "Khong co du lieu confidence"}
+          {error ?? "Chưa có báo cáo. Bấm \"Tạo báo cáo\" để bắt đầu."}
         </p>
       </div>
     );
@@ -131,7 +131,7 @@ export function ConfidenceWidget(): React.ReactElement {
       {data.nextLevel && (
         <div className="space-y-2">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            De len Level {nextLevelNum} ({data.nextLevel.label}), can them:
+            Để lên Level {nextLevelNum} ({data.nextLevel.label}), cần thêm:
           </p>
           <div className="space-y-1.5 pl-1">
             {rows.map((row, i) => {
@@ -154,7 +154,7 @@ export function ConfidenceWidget(): React.ReactElement {
                     <span className="text-emerald-500 text-[10px] font-medium">OK</span>
                   ) : (
                     <span className="text-gray-400 dark:text-gray-500 text-[10px]">
-                      (can them {remaining})
+                      (cần thêm {remaining})
                     </span>
                   )}
                 </div>

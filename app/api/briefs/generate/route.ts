@@ -2,21 +2,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateBrief } from "@/lib/content/generate-brief";
+import { validateBody } from "@/lib/validations/validate-body";
+import { generateBriefSchema } from "@/lib/validations/schemas-content";
+import { checkRateLimit } from "@/lib/utils/rate-limit";
 
 export async function POST(request: Request): Promise<NextResponse> {
-  try {
-    const body = (await request.json()) as { productIdentityId?: string };
+  const rl = checkRateLimit("ai:briefs-generate", 10, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Quá nhiều yêu cầu. Vui lòng thử lại sau.", code: "RATE_LIMIT" },
+      { status: 429 }
+    );
+  }
 
-    if (!body.productIdentityId) {
-      return NextResponse.json(
-        { error: "Thiếu productIdentityId" },
-        { status: 400 },
-      );
-    }
+  try {
+    const validation = await validateBody(request, generateBriefSchema);
+    if (validation.error) return validation.error;
+    const { productIdentityId } = validation.data;
 
     // Lấy product identity
     const identity = await prisma.productIdentity.findUnique({
-      where: { id: body.productIdentityId },
+      where: { id: productIdentityId },
     });
 
     if (!identity) {

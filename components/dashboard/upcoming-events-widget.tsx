@@ -23,14 +23,14 @@ function getDotColor(daysUntil: number): string {
 
 function getEventSuggestion(event: UpcomingEvent): string | null {
   if (event.daysUntil <= 3) {
-    return "Nen chuan bi content tu BAY GIO";
+    return "Nên chuẩn bị content từ BÂY GIỜ";
   }
   const type = event.eventType;
   if (type === "seasonal") {
-    return "SP phu hop: Phu kien, My pham, Qua tang";
+    return "SP phù hợp: Phụ kiện, Mỹ phẩm, Quà tặng";
   }
   if (type === "mega_sale") {
-    return "Chuan bi banner, voucher, content truoc";
+    return "Chuẩn bị banner, voucher, content trước";
   }
   return null;
 }
@@ -58,20 +58,20 @@ export function UpcomingEventsWidget({
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-blue-500" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            Sap toi
+            Sắp tới
           </h3>
         </div>
         <Link
           href="/insights?tab=calendar"
           className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
         >
-          Xem tat ca →
+          Xem tất cả →
         </Link>
       </div>
 
       {events.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-          Khong co su kien sap toi
+          Không có sự kiện sắp tới
         </p>
       ) : (
         <div className="space-y-4">
@@ -91,7 +91,7 @@ export function UpcomingEventsWidget({
                       ({formatDateRange(event.startDate, event.endDate)})
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      — con {event.daysUntil} ngay
+                      — còn {event.daysUntil} ngày
                     </span>
                   </div>
                   {suggestion && (

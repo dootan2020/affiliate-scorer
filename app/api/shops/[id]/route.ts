@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
+import { updateShopSchema } from "@/lib/validations/schemas-shops";
 
 export async function GET(
   _request: NextRequest,
@@ -35,22 +37,16 @@ export async function GET(
   }
 }
 
-interface UpdateShopBody {
-  name?: string;
-  platform?: string;
-  commissionReliability?: number | null;
-  supportQuality?: number | null;
-  samplePolicy?: string | null;
-  notes?: string | null;
-}
-
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as UpdateShopBody;
+
+    const validation = await validateBody(request, updateShopSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Check shop exists
     const existing = await prisma.shop.findUnique({ where: { id } });
@@ -61,37 +57,16 @@ export async function PATCH(
       );
     }
 
-    // Validate commissionReliability if provided
-    if (body.commissionReliability !== undefined && body.commissionReliability !== null) {
-      if (
-        !Number.isInteger(body.commissionReliability) ||
-        body.commissionReliability < 1 ||
-        body.commissionReliability > 5
-      ) {
-        return NextResponse.json(
-          { error: "commissionReliability phải là số nguyên từ 1 đến 5", code: "INVALID_RATING" },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validate supportQuality if provided
-    if (body.supportQuality !== undefined && body.supportQuality !== null) {
-      if (
-        !Number.isInteger(body.supportQuality) ||
-        body.supportQuality < 1 ||
-        body.supportQuality > 5
-      ) {
-        return NextResponse.json(
-          { error: "supportQuality phải là số nguyên từ 1 đến 5", code: "INVALID_RATING" },
-          { status: 400 }
-        );
-      }
-    }
-
     const updated = await prisma.shop.update({
       where: { id },
-      data: body,
+      data: {
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.platform !== undefined && { platform: body.platform }),
+        ...(body.commissionReliability !== undefined && { commissionReliability: body.commissionReliability }),
+        ...(body.supportQuality !== undefined && { supportQuality: body.supportQuality }),
+        ...(body.samplePolicy !== undefined && { samplePolicy: body.samplePolicy }),
+        ...(body.notes !== undefined && { notes: body.notes }),
+      },
     });
 
     return NextResponse.json({

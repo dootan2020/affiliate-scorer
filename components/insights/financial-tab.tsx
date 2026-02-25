@@ -19,7 +19,7 @@ function getMonthKey(date: Date): string {
 
 function getMonthLabel(key: string): string {
   const [y, m] = key.split("-");
-  return `Thang ${parseInt(m)}/${y}`;
+  return `Tháng ${parseInt(m)}/${y}`;
 }
 
 export function FinancialTab(): React.ReactElement {
@@ -38,7 +38,7 @@ export function FinancialTab(): React.ReactElement {
       setRecords(data.data ?? []);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Loi khi tai du lieu"
+        err instanceof Error ? err.message : "Lỗi khi tải dữ liệu"
       );
     } finally {
       setLoading(false);
@@ -85,7 +85,7 @@ export function FinancialTab(): React.ReactElement {
         <div className="flex items-center gap-2">
           <Wallet className="w-5 h-5 text-blue-500" />
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-            Tong quan thu chi
+            Tổng quan thu chi
           </h2>
         </div>
         <div className="flex items-center gap-2">

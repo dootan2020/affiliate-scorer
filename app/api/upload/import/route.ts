@@ -11,14 +11,14 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     if (!file) {
       return NextResponse.json(
-        { error: "Vui long chon file de upload" },
+        { error: "Vui lòng chọn file để upload" },
         { status: 400 }
       );
     }
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "File qua lon. Toi da 10MB." },
+        { error: "File quá lớn. Tối đa 10MB." },
         { status: 413 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     const message =
-      error instanceof Error ? error.message : "Loi khong xac dinh";
+      error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("[import] Error:", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tail:*)",
+      "Bash(cd:*)",
+      "Bash(head:*)",
+      "Bash(echo Server not running - will migrate on first load:*)",
+      "Bash(sleep 8:*)",
+      "Bash(curl:*)",
+      "Bash(cd /c/Users/Admin/affiliate-scorer && VERCEL_TOKEN=vcp_6WeqkIpUtu1CVgyvfDkIkgGnccO243gPTLCRfOguWJO576pKIj1zrAoA npx vercel --prod --yes --token vcp_6WeqkIpUtu1CVgyvfDkIkgGnccO243gPTLCRfOguWJO576pKIj1zrAoA 2>&1)"
+    ]
+  }
+}

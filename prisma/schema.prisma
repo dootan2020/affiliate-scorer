@@ -595,9 +595,13 @@ model ContentAsset {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Phase 4: Relations
+  metrics AssetMetric[]
+
   @@index([productIdentityId])
   @@index([status])
   @@index([productionBatchId])
+  @@index([postId])
 }
 
 model ProductionBatch {
@@ -613,4 +617,82 @@ model ProductionBatch {
   createdAt DateTime @default(now())
 
   assets ContentAsset[]
+}
+
+// ─── PHASE 4: RESULT + LEARNING ───
+
+model AssetMetric {
+  id             String       @id @default(cuid())
+  contentAssetId String
+  contentAsset   ContentAsset @relation(fields: [contentAssetId], references: [id], onDelete: Cascade)
+
+  // Khi nào capture
+  capturedAt DateTime @default(now())
+  source     String   @default("manual") // "manual" | "extension" | "import"
+
+  // Core metrics
+  views    Int?
+  likes    Int?
+  comments Int?
+  shares   Int?
+  saves    Int?
+
+  // Advanced metrics (extension/import)
+  avgWatchTimeS  Decimal? @db.Decimal(5, 2)
+  completionRate Decimal? @db.Decimal(3, 2)
+  followersGained Int?
+
+  // Business metrics
+  clicks           Int?
+  orders           Int?
+  commissionAmount Int? // VND
+
+  // Computed
+  rewardScore Decimal @default(0) @db.Decimal(8, 4)
+
+  // Raw data (import CSV/extension)
+  rawData Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([contentAssetId])
+  @@index([capturedAt(sort: Desc)])
+}
+
+model LearningWeightP4 {
+  id String @id @default(cuid())
+
+  scope String // "hook_type" | "format" | "angle" | "category" | "price_range"
+  key   String // VD: "result", "review_short", "Mỹ phẩm"
+
+  weight      Decimal @default(0) @db.Decimal(10, 4)
+  sampleCount Int     @default(0)
+  avgReward   Decimal @default(0) @db.Decimal(8, 4)
+
+  decayHalfLifeDays Int       @default(14)
+  lastRewardAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([scope, key])
+  @@index([scope])
+}
+
+model UserPattern {
+  id String @id @default(cuid())
+
+  patternType String // "winning" | "losing"
+  label       String // "Review ngắn + Mỹ phẩm < 200K"
+
+  conditions Json // { hook_type, format, category, price_range }
+  assetIds   Json @default("[]")
+  sampleSize Int  @default(0)
+
+  avgViews  Int?
+  avgReward Decimal? @db.Decimal(8, 4)
+  winRate   Decimal? @db.Decimal(3, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

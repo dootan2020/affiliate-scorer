@@ -24,7 +24,7 @@ export function CalendarTab(): React.ReactElement {
       setEvents(data.data ?? []);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Loi khi tai su kien"
+        err instanceof Error ? err.message : "Lỗi khi tải sự kiện"
       );
     } finally {
       setLoading(false);
@@ -67,7 +67,7 @@ export function CalendarTab(): React.ReactElement {
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-blue-500" />
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-            Lich su kien
+            Lịch sự kiện
           </h2>
         </div>
         <button
@@ -75,7 +75,7 @@ export function CalendarTab(): React.ReactElement {
           className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
         >
           <Plus className="w-4 h-4" />
-          Them su kien
+          Thêm sự kiện
         </button>
       </div>
 

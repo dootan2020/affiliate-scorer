@@ -182,7 +182,7 @@ export function CampaignContentList({
                   onClick={() => handleUpdateStats(post.id!)}
                   disabled={updatingId === post.id}
                   className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
-                  title="Cap nhat stats"
+                  title="Cập nhật stats"
                 >
                   <RefreshCw
                     className={`w-3.5 h-3.5 ${updatingId === post.id ? "animate-spin" : ""}`}

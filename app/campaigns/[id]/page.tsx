@@ -168,7 +168,7 @@ export default async function CampaignDetailPage({
               <>
                 <span className="text-gray-300 dark:text-slate-700">·</span>
                 <span>
-                  Bat dau:{" "}
+                  Bắt đầu:{" "}
                   {new Date(campaign.startedAt).toLocaleDateString("vi-VN")}
                 </span>
               </>
@@ -183,7 +183,7 @@ export default async function CampaignDetailPage({
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="w-4 h-4 text-rose-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Tong chi phi
+              Tổng chi phí
             </p>
           </div>
           <p className="text-xl font-semibold text-gray-900 dark:text-gray-50">
@@ -195,7 +195,7 @@ export default async function CampaignDetailPage({
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Tong doanh thu
+              Tổng doanh thu
             </p>
           </div>
           <p className="text-xl font-semibold text-gray-900 dark:text-gray-50">
@@ -207,7 +207,7 @@ export default async function CampaignDetailPage({
           <div className="flex items-center gap-2 mb-2">
             <ShoppingCart className="w-4 h-4 text-blue-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Tong don hang
+              Tổng đơn hàng
             </p>
           </div>
           <p className="text-xl font-semibold text-gray-900 dark:text-gray-50">
@@ -229,7 +229,7 @@ export default async function CampaignDetailPage({
           <div className="flex items-center gap-2 mb-2">
             <Calculator className="w-4 h-4 text-amber-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Lai / Lo
+              Lãi / Lỗ
             </p>
           </div>
           <p

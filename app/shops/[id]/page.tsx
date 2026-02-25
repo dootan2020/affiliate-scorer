@@ -179,10 +179,10 @@ export default async function ShopDetailPage({
               <thead>
                 <tr className="border-b border-gray-100 dark:border-slate-800">
                   <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2 pr-2">
-                    Ten SP
+                    Tên SP
                   </th>
                   <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2 px-2">
-                    Gia
+                    Giá
                   </th>
                   <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2 px-2">
                     HH

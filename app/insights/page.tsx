@@ -145,10 +145,10 @@ async function getOverviewData() {
 
 function getConfidenceLabel(feedbackCount: number): string {
   if (feedbackCount >= 100) return "Cao";
-  if (feedbackCount >= 50) return "Kha";
+  if (feedbackCount >= 50) return "Khá";
   if (feedbackCount >= 20) return "TB";
-  if (feedbackCount >= 10) return "Thap";
-  return "Rat thap";
+  if (feedbackCount >= 10) return "Thấp";
+  return "Rất thấp";
 }
 
 export default async function InsightsPage(): Promise<React.ReactElement> {
@@ -167,7 +167,7 @@ export default async function InsightsPage(): Promise<React.ReactElement> {
             AI Insights
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Phan tich tu {insights.totalFeedbackCount} feedback thuc te
+            Phân tích từ {insights.totalFeedbackCount} feedback thực tế
           </p>
         </div>
         <TriggerLearningButton />

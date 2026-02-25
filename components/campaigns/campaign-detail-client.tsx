@@ -121,22 +121,22 @@ function CampaignDetailClientInner(
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-slate-800">
                       <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
-                        Ngay
+                        Ngày
                       </th>
                       <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
-                        Chi phi
+                        Chi phí
                       </th>
                       <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
                         Doanh thu
                       </th>
                       <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
-                        Don hang
+                        Đơn hàng
                       </th>
                       <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4">
                         ROAS
                       </th>
                       <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-4 hidden sm:table-cell">
-                        Ghi chu
+                        Ghi chú
                       </th>
                     </tr>
                   </thead>
@@ -276,7 +276,7 @@ function CampaignDetailClientInner(
                   )}
                   {post.postedAt && (
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      Dang ngay:{" "}
+                      Đăng ngày:{" "}
                       {new Date(post.postedAt).toLocaleDateString("vi-VN")}
                     </p>
                   )}
@@ -303,7 +303,7 @@ function CampaignDetailClientInner(
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Ket qua:
+                      Kết quả:
                     </span>
                     <span
                       className={cn(
@@ -316,16 +316,16 @@ function CampaignDetailClientInner(
                       )}
                     >
                       {props.verdict === "profitable"
-                        ? "Co lai"
+                        ? "Có lãi"
                         : props.verdict === "break_even"
-                          ? "Hoa von"
-                          : "Lo"}
+                          ? "Hòa vốn"
+                          : "Lỗ"}
                     </span>
                   </div>
                   {props.lessonsLearned && (
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                        Bai hoc rut ra:
+                        Bài học rút ra:
                       </p>
                       <p className="text-sm text-gray-900 dark:text-gray-50 whitespace-pre-wrap">
                         {props.lessonsLearned}

@@ -26,7 +26,7 @@ const SOURCE_LABELS: Record<string, string> = {
   lazada: "Lazada",
   fb_ads: "Facebook Ads",
   tiktok_ads: "TikTok Ads",
-  other: "Khac",
+  other: "Khác",
 };
 
 export function isIncomeType(type: string): boolean {
@@ -76,7 +76,7 @@ export function FinancialRecordsTable({
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
       <div className="px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-slate-800">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Lich su giao dich
+          Lịch sử giao dịch
         </p>
       </div>
 
@@ -101,19 +101,19 @@ export function FinancialRecordsTable({
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-800">
                 <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-3">
-                  Ngay
+                  Ngày
                 </th>
                 <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-3">
-                  Loai
+                  Loại
                 </th>
                 <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-3">
-                  So tien
+                  Số tiền
                 </th>
                 <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-3 hidden sm:table-cell">
-                  Nguon
+                  Nguồn
                 </th>
                 <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 pt-3 hidden md:table-cell">
-                  Ghi chu
+                  Ghi chú
                 </th>
                 <th className="pb-3 px-4 pt-3 w-10" />
               </tr>

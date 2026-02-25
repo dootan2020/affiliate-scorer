@@ -155,7 +155,7 @@ export function ShopCreateModal({
           {/* Shop name (readonly) */}
           <div>
             <label className="text-sm text-gray-700 dark:text-gray-300 mb-1.5 block">
-              Ten shop
+              Tên shop
             </label>
             <input
               type="text"
@@ -187,7 +187,7 @@ export function ShopCreateModal({
 
           {/* Support quality stars */}
           <StarInput
-            label="Ho tro affiliate"
+            label="Hỗ trợ affiliate"
             value={supportQuality}
             onChange={setSupportQuality}
           />
@@ -219,7 +219,7 @@ export function ShopCreateModal({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Ghi chu ve shop..."
+              placeholder="Ghi chú về shop..."
               className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
             />
           </div>
@@ -244,7 +244,7 @@ export function ShopCreateModal({
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4" />
-            {saving ? "Dang luu..." : "Tao shop"}
+            {saving ? "Đang lưu..." : "Tạo shop"}
           </button>
         </div>
       </div>

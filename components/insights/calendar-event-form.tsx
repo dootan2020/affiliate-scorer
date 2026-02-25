@@ -6,9 +6,9 @@ import { X } from "lucide-react";
 
 const EVENT_TYPE_OPTIONS = [
   { value: "mega_sale", label: "Mega Sale" },
-  { value: "seasonal", label: "Mua vu" },
+  { value: "seasonal", label: "Mùa vụ" },
   { value: "flash_sale", label: "Flash Sale" },
-  { value: "custom", label: "Tu dinh nghia" },
+  { value: "custom", label: "Tự định nghĩa" },
 ] as const;
 
 const PLATFORM_OPTIONS = [
@@ -67,7 +67,7 @@ export function CalendarEventForm({
   async function handleSubmit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     if (!formName.trim() || !formStart || !formEnd) {
-      toast.error("Nhap ten, ngay bat dau va ket thuc");
+      toast.error("Nhập tên, ngày bắt đầu và kết thúc");
       return;
     }
     setSaving(true);
@@ -100,7 +100,7 @@ export function CalendarEventForm({
       onSaved();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Loi khi luu su kien"
+        err instanceof Error ? err.message : "Lỗi khi lưu sự kiện"
       );
     } finally {
       setSaving(false);
@@ -114,7 +114,7 @@ export function CalendarEventForm({
     >
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          {editingEvent ? "Sua su kien" : "Them su kien moi"}
+          {editingEvent ? "Sửa sự kiện" : "Thêm sự kiện mới"}
         </h3>
         <button
           type="button"
@@ -127,13 +127,13 @@ export function CalendarEventForm({
 
       <div>
         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-          Ten su kien *
+          Tên sự kiện *
         </label>
         <input
           type="text"
           value={formName}
           onChange={(e) => setFormName(e.target.value)}
-          placeholder="VD: 3.3 Sale, 8/3 Quoc te Phu nu..."
+          placeholder="VD: 3.3 Sale, 8/3 Quốc tế Phụ nữ..."
           className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
         />
       </div>
@@ -141,7 +141,7 @@ export function CalendarEventForm({
       <div className="grid grid-cols-3 gap-3">
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            Loai *
+            Loại *
           </label>
           <select
             value={formType}
@@ -157,7 +157,7 @@ export function CalendarEventForm({
         </div>
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            Bat dau *
+            Bắt đầu *
           </label>
           <input
             type="date"
@@ -168,7 +168,7 @@ export function CalendarEventForm({
         </div>
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            Ket thuc *
+            Kết thúc *
           </label>
           <input
             type="date"
@@ -181,7 +181,7 @@ export function CalendarEventForm({
 
       <div>
         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-          Nen tang
+          Nền tảng
         </label>
         <div className="flex flex-wrap gap-1.5">
           {PLATFORM_OPTIONS.map((p) => (
@@ -203,13 +203,13 @@ export function CalendarEventForm({
 
       <div>
         <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-          Ghi chu
+          Ghi chú
         </label>
         <input
           type="text"
           value={formNotes}
           onChange={(e) => setFormNotes(e.target.value)}
-          placeholder="Ghi chu them (tuy chon)"
+          placeholder="Ghi chú thêm (tùy chọn)"
           className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
         />
       </div>
@@ -220,10 +220,10 @@ export function CalendarEventForm({
         className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saving
-          ? "Dang luu..."
+          ? "Đang lưu..."
           : editingEvent
-            ? "Cap nhat su kien"
-            : "Them su kien"}
+            ? "Cập nhật sự kiện"
+            : "Thêm sự kiện"}
       </button>
     </form>
   );

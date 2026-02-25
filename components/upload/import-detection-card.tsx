@@ -50,7 +50,7 @@ function formatTypeName(type: string): string {
     tiktok_affiliate: "TikTok Affiliate",
     shopee_affiliate: "Shopee Affiliate",
     generic: "Chung",
-    unknown: "Khong xac dinh",
+    unknown: "Không xác định",
   };
   return labels[type] ?? type;
 }
@@ -108,7 +108,7 @@ export function ImportDetectionCard({
       {/* Type override dropdown */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-          Loai file
+          Loại file
         </label>
         <div className="relative">
           <select
@@ -139,7 +139,7 @@ export function ImportDetectionCard({
           ) : (
             <Check className="w-4 h-4" />
           )}
-          {isImporting ? "Dang import..." : "Import"}
+          {isImporting ? "Đang import..." : "Import"}
         </button>
         <button
           onClick={onCancel}

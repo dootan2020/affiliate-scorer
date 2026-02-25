@@ -117,7 +117,7 @@ export function CampaignCreateModal({
           <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-                Tao Campaign moi
+                Tạo Campaign mới
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Nhập thông tin campaign để bắt đầu chạy sản phẩm
@@ -127,7 +127,7 @@ export function CampaignCreateModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Ten campaign
+                  Tên campaign
                 </label>
                 <input
                   className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
@@ -140,7 +140,7 @@ export function CampaignCreateModal({
 
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Nen tang
+                  Nền tảng
                 </label>
                 <select
                   value={platform}
@@ -158,7 +158,7 @@ export function CampaignCreateModal({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                    Budget/ngay (VND)
+                    Budget/ngày (VND)
                   </label>
                   <input
                     className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
@@ -171,7 +171,7 @@ export function CampaignCreateModal({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                    So ngay chay
+                    Số ngày chạy
                   </label>
                   <input
                     className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
@@ -209,7 +209,7 @@ export function CampaignCreateModal({
                   onClick={() => setOpen(false)}
                   disabled={loading}
                 >
-                  Huy
+                  Hủy
                 </button>
                 <button
                   type="submit"
@@ -217,7 +217,7 @@ export function CampaignCreateModal({
                   disabled={loading || !name.trim()}
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Tao campaign
+                  Tạo campaign
                 </button>
               </div>
             </form>

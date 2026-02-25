@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "Tat ca" },
+  { value: "", label: "Tất cả" },
   { value: "planning", label: "Planning" },
   { value: "creating_content", label: "Creating Content" },
   { value: "running", label: "Running" },
@@ -15,14 +15,14 @@ const STATUS_OPTIONS = [
 ] as const;
 
 const PLATFORM_OPTIONS = [
-  { value: "", label: "Tat ca" },
+  { value: "", label: "Tất cả" },
   { value: "tiktok", label: "TikTok" },
   { value: "facebook", label: "Facebook" },
   { value: "shopee", label: "Shopee" },
   { value: "youtube", label: "YouTube" },
   { value: "google", label: "Google" },
   { value: "organic", label: "Organic" },
-  { value: "other", label: "Khac" },
+  { value: "other", label: "Khác" },
 ] as const;
 
 export function CampaignFilters(): React.ReactElement {

@@ -8,9 +8,9 @@ interface InsightsTabsProps {
 }
 
 const TABS = [
-  { key: "overview", label: "Tong quan" },
+  { key: "overview", label: "Tổng quan" },
   { key: "financial", label: "Thu chi" },
-  { key: "calendar", label: "Lich su kien" },
+  { key: "calendar", label: "Lịch sự kiện" },
   { key: "feedback", label: "Feedback" },
   { key: "learning", label: "Learning" },
 ] as const;

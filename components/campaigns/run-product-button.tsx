@@ -22,7 +22,7 @@ export function RunProductButton({
       <Link href={`/campaigns/${activeCampaignId}`}>
         <span className="flex items-center justify-center gap-2 w-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors">
           <BarChart3 className="w-4 h-4" />
-          Xem campaign dang chay
+          Xem campaign đang chạy
         </span>
       </Link>
     );

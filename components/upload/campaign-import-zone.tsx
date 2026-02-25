@@ -132,10 +132,10 @@ export function CampaignImportZone({
         </div>
         <div>
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-            Ket qua chien dich
+            Kết quả chiến dịch
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Upload ket qua tu FB Ads, TikTok Ads, Shopee — AI se hoc tu data nay
+            Upload kết quả từ FB Ads, TikTok Ads, Shopee — AI sẽ học từ data này
           </p>
         </div>
       </div>
@@ -144,7 +144,7 @@ export function CampaignImportZone({
       {!detection && !isDetecting && !importResult && (
         <FileDropzone
           onFileSelect={handleImportFileSelect}
-          label="Keo tha file ket qua vao day"
+          label="Kéo thả file kết quả vào đây"
           sublabel="FB Ads, TikTok Ads, Shopee (.csv, .xlsx)"
           disabled={isDetecting || isImporting}
         />
@@ -154,7 +154,7 @@ export function CampaignImportZone({
       {isDetecting && (
         <div className="rounded-2xl bg-gray-50 dark:bg-slate-800 p-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Dang nhan dang loai file...
+            Đang nhận dạng loại file...
           </p>
         </div>
       )}
@@ -174,27 +174,27 @@ export function CampaignImportZone({
       {importResult && (
         <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 p-4 space-y-2">
           <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-            Import thanh cong
+            Import thành công
           </p>
           <div className="text-sm text-emerald-600 dark:text-emerald-400 space-y-1">
             <p>
-              {importResult.rowsImported}/{importResult.rowsTotal} dong da
+              {importResult.rowsImported}/{importResult.rowsTotal} dòng đã
               import
             </p>
             {importResult.campaignsCreated > 0 && (
-              <p>{importResult.campaignsCreated} campaigns moi</p>
+              <p>{importResult.campaignsCreated} campaigns mới</p>
             )}
             {importResult.campaignsUpdated > 0 && (
-              <p>{importResult.campaignsUpdated} campaigns cap nhat</p>
+              <p>{importResult.campaignsUpdated} campaigns cập nhật</p>
             )}
             {importResult.financialRecordsCreated > 0 && (
               <p>
-                {importResult.financialRecordsCreated} ban ghi tai chinh
+                {importResult.financialRecordsCreated} bản ghi tài chính
               </p>
             )}
             {importResult.rowsError > 0 && (
               <p className="text-amber-600 dark:text-amber-400">
-                {importResult.rowsError} dong loi
+                {importResult.rowsError} dòng lỗi
               </p>
             )}
           </div>
@@ -202,7 +202,7 @@ export function CampaignImportZone({
             onClick={handleCancel}
             className="mt-2 text-sm text-emerald-700 dark:text-emerald-300 underline underline-offset-2 hover:no-underline"
           >
-            Import file khac
+            Import file khác
           </button>
         </div>
       )}
@@ -217,7 +217,7 @@ export function CampaignImportZone({
             onClick={handleCancel}
             className="mt-2 text-sm text-rose-600 dark:text-rose-400 underline underline-offset-2 hover:no-underline"
           >
-            Thu lai
+            Thử lại
           </button>
         </div>
       )}

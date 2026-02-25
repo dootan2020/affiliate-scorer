@@ -185,7 +185,7 @@ export function CalendarEventsList({
                       onClick={() => handleDelete(event.id)}
                       disabled={deleting === event.id}
                       className="p-2 rounded-lg text-gray-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
-                      title="Xoa"
+                      title="Xóa"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

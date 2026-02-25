@@ -136,8 +136,8 @@ export function CampaignListTable({
       </div>
 
       <div className="flex flex-wrap items-center gap-4 px-4 py-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl text-xs text-gray-500 dark:text-gray-400">
-        <span>Tong: {campaigns.length} campaigns</span>
-        <span>Dang chay: {activeCampaigns.length}</span>
+        <span>Tổng: {campaigns.length} campaigns</span>
+        <span>Đang chạy: {activeCampaigns.length}</span>
         <span
           className={`font-medium ${
             netProfit >= 0

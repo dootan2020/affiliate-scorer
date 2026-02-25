@@ -81,15 +81,15 @@ function summarizeResult(record: ImportRecord): string {
   if (totalCampaigns > 0) {
     const detail =
       record.campaignsUpdated > 0
-        ? `${record.campaignsCreated} moi, ${record.campaignsUpdated} cap nhat`
-        : `${record.campaignsCreated} moi`;
+        ? `${record.campaignsCreated} mới, ${record.campaignsUpdated} cập nhật`
+        : `${record.campaignsCreated} mới`;
     parts.push(`${totalCampaigns} campaigns (${detail})`);
   }
 
   const totalProducts = record.productsCreated + record.productsUpdated;
   if (totalProducts > 0) {
     parts.push(
-      `${totalProducts} SP (${record.productsCreated} moi)`
+      `${totalProducts} SP (${record.productsCreated} mới)`
     );
   }
 
@@ -98,7 +98,7 @@ function summarizeResult(record: ImportRecord): string {
   }
 
   if (parts.length === 0) {
-    return `${record.rowsImported}/${record.rowsTotal} dong`;
+    return `${record.rowsImported}/${record.rowsTotal} dòng`;
   }
 
   return parts.join(", ");
@@ -121,19 +121,19 @@ export function ImportHistoryTable({
         <thead>
           <tr className="border-b border-gray-100 dark:border-slate-700">
             <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4">
-              Ngay
+              Ngày
             </th>
             <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 hidden sm:table-cell">
               File
             </th>
             <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4">
-              Loai
+              Loại
             </th>
             <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4">
               Status
             </th>
             <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 px-4 hidden md:table-cell">
-              Ket qua
+              Kết quả
             </th>
           </tr>
         </thead>

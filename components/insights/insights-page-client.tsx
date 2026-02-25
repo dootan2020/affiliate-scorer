@@ -120,7 +120,7 @@ function InsightsPageClientInner(
                 <MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-                Chua co du lieu
+                Chưa có dữ liệu
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
                 Upload kết quả chiến dịch tại trang Upload để AI bắt đầu học.

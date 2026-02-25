@@ -472,6 +472,8 @@ model ProductIdentity {
   product    Product?
   urls       ProductUrl[]
   inboxItems InboxItem[]
+  briefs     ContentBrief[]
+  assets     ContentAsset[]
 
   @@index([inboxState])
   @@index([combinedScore(sort: Desc)])
@@ -514,4 +516,101 @@ model InboxItem {
 
   @@index([productIdentityId])
   @@index([status])
+}
+
+// ─── PHASE 3: CONTENT FACTORY ───
+
+model ContentBrief {
+  id                String          @id @default(cuid())
+  productIdentityId String
+  productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id])
+
+  // Generated content
+  angles  Json @default("[]") // 5 angles
+  hooks   Json @default("[]") // 10 hooks
+  scripts Json @default("[]") // 3 scripts (different formats)
+
+  // Metadata
+  aiModel          String? @default("claude")
+  promptUsed       String?
+  generationTimeMs Int?
+
+  status String @default("generated") // "generated" | "reviewed" | "exported"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assets ContentAsset[]
+
+  @@index([productIdentityId])
+}
+
+model ContentAsset {
+  id String @id @default(cuid())
+
+  // Identity
+  assetCode String? @unique // "A-20260225-0001"
+
+  // Relations
+  productIdentityId String
+  productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id])
+  briefId           String?
+  brief             ContentBrief? @relation(fields: [briefId], references: [id])
+  productionBatchId String?
+  productionBatch   ProductionBatch? @relation(fields: [productionBatchId], references: [id])
+
+  // Content detail
+  hookText String?
+  hookType String? // "result" | "price" | "compare" | "myth" | "problem" | "unbox" | "trend"
+  format   String? // "review_short" | "demo" | "compare" | "unbox" | "lifestyle" | "greenscreen" | "problem_solution"
+  angle    String?
+
+  // Generated content
+  scriptText  String?
+  captionText String?
+  hashtags    Json    @default("[]")
+  ctaText     String?
+
+  // Prompts cho Kling/Veo3
+  videoPrompts Json @default("[]") // [{ scene, prompt_kling, prompt_veo3, duration_s, text_overlay }]
+
+  // Compliance
+  complianceStatus String? @default("unchecked") // "unchecked" | "passed" | "warning" | "blocked"
+  complianceNotes  String?
+
+  // Lifecycle
+  status String @default("draft") // "draft" | "produced" | "rendered" | "published" | "logged" | "archived" | "failed"
+
+  // Published info
+  publishedUrl String?
+  postId       String?
+  publishedAt  DateTime?
+
+  // Versioning
+  version       Int     @default(1)
+  parentAssetId String?
+  parentAsset   ContentAsset?  @relation("AssetVersions", fields: [parentAssetId], references: [id])
+  childAssets   ContentAsset[] @relation("AssetVersions")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productIdentityId])
+  @@index([status])
+  @@index([productionBatchId])
+}
+
+model ProductionBatch {
+  id String @id @default(cuid())
+
+  batchDate        DateTime @default(now()) @db.Date
+  targetVideoCount Int
+  actualVideoCount Int      @default(0)
+
+  status String @default("active") // "active" | "done"
+  notes  String?
+
+  createdAt DateTime @default(now())
+
+  assets ContentAsset[]
 }

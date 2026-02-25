@@ -469,11 +469,12 @@ model ProductIdentity {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  product    Product?
-  urls       ProductUrl[]
-  inboxItems InboxItem[]
-  briefs     ContentBrief[]
-  assets     ContentAsset[]
+  product     Product?
+  urls        ProductUrl[]
+  inboxItems  InboxItem[]
+  briefs      ContentBrief[]
+  assets      ContentAsset[]
+  commissions Commission[]
 
   @@index([inboxState])
   @@index([combinedScore(sort: Desc)])
@@ -598,6 +599,9 @@ model ContentAsset {
   // Phase 4: Relations
   metrics AssetMetric[]
 
+  // Phase 5: Relations
+  commissions Commission[]
+
   @@index([productIdentityId])
   @@index([status])
   @@index([productionBatchId])
@@ -695,4 +699,76 @@ model UserPattern {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─── PHASE 5: BUSINESS LAYER ───
+
+model Commission {
+  id String @id @default(cuid())
+
+  // Links (cả hai optional)
+  productIdentityId String?
+  productIdentity   ProductIdentity? @relation(fields: [productIdentityId], references: [id])
+  contentAssetId    String?
+  contentAsset      ContentAsset? @relation(fields: [contentAssetId], references: [id])
+
+  // Tiền
+  amount   Int    // VND
+  platform String? // "tiktokshop" | "shopee" | "lazada" | "other"
+
+  // Thời gian
+  earnedDate   DateTime  @db.Date
+  receivedDate DateTime? @db.Date
+
+  // Status
+  status String @default("pending") // "pending" | "confirmed" | "paid" | "rejected"
+
+  notes   String?
+  rawData Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([productIdentityId])
+  @@index([contentAssetId])
+  @@index([earnedDate(sort: Desc)])
+  @@index([status])
+}
+
+model DailyBrief {
+  id String @id @default(cuid())
+
+  briefDate DateTime @unique @db.Date
+
+  // Generated content (JSON)
+  content Json
+
+  aiModel     String?
+  generatedAt DateTime @default(now())
+
+  @@index([briefDate(sort: Desc)])
+}
+
+model GoalP5 {
+  id String @id @default(cuid())
+
+  periodType  String   // "weekly" | "monthly"
+  periodStart DateTime @db.Date
+  periodEnd   DateTime @db.Date
+
+  // Targets
+  targetVideos     Int?
+  targetCommission Int? // VND
+  targetViews      Int?
+
+  // Actual (auto-calculated)
+  actualVideos     Int @default(0)
+  actualCommission Int @default(0)
+  actualViews      Int @default(0)
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([periodType, periodStart])
 }

@@ -15,10 +15,10 @@ interface ShopEditFormProps {
 }
 
 const SAMPLE_POLICY_OPTIONS = [
-  { value: "", label: "-- Chon --" },
-  { value: "sends_free", label: "Gui free sample" },
+  { value: "", label: "-- Chọn --" },
+  { value: "sends_free", label: "Gửi free sample" },
   { value: "paid_sample", label: "Mua sample" },
-  { value: "no_sample", label: "Khong co sample" },
+  { value: "no_sample", label: "Không có sample" },
 ];
 
 function StarInput({
@@ -108,16 +108,16 @@ export function ShopEditForm({
         }),
       });
       if (res.ok) {
-        setToast("Da luu thanh cong!");
+        setToast("Đã lưu thành công!");
         router.refresh();
         setTimeout(() => setToast(null), 3000);
       } else {
         const data = await res.json();
-        setToast(`Loi: ${data.error ?? "Khong xac dinh"}`);
+        setToast(`Lỗi: ${data.error ?? "Không xác định"}`);
         setTimeout(() => setToast(null), 5000);
       }
     } catch {
-      setToast("Loi ket noi. Vui long thu lai.");
+      setToast("Lỗi kết nối. Vui lòng thử lại.");
       setTimeout(() => setToast(null), 5000);
     } finally {
       setSaving(false);
@@ -131,7 +131,7 @@ export function ShopEditForm({
         className="flex items-center justify-between w-full text-left"
       >
         <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          Chinh sua danh gia shop
+          Chỉnh sửa đánh giá shop
         </p>
         {isOpen ? (
           <ChevronUp className="w-4 h-4 text-gray-400" />
@@ -143,13 +143,13 @@ export function ShopEditForm({
       {isOpen && (
         <div className="mt-4 space-y-5">
           <StarInput
-            label="Tra commission dung hen"
+            label="Trả commission đúng hẹn"
             value={commissionReliability}
             onChange={setCommissionReliability}
           />
 
           <StarInput
-            label="Ho tro affiliate"
+            label="Hỗ trợ affiliate"
             value={supportQuality}
             onChange={setSupportQuality}
           />
@@ -175,13 +175,13 @@ export function ShopEditForm({
           {/* Notes */}
           <div>
             <label className="text-sm text-gray-700 dark:text-gray-300 mb-1.5 block">
-              Ghi chu
+              Ghi chú
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Ghi chu ve shop..."
+              placeholder="Ghi chú về shop..."
               className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
             />
           </div>
@@ -194,13 +194,13 @@ export function ShopEditForm({
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
-              {saving ? "Dang luu..." : "Luu thay doi"}
+              {saving ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
 
             {toast && (
               <span
                 className={`text-sm font-medium ${
-                  toast.startsWith("Loi")
+                  toast.startsWith("Lỗi")
                     ? "text-rose-600 dark:text-rose-400"
                     : "text-emerald-600 dark:text-emerald-400"
                 }`}

@@ -97,13 +97,13 @@ export default function UploadPage(): React.ReactElement {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Loi doc file");
+        throw new Error(data.error || "Lỗi đọc file");
       }
 
       setPreview(data.data as PreviewData);
-      toast.success("Da doc file. Kiem tra mapping va xac nhan import.");
+      toast.success("Đã đọc file. Kiểm tra mapping và xác nhận import.");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Loi khong xac dinh";
+      const message = err instanceof Error ? err.message : "Lỗi không xác định";
       setError(message);
       toast.error(message);
     } finally {
@@ -132,14 +132,14 @@ export default function UploadPage(): React.ReactElement {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Loi import");
+        throw new Error(data.error || "Lỗi import");
       }
 
       setResult(data.data);
       setPreview(null);
       toast.success(data.message);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Loi khong xac dinh";
+      const message = err instanceof Error ? err.message : "Lỗi không xác định";
       setError(message);
       toast.error(message);
     } finally {
@@ -160,7 +160,7 @@ export default function UploadPage(): React.ReactElement {
           Upload Data
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Upload tat ca du lieu de AI ngay cang thong minh hon
+          Upload tất cả dữ liệu để AI ngày càng thông minh hơn
         </p>
       </div>
 
@@ -172,10 +172,10 @@ export default function UploadPage(): React.ReactElement {
           </div>
           <div>
             <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-              Nghien cuu san pham
+              Nghiên cứu sản phẩm
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Upload file tu FastMoss, KaloData
+              Upload file từ FastMoss, KaloData
             </p>
           </div>
         </div>
@@ -183,8 +183,8 @@ export default function UploadPage(): React.ReactElement {
         {!preview && (
           <FileDropzone
             onFileSelect={handleProductUpload}
-            label="Keo tha file vao day"
-            sublabel="Ho tro .csv, .xlsx, .xls"
+            label="Kéo thả file vào đây"
+            sublabel="Hỗ trợ .csv, .xlsx, .xls"
             disabled={isUploading}
           />
         )}
@@ -192,7 +192,7 @@ export default function UploadPage(): React.ReactElement {
         {isUploading && (
           <div className="rounded-2xl bg-gray-50 dark:bg-slate-800 p-4">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Dang doc file va phan tich cot...
+              Đang đọc file và phân tích cột...
             </p>
           </div>
         )}
@@ -231,10 +231,10 @@ export default function UploadPage(): React.ReactElement {
           </div>
           <div>
             <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-              Nhap ket qua thu cong
+              Nhập kết quả thủ công
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Cho ket qua organic hoac khi khong co file
+              Cho kết quả organic hoặc khi không có file
             </p>
           </div>
         </div>
@@ -242,9 +242,9 @@ export default function UploadPage(): React.ReactElement {
           <ManualFeedbackForm products={products} />
         ) : (
           <p className="text-sm text-gray-400 dark:text-gray-500">
-            Chua co san pham.{" "}
+            Chưa có sản phẩm.{" "}
             <Link href="/upload" className="text-blue-500 hover:underline">
-              Upload san pham truoc
+              Upload sản phẩm trước
             </Link>
             .
           </p>
@@ -259,7 +259,7 @@ export default function UploadPage(): React.ReactElement {
               <History className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </div>
             <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-              Lich su import
+              Lịch sử import
             </h2>
           </div>
           <ImportHistoryTable records={importHistory} />

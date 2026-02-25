@@ -7,6 +7,8 @@ import { groupDuplicateProducts } from "@/lib/utils/product-grouping";
 import { ScoreButton } from "@/components/products/score-button";
 import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-widget";
 import { MorningBriefWidget } from "@/components/dashboard/morning-brief-widget";
+import { QuickPasteWidget } from "@/components/dashboard/quick-paste-widget";
+import { InboxStatsWidget } from "@/components/dashboard/inbox-stats-widget";
 import { Upload, BarChart3, Lightbulb, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -199,6 +201,12 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
     <div className="space-y-8">
       {/* Phase 3A: Morning Brief */}
       <MorningBriefWidget />
+
+      {/* Phase 2: Quick Paste + Inbox Stats */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+        <QuickPasteWidget />
+        <InboxStatsWidget />
+      </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">

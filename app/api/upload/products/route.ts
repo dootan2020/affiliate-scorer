@@ -7,6 +7,9 @@ import { parseKaloData } from "@/lib/parsers/kalodata";
 import { parseWithMapping } from "@/lib/parsers/map-parser";
 import { deduplicateProducts } from "@/lib/utils/dedup";
 import { scoreProducts } from "@/lib/ai/scoring";
+import { syncProductIdentity } from "@/lib/inbox/sync-identity";
+import { createEmptyDeltaSummary } from "@/lib/inbox/delta-classification";
+import type { DeltaSummary } from "@/lib/inbox/delta-classification";
 import type { NormalizedProduct } from "@/lib/utils/normalize";
 import type { ColumnMapping } from "@/lib/parsers/ai-detect";
 
@@ -90,6 +93,7 @@ export async function POST(
 
     let created = 0;
     let updated = 0;
+    const deltaSummary: DeltaSummary = createEmptyDeltaSummary();
 
     const SNAPSHOT_FIELDS = {
       id: true, price: true, commissionRate: true, sales7d: true,
@@ -190,9 +194,22 @@ export async function POST(
             dataDate: p.dataDate,
           },
         });
+
+        // Phase 2: Sync product → product_identity + delta
+        try {
+          const { delta } = await syncProductIdentity({
+            productId: existing.id,
+            name: p.name, shopName: p.shopName, category: p.category,
+            price: p.price, commissionRate: p.commissionRate, imageUrl: p.imageUrl,
+            tiktokUrl: p.tiktokUrl, fastmossUrl: p.fastmossUrl,
+            aiScore: null, sales7d: p.sales7d,
+          });
+          deltaSummary[delta]++;
+        } catch (err) { console.error("Identity sync error:", err); }
+
         updated++;
       } else {
-        await prisma.product.create({
+        const newProduct = await prisma.product.create({
           data: {
             name: p.name,
             url: p.url,
@@ -228,6 +245,19 @@ export async function POST(
             dataDate: p.dataDate,
           },
         });
+
+        // Phase 2: Sync product → product_identity + delta
+        try {
+          const { delta } = await syncProductIdentity({
+            productId: newProduct.id,
+            name: p.name, shopName: p.shopName, category: p.category,
+            price: p.price, commissionRate: p.commissionRate, imageUrl: p.imageUrl,
+            tiktokUrl: p.tiktokUrl, fastmossUrl: p.fastmossUrl,
+            aiScore: null, sales7d: p.sales7d,
+          });
+          deltaSummary[delta]++;
+        } catch (err) { console.error("Identity sync error:", err); }
+
         created++;
       }
     }
@@ -271,6 +301,7 @@ export async function POST(
         afterDedup: deduplicated.length,
         created,
         updated,
+        deltaSummary,
         scoringTriggered: !!apiKey && apiKey !== "sk-ant-...",
       },
       message: `Đã import ${created + updated} sản phẩm từ ${sourceLabel} (${created} mới, ${updated} cập nhật)`,

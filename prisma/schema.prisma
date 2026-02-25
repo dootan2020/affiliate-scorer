@@ -81,6 +81,10 @@ model Product {
   dataDate      DateTime
   createdAt     DateTime @default(now())
 
+  // Phase 2: Link to Product Identity
+  identityId String? @unique
+  identity   ProductIdentity? @relation(fields: [identityId], references: [id])
+
   feedbacks    Feedback[]
   snapshots    ProductSnapshot[]
   campaigns    Campaign[]
@@ -420,4 +424,94 @@ model WeeklyReport {
   createdAt  DateTime @default(now())
 
   @@index([weekStart])
+}
+
+// ─── PHASE 2: PRODUCT INTELLIGENCE ───
+
+model ProductIdentity {
+  id String @id @default(cuid())
+
+  // Identity — canonical URL là unique, fingerprint backup
+  canonicalUrl      String? @unique
+  fingerprintHash   String? @unique
+  productIdExternal String? // ID từ TikTok Shop URL
+
+  // Metadata cơ bản (nullable hết — enrich lazy)
+  title          String?
+  shopName       String?
+  category       String?
+  price          Int? // VND
+  commissionRate Decimal?  @db.Decimal(5, 2)
+  imageUrl       String?
+  description    String?
+
+  // Inbox pipeline state
+  inboxState String @default("new") // "new" | "enriched" | "scored" | "briefed" | "published" | "archived"
+
+  // Scores (nullable — tính khi có data)
+  marketScore           Decimal? @db.Decimal(5, 2)
+  contentPotentialScore Decimal? @db.Decimal(5, 2)
+  combinedScore         Decimal? @db.Decimal(5, 2)
+
+  // Lifecycle & Delta
+  lifecycleStage String? // "new" | "rising" | "hot" | "peak" | "declining" | "unknown"
+  deltaType      String? // "NEW" | "SURGE" | "COOL" | "STABLE" | "REAPPEAR"
+
+  // User data (ghi chú, rating — optional)
+  personalNotes  String?
+  personalRating Int?
+  personalTags   Json @default("[]")
+
+  // Timestamps
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product    Product?
+  urls       ProductUrl[]
+  inboxItems InboxItem[]
+
+  @@index([inboxState])
+  @@index([combinedScore(sort: Desc)])
+  @@index([deltaType])
+}
+
+model ProductUrl {
+  id                String          @id @default(cuid())
+  productIdentityId String
+  productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id], onDelete: Cascade)
+
+  url     String @unique
+  urlType String // "tiktokshop" | "fastmoss" | "kalodata" | "manual" | "video" | "shop"
+
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@index([productIdentityId])
+}
+
+model InboxItem {
+  id String @id @default(cuid())
+
+  // Link gốc
+  rawUrl       String
+  detectedType String // "product" | "video" | "shop" | "unknown"
+
+  // Liên kết (nullable — match sau)
+  productIdentityId String?
+  productIdentity   ProductIdentity? @relation(fields: [productIdentityId], references: [id])
+
+  // Metadata extract được
+  extractedTitle    String?
+  extractedMetadata Json @default("{}")
+
+  // Status
+  status String @default("pending") // "pending" | "matched" | "new_product" | "duplicate" | "failed"
+
+  createdAt DateTime @default(now())
+
+  @@index([productIdentityId])
+  @@index([status])
 }

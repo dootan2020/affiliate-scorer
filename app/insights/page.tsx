@@ -8,7 +8,7 @@ import { PlaybookSection } from "@/components/ai/playbook-section";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 export const metadata: Metadata = {
-  title: "AI Insights",
+  title: "Phân tích",
 };
 
 const DEFAULT_WEIGHTS: WeightMap = {

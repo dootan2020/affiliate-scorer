@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 export interface TocItem {
   id: string;
   label: string;
+  indent?: boolean;
 }
 
 interface GuideTocProps {
@@ -25,7 +26,8 @@ export function GuideToc({ items, activeId }: GuideTocProps): React.ReactElement
           key={item.id}
           onClick={() => handleClick(item.id)}
           className={cn(
-            "block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+            "block w-full text-left py-1.5 rounded-lg text-sm transition-colors",
+            item.indent ? "pl-6 pr-3 text-xs" : "px-3",
             activeId === item.id
               ? "bg-orange-50 text-orange-700 font-medium dark:bg-orange-950/20 dark:text-orange-400"
               : "text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-slate-800"
@@ -57,7 +59,7 @@ export function GuideTocMobile({ items, activeId }: GuideTocMobileProps): React.
     >
       {items.map((item) => (
         <option key={item.id} value={item.id}>
-          {item.label}
+          {item.indent ? "  " : ""}{item.label}
         </option>
       ))}
     </select>

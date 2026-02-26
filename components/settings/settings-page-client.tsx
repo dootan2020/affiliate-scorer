@@ -39,8 +39,8 @@ const PROVIDERS: { id: ProviderName; label: string; consoleUrl: string }[] = [
 
 const TASK_LABELS: Record<string, { label: string; description: string }> = {
   scoring: { label: "Chấm điểm sản phẩm", description: "Phân tích và xếp hạng sản phẩm affiliate" },
-  content_brief: { label: "Tạo Content Brief", description: "Tạo script, hooks, prompts cho video" },
-  morning_brief: { label: "Morning Brief", description: "Tóm tắt tình hình hàng ngày" },
+  content_brief: { label: "Tạo Brief nội dung", description: "Tạo kịch bản, câu mở đầu, prompts cho video" },
+  morning_brief: { label: "Bản tin sáng", description: "Tóm tắt tình hình hàng ngày" },
   weekly_report: { label: "Báo cáo tuần", description: "Phân tích hiệu suất hàng tuần" },
 };
 

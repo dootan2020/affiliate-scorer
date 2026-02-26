@@ -3,7 +3,7 @@ import { GuideCallout } from "./guide-callout";
 export function GuideSectionAiConfig(): React.ReactElement {
   return (
     <section id="cau-hinh-ai">
-      <h2>9. Cấu hình AI khuyến nghị</h2>
+      <h2>10. Cấu hình AI khuyến nghị</h2>
       <p>3 preset tùy nhu cầu:</p>
 
       <h3>Nhanh &amp; Tiết kiệm — Cho người mới</h3>

@@ -6,14 +6,14 @@ import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-wid
 import { ContentSuggestionsWidget } from "@/components/dashboard/content-suggestions-widget";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "Tổng quan",
 };
 
 export default function DashboardPage(): React.ReactElement {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
-        Dashboard
+        Tổng quan
       </h1>
 
       {/* Row 1: Morning Brief (2/3) + Quick Paste (1/3) */}

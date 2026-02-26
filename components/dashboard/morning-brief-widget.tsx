@@ -141,7 +141,7 @@ export function MorningBriefWidget(): React.ReactElement {
         <div className="flex items-center gap-2">
           <Sun className="w-5 h-5 text-amber-500" />
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-            Morning Brief — {formatTodayString()}
+            Bản tin sáng — {formatTodayString()}
           </h3>
         </div>
         <button

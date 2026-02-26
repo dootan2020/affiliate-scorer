@@ -11,9 +11,9 @@ const TABS = [
   { key: "overview", label: "Tổng quan" },
   { key: "financial", label: "Thu chi" },
   { key: "calendar", label: "Lịch sự kiện" },
-  { key: "feedback", label: "Feedback" },
-  { key: "learning", label: "Learning" },
-  { key: "playbook", label: "Playbook" },
+  { key: "feedback", label: "Phản hồi" },
+  { key: "learning", label: "Học" },
+  { key: "playbook", label: "Sổ tay chiến lược" },
 ] as const;
 
 export function InsightsTabs({

@@ -7,7 +7,7 @@ import { ShopEditForm } from "@/components/shops/shop-edit-form";
 import { ArrowLeft, Star, Store } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Chi tiết Shop",
+  title: "Chi tiết cửa hàng",
 };
 
 interface ShopDetailPageProps {
@@ -124,9 +124,9 @@ export default async function ShopDetailPage({
           <StarDisplay value={shop.commissionReliability} label="Trả commission đúng hẹn" />
           <StarDisplay value={shop.supportQuality} label="Hỗ trợ affiliate" />
 
-          {/* Sample policy */}
+          {/* Chính sách mẫu */}
           <div className="flex items-center justify-between py-3 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Sample policy</span>
+            <span className="text-gray-500 dark:text-gray-400">Chính sách mẫu</span>
             {policyInfo ? (
               <span
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${policyInfo.className}`}

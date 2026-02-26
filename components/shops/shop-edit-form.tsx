@@ -154,10 +154,10 @@ export function ShopEditForm({
             onChange={setSupportQuality}
           />
 
-          {/* Sample policy */}
+          {/* Chính sách mẫu */}
           <div>
             <label className="text-sm text-gray-700 dark:text-gray-300 mb-1.5 block">
-              Sample policy
+              Chính sách mẫu
             </label>
             <select
               value={samplePolicy}

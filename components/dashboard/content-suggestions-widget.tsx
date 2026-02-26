@@ -40,7 +40,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-orange-500" />
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-            Nên tạo content
+            Nên tạo nội dung
           </h3>
         </div>
         <Link

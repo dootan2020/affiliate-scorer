@@ -5,7 +5,7 @@ import { formatPlatform } from "@/lib/utils/format";
 import { Store, Star } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Quản lý Shop",
+  title: "Quản lý cửa hàng",
   description: "Danh sách tất cả shop đã đánh giá",
 };
 

@@ -12,6 +12,10 @@ export const metadata: Metadata = {
 export default function DashboardPage(): React.ReactElement {
   return (
     <div className="space-y-6">
+      <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+        Dashboard
+      </h1>
+
       {/* Row 1: Morning Brief (2/3) + Quick Paste (1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

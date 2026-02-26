@@ -28,25 +28,74 @@ const TASK_LABELS: Record<string, { label: string; description: string }> = {
   },
 };
 
-const MODEL_OPTIONS = [
+interface ModelOption {
+  id: string;
+  label: string;
+  description: string;
+  provider: "Anthropic" | "OpenAI" | "Google";
+  supported: boolean;
+}
+
+const MODEL_OPTIONS: ModelOption[] = [
   {
     id: "claude-haiku-4-5-20251001",
-    label: "Haiku 4.5",
-    description: "Nhanh, tiết kiệm — phù hợp tác vụ đơn giản",
+    label: "Claude Haiku 4.5",
+    description: "Nhanh, tiết kiệm",
+    provider: "Anthropic",
+    supported: true,
   },
   {
     id: "claude-sonnet-4-6",
-    label: "Sonnet 4.6",
-    description: "Cân bằng chất lượng và tốc độ",
+    label: "Claude Sonnet 4.6",
+    description: "Cân bằng chất lượng/giá",
+    provider: "Anthropic",
+    supported: true,
   },
   {
     id: "claude-opus-4-6",
-    label: "Opus 4.6",
-    description: "Chất lượng cao nhất — chi phí cao hơn",
+    label: "Claude Opus 4.6",
+    description: "Mạnh nhất, sáng tạo",
+    provider: "Anthropic",
+    supported: true,
+  },
+  {
+    id: "gpt-4o",
+    label: "GPT-4o",
+    description: "Mạnh, đa năng (OpenAI)",
+    provider: "OpenAI",
+    supported: false,
+  },
+  {
+    id: "gpt-4o-mini",
+    label: "GPT-4o-mini",
+    description: "Nhanh, rẻ (OpenAI)",
+    provider: "OpenAI",
+    supported: false,
+  },
+  {
+    id: "gemini-2.0-flash",
+    label: "Gemini 2.0 Flash",
+    description: "Nhanh (Google)",
+    provider: "Google",
+    supported: false,
+  },
+  {
+    id: "gemini-2.5-pro",
+    label: "Gemini 2.5 Pro",
+    description: "Mạnh (Google)",
+    provider: "Google",
+    supported: false,
   },
 ];
 
-const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
+const PROVIDERS = ["Anthropic", "OpenAI", "Google"] as const;
+
+const DEFAULT_MODELS: Record<string, string> = {
+  scoring: "claude-haiku-4-5-20251001",
+  content_brief: "claude-sonnet-4-6",
+  morning_brief: "claude-haiku-4-5-20251001",
+  weekly_report: "claude-haiku-4-5-20251001",
+};
 
 export function SettingsPageClient(): React.ReactElement {
   const [status, setStatus] = useState<ApiStatus | null>(null);
@@ -171,19 +220,27 @@ export function SettingsPageClient(): React.ReactElement {
                 </p>
               </div>
               <select
-                value={models[taskType] ?? DEFAULT_MODEL}
-                onChange={(e) =>
+                value={models[taskType] ?? DEFAULT_MODELS[taskType] ?? "claude-haiku-4-5-20251001"}
+                onChange={(e) => {
+                  const selected = MODEL_OPTIONS.find((m) => m.id === e.target.value);
+                  if (selected && !selected.supported) {
+                    toast.info("Sắp hỗ trợ! Hiện tại chỉ Claude hoạt động.");
+                  }
                   setModels((prev) => ({
                     ...prev,
                     [taskType]: e.target.value,
-                  }))
-                }
-                className="w-full sm:w-48 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
+                  }));
+                }}
+                className="w-full sm:w-56 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
               >
-                {MODEL_OPTIONS.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
+                {PROVIDERS.map((provider) => (
+                  <optgroup key={provider} label={provider}>
+                    {MODEL_OPTIONS.filter((m) => m.provider === provider).map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label} — {m.description}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -192,7 +249,7 @@ export function SettingsPageClient(): React.ReactElement {
 
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100 dark:border-slate-800">
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Mặc định: Haiku 4.5 (nhanh, tiết kiệm)
+            Mặc định: Haiku 4.5 (nhanh) · Content Brief: Sonnet 4.6
           </p>
           <button
             onClick={handleSave}

@@ -140,7 +140,7 @@ export function MorningBriefWidget(): React.ReactElement {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sun className="w-5 h-5 text-amber-500" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
             Morning Brief — {formatTodayString()}
           </h3>
         </div>
@@ -148,6 +148,7 @@ export function MorningBriefWidget(): React.ReactElement {
           onClick={() => fetchBrief(true)}
           disabled={refreshing}
           className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label="Tạo lại brief"
           title="Tạo lại brief"
         >
           <RefreshCw className={`w-4 h-4 text-gray-400 ${refreshing ? "animate-spin" : ""}`} />

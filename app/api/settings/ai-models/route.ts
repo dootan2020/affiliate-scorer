@@ -13,6 +13,10 @@ const VALID_MODELS = [
   "claude-haiku-4-5-20251001",
   "claude-sonnet-4-6",
   "claude-opus-4-6",
+  "gpt-4o",
+  "gpt-4o-mini",
+  "gemini-2.0-flash",
+  "gemini-2.5-pro",
 ];
 
 export async function GET(): Promise<NextResponse> {

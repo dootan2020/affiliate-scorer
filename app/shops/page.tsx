@@ -124,7 +124,7 @@ export default async function ShopsPage(): Promise<React.ReactElement> {
                             href={`/shops/${shop.id}`}
                             className="group block min-w-0"
                           >
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-50 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate transition-colors">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-50 group-hover:text-orange-600 dark:group-hover:text-orange-400 truncate transition-colors">
                               {shop.name}
                             </p>
                             <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -178,7 +178,7 @@ export default async function ShopsPage(): Promise<React.ReactElement> {
           </p>
           <Link
             href="/inbox"
-            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
+            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
           >
             Xem sản phẩm
           </Link>

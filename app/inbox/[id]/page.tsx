@@ -194,7 +194,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {product.category} ·{" "}
             {shop ? (
-              <Link href={`/shops/${shop.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+              <Link href={`/shops/${shop.id}`} className="text-orange-600 dark:text-orange-400 hover:underline">
                 {product.shopName}
               </Link>
             ) : (
@@ -239,7 +239,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
       </div>
 
       {/* Key Metrics */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-4 sm:p-5 border border-blue-100 dark:border-slate-700">
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-4 sm:p-5 border border-orange-100 dark:border-slate-700">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Hoa hồng/đơn</p>
@@ -273,7 +273,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
       <div className="flex flex-col sm:flex-row gap-3">
         <Link
           href={`/production?productId=${product.id}`}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+          className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
           Tạo Brief AI
@@ -284,7 +284,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
       {(product.totalKOL !== null || product.totalVideos !== null || product.totalLivestreams !== null) && (
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-800/50 p-4 text-center">
-            <Users className="w-5 h-5 text-blue-500 mx-auto mb-1" />
+            <Users className="w-5 h-5 text-orange-500 mx-auto mb-1" />
             <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">{formatNumber(product.totalKOL ?? 0)}</p>
             <p className="text-xs text-gray-400">KOL</p>
           </div>
@@ -335,7 +335,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
       {/* Platform Strategy */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Globe className="w-5 h-5 text-blue-500" />
+          <Globe className="w-5 h-5 text-orange-500" />
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Chiến lược nền tảng: {formatPlatform(strategy.platform)}
           </p>
@@ -420,10 +420,10 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
-              <tr className="bg-blue-50/50 dark:bg-blue-950/30">
-                <td className="py-2 pr-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+              <tr className="bg-orange-50/50 dark:bg-orange-950/30">
+                <td className="py-2 pr-2 text-sm font-medium text-orange-700 dark:text-orange-300">
                   <span className="block truncate" title={product.name}>{product.name}</span>
-                  <span className="text-xs text-blue-400">← đang xem</span>
+                  <span className="text-xs text-orange-400">← đang xem</span>
                 </td>
                 <td className="py-2 px-2 text-right text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatVND(product.price)}</td>
                 <td className="py-2 px-2 text-right text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatPercent(product.commissionRate)}</td>
@@ -433,7 +433,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
               {similarProducts.map((sp) => (
                 <tr key={sp.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50">
                   <td className="py-2 pr-2 text-sm text-gray-900 dark:text-gray-50">
-                    <Link href={`/inbox/${sp.identityId ?? sp.id}`} className="block truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title={sp.name}>
+                    <Link href={`/inbox/${sp.identityId ?? sp.id}`} className="block truncate hover:text-orange-600 dark:hover:text-orange-400 transition-colors" title={sp.name}>
                       {sp.name}
                     </Link>
                   </td>

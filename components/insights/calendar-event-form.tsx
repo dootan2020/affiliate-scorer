@@ -134,7 +134,7 @@ export function CalendarEventForm({
           value={formName}
           onChange={(e) => setFormName(e.target.value)}
           placeholder="VD: 3.3 Sale, 8/3 Quốc tế Phụ nữ..."
-          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
         />
       </div>
 
@@ -146,7 +146,7 @@ export function CalendarEventForm({
           <select
             value={formType}
             onChange={(e) => setFormType(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
           >
             {EVENT_TYPE_OPTIONS.map((t) => (
               <option key={t.value} value={t.value}>
@@ -163,7 +163,7 @@ export function CalendarEventForm({
             type="date"
             value={formStart}
             onChange={(e) => setFormStart(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
           />
         </div>
         <div>
@@ -174,7 +174,7 @@ export function CalendarEventForm({
             type="date"
             value={formEnd}
             onChange={(e) => setFormEnd(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
           />
         </div>
       </div>
@@ -191,8 +191,8 @@ export function CalendarEventForm({
               onClick={() => togglePlatform(p)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 formPlatforms.includes(p)
-                  ? "bg-blue-600 text-white"
-                  : "bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-950"
+                  ? "bg-orange-600 text-white"
+                  : "bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-950"
               }`}
             >
               {p}
@@ -210,14 +210,14 @@ export function CalendarEventForm({
           value={formNotes}
           onChange={(e) => setFormNotes(e.target.value)}
           placeholder="Ghi chú thêm (tùy chọn)"
-          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={saving}
-        className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saving
           ? "Đang lưu..."

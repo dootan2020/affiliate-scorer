@@ -149,7 +149,7 @@ export default function SyncPage(): React.ReactElement {
 
       {/* Section 1: Nghiên cứu sản phẩm */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-slate-800">
           <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950 flex items-center justify-center shrink-0">
             <Search className="w-5 h-5 text-orange-500" />
           </div>
@@ -205,7 +205,7 @@ export default function SyncPage(): React.ReactElement {
 
       {/* Section 2: TikTok Studio Analytics */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-slate-800">
           <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950 flex items-center justify-center shrink-0">
             <TrendingUp className="w-5 h-5 text-purple-500" />
           </div>
@@ -225,7 +225,7 @@ export default function SyncPage(): React.ReactElement {
       {/* Section 3: Lịch sử import */}
       {importHistory.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-slate-800">
             <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
               <History className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </div>

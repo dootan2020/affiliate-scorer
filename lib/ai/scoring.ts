@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { callClaude, MAX_TOKENS_SCORING } from "@/lib/ai/claude";
+import { callAI, MAX_TOKENS_SCORING } from "@/lib/ai/call-ai";
 import { buildScoringPrompt } from "@/lib/ai/prompts";
 import { getWeights } from "@/lib/scoring/weights";
 import { calculateBaseScore } from "@/lib/scoring/formula";
@@ -93,7 +93,7 @@ async function scoreBatchWithClaude(
 ): Promise<Map<string, ClaudeScoreItem>> {
   try {
     const { system, user } = buildScoringPrompt({ products: batch, weights });
-    const response = await callClaude(system, user, MAX_TOKENS_SCORING, "scoring");
+    const response = await callAI(system, user, MAX_TOKENS_SCORING, "scoring");
     const items = parseClaudeResponse(response);
     return new Map(items.map((item) => [item.id, item]));
   } catch (error) {

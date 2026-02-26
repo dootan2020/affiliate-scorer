@@ -102,7 +102,7 @@ export default function InboxPage(): React.ReactElement {
 
       {/* Paste Links Box */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
-        <h2 className="text-base font-medium text-gray-900 dark:text-gray-50 mb-4">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
           Dán links sản phẩm
         </h2>
         <PasteLinkBox onComplete={fetchItems} />

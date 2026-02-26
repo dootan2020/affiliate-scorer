@@ -1,7 +1,7 @@
 // Phase 3: Generate content brief cho 1 SP bằng Claude API
 // Output: 5 angles + 10 hooks + 3 scripts (each with video prompts + caption)
 
-import { callClaude } from "@/lib/ai/claude";
+import { callAI } from "@/lib/ai/call-ai";
 import { prisma } from "@/lib/db";
 import { checkCompliance } from "./compliance";
 
@@ -121,7 +121,7 @@ export async function generateBrief(product: ProductInput): Promise<string> {
   const startTime = Date.now();
   const prompt = buildBriefPrompt(product);
 
-  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 6000, "content_brief");
+  const rawResponse = await callAI(SYSTEM_PROMPT, prompt, 6000, "content_brief");
 
   // Parse JSON — handle markdown fences nếu có
   let jsonStr = rawResponse.trim();

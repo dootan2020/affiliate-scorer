@@ -242,7 +242,7 @@ export function BriefPreviewCard({ brief }: Props): React.ReactElement {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4">
       {/* Product header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800">
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
           {productTitle}
         </h3>

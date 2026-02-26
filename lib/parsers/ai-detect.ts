@@ -1,4 +1,4 @@
-import { callClaude } from "@/lib/ai/claude";
+import { callAI } from "@/lib/ai/call-ai";
 import type { ParsedRow } from "@/lib/parsers/parse-file";
 
 /**
@@ -108,7 +108,7 @@ ${JSON.stringify(sampleData, null, 2)}
 Hãy map các cột vào schema. Trả về JSON duy nhất.`;
 
   try {
-    const response = await callClaude(SYSTEM_PROMPT, userPrompt, 1024, "scoring");
+    const response = await callAI(SYSTEM_PROMPT, userPrompt, 1024, "scoring");
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("AI không trả về JSON hợp lệ");
 

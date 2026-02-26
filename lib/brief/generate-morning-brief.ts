@@ -1,6 +1,6 @@
 // Phase 5: Morning Brief generator — "Hôm nay sản xuất gì?"
 import { prisma } from "@/lib/db";
-import { callClaude } from "@/lib/ai/claude";
+import { callAI } from "@/lib/ai/call-ai";
 
 interface BriefContent {
   greeting: string;
@@ -98,7 +98,7 @@ Output JSON:
 
 Chỉ output JSON, không text khác.`.trim();
 
-  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 2000, "morning_brief");
+  const rawResponse = await callAI(SYSTEM_PROMPT, prompt, 2000, "morning_brief");
 
   // Parse JSON
   let jsonStr = rawResponse.trim();

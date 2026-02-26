@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { callClaude, MAX_TOKENS_LEARNING } from "@/lib/ai/claude";
+import { callAI, MAX_TOKENS_LEARNING } from "@/lib/ai/call-ai";
 import { buildLearningPrompt } from "@/lib/ai/prompts";
 import { getWeights, saveWeights } from "@/lib/scoring/weights";
 import { getTimeDecayWeight } from "@/lib/utils/product-badges";
@@ -136,7 +136,7 @@ export async function runLearningCycle(): Promise<LearningResult> {
       previousPatterns,
     });
 
-    const raw = await callClaude(system, user, MAX_TOKENS_LEARNING, "scoring");
+    const raw = await callAI(system, user, MAX_TOKENS_LEARNING, "scoring");
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("Không tìm thấy JSON trong phản hồi Claude");

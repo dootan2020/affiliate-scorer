@@ -1,6 +1,6 @@
 // Phase 5: Weekly auto-report generator
 import { prisma } from "@/lib/db";
-import { callClaude } from "@/lib/ai/claude";
+import { callAI } from "@/lib/ai/call-ai";
 
 interface WeeklyReportContent {
   summary: string;
@@ -165,7 +165,7 @@ Output JSON:
 
 Chỉ output JSON, không text khác.`.trim();
 
-  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 1500, "weekly_report");
+  const rawResponse = await callAI(SYSTEM_PROMPT, prompt, 1500, "weekly_report");
 
   let jsonStr = rawResponse.trim();
   if (jsonStr.startsWith("```")) {

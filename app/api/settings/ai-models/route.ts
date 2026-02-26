@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import type { AiTaskType } from "@/lib/ai/claude";
+import type { AiTaskType } from "@/lib/ai/call-ai";
 
 const VALID_TASK_TYPES: AiTaskType[] = [
   "scoring",

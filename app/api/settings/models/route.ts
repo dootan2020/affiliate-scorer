@@ -317,7 +317,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(
       { models: classified, fallback: false },
-      { headers: { "Cache-Control": "public, max-age=86400" } }
+      { headers: { "Cache-Control": "private, max-age=3600" } }
     );
   } catch {
     // API fetch failed → return fallback

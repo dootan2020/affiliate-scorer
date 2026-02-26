@@ -5,13 +5,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertTriangle, X } from "lucide-react";
 
+interface ProviderStatus {
+  provider: string;
+  connected: boolean;
+}
+
 export function SetupBanner(): React.ReactElement | null {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
+  const [checked, setChecked] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Don't show on settings page (user is already there)
     if (pathname === "/settings") return;
 
     let cancelled = false;
@@ -19,21 +24,21 @@ export function SetupBanner(): React.ReactElement | null {
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        const providers = data.providers as
-          | { isConnected: boolean }[]
-          | undefined;
-        const hasConnected = providers?.some((p) => p.isConnected);
-        if (!hasConnected) setVisible(true);
+        const providers = data.providers as ProviderStatus[] | undefined;
+        const hasConnected = providers?.some((p) => p.connected);
+        setVisible(!hasConnected);
+        setChecked(true);
       })
       .catch(() => {
-        // Network/parse error — don't show banner
+        setChecked(true);
       });
     return () => {
       cancelled = true;
     };
   }, [pathname]);
 
-  if (!visible || dismissed) return null;
+  // Don't render anything until check completes (avoid flash)
+  if (!checked || !visible || dismissed || pathname === "/settings") return null;
 
   return (
     <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-4 flex items-start gap-3">

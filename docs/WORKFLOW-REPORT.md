@@ -1,454 +1,358 @@
-# Workflow Report — AffiliateScorer (Content Factory)
+# WORKFLOW REPORT — Content Factory
 
-> Trạng thái thực tế sau refactor Phase 8. Viết ngày 2026-02-26.
+> Quét tự động từ codebase ngày 2026-02-26. Phản ánh trạng thái code hiện tại.
 
 ---
 
-## 1. Luồng Workflow Chính
+## Section 1: Luồng Workflow Chính
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    MAIN WORKFLOW: CONTENT FACTORY                        │
-└─────────────────────────────────────────────────────────────────────────┘
-
-  [1] CAPTURE — Nạp dữ liệu sản phẩm
-  ┌──────────────────────────────────────────────────┐
-  │  A. Paste Links (TikTok Shop URLs)               │
-  │     POST /api/inbox/paste                         │
-  │     → parseLinks() → processInboxItem()           │
-  │     → ProductIdentity (state: "new")              │
-  │     → InboxItem (với rawUrl, detectedType)        │
-  │                                                   │
-  │  B. Upload File (FastMoss / KaloData CSV/XLSX)    │
-  │     POST /api/upload/products/preview             │
-  │     POST /api/upload/products (với mapping)       │
-  │     → parseFile() → detectFormat()                │
-  │     → parseFastMoss() / parseKaloData()           │
-  │     → Product (upsert) + ProductSnapshot          │
-  │     → syncProductIdentity() → ProductIdentity     │
-  │     → scoreProducts() (nếu ANTHROPIC_API_KEY có) │
-  │                                                   │
-  │  C. TikTok Studio Analytics                       │
-  │     POST /api/sync/tiktok-studio                  │
-  │     → AccountDailyStat / FollowerActivity /       │
-  │        AccountInsight                             │
-  └──────────────────────────────────────────────────┘
-                           │
-                           ▼
-  [2] INBOX — Xử lý & Chấm điểm
-  ┌──────────────────────────────────────────────────┐
-  │  Vào: ProductIdentity (state: "new")              │
-  │                                                   │
-  │  A. Enrich — Bổ sung metadata thủ công           │
-  │     PUT /api/inbox/[id]                           │
-  │     → Cập nhật title, category, price, v.v.      │
-  │     → state: "new" → "enriched"                  │
-  │                                                   │
-  │  B. Score — Tính điểm tổng hợp                   │
-  │     POST /api/inbox/[id]/score                    │
-  │     → calculateContentPotentialScore()            │
-  │     → combinedScore = marketScore*0.5 +           │
-  │                       contentScore*0.5            │
-  │     → state: "enriched" → "scored"               │
-  │     POST /api/inbox/score-all (batch)             │
-  │                                                   │
-  │  Ra: ProductIdentity (state: "scored",            │
-  │      combinedScore, contentPotentialScore)        │
-  └──────────────────────────────────────────────────┘
-                           │
-                           ▼
-  [3] PRODUCTION — Tạo Brief & Assets
-  ┌──────────────────────────────────────────────────┐
-  │  Vào: ProductIdentity (state: "scored")           │
-  │                                                   │
-  │  A. Generate Brief (AI)                           │
-  │     POST /api/briefs/generate                     │
-  │     → generateBrief() gọi Claude API             │
-  │     → ContentBrief (angles, hooks, scripts)       │
-  │     → ContentAsset[] được tạo từ brief            │
-  │     → state: "scored" → "briefed"               │
-  │                                                   │
-  │  B. Tạo Production Batch                         │
-  │     POST /api/production/create-batch             │
-  │     → ProductionBatch + liên kết ContentAsset[]  │
-  │     GET  /api/production/[batchId]               │
-  │     GET  /api/production/[batchId]/export        │
-  │                                                   │
-  │  Ra: ContentAsset (status: "draft"),              │
-  │      ProductionBatch                              │
-  └──────────────────────────────────────────────────┘
-                           │
-                           ▼
-  [4] LOG — Ghi nhận kết quả thực tế
-  ┌──────────────────────────────────────────────────┐
-  │  Vào: ContentAsset (đã đăng, có publishedUrl)    │
-  │                                                   │
-  │  A. Log thủ công — paste TikTok link             │
-  │     POST /api/log/match (match link → assetId)   │
-  │     POST /api/log/quick (nhập views/likes/...)   │
-  │     → AssetMetric (rewardScore tính từ metrics)  │
-  │     → ContentAsset.status → "logged"             │
-  │                                                   │
-  │  B. Log batch — TikTok Studio import             │
-  │     POST /api/log/batch                           │
-  │                                                   │
-  │  Ra: AssetMetric (rewardScore, views, orders...)  │
-  └──────────────────────────────────────────────────┘
-                           │
-                           ▼
-  [5] LEARN — AI cập nhật patterns
-  ┌──────────────────────────────────────────────────┐
-  │  Vào: AssetMetric (rewardScore)                   │
-  │                                                   │
-  │  A. Tự động sau mỗi log                          │
-  │     updateLearningWeights() (hook_type, format,  │
-  │     angle, category, price_range)                │
-  │     analyzeAsset() → win/loss verdict            │
-  │                                                   │
-  │  B. Trigger thủ công                             │
-  │     POST /api/learning (apply decay)             │
-  │     GET  /api/patterns → xem playbook            │
-  │     POST /api/patterns → regenerate patterns     │
-  │     GET  /api/learning/history                   │
-  │                                                   │
-  │  Ra: LearningWeightP4 (weight theo scope/key),   │
-  │      UserPattern (winning/losing patterns),       │
-  │      LearningLog                                  │
-  └──────────────────────────────────────────────────┘
-
-  Storage map:
-  ┌──────────────────┬──────────────────────────────────┐
-  │ Bước             │ Tables chính                     │
-  ├──────────────────┼──────────────────────────────────┤
-  │ Capture (link)   │ InboxItem, ProductIdentity       │
-  │ Capture (file)   │ Product, ProductSnapshot,        │
-  │                  │ ImportBatch, ProductIdentity      │
-  │ Capture (studio) │ AccountDailyStat,                │
-  │                  │ FollowerActivity, AccountInsight  │
-  │ Inbox/Score      │ ProductIdentity (scores)         │
-  │ Production       │ ContentBrief, ContentAsset,      │
-  │                  │ ProductionBatch                   │
-  │ Log              │ AssetMetric                       │
-  │ Learn            │ LearningWeightP4, UserPattern,   │
-  │                  │ LearningLog                       │
-  └──────────────────┴──────────────────────────────────┘
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  1. CAPTURE  │───▶│  2. INBOX    │───▶│ 3. PRODUCTION│───▶│   4. LOG     │───▶│  5. LEARN   │
+│  /sync       │    │  /inbox      │    │  /production │    │  /log        │    │  /insights  │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
----
+### Bước 1: Capture (/sync)
+- **Input:** File CSV/XLSX từ FastMoss, KaloData, TikTok Studio
+- **API:** `POST /api/upload/products/preview` → `POST /api/upload/products`
+- **API (TikTok):** `POST /api/sync/tiktok-studio`
+- **Output:** Product + ProductSnapshot + ProductIdentity (auto-linked). Auto-trigger scoring.
+- **Models thay đổi:** Product, ProductSnapshot, ImportBatch, ProductIdentity, AccountDailyStat, FollowerActivity, AccountInsight, ContentPost (TikTok Studio)
 
-## 2. Trang & Chức Năng
+### Bước 2: Inbox (/inbox)
+- **Input:** Paste link hoặc dữ liệu từ bước 1
+- **API:** `GET /api/inbox` (list + stats), `POST /api/inbox/paste` (paste link), `POST /api/inbox/[id]/score` (score 1), `POST /api/inbox/score-all` (score all)
+- **Output:** ProductIdentity với state: new → enriched → scored → briefed → published
+- **Models thay đổi:** ProductIdentity, ProductUrl, InboxItem, Product (score sync)
 
-### Trang Đang Hoạt Động
+### Bước 3: Production (/production)
+- **Input:** Chọn ProductIdentity đã scored
+- **API:** `POST /api/briefs/batch` → `GET /api/briefs/[id]` → `POST /api/production/create-batch` → `GET /api/production/[batchId]/export`
+- **Output:** ContentBrief + ContentAsset + ProductionBatch, export scripts.md / prompts.json / checklist.csv
+- **Models thay đổi:** ContentBrief, ContentAsset, ProductionBatch
 
-| Route | Tên | Chức năng chính |
-|-------|-----|-----------------|
-| `/` | Dashboard | Overview: morning brief, quick paste, inbox stats, upcoming events, content suggestions |
-| `/inbox` | Inbox | Danh sách ProductIdentity, paste links, filter theo state, phân trang |
-| `/inbox/[id]` | Chi tiết SP | Xem Product, AI score breakdown, tạo brief, gợi ý content, notes cá nhân |
-| `/sync` | Đồng bộ | Upload FastMoss/KaloData CSV, TikTok Studio analytics, lịch sử import |
-| `/production` | Sản xuất | Chọn products → generate briefs AI → xuất packs sản xuất |
-| `/log` | Log kết quả | Paste TikTok links → nhập metrics → AI học pattern |
-| `/library` | Thư viện | Toàn bộ ContentAsset, filter theo status/format/product |
-| `/insights` | AI Insights | Overview stats, learning accuracy, feedback table, AI patterns, playbook |
-| `/shops` | Shops | Danh sách shop đã đánh giá (trust metrics) |
-| `/shops/[id]` | Chi tiết shop | Xem/sửa thông tin shop |
+### Bước 4: Log (/log)
+- **Input:** TikTok URL + metrics (views, likes, comments, shares, saves, orders)
+- **API:** `POST /api/log/match` → `POST /api/log/quick` (1 video) hoặc `POST /api/log/batch` (nhiều video)
+- **Output:** AssetMetric + reward calculation (win/loss/neutral)
+- **Models thay đổi:** ContentAsset (status update), AssetMetric, LearningWeightP4
 
-**Lưu ý:** `/shops` không có trong sidebar navigation — chỉ truy cập được qua link từ trang chi tiết sản phẩm.
+### Bước 5: Learn (/insights)
+- **Input:** Dữ liệu tích lũy từ log + feedback
+- **API:** `POST /api/learning/trigger` → `GET /api/patterns` → `GET /api/ai/weekly-report`
+- **Output:** Pattern detection, weight updates, weekly reports
+- **Models thay đổi:** LearningLog, UserPattern, LearningWeightP4, WeeklyReport
 
-### Chi tiết từng trang
+### Storage Map
 
-#### `/` — Dashboard
-- **Components:** `MorningBriefWidget`, `QuickPasteWidget`, `InboxStatsWidget`, `UpcomingEventsWidget`, `ContentSuggestionsWidget`
-- **APIs:** `GET /api/morning-brief`, `POST /api/inbox/paste`, stats từ `/api/inbox`
-- **Models:** Campaign (morning brief), CalendarEvent, ProductIdentity, FinancialRecord
-- **Links đến:** `/inbox`, `/production`, `/sync`
-
-#### `/inbox` — Unified Inbox
-- **Components:** `PasteLinkBox`, `InboxTable`, `QuickEnrichModal`
-- **APIs:** `GET /api/inbox` (filter/page), `POST /api/inbox/paste`
-- **Models:** ProductIdentity (+ Product linked via relation, ProductUrl, InboxItem)
-- **Links đến:** `/inbox/[id]`
-- **State pipeline:** new → enriched → scored → briefed → published → archived
-
-#### `/inbox/[id]` — Chi tiết sản phẩm
-- **Type:** Server Component (data fetch trực tiếp với Prisma)
-- **APIs sử dụng trong component:** Direct Prisma, `WinProbabilityCard` → `/api/ai/confidence`, `ChannelRecommendations` → `/api/ai/intelligence`
-- **Models:** Product (với snapshots), ProductIdentity, Shop
-- **Vấn đề:** Page nhận `id` là ProductIdentity ID, nhưng sau đó lookup Product thông qua `identity.product.id`. Nếu identity không tồn tại, sẽ dùng `id` như Product ID trực tiếp — fallback logic dễ gây confusion.
-- **Links đến:** `/inbox`, `/production?productId=...`, `/shops/[shopId]`
-
-#### `/sync` — Đồng bộ (cũ: Upload)
-- **Components:** `FileDropzone`, `ColumnMapping`, `UploadProgress`, `ImportHistoryTable`, `TikTokStudioDropzone`
-- **APIs:** `POST /api/upload/products/preview`, `POST /api/upload/products`, `POST /api/sync/tiktok-studio`, `GET /api/upload/import/history`
-- **Models:** Product, ProductSnapshot, ImportBatch, DataImport, AccountDailyStat, FollowerActivity, AccountInsight
-
-#### `/production` — Sản xuất Content
-- **Components:** `ProductionPageClient`
-- **APIs:** `POST /api/briefs/generate`, `POST /api/production/create-batch`, `GET /api/production/[batchId]`, `GET /api/production/[batchId]/export`
-- **Models:** ProductIdentity, ContentBrief, ContentAsset, ProductionBatch
-- **Query param:** `?productId=...` (từ `/inbox/[id]`) để pre-select sản phẩm
-
-#### `/log` — Log kết quả
-- **Components:** `LogPageClient`
-- **APIs:** `POST /api/log/match`, `POST /api/log/quick`, `POST /api/log/batch`
-- **Models:** ContentAsset, AssetMetric, LearningWeightP4, UserPattern
-
-#### `/library` — Thư viện
-- **Components:** `LibraryPageClient`
-- **APIs:** `GET /api/library`
-- **Models:** ContentAsset (với ProductIdentity, AssetMetric)
-
-#### `/insights` — AI Insights (merged Playbook)
-- **Components:** `InsightsPageClient`, `TriggerLearningButton`, `ConfidenceWidget`, `WeeklyReportCard`, `PlaybookSection`
-- **APIs:** `GET /api/learning`, `GET /api/patterns`, `POST /api/learning/trigger`, `GET /api/ai/anomalies`, `GET /api/reports/weekly`
-- **Models:** LearningLog, Feedback, Product, Shop, FinancialRecord, CalendarEvent, LearningWeightP4, UserPattern, WinPattern, WeeklyReport
-
-### Redirects
-
-| Từ | Đến |
-|----|-----|
-| `/products` | `/inbox` |
-| `/products/[id]` | `/inbox/[id]` |
-| `/upload` | `/sync` |
-| `/playbook` | `/insights?tab=playbook` |
-
-### Trang đã xóa
-
-| Trang | Trạng thái |
-|-------|-----------|
-| `/campaigns` | Đã xóa hoàn toàn (không có page.tsx) |
-| `/feedback` | Đã xóa hoàn toàn (không có page.tsx) |
+| Bước | Tables chính |
+|------|-------------|
+| Capture | Product, ProductSnapshot, ImportBatch, DataImport, ProductIdentity, AccountDailyStat |
+| Inbox | ProductIdentity, ProductUrl, InboxItem, Product |
+| Production | ContentBrief, ContentAsset, ProductionBatch |
+| Log | AssetMetric, ContentAsset, LearningWeightP4 |
+| Learn | LearningLog, UserPattern, LearningWeightP4, WeeklyReport |
+| Hỗ trợ | Shop, FinancialRecord, CalendarEvent, GoalP5, Commission, DailyBrief |
 
 ---
 
-## 3. Database
+## Section 2: Trang & Chức Năng
 
-### Models Đang Active
+### Routes đang active (có page.tsx thật)
 
-| Model | Mục đích | Quan hệ chính |
-|-------|---------|---------------|
-| **ProductIdentity** | Hub trung tâm — đại diện cho 1 sản phẩm thực tế, dedupe | → Product (1:1), ProductUrl[], InboxItem[], ContentBrief[], ContentAsset[], Commission[] |
-| **Product** | Dữ liệu thô từ FastMoss/KaloData, AI scores | → ProductIdentity (optional 1:1), ProductSnapshot[], ContentPost[], Feedback[], Campaign[] |
-| **ProductUrl** | Các URLs khác nhau trỏ đến cùng 1 sản phẩm | → ProductIdentity |
-| **InboxItem** | Mỗi link người dùng paste vào | → ProductIdentity (optional) |
-| **ContentBrief** | AI-generated: angles, hooks, scripts | → ProductIdentity, ContentAsset[] |
-| **ContentAsset** | Mỗi video/asset cụ thể, lifecycle đầy đủ | → ProductIdentity, ContentBrief, ProductionBatch, AssetMetric[], Commission[] |
-| **ProductionBatch** | Nhóm assets cho 1 lần sản xuất | → ContentAsset[] |
-| **AssetMetric** | Metrics thực tế (views, likes, orders, rewardScore) | → ContentAsset |
-| **LearningWeightP4** | Trọng số học máy theo scope/key | — |
-| **UserPattern** | Patterns thắng/thua đã detect | — |
-| **LearningLog** | Lịch sử mỗi lần chạy học | — |
-| **ProductSnapshot** | Lịch sử data theo thời gian | → Product, ImportBatch |
-| **ImportBatch** | Mỗi lần upload file | → ProductSnapshot[] |
-| **DataImport** | Import generic đa nguồn (13 source types) | → Feedback[] |
-| **Shop** | Thông tin shop, trust metrics | — |
-| **Commission** | Theo dõi hoa hồng thực nhận | → ProductIdentity, ContentAsset |
-| **FinancialRecord** | Thu/chi tổng quát | → Campaign (optional) |
-| **CalendarEvent** | Lịch sự kiện, mega sale | — |
-| **UserGoal** | Mục tiêu cá nhân (cũ) | — |
-| **GoalP5** | Mục tiêu v2 (weekly/monthly) | — |
-| **DailyBrief** | AI morning brief đã cache | — |
-| **WeeklyReport** | Báo cáo tuần AI | — |
-| **AccountDailyStat** | Stats tài khoản TikTok theo ngày | — |
-| **FollowerActivity** | Follower activity heatmap | — |
-| **AccountInsight** | Viewer/follower analytics | — |
+| Route | File | Loại | Components chính | APIs gọi | Links đến |
+|-------|------|------|------------------|----------|-----------|
+| `/` | `app/page.tsx` | Server | MorningBriefWidget, QuickPasteWidget, InboxStatsWidget, UpcomingEventsWidget, ContentSuggestionsWidget | `/api/brief/today`, `/api/inbox?limit=1`, `/api/inbox?sort=score&limit=20`, `/api/calendar/upcoming` | /sync, /production, /inbox, /insights?tab=calendar |
+| `/inbox` | `app/inbox/page.tsx` | Client | PasteLinkBox, QuickEnrichModal, InboxTable | `/api/inbox?state=&page=&limit=20` | /inbox/[id] |
+| `/inbox/[id]` | `app/inbox/[id]/page.tsx` | Server | ScoreBreakdown, SeasonalTagForm, ProductImage, ProfitEstimator, PersonalNotesSection, AffiliateLinkSection, WinProbabilityCard, LifecycleBadge, ChannelRecommendations | Prisma direct, `/api/products/[id]/notes`, `/api/products/[id]/seasonal` | /inbox, /shops/[id], /production?productId=[id] |
+| `/sync` | `app/sync/page.tsx` | Client | FileDropzone, ColumnMapping, UploadProgress, ImportHistoryTable, TikTokStudioDropzone | `/api/upload/products/preview`, `/api/upload/products`, `/api/upload/import/history`, `/api/sync/tiktok-studio` | — |
+| `/production` | `app/production/page.tsx` | Server+Client | ProductionPageClient → ProductSelector, BriefPreviewCard | `/api/briefs/batch`, `/api/briefs/[id]`, `/api/production/create-batch`, `/api/production/[batchId]/export` | — |
+| `/log` | `app/log/page.tsx` | Server+Client | LogPageClient | `/api/log/match`, `/api/log/quick`, `/api/log/batch` | /sync |
+| `/library` | `app/library/page.tsx` | Server+Client | LibraryPageClient | `/api/library` | — |
+| `/insights` | `app/insights/page.tsx` | Server | InsightsPageClient (tabs: Overview, Financial, Calendar, AI), TriggerLearningButton, ConfidenceWidget, WeeklyReportCard, PlaybookSection | Prisma direct, `/api/learning/trigger`, `/api/patterns`, `/api/ai/confidence`, `/api/ai/weekly-report` | /sync, /inbox |
+| `/shops` | `app/shops/page.tsx` | Server | — (inline table) | Prisma direct | /shops/[id], /inbox |
+| `/shops/[id]` | `app/shops/[id]/page.tsx` | Server | ShopEditForm | Prisma direct, `/api/shops/[id]` | /shops, /inbox/[id] |
 
-### Models Deprecated / Ít dùng (giữ lại cho data)
+### Redirects đang active
 
-| Model | Trạng thái | Lý do giữ |
-|-------|-----------|-----------|
-| **Campaign** | Deprecated — UI đã xóa, nhưng vẫn có relation với Product, Feedback, ContentPost, FinancialRecord | Có data cũ, API morning-brief vẫn query Campaign |
-| **Feedback** | Deprecated — trang `/feedback` đã xóa | Model vẫn được `/insights` query, API `/api/feedback/manual` vẫn tồn tại, `/api/upload/feedback` vẫn tồn tại |
-| **ContentPost** | Ít dùng — không có UI riêng | Quan hệ với Campaign và Product |
-| **WinPattern** | Cũ (Phase 3A) — thay bởi UserPattern | API `/api/ai/patterns` vẫn tham chiếu |
-| **UserGoal** | Cũ — thay bởi GoalP5 | Cả 2 đều tồn tại song song |
+| URL gốc | Redirect đến | File |
+|----------|-------------|------|
+| `/products` | `/inbox` | `app/products/page.tsx` |
+| `/products/[id]` | `/inbox/[id]` | `app/products/[id]/page.tsx` |
+| `/upload` | `/sync` | `app/upload/page.tsx` |
+| `/playbook` | `/insights?tab=playbook` | `app/playbook/page.tsx` |
+
+### Navigation
+
+**Sidebar (desktop, 7 items):** Dashboard `/`, Inbox `/inbox`, Sync `/sync`, Sản xuất `/production`, Log `/log`, Thư viện `/library`, Insights `/insights`
+
+**Mobile bottom tabs (5 items):** `/`, `/inbox`, `/production`, `/log`, `/library`
+
+**Note:** `/shops` không có nav item — chỉ truy cập qua link trong product detail hoặc shop pages.
 
 ---
 
-## 4. API Endpoints
+## Section 3: Database
 
-### Nhóm Inbox (Phase 2)
+**Datasource:** PostgreSQL (via Prisma + @prisma/adapter-pg)
 
-| Method | Endpoint | Mục đích | Model |
-|--------|---------|---------|-------|
-| GET | `/api/inbox` | Danh sách ProductIdentity với filter/page | ProductIdentity |
-| POST | `/api/inbox/paste` | Nhận text chứa links, parse + dedupe | InboxItem, ProductIdentity |
-| GET | `/api/inbox/[id]` | Chi tiết 1 identity | ProductIdentity |
-| PUT | `/api/inbox/[id]` | Cập nhật metadata, enrich | ProductIdentity |
-| POST | `/api/inbox/[id]/score` | Tính Content Potential Score | ProductIdentity |
-| POST | `/api/inbox/score-all` | Chấm điểm tất cả identities | ProductIdentity |
-| ~~POST~~ | ~~`/api/inbox/migrate`~~ | ~~One-time migration~~ | ~~Đã xóa~~ |
+### Models ĐANG DÙNG (25 models)
 
-### Nhóm Products (Phase 1, legacy)
+| Model | Phase | Quan hệ chính | Nơi dùng |
+|-------|-------|---------------|----------|
+| Product | P1 | belongsTo ProductIdentity (identityId), hasMany ProductSnapshot, belongsTo ImportBatch | upload, scoring, inbox detail, shops, export |
+| ProductSnapshot | P1 | belongsTo Product | upload (auto-create), scoring, anomaly detection, lifecycle |
+| ImportBatch | P1 | hasMany Product | upload, confidence |
+| Feedback | P1 | standalone | learning trigger, insights, personalize |
+| LearningLog | P1 | standalone | learning trigger/history, insights, weights |
+| Shop | P3A | referenced by Product.shopName | shops CRUD, inbox detail |
+| FinancialRecord | P3A | optional Campaign ref | financial CRUD, morning brief, commissions summary |
+| CalendarEvent | P3A | standalone | calendar CRUD, morning brief, insights |
+| ContentPost | P3A | belongsTo Campaign, belongsTo Product | content-posts CRUD |
+| Campaign | P3A | hasMany ContentPost, hasMany FinancialRecord | anomaly detection, confidence, patterns, recommendations, weekly report |
+| DataImport | Sync | standalone | import history, general import |
+| ProductIdentity | P2 | hasMany ProductUrl, hasOne Product, hasMany ContentBrief, hasMany ContentAsset | inbox pipeline, briefs, morning brief, scoring |
+| ProductUrl | P2 | belongsTo ProductIdentity | inbox paste processing, sync identity |
+| InboxItem | P2 | belongsTo ProductIdentity | inbox paste processing |
+| ContentBrief | P3 | belongsTo ProductIdentity, hasMany ContentAsset | brief generation, batch briefs |
+| ContentAsset | P3 | belongsTo ContentBrief, belongsTo ProductIdentity, belongsTo ProductionBatch, hasMany AssetMetric | library, log, metrics, production, commissions |
+| ProductionBatch | P3 | hasMany ContentAsset | production create/export |
+| AssetMetric | P4 | belongsTo ContentAsset | log quick/batch, metrics capture, goals progress, patterns |
+| LearningWeightP4 | P4 | standalone | patterns, decay, explore-exploit, update-weights, win-loss |
+| UserPattern | P4 | standalone | patterns API, pattern detection, weekly report |
+| WeeklyReport | P4 | standalone | weekly report API |
+| Commission | P5 | belongsTo ProductIdentity, belongsTo ContentAsset | commissions CRUD, goals progress, weekly report |
+| GoalP5 | P5 | standalone | goals-p5 CRUD, morning brief, weekly report |
+| DailyBrief | P5 | standalone | brief/today, reports/weekly, generate-morning-brief |
+| AccountDailyStat | TikTok | standalone | morning brief, TikTok Studio parser |
+| FollowerActivity | TikTok | standalone | TikTok Studio follower activity parser |
+| AccountInsight | TikTok | standalone | TikTok Studio insights parser |
 
-| Method | Endpoint | Mục đích | Model |
-|--------|---------|---------|-------|
-| GET | `/api/products` | Danh sách products (cũ) | Product |
-| GET/PUT | `/api/products/[id]` | Chi tiết product | Product |
-| PUT | `/api/products/[id]/notes` | Ghi chú cá nhân | Product |
-| PUT | `/api/products/[id]/seasonal` | Seasonal tag | Product |
-| POST | `/api/score` | AI scoring (legacy) | Product |
+### Models DEPRECATED
 
-### Nhóm Upload / Sync
-
-| Method | Endpoint | Mục đích | Model |
-|--------|---------|---------|-------|
-| POST | `/api/upload/products/preview` | Đọc file, detect format, AI mapping | — |
-| POST | `/api/upload/products` | Import file → products | Product, ProductSnapshot, ImportBatch |
-| GET | `/api/upload/import/history` | Lịch sử import | DataImport |
-| POST | `/api/upload/import` | Generic import | DataImport |
-| POST | `/api/upload/import/detect` | Detect file type | — |
-| ~~POST~~ | ~~`/api/upload/feedback`~~ | ~~Upload feedback CSV~~ | ~~Đã xóa~~ |
-| POST | `/api/sync/tiktok-studio` | Import TikTok Studio files | AccountDailyStat, FollowerActivity, AccountInsight |
-
-### Nhóm Production / Briefs (Phase 3)
-
-| Method | Endpoint | Mục đích | Model |
-|--------|---------|---------|-------|
-| POST | `/api/briefs/generate` | Generate brief AI (Claude) | ContentBrief, ContentAsset |
-| GET | `/api/briefs/[id]` | Chi tiết brief | ContentBrief |
-| POST | `/api/briefs/batch` | Batch generate | ContentBrief, ContentAsset |
-| GET | `/api/brief/today` | Morning brief hôm nay | DailyBrief |
-| POST | `/api/brief/generate` | Tạo morning brief | DailyBrief |
-| POST | `/api/production/create-batch` | Tạo production batch | ProductionBatch, ContentAsset |
-| GET | `/api/production/[batchId]` | Xem batch + assets | ProductionBatch, ContentAsset |
-| GET | `/api/production/[batchId]/export` | Export pack | ProductionBatch, ContentAsset |
-| GET | `/api/library` | Danh sách content assets | ContentAsset |
-| GET/PUT | `/api/assets/[id]` | Chi tiết / cập nhật asset | ContentAsset |
-| POST | `/api/compliance` | Kiểm tra compliance | ContentAsset |
-
-### Nhóm Log / Learning (Phase 4)
-
-| Method | Endpoint | Mục đích | Model |
-|--------|---------|---------|-------|
-| POST | `/api/log/match` | Match TikTok link → assetId | ContentAsset |
-| POST | `/api/log/quick` | Log metrics 1 video | AssetMetric, ContentAsset, LearningWeightP4 |
-| POST | `/api/log/batch` | Log nhiều metrics | AssetMetric |
-| POST | `/api/metrics/capture` | Capture metrics | AssetMetric |
-| GET | `/api/learning` | Xem learning weights | LearningWeightP4 |
-| POST | `/api/learning` | Apply decay | LearningWeightP4 |
-| POST | `/api/learning/trigger` | Trigger learning run | LearningLog |
-| GET | `/api/learning/history` | Lịch sử learning | LearningLog |
-| GET | `/api/patterns` | Xem playbook patterns | UserPattern, LearningWeightP4 |
-| POST | `/api/patterns` | Regenerate patterns | UserPattern |
-
-### Nhóm AI Intelligence
-
-| Method | Endpoint | Mục đích | Model |
-|--------|---------|---------|-------|
-| GET | `/api/ai/confidence` | AI confidence level | LearningLog, Feedback |
-| GET | `/api/ai/anomalies` | Phát hiện anomalies | ProductIdentity |
-| GET | `/api/ai/intelligence` | Channel recommendations | Product |
-| ~~GET~~ | ~~`/api/ai/patterns`~~ | ~~Win patterns~~ | ~~Đã xóa, dùng /api/patterns~~ |
-| GET | `/api/ai/weekly-report` | Báo cáo tuần | WeeklyReport |
-| GET | `/api/morning-brief` | Morning brief | ProductIdentity, CalendarEvent, GoalP5, AccountDailyStat |
-| GET | `/api/reports/weekly` | Weekly report | WeeklyReport |
-| GET | `/api/insights` | Overview insights | Product, LearningLog |
-
-### Nhóm Business (Phase 5)
-
-| Method | Endpoint | Mục đích | Model |
-|--------|---------|---------|-------|
-| GET/POST | `/api/commissions` | Danh sách / tạo commission | Commission |
-| GET | `/api/commissions/summary` | Tổng hợp commission | Commission |
-| GET/POST | `/api/financial` | Thu/chi | FinancialRecord |
-| GET/PUT | `/api/financial/[id]` | Chi tiết record | FinancialRecord |
-| GET | `/api/financial/summary` | Tổng hợp tài chính | FinancialRecord |
-| GET/POST | `/api/goals-p5` | Goals v2 | GoalP5 |
-| GET | `/api/goals-p5/current` | Goal hiện tại | GoalP5 |
-| GET | `/api/goals-p5/progress` | Progress | GoalP5 |
-| ~~GET/POST~~ | ~~`/api/goals`~~ | ~~Goals cũ~~ | ~~Đã xóa, dùng /api/goals-p5~~ |
-| GET/POST | `/api/shops` | Danh sách / tạo shop | Shop |
-| GET/PUT | `/api/shops/[id]` | Chi tiết shop | Shop |
-| GET/POST | `/api/calendar` | Sự kiện | CalendarEvent |
-| GET/PUT | `/api/calendar/[id]` | Chi tiết sự kiện | CalendarEvent |
-| GET | `/api/calendar/upcoming` | Sự kiện sắp tới | CalendarEvent |
-
-### Nhóm khác
-
-| Method | Endpoint | Mục đích | Model |
-|--------|---------|---------|-------|
-| ~~POST~~ | ~~`/api/feedback/manual`~~ | ~~Thêm feedback thủ công~~ | ~~Đã xóa~~ |
-| GET/PUT | `/api/content-posts/[id]` | Content post | ContentPost |
-| GET/POST | `/api/content-posts` | Danh sách | ContentPost |
-| GET | `/api/export/sheet` | Export Google Sheet | Product |
-| GET | `/api/image-proxy` | Proxy ảnh | — |
-
-### Endpoints đã xóa (không còn trong codebase)
-
-- `/api/campaigns` — đã xóa hoàn toàn
-- `/api/budget` — đã xóa hoàn toàn
+| Model | Lý do giữ | Chi tiết |
+|-------|----------|----------|
+| UserGoal | Có data cũ trong DB | Hoàn toàn thay thế bởi GoalP5. Không có code nào query. Thư mục `/api/goals/` chỉ có CLAUDE.md, không có route.ts. |
+| WinPattern | Có relation trong schema | Write-only: `lib/ai/patterns.ts` ghi vào qua `refreshPatterns()`, nhưng hàm đó không được gọi từ route nào. Route `/api/patterns` dùng `regeneratePatterns()` → ghi UserPattern, không phải WinPattern. Data ghi vào nhưng không bao giờ đọc. |
 
 ---
 
-## 5. Vấn Đề Phát Hiện
+## Section 4: API Endpoints
 
-### 5.1. ~~Broken Links trong UI (Stale References)~~ ✅ ĐÃ FIX (2026-02-26)
+**Tổng: 59 route.ts files**
 
-**Đã sửa:** 3 hardcoded links + 2 links trong morning-brief enricher. Quét toàn bộ codebase xác nhận không còn `/upload`, `/products`, `/feedback`, `/campaigns`, `/playbook` hardcoded trong JSX.
+### Inbox (5 endpoints)
 
-### 5.2. ~~Dual Identity System — Disconnect giữa Product và ProductIdentity~~ ✅ ĐÃ FIX (2026-02-26)
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| GET | `/api/inbox` | List identities + stats theo state/page | ProductIdentity |
+| GET, PUT | `/api/inbox/[id]` | Detail + update metadata/state/notes | ProductIdentity |
+| POST | `/api/inbox/[id]/score` | Score 1 identity | ProductIdentity (via service) |
+| POST | `/api/inbox/paste` | Parse pasted links, dedupe, tạo identity | ProductIdentity, ProductUrl, InboxItem |
+| POST | `/api/inbox/score-all` | Batch score all identities | ProductIdentity (via service) |
 
-**Đã sửa:**
-- Auto-sync score: Upload FastMoss → `scoreProducts()` → tự động cập nhật `ProductIdentity.combinedScore` via shared `lib/services/score-identity.ts`
-- `/inbox/[id]` chỉ nhận ProductIdentity.id. Nếu nhận Product.id → redirect sang `/inbox/{identity.id}`. Không còn fallback logic.
-- Similar products links dùng `identityId` thay vì `Product.id`
-- Tất cả components (product-table, product-card, shops/[id]) dùng `identityId ?? id` cho links
+### Upload / Sync (6 endpoints)
 
-### 5.3. ~~Morning Brief Dùng Campaign (Đã Deprecated)~~ ✅ ĐÃ FIX (2026-02-26)
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| POST | `/api/upload/products` | Import CSV/XLSX → products + auto-score | Product, ImportBatch, ProductIdentity |
+| POST | `/api/upload/products/preview` | Preview column mapping trước import | Stateless |
+| POST | `/api/upload/import` | General import handler | DataImport |
+| POST | `/api/upload/import/detect` | Detect file format + confidence | Stateless |
+| GET | `/api/upload/import/history` | Last 20 import records | DataImport |
+| POST | `/api/sync/tiktok-studio` | Import TikTok Studio analytics (multi-file) | AccountDailyStat, FollowerActivity, AccountInsight, ContentPost |
 
-**Đã sửa:** Morning brief query ProductIdentity (scored, chưa briefed) thay vì Campaign. UserGoal → GoalP5. Thêm AccountDailyStat summary. Xóa campaign analyzer import.
+### Briefs / Production (7 endpoints)
 
-`/api/morning-brief/route.ts` dòng 30–47: Vẫn query `prisma.campaign.findMany({ where: { status: "running" } })`. Trang `/campaigns` đã bị xóa, không có UI để tạo/quản lý campaigns nữa. Nếu không có campaign nào, code chạy đúng nhưng phần "active campaigns" trong morning brief sẽ luôn trống.
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| POST | `/api/briefs/generate` | Generate AI brief cho 1 product | ContentBrief, ContentAsset |
+| POST | `/api/briefs/batch` | Batch generate briefs | ContentBrief, ContentAsset |
+| GET | `/api/briefs/[id]` | Brief detail + assets | ContentBrief |
+| POST | `/api/brief/generate` | Generate morning brief | DailyBrief |
+| GET | `/api/brief/today` | Get/generate today's morning brief | DailyBrief |
+| POST | `/api/production/create-batch` | Tạo batch từ assets | ProductionBatch |
+| GET | `/api/production/[batchId]` | Batch detail | ProductionBatch |
+| GET | `/api/production/[batchId]/export` | Export scripts/prompts/checklist | ContentAsset |
 
-### 5.4. `/api/feedback/manual` và `/api/upload/feedback` — Orphan APIs
+### Log / Metrics (4 endpoints)
 
-**Nghiêm trọng: LOW**
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| POST | `/api/log/match` | Match TikTok URLs → assets | ContentAsset |
+| POST | `/api/log/quick` | Log metrics 1 video + reward | AssetMetric, LearningWeightP4 |
+| POST | `/api/log/batch` | Log metrics nhiều video | AssetMetric, LearningWeightP4 |
+| POST | `/api/metrics/capture` | Chrome extension capture | AssetMetric |
 
-Hai endpoints này vẫn tồn tại và hoạt động nhưng:
-- Không có UI nào gọi `/api/feedback/manual` (trang `/feedback` đã bị xóa)
-- Feedback model vẫn được query trong `/insights` (overview stats, table)
-- Nếu user muốn log feedback mới, không có đường nào vào UI nữa
+### Learning / AI (8 endpoints)
 
-### 5.5. `/shops` Không Có Trong Navigation
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| GET, POST | `/api/learning` | Weights + temporal decay | LearningWeightP4 |
+| GET | `/api/learning/history` | Learning cycle history | LearningLog |
+| POST | `/api/learning/trigger` | Trigger learning cycle | Feedback, LearningLog |
+| GET, POST | `/api/patterns` | Playbook patterns + insights | UserPattern, LearningWeightP4 |
+| GET | `/api/insights` | Learning summary (accuracy, feedback count) | LearningLog, Feedback |
+| GET | `/api/ai/confidence` | AI confidence tier (0–3) | LearningLog, Feedback, Product |
+| GET | `/api/ai/intelligence` | Per-product intelligence | Product |
+| GET | `/api/ai/anomalies` | Product anomaly detection | Product, ProductSnapshot |
+| GET, POST | `/api/ai/weekly-report` | Weekly AI report | WeeklyReport |
 
-**Nghiêm trọng: LOW**
+### Products (4 endpoints)
 
-Sidebar chỉ có 7 items: Dashboard, Inbox, Sync, Sản xuất, Log, Thư viện, Insights. `/shops` không có, chỉ có thể vào qua link từ `/inbox/[id]` khi sản phẩm có `shopName` khớp với Shop trong DB. Nếu không có shop, link không hiện.
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| GET | `/api/products` | Paginated product list | Product |
+| GET | `/api/products/[id]` | Product detail | Product |
+| PATCH | `/api/products/[id]/notes` | Update notes/rating/tags/affiliate | Product |
+| PATCH | `/api/products/[id]/seasonal` | Set seasonal tag + sell window | Product |
 
-### 5.6. ~~Dual Goal System~~ ✅ ĐÃ FIX (2026-02-26)
+### Shops (2 endpoints)
 
-**Đã sửa:** Xóa `/api/goals/route.ts`. Morning brief + weekly report chuyển sang GoalP5. Không còn code nào reference UserGoal.
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| GET, POST | `/api/shops` | List/create shops | Shop |
+| GET, PATCH, DELETE | `/api/shops/[id]` | Shop detail/update/delete | Shop |
 
-### 5.7. ~~`/inbox/[id]` Link Similar Products Dùng Product.id~~ ✅ ĐÃ FIX (2026-02-26)
+### Financial / Calendar (6 endpoints)
 
-**Đã sửa:** Similar products query include `identityId`, link dùng `sp.identityId ?? sp.id`. Filter chỉ hiện products có linked identity.
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| GET, POST | `/api/financial` | List/create financial records | FinancialRecord |
+| PATCH, DELETE | `/api/financial/[id]` | Update/delete record | FinancialRecord |
+| GET | `/api/financial/summary` | Monthly income/expense/profit | FinancialRecord |
+| GET, POST | `/api/calendar` | List/create events | CalendarEvent |
+| PATCH, DELETE | `/api/calendar/[id]` | Update/delete event | CalendarEvent |
+| GET | `/api/calendar/upcoming` | Events next 30 days | CalendarEvent |
 
-### 5.8. ~~`DataImport.campaignsCreated/Updated` — Stale Fields~~ ✅ ĐÃ FIX (2026-02-26)
+### Goals / Commissions / Reports (7 endpoints)
 
-**Đã sửa:** Xóa `campaignsCreated` và `campaignsUpdated` khỏi ImportRecord interface trong cả sync page và ImportHistoryTable component. DB fields giữ nguyên.
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| GET, POST | `/api/goals-p5` | Upsert/list goals | GoalP5 |
+| GET | `/api/goals-p5/current` | Active weekly + monthly goals | GoalP5 |
+| GET | `/api/goals-p5/progress` | Auto-calculate progress | GoalP5, ContentAsset, Commission |
+| GET, POST | `/api/commissions` | Commission records | Commission |
+| GET | `/api/commissions/summary` | P&L summary + ROI | Commission, FinancialRecord |
+| GET, POST | `/api/reports/weekly` | Weekly reports | DailyBrief |
+| GET | `/api/morning-brief` | Dashboard morning brief data | ProductIdentity, CalendarEvent, GoalP5 |
 
-### 5.9. ~~`/api/inbox/migrate` — One-Time Migration Endpoint~~ ✅ ĐÃ FIX (2026-02-26)
+### Library / Assets / Content (4 endpoints)
 
-**Đã sửa:** Xóa file `app/api/inbox/migrate/route.ts`.
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| GET | `/api/library` | Paginated asset library | ContentAsset |
+| PATCH | `/api/assets/[id]` | Update asset status/URL/script | ContentAsset |
+| GET, POST | `/api/content-posts` | List/create content posts | ContentPost |
+| PATCH, DELETE | `/api/content-posts/[id]` | Update/delete post | ContentPost |
 
-### 5.10. ~~`WinPattern` vs `UserPattern` — Redundant Models~~ ✅ ĐÃ FIX (2026-02-26)
+### Utility (4 endpoints)
 
-**Đã sửa:** Xóa `/api/ai/patterns/route.ts` (WinPattern API). PlaybookSection chuyển sang `/api/patterns` (UserPattern). `lib/ai/patterns.ts` vẫn còn nhưng không có consumer — dead code, giữ cho reference. WinPattern model giữ trong schema (có data cũ).
+| Method | Path | Mục đích | Model chính |
+|--------|------|---------|-------------|
+| POST | `/api/score` | Trigger AI scoring (batch/all) | Product |
+| POST | `/api/compliance` | Check text vs TikTok VN rules | Stateless |
+| GET | `/api/export/sheet` | Export top 100 products as CSV | Product |
+| GET | `/api/image-proxy` | Server-side image proxy | Stateless |
 
 ---
 
-## Tóm Tắt Sức Khỏe Hệ Thống
+## Section 5: Vấn Đề Phát Hiện
 
-| Khía cạnh | Trạng thái | Ghi chú |
-|-----------|-----------|---------|
-| Navigation | Tốt | 7 routes trong sidebar, đúng sau refactor |
-| Redirects | Hoạt động | `/products`, `/upload`, `/playbook` redirect đúng |
-| Core workflow | Hoạt động | Capture → Inbox → Production → Log → Learn |
-| Data integrity | ✅ Tốt | Auto-sync score Product→Identity. Routing chuẩn hóa qua ProductIdentity.id |
-| Dead APIs | ✅ Đã dọn | Xóa feedback, goals, migrate, ai/patterns, upload/feedback |
-| Broken UI links | ✅ Đã fix | Không còn hardcoded `/upload`, `/products`, `/campaigns` trong UI |
-| Deprecated pages | Xóa sạch | `/campaigns`, `/feedback` không còn |
-| AI integration | Hoạt động | Cần `ANTHROPIC_API_KEY` cho brief generation và scoring |
-| Morning Brief | ✅ Updated | Query ProductIdentity thay Campaign, dùng GoalP5, thêm AccountDailyStat |
-| Playbook | ✅ Updated | Dùng UserPattern `/api/patterns` thay WinPattern `/api/ai/patterns` |
+### 5.1 — Campaign model vẫn được query (MEDIUM)
+- **File:** `lib/ai/anomaly-detection.ts`, `lib/ai/confidence.ts`, `lib/ai/patterns.ts`, `lib/ai/recommendations.ts`, `lib/ai/weekly-report.ts`, `lib/ai/win-loss-analysis.ts`, `lib/ai/win-probability.ts`, `lib/parsers/merge-import.ts`
+- **Mô tả:** Campaign model đã không còn CRUD UI/API nhưng 8 lib files vẫn query `prisma.campaign`. Các hàm này đọc Campaign data cho AI analysis.
+- **Đề xuất:** Nếu Campaign data đã migrate sang ContentAsset flow → refactor các lib functions. Nếu data cũ vẫn cần → giữ read-only nhưng đánh dấu deprecated.
+
+### 5.2 — WinPattern model write-only, không bao giờ đọc (LOW)
+- **File:** `lib/ai/patterns.ts:129-133`, `prisma/schema.prisma`
+- **Mô tả:** `refreshPatterns()` ghi WinPattern nhưng hàm này không được gọi từ route nào. Route `/api/patterns` gọi `regeneratePatterns()` → ghi UserPattern. WinPattern data chết.
+- **Đề xuất:** Xóa WinPattern model + `refreshPatterns()` function, hoặc wire nó vào route nào đó.
+
+### 5.3 — UserGoal model hoàn toàn không dùng (LOW)
+- **File:** `prisma/schema.prisma`
+- **Mô tả:** Thay thế bởi GoalP5. Không code nào query. Thư mục `/api/goals/` chỉ có CLAUDE.md.
+- **Đề xuất:** Xóa model khỏi schema sau khi drop table.
+
+### 5.4 — content-posts API dùng Campaign relation (LOW)
+- **File:** `app/api/content-posts/route.ts`, `app/api/content-posts/[id]/route.ts`
+- **Mô tả:** Content posts API vẫn include `{ campaign: true }` và accept `campaignId`. Không có UI nào gọi API này.
+- **Đề xuất:** Nếu ContentPost không dùng → xóa cả model + API. Nếu dùng cho TikTok Studio sync → refactor bỏ Campaign reference.
+
+### 5.5 — Nhiều API không có UI gọi (MEDIUM)
+- **Mô tả:** Các API sau không có component nào fetch:
+  - `POST /api/inbox/[id]/score` — scoring 1 identity (chỉ score-all được gọi)
+  - `POST /api/inbox/score-all` — batch scoring (không có UI button)
+  - `POST /api/brief/generate` — morning brief gen (widget dùng `/api/brief/today`)
+  - `GET /api/ai/anomalies` — chỉ dùng internal bởi morning-brief route
+  - `GET/POST /api/learning` — weights/decay (không UI)
+  - `GET /api/learning/history` — không UI
+  - `GET /api/insights` — insights page dùng Prisma direct
+  - `GET /api/financial/summary` — financial tab dùng `/api/financial`
+  - `GET/POST /api/commissions`, `GET /api/commissions/summary` — không UI
+  - `GET/POST /api/goals-p5/*` — không UI
+  - `GET/POST /api/reports/weekly` — không UI
+  - `GET/POST /api/content-posts/*` — không UI
+  - `POST /api/upload/import`, `POST /api/upload/import/detect` — sync page dùng `/api/upload/products` trực tiếp
+  - `PATCH /api/assets/[id]` — library chỉ read
+  - `GET /api/export/sheet` — có thể dùng qua direct URL
+  - `POST /api/metrics/capture` — Chrome extension only
+- **Đề xuất:** Giữ các API cần cho: (1) internal use (anomalies, insights), (2) Chrome extension (metrics/capture), (3) future UI (goals, commissions, reports). Xóa API thật sự orphan nếu không có plan.
+
+### 5.6 — Split lucide-react import (LOW)
+- **File:** `app/inbox/[id]/page.tsx:4,21`
+- **Mô tả:** 2 import statements từ "lucide-react" trong cùng file. Cả 2 đều dùng. Không lỗi runtime nhưng code-style issue.
+- **Đề xuất:** Merge thành 1 import.
+
+### 5.7 — JSON.parse không có inner try-catch (LOW)
+- **Files:** `lib/brief/generate-morning-brief.ts:109`, `lib/content/generate-brief.ts:132`, `lib/reports/generate-weekly-report.ts:175`, `lib/ai/learning.ts:117,139`, `lib/ai/scoring.ts:82`
+- **Mô tả:** Các `JSON.parse()` trên Claude AI response / DB JSON string không có inner try-catch riêng. Outer route-level catch bắt lỗi → trả 500. Không crash nhưng entire operation abort khi 1 parse fail.
+- **Đề xuất:** Wrap từng `JSON.parse` trong try-catch riêng với error message cụ thể.
+
+### 5.8 — .env.example chứa Supabase vars không dùng (LOW)
+- **File:** `.env.example`
+- **Mô tả:** `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` khai báo trong .env.example nhưng không có code nào reference. App dùng raw PostgreSQL via `pg` + Prisma adapter.
+- **Đề xuất:** Xóa hoặc comment "reserved for future use".
+
+### 5.9 — Thư mục /api/goals/ rỗng (LOW)
+- **File:** `app/api/goals/`
+- **Mô tả:** Chỉ chứa CLAUDE.md, không có route.ts. Remnant từ khi xóa UserGoal API.
+- **Đề xuất:** Xóa thư mục.
+
+### Hardcoded links sai: **KHÔNG CÒN**
+Đã quét toàn bộ JSX cho `href="/upload"`, `href="/products"`, `href="/campaigns"`, `href="/feedback"` → không tìm thấy. Tất cả đã fix ở TASKS-2.
+
+---
+
+## Section 6: Tóm Tắt Sức Khỏe
+
+| Hạng mục | Trạng thái | Ghi chú |
+|----------|-----------|---------|
+| Navigation | ✅ OK | 7 sidebar items, 5 mobile tabs, 4 redirects active |
+| Redirects | ✅ OK | /products→/inbox, /upload→/sync, /playbook→/insights, /products/[id]→/inbox/[id] |
+| Core workflow (Capture→Inbox→Production→Log→Learn) | ✅ OK | Tất cả 5 bước có trang + API hoạt động |
+| Data integrity | ⚠️ MEDIUM | Campaign model vẫn query ở 8 lib files dù không có CRUD UI |
+| Dead code | ⚠️ LOW | WinPattern write-only, UserGoal unused, /api/goals/ empty dir |
+| AI integration | ✅ OK | Scoring, brief generation, pattern detection, confidence, weekly report — tất cả hoạt động |
+| Identity system | ✅ OK | ProductIdentity là hub chính, auto-sync scores từ upload + inbox scoring |
+| Hardcoded links | ✅ OK | Không còn link sai |
+| Env vars | ✅ OK | 2 required (DATABASE_URL, ANTHROPIC_API_KEY), 1 optional (AUTH_SECRET) |
+| Orphan APIs | ⚠️ MEDIUM | ~17 endpoints không có UI gọi trực tiếp (một số dùng internal/extension/future) |
+| TypeScript | ✅ OK | Không có `as any`, `@ts-ignore`, hoặc type suppressions |
+
+---
+
+## Build Check
+
+```
+pnpm build — 2026-02-26
+
+✅ PASS
+- Next.js 16.1.6 (Turbopack)
+- TypeScript: compiled successfully (6.4s)
+- Static pages: 61/61 generated (2.2s)
+- Routes: 13 static (○) + 48 dynamic (ƒ)
+- Warnings: 1 (middleware→proxy deprecation — Next.js 16 cosmetic)
+- Errors: 0
+```

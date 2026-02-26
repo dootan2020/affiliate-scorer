@@ -227,7 +227,7 @@ export function OverviewTab({
         </ul>
         <div className="mt-4">
           <Link
-            href="/products"
+            href="/inbox"
             className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
             Xem danh sách sản phẩm →

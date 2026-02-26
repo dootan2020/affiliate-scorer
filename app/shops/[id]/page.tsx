@@ -71,7 +71,7 @@ export default async function ShopDetailPage({
   const shop = await prisma.shop.findUnique({ where: { id } });
   if (!shop) notFound();
 
-  // Fetch products that belong to this shop
+  // Fetch products that belong to this shop (include identityId for routing)
   const products = await prisma.product.findMany({
     where: { shopName: shop.name },
     orderBy: { aiScore: "desc" },
@@ -84,6 +84,7 @@ export default async function ShopDetailPage({
       sales7d: true,
       aiScore: true,
       category: true,
+      identityId: true,
     },
   });
 
@@ -203,7 +204,7 @@ export default async function ShopDetailPage({
                   >
                     <td className="py-2 pr-2 text-sm text-gray-900 dark:text-gray-50">
                       <Link
-                        href={`/inbox/${product.id}`}
+                        href={`/inbox/${product.identityId ?? product.id}`}
                         className="block truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                         title={product.name}
                       >

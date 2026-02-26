@@ -2,30 +2,40 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Trophy, XCircle, RefreshCw, BookOpen } from "lucide-react";
-import { formatVND } from "@/lib/utils/format";
 
 interface PatternItem {
   id: string;
   label: string;
   patternType: string;
   winRate: number;
-  avgROAS: number;
-  totalProfit: number;
-  sampleSize: number;
+  avgReward: number;
+  sampleCount: number;
+}
+
+interface InsightItem {
+  label: string;
+  detail: string;
+}
+
+interface PatternsResponse {
+  winning: PatternItem[];
+  losing: PatternItem[];
+  insights: InsightItem[];
+  totalLogged: number;
 }
 
 export function PlaybookSection(): React.ReactElement {
-  const [patterns, setPatterns] = useState<PatternItem[]>([]);
+  const [data, setData] = useState<PatternsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchPatterns = useCallback(async (): Promise<void> => {
     try {
-      const res = await fetch("/api/ai/patterns");
+      const res = await fetch("/api/patterns");
       if (!res.ok) throw new Error("Không thể tải dữ liệu");
       const json = await res.json();
-      setPatterns(json.data ?? []);
+      setData(json.data ?? null);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi không xác định");
@@ -41,20 +51,16 @@ export function PlaybookSection(): React.ReactElement {
   async function handleRefresh(): Promise<void> {
     setRefreshing(true);
     try {
-      const res = await fetch("/api/ai/patterns", { method: "POST" });
+      const res = await fetch("/api/patterns", { method: "POST" });
       if (!res.ok) throw new Error("Không thể refresh");
-      const json = await res.json();
-      setPatterns(json.data ?? []);
-      setError(null);
+      // Re-fetch after regeneration
+      await fetchPatterns();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setRefreshing(false);
     }
   }
-
-  const winning = patterns.filter((p) => p.patternType === "winning");
-  const losing = patterns.filter((p) => p.patternType === "losing");
 
   if (loading) {
     return (
@@ -69,6 +75,11 @@ export function PlaybookSection(): React.ReactElement {
     );
   }
 
+  const winning = data?.winning ?? [];
+  const losing = data?.losing ?? [];
+  const insights = data?.insights ?? [];
+  const totalLogged = data?.totalLogged ?? 0;
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-5">
       {/* Header */}
@@ -76,6 +87,9 @@ export function PlaybookSection(): React.ReactElement {
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-indigo-500" />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Playbook</span>
+          {totalLogged > 0 && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">({totalLogged} videos)</span>
+          )}
         </div>
         <button
           onClick={handleRefresh}
@@ -91,18 +105,35 @@ export function PlaybookSection(): React.ReactElement {
         <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>
       )}
 
-      {patterns.length === 0 ? (
+      {winning.length === 0 && losing.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
             <BookOpen className="w-7 h-7 text-gray-400 dark:text-gray-500" />
           </div>
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Chưa có playbook</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
-            Cần ít nhất 3 campaigns hoàn thành để tạo playbook.
+            Cần log kết quả video tại trang Log để AI học patterns.
           </p>
         </div>
       ) : (
         <>
+          {/* Insights */}
+          {insights.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                Insights
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {insights.map((insight) => (
+                  <div key={insight.label} className="rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 p-3">
+                    <p className="text-xs font-medium text-blue-700 dark:text-blue-300">{insight.label}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{insight.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Winning patterns */}
           {winning.length > 0 && (
             <div className="space-y-3">
@@ -165,15 +196,9 @@ function PatternCard({
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400 pl-6">
         <span>
-          {isWin ? "Win" : "Loss"} rate: {pattern.sampleSize > 0
-            ? `${Math.round(pattern.winRate * pattern.sampleSize)}/${pattern.sampleSize}`
-            : "0/0"
-          } ({winRatePct}%)
+          Win rate: {winRatePct}% ({pattern.sampleCount} videos)
         </span>
-        <span>ROAS TB: {pattern.avgROAS.toFixed(1)}x</span>
-        <span className={isWin ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-rose-600 dark:text-rose-400 font-medium"}>
-          {pattern.totalProfit >= 0 ? "Lai" : "Lo"}: {pattern.totalProfit >= 0 ? "+" : ""}{formatVND(Math.abs(pattern.totalProfit))}
-        </span>
+        <span>Avg reward: {Number(pattern.avgReward).toFixed(1)}</span>
       </div>
     </div>
   );

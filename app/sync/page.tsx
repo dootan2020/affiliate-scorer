@@ -30,8 +30,6 @@ interface ImportRecord {
   rowsTotal: number;
   rowsImported: number;
   rowsError: number;
-  campaignsCreated: number;
-  campaignsUpdated: number;
   productsCreated: number;
   productsUpdated: number;
   financialRecordsCreated: number;

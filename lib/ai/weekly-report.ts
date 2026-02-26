@@ -112,13 +112,16 @@ function buildSuggestions(c: WeeklyReportData["campaigns"], f: WeeklyReportData[
 
 async function getGoalProgress(): Promise<WeeklyReportData["goalProgress"]> {
   const now = new Date();
-  const goal = await prisma.userGoal.findFirst({
+  const goal = await prisma.goalP5.findFirst({
     where: { periodStart: { lte: now }, periodEnd: { gte: now } },
     orderBy: { createdAt: "desc" },
-    select: { targetAmount: true, currentAmount: true, progressPercent: true },
+    select: { targetCommission: true, actualCommission: true },
   });
-  if (!goal) return null;
-  return { target: goal.targetAmount, current: goal.currentAmount, percent: Math.round(goal.progressPercent) };
+  if (!goal || !goal.targetCommission) return null;
+  const percent = goal.targetCommission > 0
+    ? Math.round((goal.actualCommission / goal.targetCommission) * 100)
+    : 0;
+  return { target: goal.targetCommission, current: goal.actualCommission, percent };
 }
 
 export async function generateWeeklyReport(): Promise<WeeklyReportData> {

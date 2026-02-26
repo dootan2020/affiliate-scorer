@@ -5,6 +5,7 @@ import { formatVND, formatPercent } from "@/lib/utils/format";
 
 interface ProductCardData {
   id: string;
+  identityId?: string | null;
   name: string;
   price: number;
   commissionRate: number;
@@ -31,7 +32,7 @@ export function ProductCard({ product }: ProductCardProps): React.ReactElement {
   const scoreStyle = score !== null ? getScoreStyle(score) : null;
 
   return (
-    <Link href={`/inbox/${product.id}`} className="block">
+    <Link href={`/inbox/${product.identityId ?? product.id}`} className="block">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer h-full">
         <div className="flex items-start justify-between gap-2 mb-4">
           <p className="font-medium text-sm text-gray-900 dark:text-gray-50 line-clamp-2 flex-1">

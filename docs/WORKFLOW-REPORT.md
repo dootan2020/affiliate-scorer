@@ -277,7 +277,7 @@
 | PUT | `/api/inbox/[id]` | Cập nhật metadata, enrich | ProductIdentity |
 | POST | `/api/inbox/[id]/score` | Tính Content Potential Score | ProductIdentity |
 | POST | `/api/inbox/score-all` | Chấm điểm tất cả identities | ProductIdentity |
-| POST | `/api/inbox/migrate` | One-time migration: Products → Identities | ProductIdentity, Product |
+| ~~POST~~ | ~~`/api/inbox/migrate`~~ | ~~One-time migration~~ | ~~Đã xóa~~ |
 
 ### Nhóm Products (Phase 1, legacy)
 
@@ -298,7 +298,7 @@
 | GET | `/api/upload/import/history` | Lịch sử import | DataImport |
 | POST | `/api/upload/import` | Generic import | DataImport |
 | POST | `/api/upload/import/detect` | Detect file type | — |
-| POST | `/api/upload/feedback` | Upload feedback CSV | Feedback |
+| ~~POST~~ | ~~`/api/upload/feedback`~~ | ~~Upload feedback CSV~~ | ~~Đã xóa~~ |
 | POST | `/api/sync/tiktok-studio` | Import TikTok Studio files | AccountDailyStat, FollowerActivity, AccountInsight |
 
 ### Nhóm Production / Briefs (Phase 3)
@@ -339,9 +339,9 @@
 | GET | `/api/ai/confidence` | AI confidence level | LearningLog, Feedback |
 | GET | `/api/ai/anomalies` | Phát hiện anomalies | ProductIdentity |
 | GET | `/api/ai/intelligence` | Channel recommendations | Product |
-| GET | `/api/ai/patterns` | Win patterns | WinPattern |
+| ~~GET~~ | ~~`/api/ai/patterns`~~ | ~~Win patterns~~ | ~~Đã xóa, dùng /api/patterns~~ |
 | GET | `/api/ai/weekly-report` | Báo cáo tuần | WeeklyReport |
-| GET | `/api/morning-brief` | Morning brief | Campaign, CalendarEvent, Product |
+| GET | `/api/morning-brief` | Morning brief | ProductIdentity, CalendarEvent, GoalP5, AccountDailyStat |
 | GET | `/api/reports/weekly` | Weekly report | WeeklyReport |
 | GET | `/api/insights` | Overview insights | Product, LearningLog |
 
@@ -357,7 +357,7 @@
 | GET/POST | `/api/goals-p5` | Goals v2 | GoalP5 |
 | GET | `/api/goals-p5/current` | Goal hiện tại | GoalP5 |
 | GET | `/api/goals-p5/progress` | Progress | GoalP5 |
-| GET/POST | `/api/goals` | Goals cũ | UserGoal |
+| ~~GET/POST~~ | ~~`/api/goals`~~ | ~~Goals cũ~~ | ~~Đã xóa, dùng /api/goals-p5~~ |
 | GET/POST | `/api/shops` | Danh sách / tạo shop | Shop |
 | GET/PUT | `/api/shops/[id]` | Chi tiết shop | Shop |
 | GET/POST | `/api/calendar` | Sự kiện | CalendarEvent |
@@ -368,7 +368,7 @@
 
 | Method | Endpoint | Mục đích | Model |
 |--------|---------|---------|-------|
-| POST | `/api/feedback/manual` | Thêm feedback thủ công | Feedback |
+| ~~POST~~ | ~~`/api/feedback/manual`~~ | ~~Thêm feedback thủ công~~ | ~~Đã xóa~~ |
 | GET/PUT | `/api/content-posts/[id]` | Content post | ContentPost |
 | GET/POST | `/api/content-posts` | Danh sách | ContentPost |
 | GET | `/api/export/sheet` | Export Google Sheet | Product |
@@ -383,34 +383,21 @@
 
 ## 5. Vấn Đề Phát Hiện
 
-### 5.1. Broken Links trong UI (Stale References)
+### 5.1. ~~Broken Links trong UI (Stale References)~~ ✅ ĐÃ FIX (2026-02-26)
 
-**Nghiêm trọng: MEDIUM**
+**Đã sửa:** 3 hardcoded links + 2 links trong morning-brief enricher. Quét toàn bộ codebase xác nhận không còn `/upload`, `/products`, `/feedback`, `/campaigns`, `/playbook` hardcoded trong JSX.
 
-| File | Dòng | Vấn đề | Nên sửa thành |
-|------|------|---------|---------------|
-| `components/insights/insights-page-client.tsx` | ~157 | `href="/upload"` trong empty state | `href="/sync"` |
-| `components/insights/overview-tab.tsx` | ~230 | `href="/products"` | `href="/inbox"` |
-| `app/shops/page.tsx` | ~180 | `href="/products"` trong empty state | `href="/inbox"` |
+### 5.2. ~~Dual Identity System — Disconnect giữa Product và ProductIdentity~~ ✅ ĐÃ FIX (2026-02-26)
 
-Cả 3 đều có redirect nên không 404, nhưng UX kém — người dùng đi qua redirect không cần thiết.
+**Đã sửa:**
+- Auto-sync score: Upload FastMoss → `scoreProducts()` → tự động cập nhật `ProductIdentity.combinedScore` via shared `lib/services/score-identity.ts`
+- `/inbox/[id]` chỉ nhận ProductIdentity.id. Nếu nhận Product.id → redirect sang `/inbox/{identity.id}`. Không còn fallback logic.
+- Similar products links dùng `identityId` thay vì `Product.id`
+- Tất cả components (product-table, product-card, shops/[id]) dùng `identityId ?? id` cho links
 
-### 5.2. Dual Identity System — Disconnect giữa Product và ProductIdentity
+### 5.3. ~~Morning Brief Dùng Campaign (Đã Deprecated)~~ ✅ ĐÃ FIX (2026-02-26)
 
-**Nghiêm trọng: HIGH**
-
-Codebase đang tồn tại **2 hệ thống song song**:
-- `Product` — data từ FastMoss upload, có `aiScore`, `sales7d`, v.v.
-- `ProductIdentity` — hub mới, có `combinedScore`, `inboxState`
-
-Vấn đề cụ thể:
-- `/inbox/[id]` nhận `id` có thể là **ProductIdentity.id** hoặc **Product.id** (fallback logic dòng 73). Nếu user đến từ `inbox` (ProductIdentity), trang sẽ lookup `identity.product.id` để render. Nếu identity không có linked product, trang sẽ dùng `id` như Product ID — hành vi này không nhất quán và khó debug.
-- `ProductIdentity.inboxState` được update độc lập với `Product.aiScore`. Sau khi upload file, `Product.aiScore` được tính, nhưng `ProductIdentity.combinedScore` chỉ được cập nhật khi gọi `/api/inbox/[id]/score`. Có thể xảy ra trạng thái: Product đã scored nhưng Identity vẫn ở state "new".
-- `api/inbox/score-all` và `api/score` phục vụ 2 hệ thống khác nhau, tạo confusion.
-
-### 5.3. Morning Brief Dùng Campaign (Đã Deprecated)
-
-**Nghiêm trọng: LOW**
+**Đã sửa:** Morning brief query ProductIdentity (scored, chưa briefed) thay vì Campaign. UserGoal → GoalP5. Thêm AccountDailyStat summary. Xóa campaign analyzer import.
 
 `/api/morning-brief/route.ts` dòng 30–47: Vẫn query `prisma.campaign.findMany({ where: { status: "running" } })`. Trang `/campaigns` đã bị xóa, không có UI để tạo/quản lý campaigns nữa. Nếu không có campaign nào, code chạy đúng nhưng phần "active campaigns" trong morning brief sẽ luôn trống.
 
@@ -429,47 +416,25 @@ Hai endpoints này vẫn tồn tại và hoạt động nhưng:
 
 Sidebar chỉ có 7 items: Dashboard, Inbox, Sync, Sản xuất, Log, Thư viện, Insights. `/shops` không có, chỉ có thể vào qua link từ `/inbox/[id]` khi sản phẩm có `shopName` khớp với Shop trong DB. Nếu không có shop, link không hiện.
 
-### 5.6. Dual Goal System
+### 5.6. ~~Dual Goal System~~ ✅ ĐÃ FIX (2026-02-26)
 
-**Nghiêm trọng: LOW**
+**Đã sửa:** Xóa `/api/goals/route.ts`. Morning brief + weekly report chuyển sang GoalP5. Không còn code nào reference UserGoal.
 
-Có 2 models song song:
-- `UserGoal` — cũ, `/api/goals` vẫn tồn tại
-- `GoalP5` — mới, `/api/goals-p5` + `/api/goals-p5/current` + `/api/goals-p5/progress`
+### 5.7. ~~`/inbox/[id]` Link Similar Products Dùng Product.id~~ ✅ ĐÃ FIX (2026-02-26)
 
-Chưa rõ UI đang dùng cái nào. Cần cleanup.
+**Đã sửa:** Similar products query include `identityId`, link dùng `sp.identityId ?? sp.id`. Filter chỉ hiện products có linked identity.
 
-### 5.7. `/inbox/[id]` Link Similar Products Dùng Product.id Thay vì Identity.id
+### 5.8. ~~`DataImport.campaignsCreated/Updated` — Stale Fields~~ ✅ ĐÃ FIX (2026-02-26)
 
-**Nghiêm trọng: LOW**
+**Đã sửa:** Xóa `campaignsCreated` và `campaignsUpdated` khỏi ImportRecord interface trong cả sync page và ImportHistoryTable component. DB fields giữ nguyên.
 
-Dòng 414 trong `app/inbox/[id]/page.tsx`:
-```tsx
-<Link href={`/inbox/${sp.id}`}>
-```
-`sp.id` là **Product.id**, không phải **ProductIdentity.id**. Khi user click, `/inbox/[id]` sẽ không tìm thấy ProductIdentity với ID đó, và sẽ fallback sang lookup Product trực tiếp. Hoạt động nhưng không đồng nhất.
+### 5.9. ~~`/api/inbox/migrate` — One-Time Migration Endpoint~~ ✅ ĐÃ FIX (2026-02-26)
 
-### 5.8. `DataImport.campaignsCreated` và `DataImport.campaignsUpdated` — Stale Fields
+**Đã sửa:** Xóa file `app/api/inbox/migrate/route.ts`.
 
-**Nghiêm trọng: VERY LOW**
+### 5.10. ~~`WinPattern` vs `UserPattern` — Redundant Models~~ ✅ ĐÃ FIX (2026-02-26)
 
-Model `DataImport` vẫn có `campaignsCreated` và `campaignsUpdated`. `/sync` page còn hiển thị các fields này trong `ImportRecord` interface. Campaigns không còn được tạo từ import nữa.
-
-### 5.9. `/api/inbox/migrate` — One-Time Migration Endpoint Vẫn Public
-
-**Nghiêm trọng: LOW**
-
-Endpoint migration từ Phase 2 vẫn tồn tại và có thể được gọi bất kỳ lúc nào. Không có protection, không có check "đã chạy rồi". Gọi nhiều lần sẽ tạo duplicate identities (có `@unique` guard nên có thể không lỗi, nhưng vẫn nên xóa hoặc guard kỹ hơn).
-
-### 5.10. `WinPattern` vs `UserPattern` — Redundant Models
-
-**Nghiêm trọng: LOW**
-
-Cả 2 model cùng mục đích (win/loss patterns):
-- `WinPattern` — Phase 3A, có `campaignIds`, `avgROAS`, `totalProfit`
-- `UserPattern` — Phase 4, có `assetIds`, `avgReward`, `winRate`
-
-`UserPattern` là model mới và đúng, nhưng `WinPattern` vẫn tồn tại. `/api/ai/patterns` query `WinPattern`, còn `/api/patterns` query `UserPattern`.
+**Đã sửa:** Xóa `/api/ai/patterns/route.ts` (WinPattern API). PlaybookSection chuyển sang `/api/patterns` (UserPattern). `lib/ai/patterns.ts` vẫn còn nhưng không có consumer — dead code, giữ cho reference. WinPattern model giữ trong schema (có data cũ).
 
 ---
 
@@ -480,8 +445,10 @@ Cả 2 model cùng mục đích (win/loss patterns):
 | Navigation | Tốt | 7 routes trong sidebar, đúng sau refactor |
 | Redirects | Hoạt động | `/products`, `/upload`, `/playbook` redirect đúng |
 | Core workflow | Hoạt động | Capture → Inbox → Production → Log → Learn |
-| Data integrity | Cần chú ý | Dual system Product/ProductIdentity chưa hoàn toàn thống nhất |
-| Dead APIs | Có | feedback, campaign-related endpoints còn tồn tại |
-| Broken UI links | 3 chỗ | `/upload`, `/products` hardcoded trong components |
+| Data integrity | ✅ Tốt | Auto-sync score Product→Identity. Routing chuẩn hóa qua ProductIdentity.id |
+| Dead APIs | ✅ Đã dọn | Xóa feedback, goals, migrate, ai/patterns, upload/feedback |
+| Broken UI links | ✅ Đã fix | Không còn hardcoded `/upload`, `/products`, `/campaigns` trong UI |
 | Deprecated pages | Xóa sạch | `/campaigns`, `/feedback` không còn |
 | AI integration | Hoạt động | Cần `ANTHROPIC_API_KEY` cho brief generation và scoring |
+| Morning Brief | ✅ Updated | Query ProductIdentity thay Campaign, dùng GoalP5, thêm AccountDailyStat |
+| Playbook | ✅ Updated | Dùng UserPattern `/api/patterns` thay WinPattern `/api/ai/patterns` |

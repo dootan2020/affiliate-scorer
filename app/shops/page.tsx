@@ -177,7 +177,7 @@ export default async function ShopsPage(): Promise<React.ReactElement> {
             Đánh giá shop từ trang chi tiết sản phẩm.
           </p>
           <Link
-            href="/products"
+            href="/inbox"
             className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
           >
             Xem sản phẩm

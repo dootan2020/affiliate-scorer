@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { calculateConfidence } from "@/lib/ai/confidence";
-import { analyzeCampaigns } from "./brief-campaign-analyzer";
 import {
   getAnomalyItems,
   getNewProductItems,
@@ -26,26 +25,28 @@ export async function GET(): Promise<NextResponse> {
     const now = new Date();
     const items: BriefItem[] = [];
 
-    // 1. Active campaigns analysis
-    const activeCampaigns = await prisma.campaign.findMany({
-      where: { status: "running" },
-      include: { product: { select: { name: true } } },
+    // 1. Top products to create content for (scored, not yet briefed)
+    const topProducts = await prisma.productIdentity.findMany({
+      where: {
+        inboxState: "scored",
+        combinedScore: { not: null },
+      },
+      orderBy: { combinedScore: "desc" },
+      take: 5,
+      select: { id: true, title: true, combinedScore: true },
     });
 
-    const pausedCount = await prisma.campaign.count({
-      where: { status: "paused" },
-    });
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-    const campaignItems = analyzeCampaigns(
-      activeCampaigns,
-      yesterdayStr,
-      now
-    );
-    items.push(...campaignItems);
+    if (topProducts.length > 0) {
+      const names = topProducts
+        .map((p) => (p.title ?? "SP").substring(0, 20))
+        .join(", ");
+      items.push({
+        priority: "opportunity",
+        icon: "Sparkles",
+        text: `${topProducts.length} SP nên tạo content: ${names}`,
+        actionHref: "/production",
+      });
+    }
 
     // 2. Upcoming events within 7 days
     const sevenDaysLater = new Date(now);
@@ -70,7 +71,7 @@ export async function GET(): Promise<NextResponse> {
         priority: "prepare",
         icon: "Calendar",
         text: `${event.name} trong ${daysUntil} ngày — chuẩn bị content`,
-        actionHref: "/calendar",
+        actionHref: "/insights?tab=calendar",
       });
     }
 
@@ -103,17 +104,18 @@ export async function GET(): Promise<NextResponse> {
       .reduce((sum, r) => sum + r.amount, 0);
     const weekProfit = weekRevenue - weekSpend;
 
-    // 5. Current goal progress
-    const currentGoal = await prisma.userGoal.findFirst({
+    // 5. Current goal progress (GoalP5)
+    const currentGoal = await prisma.goalP5.findFirst({
       where: { periodStart: { lte: now }, periodEnd: { gte: now } },
       orderBy: { createdAt: "desc" },
     });
 
     let goalData: {
-      type: string;
-      targetAmount: number;
-      currentAmount: number;
-      progressPercent: number;
+      periodType: string;
+      targetVideos: number | null;
+      targetCommission: number | null;
+      actualVideos: number;
+      actualCommission: number;
       daysRemaining: number;
     } | null = null;
 
@@ -126,15 +128,32 @@ export async function GET(): Promise<NextResponse> {
         )
       );
       goalData = {
-        type: currentGoal.type,
-        targetAmount: currentGoal.targetAmount,
-        currentAmount: currentGoal.currentAmount,
-        progressPercent: currentGoal.progressPercent,
+        periodType: currentGoal.periodType,
+        targetVideos: currentGoal.targetVideos,
+        targetCommission: currentGoal.targetCommission,
+        actualVideos: currentGoal.actualVideos,
+        actualCommission: currentGoal.actualCommission,
         daysRemaining,
       };
     }
 
-    // 6. Sort by priority and build response
+    // 6. Account stats summary (last 7 days from TikTok Studio)
+    const accountStats = await prisma.accountDailyStat.findMany({
+      where: { date: { gte: weekStart, lt: weekEnd } },
+      orderBy: { date: "desc" },
+    });
+
+    const accountSummary = accountStats.length > 0
+      ? {
+          totalViews: accountStats.reduce((s, r) => s + r.videoViews, 0),
+          totalLikes: accountStats.reduce((s, r) => s + r.likes, 0),
+          totalComments: accountStats.reduce((s, r) => s + r.comments, 0),
+          totalShares: accountStats.reduce((s, r) => s + r.shares, 0),
+          days: accountStats.length,
+        }
+      : null;
+
+    // 7. Sort by priority and build response
     items.sort(
       (a, b) =>
         (PRIORITY_ORDER[a.priority] ?? 99) -
@@ -142,8 +161,7 @@ export async function GET(): Promise<NextResponse> {
     );
 
     const summary = {
-      activeCampaigns: activeCampaigns.length,
-      pausedCampaigns: pausedCount,
+      topProductsCount: topProducts.length,
       weekSpend: Math.round(weekSpend),
       weekRevenue: Math.round(weekRevenue),
       weekProfit: Math.round(weekProfit),
@@ -156,6 +174,7 @@ export async function GET(): Promise<NextResponse> {
         items,
         summary,
         goal: goalData,
+        accountSummary,
         confidenceLevel: confidence.level,
         confidenceLabel: confidence.label,
       },

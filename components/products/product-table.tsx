@@ -14,6 +14,7 @@ interface ProductBadge {
 
 interface ProductRow {
   id: string;
+  identityId?: string | null;
   name: string;
   price: number;
   commissionRate: number;
@@ -170,7 +171,7 @@ export function ProductTable({
             </td>
             <td className="py-3 px-3">
               <Link
-                href={`/inbox/${product.id}`}
+                href={`/inbox/${product.identityId ?? product.id}`}
                 className="flex items-center gap-3 group"
               >
                 <ProductImage

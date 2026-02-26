@@ -8,6 +8,7 @@ import { parseWithMapping } from "@/lib/parsers/map-parser";
 import { deduplicateProducts } from "@/lib/utils/dedup";
 import { scoreProducts } from "@/lib/ai/scoring";
 import { syncProductIdentity } from "@/lib/inbox/sync-identity";
+import { syncIdentityScores } from "@/lib/services/score-identity";
 import { createEmptyDeltaSummary } from "@/lib/inbox/delta-classification";
 import type { DeltaSummary } from "@/lib/inbox/delta-classification";
 import type { NormalizedProduct } from "@/lib/utils/normalize";
@@ -286,11 +287,26 @@ export async function POST(
     }
 
     // Auto-trigger scoring in background (fire-and-forget)
+    // After Product.aiScore is set, sync to ProductIdentity.combinedScore
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (apiKey && apiKey !== "sk-ant-...") {
-      scoreProducts({ batchId: batch.id }).catch((err) => {
-        console.error("Auto-scoring failed (non-blocking):", err);
-      });
+      scoreProducts({ batchId: batch.id })
+        .then(async () => {
+          // Find all identities linked to products in this batch
+          const linkedIdentities = await prisma.product.findMany({
+            where: { importBatchId: batch.id, identityId: { not: null } },
+            select: { identityId: true },
+          });
+          const identityIds = linkedIdentities
+            .map((p) => p.identityId)
+            .filter((id): id is string => id != null);
+          if (identityIds.length > 0) {
+            await syncIdentityScores(identityIds);
+          }
+        })
+        .catch((err) => {
+          console.error("Auto-scoring failed (non-blocking):", err);
+        });
     }
 
     return NextResponse.json({

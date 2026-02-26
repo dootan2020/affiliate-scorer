@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { ScoreBreakdown } from "@/components/products/score-breakdown";
@@ -63,14 +63,32 @@ function InfoRow({ label, value }: InfoRowProps): React.ReactElement | null {
 export default async function InboxDetailPage({ params }: InboxDetailPageProps): Promise<React.ReactElement> {
   const { id } = await params;
 
-  // First: look up the ProductIdentity by id to get the linked product via relation
+  // Lookup ProductIdentity by id
   const identity = await prisma.productIdentity.findUnique({
     where: { id },
     select: { product: { select: { id: true } }, title: true },
   });
 
-  // If identity not found, fall back to direct product lookup
-  const productId = identity?.product?.id ?? id;
+  let productId: string;
+
+  if (identity?.product?.id) {
+    // Normal path: identity found with linked product
+    productId = identity.product.id;
+  } else if (!identity) {
+    // id might be a Product.id — find linked ProductIdentity and redirect
+    const productWithIdentity = await prisma.product.findUnique({
+      where: { id },
+      select: { identityId: true },
+    });
+    if (productWithIdentity?.identityId) {
+      redirect(`/inbox/${productWithIdentity.identityId}`);
+    }
+    // No identity linked — 404
+    notFound();
+  } else {
+    // Identity exists but no linked product — show what we can
+    productId = id;
+  }
 
   const [product, totalProducts] = await Promise.all([
     prisma.product.findUnique({
@@ -91,23 +109,28 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
   ]);
   if (!product) notFound();
 
-  // Similar products — same category, price ±50%, fallback to category-only
+  // Similar products — same category, price ±50%, with identity link for routing
+  const similarSelect = {
+    id: true, name: true, price: true, commissionRate: true, commissionVND: true,
+    sales7d: true, aiScore: true, identityId: true,
+  };
   let similarProducts = await prisma.product.findMany({
     where: {
       category: product.category,
       id: { not: product.id },
+      identityId: { not: null },
       price: { gte: product.price * 0.5, lte: product.price * 1.5 },
     },
     orderBy: { aiScore: "desc" },
     take: 5,
-    select: { id: true, name: true, price: true, commissionRate: true, commissionVND: true, sales7d: true, aiScore: true },
+    select: similarSelect,
   });
   if (similarProducts.length === 0) {
     similarProducts = await prisma.product.findMany({
-      where: { category: product.category, id: { not: product.id } },
+      where: { category: product.category, id: { not: product.id }, identityId: { not: null } },
       orderBy: { aiScore: "desc" },
       take: 5,
-      select: { id: true, name: true, price: true, commissionRate: true, commissionVND: true, sales7d: true, aiScore: true },
+      select: similarSelect,
     });
   }
 
@@ -411,7 +434,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
               {similarProducts.map((sp) => (
                 <tr key={sp.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50">
                   <td className="py-2 pr-2 text-sm text-gray-900 dark:text-gray-50">
-                    <Link href={`/inbox/${sp.id}`} className="block truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title={sp.name}>
+                    <Link href={`/inbox/${sp.identityId ?? sp.id}`} className="block truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title={sp.name}>
                       {sp.name}
                     </Link>
                   </td>

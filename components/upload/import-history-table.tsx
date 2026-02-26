@@ -8,8 +8,6 @@ interface ImportRecord {
   rowsTotal: number;
   rowsImported: number;
   rowsError: number;
-  campaignsCreated: number;
-  campaignsUpdated: number;
   productsCreated: number;
   productsUpdated: number;
   financialRecordsCreated: number;
@@ -76,15 +74,6 @@ function formatDate(iso: string): string {
 
 function summarizeResult(record: ImportRecord): string {
   const parts: string[] = [];
-
-  const totalCampaigns = record.campaignsCreated + record.campaignsUpdated;
-  if (totalCampaigns > 0) {
-    const detail =
-      record.campaignsUpdated > 0
-        ? `${record.campaignsCreated} mới, ${record.campaignsUpdated} cập nhật`
-        : `${record.campaignsCreated} mới`;
-    parts.push(`${totalCampaigns} campaigns (${detail})`);
-  }
 
   const totalProducts = record.productsCreated + record.productsUpdated;
   if (totalProducts > 0) {

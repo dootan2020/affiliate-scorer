@@ -14,9 +14,7 @@ export async function getAnomalyItems(): Promise<BriefItem[]> {
   const anomalies = await detectAnomalies();
 
   for (const anomaly of anomalies) {
-    const href = anomaly.campaignId
-      ? `/campaigns/${anomaly.campaignId}`
-      : "/campaigns";
+    const href = "/insights";
 
     if (anomaly.severity === "urgent") {
       items.push({
@@ -64,7 +62,7 @@ export async function getNewProductItems(
       priority: "routine",
       icon: "Sparkles",
       text: `${newProducts.length} SP mới: ${productNames}`,
-      actionHref: "/products?sort=newest",
+      actionHref: "/inbox",
     });
   }
 

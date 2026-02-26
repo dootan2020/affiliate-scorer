@@ -174,7 +174,7 @@ export function PlaybookPageClient(): React.ReactElement {
 
       {/* Insights */}
       {data.insights.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-3">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-3">
           <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
             <Lightbulb className="w-4 h-4" /> Insights
           </h3>

@@ -40,7 +40,7 @@ function formatChannelName(channel: string): string {
 export function ChannelRecommendations({ recommendations }: ChannelRecommendationsProps): React.ReactElement {
   if (recommendations.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Chưa có gợi ý kênh phân phối.
         </p>
@@ -49,10 +49,10 @@ export function ChannelRecommendations({ recommendations }: ChannelRecommendatio
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-4">
-      <div className="flex items-center gap-2">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-4">
+      <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <Tv className="w-5 h-5 text-indigo-500" />
-        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Gợi ý kênh phân phối</span>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Gợi ý kênh phân phối</h3>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -98,7 +98,7 @@ export function ChannelRecommendations({ recommendations }: ChannelRecommendatio
                 <div className="text-xs">
                   <span className="text-gray-500 dark:text-gray-400">Budget: </span>
                   <span className="text-gray-700 dark:text-gray-300 font-medium">
-                    {formatVND(rec.budgetSuggestion)}/ngay
+                    {formatVND(rec.budgetSuggestion)}/ngày
                   </span>
                 </div>
               )}

@@ -148,7 +148,7 @@ export function SettingsPageClient(): React.ReactElement {
   return (
     <div className="space-y-6">
       {/* API Key Status */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
         <div className="flex items-center gap-2 mb-4">
           <Key className="w-5 h-5 text-orange-500" />
           <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
@@ -193,7 +193,7 @@ export function SettingsPageClient(): React.ReactElement {
       </div>
 
       {/* Model Configuration */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
         <div className="flex items-center gap-2 mb-4">
           <Brain className="w-5 h-5 text-orange-500" />
           <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">

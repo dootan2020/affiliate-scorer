@@ -50,7 +50,7 @@ function formatTodayString(): string {
 
 function EmptyState(): React.ReactElement {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
       <div className="flex flex-col items-center justify-center py-6 text-center">
         <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center mb-3">
           <Sun className="w-6 h-6 text-amber-500" />
@@ -115,7 +115,7 @@ export function MorningBriefWidget(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
           <span className="ml-2 text-sm text-gray-400">Đang tạo brief...</span>

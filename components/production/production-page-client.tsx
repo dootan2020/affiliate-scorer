@@ -134,10 +134,10 @@ export function ProductionPageClient(): React.ReactElement {
   const totalAssets = briefs.reduce((sum, b) => sum + b.assets.length, 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Bước 1: Chọn sản phẩm */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
+        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
           <div className="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 text-sm font-bold">
             1
           </div>
@@ -213,8 +213,8 @@ export function ProductionPageClient(): React.ReactElement {
 
       {/* Bước 3: Xuất packs */}
       {batchId && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
+          <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
             <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm font-bold">
               3
             </div>

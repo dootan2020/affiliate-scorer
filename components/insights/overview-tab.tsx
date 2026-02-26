@@ -61,7 +61,7 @@ export function OverviewTab({
             {totalProducts}
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            ghi chu: {productsWithNotes}
+            ghi chú: {productsWithNotes}
           </p>
         </div>
 
@@ -142,7 +142,7 @@ export function OverviewTab({
                   {event.name}
                 </span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
-                  con {event.daysUntil} ngay
+                  còn {event.daysUntil} ngày
                 </span>
               </div>
             ))}

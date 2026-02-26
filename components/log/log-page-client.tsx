@@ -139,10 +139,10 @@ function QuickMode(): React.ReactElement {
   return (
     <div className="space-y-4">
       {/* URL input */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Link2 className="w-4 h-4 text-orange-500" />
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Link TikTok</span>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4">
+        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
+          <Link2 className="w-5 h-5 text-orange-500" />
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Link TikTok</h3>
         </div>
         <div className="flex gap-2">
           <input
@@ -188,10 +188,10 @@ function QuickMode(): React.ReactElement {
 
       {/* Metrics input */}
       {match?.assetId && !result && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Nhập metrics</span>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4">
+          <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
+            <BarChart3 className="w-5 h-5 text-purple-500" />
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Nhập metrics</h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
@@ -329,10 +329,10 @@ function BatchMode(): React.ReactElement {
   return (
     <div className="space-y-4">
       {/* Textarea */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-4">
-        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50 pb-3 border-b border-gray-100 dark:border-slate-800">
           Paste nhiều link TikTok (1 link/dòng)
-        </span>
+        </h3>
         <textarea
           placeholder={"https://www.tiktok.com/@you/video/111\nhttps://www.tiktok.com/@you/video/222"}
           value={text}
@@ -351,7 +351,7 @@ function BatchMode(): React.ReactElement {
 
       {/* Match results + metrics */}
       {matches.length > 0 && !done && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4">
           <p className="text-sm text-gray-500">
             {matchedCount}/{matches.length} matched
           </p>
@@ -408,7 +408,7 @@ function BatchMode(): React.ReactElement {
       )}
 
       {done && (
-        <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl p-6 text-center">
+        <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl p-5 text-center">
           <Check className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
           <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
             Đã log thành công! Learning weights đã cập nhật.
@@ -436,7 +436,7 @@ function RewardResult({ result }: { result: LogResult }): React.ReactElement {
     analysis.verdict === "loss" ? "LOSS" : "Trung bình";
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-4">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4">
       <div className="flex items-center gap-3">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
           analysis.verdict === "win" ? "bg-emerald-50 dark:bg-emerald-950/30" :

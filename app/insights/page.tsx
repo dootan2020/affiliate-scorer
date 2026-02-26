@@ -160,7 +160,7 @@ export default async function InsightsPage(): Promise<React.ReactElement> {
   const confidenceLabel = getConfidenceLabel(insights.totalFeedbackCount);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">

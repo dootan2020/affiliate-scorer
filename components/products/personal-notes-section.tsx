@@ -159,7 +159,7 @@ export function PersonalNotesSection({
               onChange={(e) => setNewTag(e.target.value)}
               onKeyDown={handleTagKeyDown}
               onBlur={handleAddTag}
-              placeholder="Nhap tag..."
+              placeholder="Nhập tag..."
               className="rounded-full border border-gray-200 dark:border-slate-700 dark:bg-slate-800 px-3 py-1 text-xs outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 w-28"
             />
           ) : (

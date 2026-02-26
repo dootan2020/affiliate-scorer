@@ -61,7 +61,7 @@ export function WinProbabilityCard({ productId }: WinProbabilityCardProps): Reac
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-4 animate-pulse">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-4 animate-pulse">
         <div className="h-5 w-48 bg-gray-200 dark:bg-slate-700 rounded-lg" />
         <div className="h-3 w-full bg-gray-200 dark:bg-slate-700 rounded-full" />
         <div className="space-y-3">
@@ -75,7 +75,7 @@ export function WinProbabilityCard({ productId }: WinProbabilityCardProps): Reac
 
   if (error || !data) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {error ?? "Không có dữ liệu Win Probability"}
         </p>
@@ -93,12 +93,12 @@ export function WinProbabilityCard({ productId }: WinProbabilityCardProps): Reac
   const pct = Math.round(data.total);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <Target className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Win Probability</span>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Win Probability</h3>
         </div>
         <span className={`text-2xl font-bold ${getTextColor(pct)}`}>{pct}%</span>
       </div>

@@ -101,7 +101,7 @@ export default function InboxPage(): React.ReactElement {
       </div>
 
       {/* Paste Links Box */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
         <h2 className="text-base font-medium text-gray-900 dark:text-gray-50 mb-4">
           Dán links sản phẩm
         </h2>

@@ -64,7 +64,7 @@ export function PlaybookSection(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-4 animate-pulse">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-4 animate-pulse">
         <div className="h-5 w-40 bg-gray-200 dark:bg-slate-700 rounded-lg" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -81,12 +81,12 @@ export function PlaybookSection(): React.ReactElement {
   const totalLogged = data?.totalLogged ?? 0;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-indigo-500" />
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Playbook</span>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Playbook</h3>
           {totalLogged > 0 && (
             <span className="text-xs text-gray-400 dark:text-gray-500">({totalLogged} videos)</span>
           )}

@@ -78,7 +78,7 @@ export function WeeklyReportCard(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-4 animate-pulse">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-4 animate-pulse">
         <div className="h-5 w-48 bg-gray-200 dark:bg-slate-700 rounded-lg" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -92,14 +92,14 @@ export function WeeklyReportCard(): React.ReactElement {
   const data = report?.reportData;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-orange-500" />
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
             {report ? `Báo cáo tuần — ${formatDateRange(report.weekStart, report.weekEnd)}` : "Báo cáo tuần"}
-          </span>
+          </h3>
         </div>
         <button
           onClick={handleGenerate}

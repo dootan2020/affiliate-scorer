@@ -121,7 +121,7 @@ export function PasteLinkBox({ onComplete, compact }: PasteLinkBoxProps): React.
 
       {/* Kết quả */}
       {result && (
-        <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4 space-y-2">
+        <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-5 space-y-2">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
             Kết quả: {result.total} links
           </p>

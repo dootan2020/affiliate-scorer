@@ -112,7 +112,7 @@ export function ColumnMapping({
                         onChange={(e) =>
                           handleChange(field.key, e.target.value)
                         }
-                        className="w-full appearance-none rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 pr-8 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
+                        className="w-full appearance-none rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 pr-8 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
                       >
                         <option value="__skip__">-- Bỏ qua --</option>
                         {headers.map((h) => (

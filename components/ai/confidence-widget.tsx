@@ -79,7 +79,7 @@ export function ConfidenceWidget(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-4 animate-pulse">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-4 animate-pulse">
         <div className="h-5 w-56 bg-gray-200 dark:bg-slate-700 rounded-lg" />
         <div className="h-3 w-full bg-gray-200 dark:bg-slate-700 rounded-full" />
         <div className="space-y-2">
@@ -93,7 +93,7 @@ export function ConfidenceWidget(): React.ReactElement {
 
   if (error || !data) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {error ?? "Chưa có báo cáo. Bấm \"Tạo báo cáo\" để bắt đầu."}
         </p>
@@ -113,11 +113,11 @@ export function ConfidenceWidget(): React.ReactElement {
   const nextLevelNum = data.level + 1;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-6 space-y-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-5">
       {/* Header */}
-      <div className="flex items-center flex-wrap gap-2">
+      <div className="flex items-center flex-wrap gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <Brain className="w-5 h-5 text-purple-500" />
-        <span className="text-sm font-medium text-gray-900 dark:text-gray-50">AI Confidence:</span>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">AI Confidence:</h3>
         <span className={`text-sm font-bold ${getLevelColor(data.level)}`}>
           Level {data.level} — {data.label}
         </span>

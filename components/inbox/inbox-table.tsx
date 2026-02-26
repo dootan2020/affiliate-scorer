@@ -79,14 +79,14 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-800">
               <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 w-10">#</th>
-              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-3 w-14">Điểm</th>
-              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-3">Sản phẩm</th>
-              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-3 hidden md:table-cell">Delta</th>
-              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-3 hidden sm:table-cell">Content</th>
-              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-3">Giá</th>
-              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-3 hidden lg:table-cell">Bán 7d</th>
-              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-3 hidden lg:table-cell">KOL</th>
-              <th className="pb-3 pt-4 px-3 w-8" />
+              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 w-14">Điểm</th>
+              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4">Sản phẩm</th>
+              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden md:table-cell">Delta</th>
+              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden sm:table-cell">Content</th>
+              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4">Giá</th>
+              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden lg:table-cell">Bán 7d</th>
+              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden lg:table-cell">KOL</th>
+              <th className="pb-3 pt-4 px-4 w-8" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-800/60">
@@ -99,15 +99,15 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
               return (
                 <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors group">
                   {/* # */}
-                  <td className="py-3 px-4 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+                  <td className="py-3.5 px-4 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
                     {startIndex + idx}
                   </td>
                   {/* Score */}
-                  <td className="py-3 px-3">
+                  <td className="py-3.5 px-4">
                     <ScoreBadge score={aiScore} />
                   </td>
                   {/* Product info */}
-                  <td className="py-3 px-3 max-w-[240px]">
+                  <td className="py-3.5 px-4 max-w-[240px]">
                     <Link href={`/inbox/${item.id}`} className="flex items-center gap-2.5 group/link">
                       <ProductImage
                         src={imageUrl}
@@ -126,11 +126,11 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                     </Link>
                   </td>
                   {/* Delta */}
-                  <td className="py-3 px-3 hidden md:table-cell">
+                  <td className="py-3.5 px-4 hidden md:table-cell">
                     <DeltaBadge type={item.deltaType} />
                   </td>
                   {/* Content score */}
-                  <td className="py-3 px-3 text-right hidden sm:table-cell">
+                  <td className="py-3.5 px-4 text-right hidden sm:table-cell">
                     {contentScore !== null ? (
                       <span className="text-sm text-gray-700 dark:text-gray-300 tabular-nums">
                         {Math.round(contentScore)}
@@ -140,7 +140,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                     )}
                   </td>
                   {/* Price */}
-                  <td className="py-3 px-3 text-right whitespace-nowrap">
+                  <td className="py-3.5 px-4 text-right whitespace-nowrap">
                     {item.price !== null ? (
                       <span className="text-sm text-gray-700 dark:text-gray-300 tabular-nums">
                         {formatVND(item.price)}
@@ -150,7 +150,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                     )}
                   </td>
                   {/* Sales 7d */}
-                  <td className="py-3 px-3 text-right hidden lg:table-cell">
+                  <td className="py-3.5 px-4 text-right hidden lg:table-cell">
                     {item.product?.sales7d !== null && item.product?.sales7d !== undefined ? (
                       <span className="text-sm text-gray-700 dark:text-gray-300 tabular-nums">
                         {formatNumber(item.product.sales7d)}
@@ -160,7 +160,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                     )}
                   </td>
                   {/* KOL */}
-                  <td className="py-3 px-3 text-right hidden lg:table-cell">
+                  <td className="py-3.5 px-4 text-right hidden lg:table-cell">
                     {item.product?.totalKOL !== null && item.product?.totalKOL !== undefined ? (
                       <span className="text-sm text-gray-700 dark:text-gray-300 tabular-nums">
                         {formatNumber(item.product.totalKOL)}
@@ -170,7 +170,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                     )}
                   </td>
                   {/* Actions */}
-                  <td className="py-3 px-3">
+                  <td className="py-3.5 px-4">
                     <button
                       onClick={() => onEnrich(item.id)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"

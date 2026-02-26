@@ -223,14 +223,23 @@ function formatModelName(id: string, provider: ProviderName): string {
   }
 
   if (provider === "google") {
-    return id
-      .replace("-latest", "")
+    // Clean up suffixes: -preview-*, -image-preview, -09-2025, -latest, -exp, -customtools
+    let clean = id
+      .replace(/-preview-\w+/g, "")
+      .replace(/-image-preview/g, "")
+      .replace(/-\d{2}-\d{4}/g, "")
+      .replace(/-preview/g, "")
+      .replace(/-latest/g, "")
+      .replace(/-exp/g, "")
+      .replace(/-image/g, "");
+    // Format
+    clean = clean
       .replace("gemini-", "Gemini ")
       .replace("-pro", " Pro")
       .replace("-flash-lite", " Flash Lite")
       .replace("-flash", " Flash")
-      .replace("-exp", " (Preview)")
       .trim();
+    return clean || id;
   }
 
   return id;

@@ -143,14 +143,14 @@ export function FinancialTab(): React.ReactElement {
           className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Them thu
+          Thêm thu
         </button>
         <button
           onClick={() => openForm("expense")}
           className="inline-flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Them chi
+          Thêm chi
         </button>
       </div>
 

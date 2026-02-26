@@ -16,6 +16,7 @@ import {
   ClipboardList,
   BookOpen,
   Sparkles,
+  HelpCircle,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/log", label: "Log", icon: ClipboardList },
   { href: "/library", label: "Thư viện", icon: BookOpen },
   { href: "/insights", label: "Insights", icon: Sparkles },
+  { href: "/guide", label: "Hướng dẫn", icon: HelpCircle },
 ];
 
 const BOTTOM_TAB_ITEMS = NAV_ITEMS.filter((item) =>

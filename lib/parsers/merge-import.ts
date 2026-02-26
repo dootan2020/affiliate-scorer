@@ -10,7 +10,7 @@ interface MergeResult {
 
 /**
  * Merge imported data into database.
- * Campaign creation/update removed — Content Factory workflow uses
+ * Campaign creation/update removed — PASTR workflow uses
  * Product + ProductIdentity created via /api/upload/products.
  */
 export async function mergeImportedData(

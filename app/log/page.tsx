@@ -4,7 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { LogPageClient } from "@/components/log/log-page-client";
 
 export const metadata: Metadata = {
-  title: "Log kết quả | Content Factory",
+  title: "Log",
   description: "Paste TikTok links, nhập metrics → AI học patterns",
 };
 

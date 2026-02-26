@@ -1,14 +1,31 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { decrypt } from "@/lib/encryption";
+import { maskKey } from "@/lib/ai/providers";
 
+// Legacy endpoint — returns Anthropic key status for backward compat
 export async function GET(): Promise<NextResponse> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  const hasKey = !!apiKey && apiKey !== "sk-ant-..." && apiKey.length > 10;
-  const maskedKey = hasKey ? "••••••••" + apiKey.slice(-4) : null;
+  try {
+    const record = await prisma.apiProvider.findUnique({
+      where: { provider: "anthropic" },
+    });
 
-  return NextResponse.json({
-    data: {
-      hasKey,
-      maskedKey,
-    },
-  });
+    const hasKey = !!record?.encryptedKey && record.isConnected;
+    let maskedKey: string | null = null;
+    if (hasKey && record?.encryptedKey) {
+      try {
+        maskedKey = maskKey(decrypt(record.encryptedKey));
+      } catch {
+        // decrypt error
+      }
+    }
+
+    return NextResponse.json({
+      data: { hasKey, maskedKey },
+    });
+  } catch {
+    return NextResponse.json({
+      data: { hasKey: false, maskedKey: null },
+    });
+  }
 }

@@ -5,28 +5,20 @@ export type ProviderName = "anthropic" | "openai" | "google";
 
 interface ProviderConfig {
   label: string;
-  envVar: string;
-  keyHint: string;
   consoleUrl: string;
 }
 
 export const PROVIDER_CONFIGS: Record<ProviderName, ProviderConfig> = {
   anthropic: {
     label: "Anthropic (Claude)",
-    envVar: "ANTHROPIC_API_KEY",
-    keyHint: "sk-ant-...",
     consoleUrl: "https://console.anthropic.com/settings/keys",
   },
   openai: {
     label: "OpenAI (GPT)",
-    envVar: "OPENAI_API_KEY",
-    keyHint: "sk-...",
     consoleUrl: "https://platform.openai.com/api-keys",
   },
   google: {
     label: "Google (Gemini)",
-    envVar: "GOOGLE_AI_API_KEY",
-    keyHint: "AIza...",
     consoleUrl: "https://aistudio.google.com/apikey",
   },
 };
@@ -52,22 +44,13 @@ export function getProviderFromModelId(modelId: string): ProviderName {
   return "anthropic"; // fallback
 }
 
-/** Get API key for a provider — env var takes priority, then DB decrypt */
+/** Get API key for a provider from DB (encrypted) */
 export async function getApiKey(provider: ProviderName): Promise<string | null> {
-  const config = PROVIDER_CONFIGS[provider];
-
-  // Check env var first
-  const envKey = process.env[config.envVar];
-  if (envKey && envKey.length > 10 && envKey !== config.keyHint) {
-    return envKey;
-  }
-
-  // Check DB
   try {
     const record = await prisma.apiProvider.findUnique({
       where: { provider },
     });
-    if (record?.encryptedKey) {
+    if (record?.encryptedKey && record.isConnected) {
       return decrypt(record.encryptedKey);
     }
   } catch {

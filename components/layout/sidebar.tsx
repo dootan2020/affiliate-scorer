@@ -65,8 +65,9 @@ export function Sidebar(): React.ReactElement {
       <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-60 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 z-40">
         {/* App name */}
         <div className="px-5 h-16 flex items-center shrink-0">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-50">
-            Content Factory
+          <Link href="/" className="flex items-center gap-2">
+            <span className="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center text-white text-sm font-extrabold">P</span>
+            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-50">PASTR</span>
           </Link>
         </div>
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ProductionPageClient } from "@/components/production/production-page-client";
 
 export const metadata: Metadata = {
-  title: "Sản xuất | AffiliateScorer",
+  title: "Sản xuất",
   description: "Chọn sản phẩm, tạo briefs AI, preview và xuất packs sản xuất",
 };
 

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; AffiliateScorer/1.0)",
+        "User-Agent": "Mozilla/5.0 (compatible; PASTR/1.0)",
         "Referer": "https://www.fastmoss.com/",
       },
       signal: controller.signal,

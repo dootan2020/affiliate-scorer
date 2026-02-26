@@ -56,7 +56,7 @@ function EmptyState(): React.ReactElement {
           <Sun className="w-6 h-6 text-amber-500" />
         </div>
         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">
-          Chào mừng đến Content Factory!
+          Chào mừng đến PASTR!
         </h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 max-w-xs">
           Chưa có data — bắt đầu bằng cách thêm sản phẩm vào Inbox

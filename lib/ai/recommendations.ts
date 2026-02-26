@@ -126,7 +126,7 @@ export async function getChannelRecommendations(
 
 /**
  * Budget portfolio — no longer applicable without Campaign model.
- * Content Factory workflow uses ContentAsset without ad budgets.
+ * PASTR workflow uses ContentAsset without ad budgets.
  */
 export async function getBudgetPortfolio(): Promise<[]> {
   return [];

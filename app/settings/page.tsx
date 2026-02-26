@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SettingsPageClient } from "@/components/settings/settings-page-client";
 
 export const metadata: Metadata = {
-  title: "Cài đặt | AffiliateScorer",
+  title: "Cài đặt",
 };
 
 export default function SettingsPage(): React.ReactElement {

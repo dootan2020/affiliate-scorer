@@ -20,14 +20,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey || apiKey === "sk-ant-...") {
-      return NextResponse.json(
-        { error: "Chưa cấu hình ANTHROPIC_API_KEY. Xem .env.example", code: "MISSING_API_KEY" },
-        { status: 503 },
-      );
-    }
-
     const results = parsed.data.scoreAll
       ? await scoreAllProducts()
       : await scoreProducts(parsed.data);

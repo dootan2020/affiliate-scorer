@@ -7,7 +7,7 @@ import { ShopEditForm } from "@/components/shops/shop-edit-form";
 import { ArrowLeft, Star, Store } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Chi tiet Shop | AffiliateScorer",
+  title: "Chi tiết Shop",
 };
 
 interface ShopDetailPageProps {

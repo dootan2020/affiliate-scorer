@@ -18,11 +18,7 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getClient(explicitKey?: string): Anthropic {
-  const apiKey = explicitKey ?? process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || apiKey === "sk-ant-...") {
-    throw new Error("Chưa cấu hình ANTHROPIC_API_KEY. Vào Settings → API Keys để kết nối.");
-  }
+function getClient(apiKey: string): Anthropic {
   return new Anthropic({ apiKey });
 }
 
@@ -45,6 +41,9 @@ export async function callClaude(
   taskType?: AiTaskType,
   apiKey?: string
 ): Promise<string> {
+  if (!apiKey) {
+    throw new Error("Chưa cấu hình API key cho Anthropic. Vào Settings → API Keys để kết nối.");
+  }
   const client = getClient(apiKey);
   const model = await getModelForTask(taskType);
   let lastError: Error | null = null;

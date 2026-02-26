@@ -3,6 +3,7 @@ import { Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Sidebar } from "@/components/layout/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SetupBanner } from "@/components/shared/setup-banner";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -17,14 +18,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Content Factory — AI Sản Xuất Video Affiliate",
+  title: {
+    default: "PASTR — AI Video Affiliate",
+    template: "%s | PASTR",
+  },
   description:
-    "Công cụ AI giúp sản xuất 10+ video affiliate TikTok mỗi ngày",
+    "Paste links. Ship videos. Learn fast. Công cụ AI sản xuất video affiliate TikTok.",
   openGraph: {
-    title: "Content Factory — AI Sản Xuất Video Affiliate",
+    title: "PASTR — Paste links. Ship videos. Learn fast.",
     description:
-      "Công cụ AI giúp sản xuất 10+ video affiliate TikTok mỗi ngày",
+      "Công cụ AI giúp sản xuất video affiliate TikTok nhanh hơn",
     type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "PASTR — AI Video Affiliate",
+    description: "Paste links. Ship videos. Learn fast.",
   },
 };
 
@@ -44,6 +53,7 @@ export default function RootLayout({
             {/* Offset for desktop sidebar width; top/bottom offset for mobile bars */}
             <main className="flex-1 overflow-auto md:ml-60 pt-14 pb-20 md:pt-0 md:pb-0">
               <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <SetupBanner />
                 {children}
               </div>
             </main>

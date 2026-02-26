@@ -830,8 +830,7 @@ model AiModelConfig {
 model ApiProvider {
   id           String    @id @default(cuid())
   provider     String    @unique // "anthropic" | "openai" | "google"
-  encryptedKey String?   // AES-256-GCM encrypted, NULL if using env var
-  isFromEnv    Boolean   @default(false)
+  encryptedKey String?   // AES-256-GCM encrypted
   isConnected  Boolean   @default(false)
   lastTestedAt DateTime?
   createdAt    DateTime  @default(now())

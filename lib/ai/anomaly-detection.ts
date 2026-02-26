@@ -13,7 +13,7 @@ const SEVERITY_ORDER: Record<Anomaly["severity"], number> = { urgent: 0, warning
 
 /**
  * Detect anomalies based on ContentAsset metrics and ProductSnapshot data.
- * Replaces Campaign-based anomaly detection with Content Factory workflow.
+ * Replaces Campaign-based anomaly detection with PASTR workflow.
  */
 export async function detectAnomalies(): Promise<Anomaly[]> {
   const anomalies: Anomaly[] = [];

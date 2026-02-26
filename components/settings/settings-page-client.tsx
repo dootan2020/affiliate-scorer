@@ -19,7 +19,6 @@ type ProviderName = "anthropic" | "openai" | "google";
 interface ProviderStatus {
   provider: ProviderName;
   connected: boolean;
-  fromEnv: boolean;
   lastChars: string | null;
 }
 
@@ -228,14 +227,13 @@ export function SettingsPageClient(): React.ReactElement {
                 <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                    {currentStatus.fromEnv ? "Đã kết nối qua biến môi trường" : "Đã kết nối"}
+                    Đã kết nối
                   </p>
                   <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 font-mono mt-0.5">
                     {currentStatus.lastChars}
                   </p>
                 </div>
-                {!currentStatus.fromEnv && (
-                  <button
+                <button
                     onClick={() => void handleDeleteKey()}
                     disabled={deleting}
                     className="p-2 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
@@ -247,7 +245,6 @@ export function SettingsPageClient(): React.ReactElement {
                       <Trash2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     )}
                   </button>
-                )}
               </div>
             </div>
           ) : (

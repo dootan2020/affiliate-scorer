@@ -6,7 +6,7 @@ import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-wid
 import { ContentSuggestionsWidget } from "@/components/dashboard/content-suggestions-widget";
 
 export const metadata: Metadata = {
-  title: "Dashboard | AffiliateScorer",
+  title: "Dashboard",
 };
 
 export default function DashboardPage(): React.ReactElement {

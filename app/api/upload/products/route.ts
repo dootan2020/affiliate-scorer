@@ -288,26 +288,23 @@ export async function POST(
 
     // Auto-trigger scoring in background (fire-and-forget)
     // After Product.aiScore is set, sync to ProductIdentity.combinedScore
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (apiKey && apiKey !== "sk-ant-...") {
-      scoreProducts({ batchId: batch.id })
-        .then(async () => {
-          // Find all identities linked to products in this batch
-          const linkedIdentities = await prisma.product.findMany({
-            where: { importBatchId: batch.id, identityId: { not: null } },
-            select: { identityId: true },
-          });
-          const identityIds = linkedIdentities
-            .map((p) => p.identityId)
-            .filter((id): id is string => id != null);
-          if (identityIds.length > 0) {
-            await syncIdentityScores(identityIds);
-          }
-        })
-        .catch((err) => {
-          console.error("Auto-scoring failed (non-blocking):", err);
+    scoreProducts({ batchId: batch.id })
+      .then(async () => {
+        // Find all identities linked to products in this batch
+        const linkedIdentities = await prisma.product.findMany({
+          where: { importBatchId: batch.id, identityId: { not: null } },
+          select: { identityId: true },
         });
-    }
+        const identityIds = linkedIdentities
+          .map((p) => p.identityId)
+          .filter((id): id is string => id != null);
+        if (identityIds.length > 0) {
+          await syncIdentityScores(identityIds);
+        }
+      })
+      .catch((err) => {
+        console.error("Auto-scoring failed (non-blocking):", err);
+      });
 
     return NextResponse.json({
       data: {
@@ -318,7 +315,7 @@ export async function POST(
         created,
         updated,
         deltaSummary,
-        scoringTriggered: !!apiKey && apiKey !== "sk-ant-...",
+        scoringTriggered: true,
       },
       message: `Đã import ${created + updated} sản phẩm từ ${sourceLabel} (${created} mới, ${updated} cập nhật)`,
     });

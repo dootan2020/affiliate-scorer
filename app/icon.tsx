@@ -8,19 +8,20 @@ export default function Icon(): ImageResponse {
     (
       <div
         style={{
-          fontSize: 24,
+          fontSize: 20,
           width: "100%",
           height: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#2563eb",
+          background: "#E87B35",
           borderRadius: "8px",
           color: "white",
-          fontWeight: 700,
+          fontWeight: 800,
+          letterSpacing: "-0.5px",
         }}
       >
-        A
+        P
       </div>
     ),
     { ...size }

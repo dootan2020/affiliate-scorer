@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: InboxDetailPageProps): Promis
     select: { title: true },
   });
   return {
-    title: identity?.title ? `${identity.title} | Inbox | AffiliateScorer` : "Chi tiết sản phẩm | Inbox | AffiliateScorer",
+    title: identity?.title ? `${identity.title} | Inbox` : "Chi tiết sản phẩm | Inbox",
   };
 }
 

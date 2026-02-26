@@ -25,14 +25,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       where: { provider: body.provider },
       update: {
         encryptedKey,
-        isFromEnv: false,
         isConnected: true,
         lastTestedAt: new Date(),
       },
       create: {
         provider: body.provider,
         encryptedKey,
-        isFromEnv: false,
         isConnected: true,
         lastTestedAt: new Date(),
       },

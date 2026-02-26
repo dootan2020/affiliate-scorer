@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LibraryPageClient } from "@/components/library/library-page-client";
 
 export const metadata: Metadata = {
-  title: "Thư viện | Content Factory",
+  title: "Thư viện",
   description: "Toàn bộ content assets — lọc theo trạng thái, định dạng, sản phẩm",
 };
 

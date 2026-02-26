@@ -63,7 +63,7 @@ export async function GET(): Promise<NextResponse> {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="affiliate-scorer-${date}.csv"`,
+        "Content-Disposition": `attachment; filename="pastr-${date}.csv"`,
       },
     });
   } catch (error) {

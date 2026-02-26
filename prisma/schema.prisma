@@ -776,3 +776,43 @@ model GoalP5 {
 
   @@unique([periodType, periodStart])
 }
+
+// ─── TIKTOK STUDIO ANALYTICS ───
+
+model AccountDailyStat {
+  id           String   @id @default(cuid())
+  date         DateTime @db.Date
+  videoViews   Int      @default(0)
+  profileViews Int      @default(0)
+  likes        Int      @default(0)
+  comments     Int      @default(0)
+  shares       Int      @default(0)
+  importBatchId String?
+  createdAt    DateTime @default(now())
+
+  @@unique([date])
+  @@index([date])
+}
+
+model FollowerActivity {
+  id           String   @id @default(cuid())
+  dayOfWeek    Int      // 0=Mon..6=Sun
+  hour         Int      // 0-23
+  activeCount  Int      @default(0)
+  importBatchId String?
+  updatedAt    DateTime @updatedAt
+
+  @@unique([dayOfWeek, hour])
+}
+
+model AccountInsight {
+  id            String    @id @default(cuid())
+  type          String    // "viewers" | "follower_history" | "follower_gender" | "follower_territories"
+  date          DateTime? @db.Date
+  data          Json      // flexible JSON for each insight type
+  importBatchId String?
+  createdAt     DateTime  @default(now())
+
+  @@index([type])
+  @@index([date])
+}

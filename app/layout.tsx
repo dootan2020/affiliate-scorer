@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
-import { NavHeader } from "@/components/layout/nav-header";
+import { Sidebar } from "@/components/layout/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AffiliateScorer — AI Chọn Sản Phẩm Affiliate",
+  title: "Content Factory — AI Sản Xuất Video Affiliate",
   description:
-    "Công cụ AI chấm điểm sản phẩm affiliate từ FastMoss/KaloData. Học từ kết quả thật để cải thiện scoring.",
+    "Công cụ AI giúp sản xuất 10+ video affiliate TikTok mỗi ngày",
   openGraph: {
-    title: "AffiliateScorer — AI Chọn Sản Phẩm Affiliate",
+    title: "Content Factory — AI Sản Xuất Video Affiliate",
     description:
-      "Công cụ AI chấm điểm sản phẩm affiliate từ FastMoss/KaloData. Học từ kết quả thật để cải thiện scoring.",
+      "Công cụ AI giúp sản xuất 10+ video affiliate TikTok mỗi ngày",
     type: "website",
   },
 };
@@ -38,10 +38,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-gray-50 dark:bg-slate-950 min-h-screen`}
       >
         <ThemeProvider>
-          <NavHeader />
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 sm:pb-8">
-            {children}
-          </main>
+          <div className="flex min-h-screen">
+            <Sidebar />
+            {/* Offset for desktop sidebar width; top/bottom offset for mobile bars */}
+            <main className="flex-1 overflow-auto md:ml-60 pt-14 pb-20 md:pt-0 md:pb-0">
+              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {children}
+              </div>
+            </main>
+          </div>
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>

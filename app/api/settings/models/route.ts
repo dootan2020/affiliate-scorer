@@ -228,6 +228,7 @@ function formatModelName(id: string, provider: ProviderName): string {
       .replace(/-preview-\w+/g, "")
       .replace(/-image-preview/g, "")
       .replace(/-\d{2}-\d{4}/g, "")
+      .replace(/-\d{4}/g, "")
       .replace(/-preview/g, "")
       .replace(/-latest/g, "")
       .replace(/-exp/g, "")

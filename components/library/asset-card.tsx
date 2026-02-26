@@ -1,7 +1,7 @@
 "use client";
 
 import { Copy, Eye, ExternalLink } from "lucide-react";
-import Image from "next/image";
+import { ProductImage } from "@/components/products/product-image";
 
 interface AssetMetric {
   views: number | null;
@@ -79,18 +79,12 @@ export function AssetCard({ asset, onCopyScript }: AssetCardProps): React.ReactE
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col gap-3">
       {/* Product thumbnail + name */}
       <div className="flex items-center gap-3">
-        {asset.productIdentity.imageUrl ? (
-          <Image
-            src={asset.productIdentity.imageUrl}
-            alt={asset.productIdentity.title}
-            width={40}
-            height={40}
-            className="w-10 h-10 rounded-xl object-cover shrink-0"
-            unoptimized
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 shrink-0" />
-        )}
+        <ProductImage
+          src={asset.productIdentity.imageUrl}
+          alt={asset.productIdentity.title}
+          size={40}
+          className="rounded-xl"
+        />
         <div className="flex-1 min-w-0">
           <p className="text-xs text-gray-400 dark:text-gray-500 truncate font-mono">
             {asset.assetCode ?? "—"}

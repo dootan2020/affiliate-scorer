@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Loader2, Sparkles, CheckCircle } from "lucide-react";
+import { ProductImage } from "@/components/products/product-image";
 
 interface ProductIdentityItem {
   id: string;
@@ -71,22 +71,11 @@ export function ContentSuggestionsWidget(): React.ReactElement {
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
             >
               {/* Thumbnail */}
-              <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden shrink-0">
-                {item.imageUrl ? (
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.title ?? "Sản phẩm"}
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-gray-300 dark:text-gray-600" />
-                  </div>
-                )}
-              </div>
+              <ProductImage
+                src={item.imageUrl}
+                alt={item.title ?? "Sản phẩm"}
+                size={40}
+              />
 
               {/* Info */}
               <div className="flex-1 min-w-0">

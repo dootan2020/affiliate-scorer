@@ -9,15 +9,21 @@ const VALID_TASK_TYPES: AiTaskType[] = [
   "weekly_report",
 ];
 
-const VALID_MODELS = [
-  "claude-haiku-4-5-20251001",
-  "claude-sonnet-4-6",
-  "claude-opus-4-6",
-  "gpt-4o",
-  "gpt-4o-mini",
-  "gemini-2.0-flash",
-  "gemini-2.5-pro",
+const VALID_MODEL_PREFIXES = [
+  "claude-",
+  "gpt-",
+  "gemini-",
+  "o1-",
+  "o1",
+  "o3-",
+  "o3",
+  "o4-",
+  "o4",
 ];
+
+function isValidModelId(modelId: string): boolean {
+  return VALID_MODEL_PREFIXES.some((p) => modelId.startsWith(p));
+}
 
 export async function GET(): Promise<NextResponse> {
   try {
@@ -42,7 +48,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const updates: Array<{ taskType: string; modelId: string }> = [];
     for (const [taskType, modelId] of Object.entries(body)) {
       if (!VALID_TASK_TYPES.includes(taskType as AiTaskType)) continue;
-      if (!VALID_MODELS.includes(modelId)) continue;
+      if (!isValidModelId(modelId)) continue;
       updates.push({ taskType, modelId });
     }
 

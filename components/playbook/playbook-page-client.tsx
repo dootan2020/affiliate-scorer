@@ -33,6 +33,12 @@ interface PlaybookData {
   totalLogged: number;
 }
 
+function formatViews(v: number | null): string {
+  if (!v) return "—";
+  if (v >= 1000) return `${(v / 1000).toFixed(1)}K`;
+  return String(v);
+}
+
 export function PlaybookPageClient(): React.ReactElement {
   const [data, setData] = useState<PlaybookData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,12 +96,6 @@ export function PlaybookPageClient(): React.ReactElement {
     );
   }
 
-  const formatViews = (v: number | null): string => {
-    if (!v) return "—";
-    if (v >= 1000) return `${(v / 1000).toFixed(1)}K`;
-    return String(v);
-  };
-
   return (
     <div className="space-y-6">
       {/* Stats bar */}
@@ -119,9 +119,9 @@ export function PlaybookPageClient(): React.ReactElement {
       {/* Winning patterns */}
       {data.winning.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+          <h3 className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
             <Trophy className="w-4 h-4" /> Winning Patterns
-          </h2>
+          </h3>
           {data.winning.map((p, i) => (
             <div key={p.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm">
@@ -147,9 +147,9 @@ export function PlaybookPageClient(): React.ReactElement {
       {/* Losing patterns */}
       {data.losing.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+          <h3 className="text-sm font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
             <XCircle className="w-4 h-4" /> Losing Patterns
-          </h2>
+          </h3>
           {data.losing.map((p, i) => (
             <div key={p.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center text-rose-600 dark:text-rose-400 font-bold text-sm">
@@ -175,9 +175,9 @@ export function PlaybookPageClient(): React.ReactElement {
       {/* Insights */}
       {data.insights.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-3">
-          <h2 className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+          <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
             <Lightbulb className="w-4 h-4" /> Insights
-          </h2>
+          </h3>
           {data.insights.map((ins, i) => (
             <div key={i} className="flex items-start gap-2">
               <span className="text-amber-500 mt-0.5">·</span>

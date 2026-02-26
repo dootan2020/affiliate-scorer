@@ -1,12 +1,7 @@
 import { prisma } from "@/lib/db";
-import type { FbAdsFeedbackEntry } from "@/lib/parsers/fb-ads";
 import type { TikTokAdsFeedbackEntry } from "@/lib/parsers/tiktok-ads";
-import type { ShopeeAffiliateFeedbackEntry } from "@/lib/parsers/shopee-affiliate";
 
-export type FeedbackEntry =
-  | FbAdsFeedbackEntry
-  | TikTokAdsFeedbackEntry
-  | ShopeeAffiliateFeedbackEntry;
+export type FeedbackEntry = TikTokAdsFeedbackEntry;
 
 export interface MappedFeedback {
   entry: FeedbackEntry;
@@ -52,7 +47,6 @@ function similarity(a: string, b: string): number {
 
 function getEntryName(entry: FeedbackEntry): string {
   if ("campaignName" in entry) return entry.campaignName;
-  if ("productName" in entry) return entry.productName;
   return "";
 }
 

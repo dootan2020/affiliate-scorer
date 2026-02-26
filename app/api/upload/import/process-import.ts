@@ -1,17 +1,16 @@
 import { prisma } from "@/lib/db";
 import { parseFile, type ParsedRow } from "@/lib/parsers/parse-file";
 import { detectFormatExtended } from "@/lib/parsers/detect-format";
-import { parseFbAdsCampaigns } from "@/lib/parsers/campaign-fb-ads";
-import { parseTikTokAdsCampaigns } from "@/lib/parsers/campaign-tiktok-ads";
-import { parseShopeeAdsCampaigns } from "@/lib/parsers/campaign-shopee-ads";
 import { parseTikTokAffiliate } from "@/lib/parsers/affiliate-tiktok";
-import { parseShopeeAffiliateRecords } from "@/lib/parsers/affiliate-shopee";
 import { loadProductCache, clearProductCache, fuzzyMatchProduct } from "@/lib/parsers/fuzzy-match-product";
 import { mergeImportedData } from "@/lib/parsers/merge-import";
 import type { ExtendedFileFormat, ImportParseResult } from "@/lib/parsers/types";
 
 const PRODUCT_REDIRECT_TYPES: ExtendedFileFormat[] = ["fastmoss", "kalodata"];
 const UNRESOLVABLE_TYPES: ExtendedFileFormat[] = ["unknown", "generic"];
+
+// Formats that can still be imported (affiliate data only — campaign parsers removed)
+const SUPPORTED_IMPORT_TYPES: ExtendedFileFormat[] = ["tiktok_affiliate"];
 
 export interface ImportSummary {
   importId: string;
@@ -31,22 +30,14 @@ export interface ImportSummary {
 /** Route parsed rows to the correct platform-specific parser */
 function parseByType(type: ExtendedFileFormat, headers: string[], rows: ParsedRow[]): ImportParseResult {
   switch (type) {
-    case "fb_ads":
-      return parseFbAdsCampaigns(headers, rows);
-    case "tiktok_ads":
-      return parseTikTokAdsCampaigns(headers, rows);
-    case "shopee_ads":
-      return parseShopeeAdsCampaigns(headers, rows);
     case "tiktok_affiliate":
       return parseTikTokAffiliate(headers, rows);
-    case "shopee_affiliate":
-      return parseShopeeAffiliateRecords(headers, rows);
     default:
-      throw new Error(`Parser chưa hỗ trợ loại: ${type}`);
+      throw new Error(`Parser chưa hỗ trợ loại: ${type}. Các loại hỗ trợ: ${SUPPORTED_IMPORT_TYPES.join(", ")}`);
   }
 }
 
-/** Fuzzy-match campaigns and financial records to existing products */
+/** Fuzzy-match financial records to existing products */
 async function applyFuzzyMatching(result: ImportParseResult): Promise<void> {
   await loadProductCache();
   try {
@@ -143,7 +134,7 @@ export async function processImport(
     const typeLabel = formatTypeLabel(detectedType);
     const message =
       `Đã import ${rowsImported}/${rows.length} dòng từ ${typeLabel}` +
-      ` (${mergeResult.campaignsCreated} campaigns mới, ${mergeResult.campaignsUpdated} cập nhật)`;
+      ` (${mergeResult.financialRecordsCreated} bản ghi tài chính)`;
 
     return { summary, message };
   } catch (error) {
@@ -161,11 +152,7 @@ export async function processImport(
 
 function formatTypeLabel(type: ExtendedFileFormat): string {
   const labels: Record<string, string> = {
-    fb_ads: "Facebook Ads",
-    tiktok_ads: "TikTok Ads",
-    shopee_ads: "Shopee Ads",
     tiktok_affiliate: "TikTok Affiliate",
-    shopee_affiliate: "Shopee Affiliate",
   };
   return labels[type] ?? type;
 }

@@ -63,10 +63,10 @@ function EmptyState(): React.ReactElement {
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
           <Link
-            href="/upload"
+            href="/sync"
             className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
           >
-            Upload FastMoss
+            Đồng bộ sản phẩm
           </Link>
           <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">|</span>
           <Link

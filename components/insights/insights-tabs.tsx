@@ -13,6 +13,7 @@ const TABS = [
   { key: "calendar", label: "Lịch sự kiện" },
   { key: "feedback", label: "Feedback" },
   { key: "learning", label: "Learning" },
+  { key: "playbook", label: "Playbook" },
 ] as const;
 
 export function InsightsTabs({

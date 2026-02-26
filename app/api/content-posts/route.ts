@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateBody } from "@/lib/validations/validate-body";
-import { createContentPostSchema } from "@/lib/validations/schemas-campaigns";
+import { createContentPostSchema } from "@/lib/validations/schemas-content";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {

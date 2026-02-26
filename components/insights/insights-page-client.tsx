@@ -10,7 +10,7 @@ import { CalendarTab } from "./calendar-tab";
 import { AccuracyChart } from "./accuracy-chart";
 import { PatternList } from "./pattern-list";
 import { WeeklyReport } from "./weekly-report";
-import { FeedbackTable } from "@/components/feedback/feedback-table";
+import { PlaybookPageClient } from "@/components/playbook/playbook-page-client";
 import { MessageSquare, Upload } from "lucide-react";
 import type { WeightMap } from "@/lib/ai/prompts";
 
@@ -110,7 +110,35 @@ function InsightsPageClientInner(
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
               <div className="overflow-x-auto">
                 <div className="min-w-[600px]">
-                  <FeedbackTable feedbacks={props.feedbackTable} />
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-slate-800">
+                        {["Sản phẩm", "Nền tảng", "ROAS", "Doanh thu", "Kết quả", "Ngày"].map((h) => (
+                          <th key={h} className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {props.feedbackTable.map((fb) => (
+                        <tr key={fb.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                          <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50 max-w-[180px] truncate">{fb.productName}</td>
+                          <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">{fb.adPlatform ?? fb.salesPlatform ?? "—"}</td>
+                          <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50">{fb.adROAS != null ? `${fb.adROAS.toFixed(2)}x` : "—"}</td>
+                          <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50">{fb.revenue != null ? `${fb.revenue.toLocaleString()}đ` : "—"}</td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              fb.overallSuccess === "success" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                              : fb.overallSuccess === "moderate" ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                              : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
+                            }`}>
+                              {fb.overallSuccess === "success" ? "Tốt" : fb.overallSuccess === "moderate" ? "Vừa" : "Kém"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-400">{new Date(fb.feedbackDate).toLocaleDateString("vi-VN")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -134,6 +162,15 @@ function InsightsPageClientInner(
               </Link>
             </div>
           )}
+        </section>
+      )}
+
+      {activeTab === "playbook" && (
+        <section className="space-y-4">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+            Playbook — Patterns tích luỹ từ dữ liệu
+          </h2>
+          <PlaybookPageClient />
         </section>
       )}
 

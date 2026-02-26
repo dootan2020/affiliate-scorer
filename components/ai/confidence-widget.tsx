@@ -6,9 +6,13 @@ import { Brain, Circle } from "lucide-react";
 interface ConfidenceMetrics {
   productsCount: number;
   productsWithNotes: number;
-  campaignsCompleted: number;
+  assetsLogged: number;
+  assetsPublished: number;
   financialRecords: number;
+  contentAssets: number;
+  shopsRated: number;
   daysActive: number;
+  uploadsCount: number;
 }
 
 interface ConfidenceData {
@@ -29,9 +33,10 @@ interface MetricRow {
 }
 
 const METRIC_THRESHOLDS: { key: keyof ConfidenceMetrics; label: string; required: number }[] = [
-  { key: "productsCount", label: "Products", required: 50 },
+  { key: "productsCount", label: "Sản phẩm", required: 50 },
   { key: "productsWithNotes", label: "Ghi chú", required: 10 },
-  { key: "campaignsCompleted", label: "Campaigns hoàn thành", required: 5 },
+  { key: "assetsLogged", label: "Videos đã log", required: 10 },
+  { key: "contentAssets", label: "Content assets", required: 10 },
   { key: "financialRecords", label: "Thu chi", required: 20 },
   { key: "daysActive", label: "Ngày active", required: 30 },
 ];
@@ -78,7 +83,7 @@ export function ConfidenceWidget(): React.ReactElement {
         <div className="h-5 w-56 bg-gray-200 dark:bg-slate-700 rounded-lg" />
         <div className="h-3 w-full bg-gray-200 dark:bg-slate-700 rounded-full" />
         <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => (
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded" />
           ))}
         </div>

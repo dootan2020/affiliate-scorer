@@ -113,9 +113,14 @@ export async function runLearningCycle(): Promise<LearningResult> {
     });
 
     const previousAccuracy = previousLog?.currentAccuracy ?? 0;
-    const previousPatterns: string[] = previousLog
-      ? (JSON.parse(previousLog.patternsFound) as string[])
-      : [];
+    let previousPatterns: string[] = [];
+    if (previousLog) {
+      try {
+        previousPatterns = JSON.parse(previousLog.patternsFound) as string[];
+      } catch (parseError) {
+        console.error("[runLearningCycle] Failed to parse previous patterns:", parseError);
+      }
+    }
 
     const newDataPoints = previousLog?.runDate
       ? await prisma.feedback.count({
@@ -136,7 +141,20 @@ export async function runLearningCycle(): Promise<LearningResult> {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("Không tìm thấy JSON trong phản hồi Claude");
 
-    const parsed = JSON.parse(jsonMatch[0]) as ClaudeResponse;
+    let parsed: ClaudeResponse;
+    try {
+      parsed = JSON.parse(jsonMatch[0]) as ClaudeResponse;
+    } catch (parseError) {
+      console.error("[runLearningCycle] JSON parse failed:", parseError, "Raw:", jsonMatch[0].substring(0, 200));
+      return {
+        accuracy: previousAccuracy,
+        previousAccuracy,
+        patterns: [],
+        insights: "Lỗi khi phân tích phản hồi AI. Thử lại sau.",
+        weightsAdjusted: false,
+        weekNumber,
+      };
+    }
 
     const newWeights: WeightMap = {
       commission: parsed.weightAdjustments.commission ?? currentWeights.commission,

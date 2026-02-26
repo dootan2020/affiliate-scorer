@@ -106,7 +106,20 @@ Chỉ output JSON, không text khác.`.trim();
     jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   }
 
-  const content: BriefContent = JSON.parse(jsonStr);
+  let content: BriefContent;
+  try {
+    content = JSON.parse(jsonStr);
+  } catch (parseError) {
+    console.error("[generateMorningBrief] JSON parse failed:", parseError, "Raw:", jsonStr.substring(0, 200));
+    content = {
+      greeting: "Chào buổi sáng!",
+      produce_today: [],
+      new_products_alert: [],
+      yesterday_recap: "Không thể phân tích dữ liệu hôm qua",
+      tip: "Thử lại sau",
+      weekly_progress: "",
+    };
+  }
 
   // Save to DB
   const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());

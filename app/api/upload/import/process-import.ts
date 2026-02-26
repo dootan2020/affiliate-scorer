@@ -21,8 +21,6 @@ export interface ImportSummary {
   rowsImported: number;
   rowsSkipped: number;
   rowsError: number;
-  campaignsCreated: number;
-  campaignsUpdated: number;
   financialRecordsCreated: number;
   errors: Array<{ row: number; message: string }>;
 }
@@ -41,11 +39,6 @@ function parseByType(type: ExtendedFileFormat, headers: string[], rows: ParsedRo
 async function applyFuzzyMatching(result: ImportParseResult): Promise<void> {
   await loadProductCache();
   try {
-    for (const campaign of result.campaigns) {
-      if (!campaign.productId) {
-        campaign.productId = fuzzyMatchProduct(campaign.name) ?? null;
-      }
-    }
     for (const record of result.financialRecords) {
       if (record.productId || !record.metadata) continue;
       const meta = record.metadata as Record<string, unknown>;
@@ -96,7 +89,6 @@ export async function processImport(
     await applyFuzzyMatching(parseResult);
 
     const mergeResult = await mergeImportedData(
-      parseResult.campaigns,
       parseResult.financialRecords,
       dataImport.id
     );
@@ -108,8 +100,6 @@ export async function processImport(
         status: parseResult.errors.length > 0 ? "partial" : "completed",
         rowsImported,
         rowsError: parseResult.errors.length,
-        campaignsCreated: mergeResult.campaignsCreated,
-        campaignsUpdated: mergeResult.campaignsUpdated,
         financialRecordsCreated: mergeResult.financialRecordsCreated,
         errorLog: parseResult.errors.length > 0 ? parseResult.errors : undefined,
         completedAt: new Date(),
@@ -125,8 +115,6 @@ export async function processImport(
       rowsImported,
       rowsSkipped: 0,
       rowsError: parseResult.errors.length,
-      campaignsCreated: mergeResult.campaignsCreated,
-      campaignsUpdated: mergeResult.campaignsUpdated,
       financialRecordsCreated: mergeResult.financialRecordsCreated,
       errors: parseResult.errors,
     };

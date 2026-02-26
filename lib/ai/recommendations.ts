@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db";
-import { parseDailyResults } from "@/lib/utils/typed-json";
 
 export interface ChannelRec {
   channel: string;
@@ -9,31 +8,21 @@ export interface ChannelRec {
   confidence: "data" | "goi_y";
 }
 
-export interface BudgetAllocation {
-  campaignId: string;
-  campaignName: string;
-  currentSpend: number;
-  roas: number | null;
-  suggestedSpend: number;
-  reason: string;
-}
-
-interface DailyResult {
-  date: string;
-  spend: number;
-  revenue: number;
-  orders: number;
-}
-
-async function getUserPlatformRoas(platform: string): Promise<number | null> {
-  const campaigns = await prisma.campaign.findMany({
-    where: { status: "completed", platform, roas: { not: null } },
-    select: { roas: true },
-    take: 20,
+/**
+ * Get avg rewardScore for assets by format type, as proxy for channel performance.
+ */
+async function getAvgRewardByFormat(format: string): Promise<number | null> {
+  const metrics = await prisma.assetMetric.findMany({
+    where: {
+      contentAsset: { format },
+    },
+    select: { rewardScore: true },
+    take: 50,
+    orderBy: { capturedAt: "desc" },
   });
 
-  if (campaigns.length === 0) return null;
-  return campaigns.reduce((s, c) => s + (c.roas ?? 0), 0) / campaigns.length;
+  if (metrics.length === 0) return null;
+  return metrics.reduce((s, m) => s + Number(m.rewardScore), 0) / metrics.length;
 }
 
 export async function getChannelRecommendations(
@@ -75,10 +64,10 @@ export async function getChannelRecommendations(
     let fbConf: "data" | "goi_y" = "goi_y";
     let extraReason = "";
     if (confidenceLevel >= 2) {
-      const fbRoas = await getUserPlatformRoas("facebook");
-      if (fbRoas !== null) {
+      const avgReward = await getAvgRewardByFormat("review_short");
+      if (avgReward !== null) {
         fbConf = "data";
-        extraReason = ` (ROAS FB của bạn: ${fbRoas.toFixed(1)}x)`;
+        extraReason = ` (Avg reward review ngắn: ${avgReward.toFixed(1)})`;
       }
     }
     recs.push({
@@ -106,10 +95,10 @@ export async function getChannelRecommendations(
     let shopeeConf: "data" | "goi_y" = "goi_y";
     let extraReason = "";
     if (confidenceLevel >= 2) {
-      const shopeeRoas = await getUserPlatformRoas("shopee");
-      if (shopeeRoas !== null) {
+      const avgReward = await getAvgRewardByFormat("demo");
+      if (avgReward !== null) {
         shopeeConf = "data";
-        extraReason = ` (ROAS Shopee: ${shopeeRoas.toFixed(1)}x)`;
+        extraReason = ` (Avg reward demo: ${avgReward.toFixed(1)})`;
       }
     }
     recs.push({
@@ -135,67 +124,10 @@ export async function getChannelRecommendations(
   return recs;
 }
 
-export async function getBudgetPortfolio(): Promise<BudgetAllocation[]> {
-  const activeCampaigns = await prisma.campaign.findMany({
-    where: { status: "running" },
-    select: {
-      id: true,
-      name: true,
-      totalSpend: true,
-      totalRevenue: true,
-      roas: true,
-      dailyResults: true,
-      plannedBudgetDaily: true,
-    },
-  });
-
-  if (activeCampaigns.length === 0) return [];
-
-  const totalBudget = activeCampaigns.reduce((s, c) => s + (c.plannedBudgetDaily ?? 0), 0);
-  const maxPerCampaign = totalBudget > 0 ? totalBudget * 0.5 : Infinity;
-  const allocations: BudgetAllocation[] = [];
-
-  for (const campaign of activeCampaigns) {
-    const dailyResults = parseDailyResults(campaign.dailyResults);
-    const recent = dailyResults.slice(-3);
-    const currentSpend = campaign.plannedBudgetDaily ?? 0;
-
-    // Calculate recent ROAS (last 3 days)
-    let recentRoas = campaign.roas;
-    if (recent.length > 0) {
-      const totalSpend = recent.reduce((s, d) => s + (d.spend ?? 0), 0);
-      const totalRev = recent.reduce((s, d) => s + (d.revenue ?? 0), 0);
-      recentRoas = totalSpend > 0 ? totalRev / totalSpend : 0;
-    }
-
-    let suggestedSpend = currentSpend;
-    let reason = "Giữ nguyên budget hiện tại";
-
-    if (recentRoas !== null && recentRoas > 2) {
-      suggestedSpend = Math.round(currentSpend * 1.5);
-      reason = `ROAS ${recentRoas.toFixed(1)}x tốt — tăng budget 50%`;
-    } else if (recentRoas !== null && recentRoas >= 1) {
-      reason = `ROAS ${recentRoas.toFixed(1)}x ổn định — giữ nguyên`;
-    } else if (recentRoas !== null && recentRoas < 1) {
-      suggestedSpend = Math.round(currentSpend * 0.5);
-      reason = `ROAS ${recentRoas.toFixed(1)}x lỗ — giảm budget 50%`;
-    }
-
-    // Cap at 50% of total budget
-    if (suggestedSpend > maxPerCampaign) {
-      suggestedSpend = Math.round(maxPerCampaign);
-      reason += " (giới hạn 50% tổng budget)";
-    }
-
-    allocations.push({
-      campaignId: campaign.id,
-      campaignName: campaign.name,
-      currentSpend,
-      roas: recentRoas,
-      suggestedSpend,
-      reason,
-    });
-  }
-
-  return allocations.sort((a, b) => (b.roas ?? 0) - (a.roas ?? 0));
+/**
+ * Budget portfolio — no longer applicable without Campaign model.
+ * Content Factory workflow uses ContentAsset without ad budgets.
+ */
+export async function getBudgetPortfolio(): Promise<[]> {
+  return [];
 }

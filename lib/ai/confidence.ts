@@ -3,10 +3,10 @@ import { prisma } from "@/lib/db";
 export interface ConfidenceMetrics {
   productsCount: number;
   productsWithNotes: number;
-  campaignsTotal: number;
-  campaignsCompleted: number;
+  assetsLogged: number;
+  assetsPublished: number;
   financialRecords: number;
-  contentPosts: number;
+  contentAssets: number;
   shopsRated: number;
   daysActive: number;
   uploadsCount: number;
@@ -27,14 +27,14 @@ const THRESHOLDS = [15, 30, 55, 75] as const;
 function computePercent(metrics: ConfidenceMetrics): number {
   const products = Math.min(metrics.productsCount / 50, 1) * 10;
   const notes = Math.min(metrics.productsWithNotes / 10, 1) * 10;
-  const campaigns = Math.min(metrics.campaignsCompleted / 5, 1) * 25;
+  const logged = Math.min(metrics.assetsLogged / 10, 1) * 25;
   const financial = Math.min(metrics.financialRecords / 20, 1) * 15;
-  const content = Math.min(metrics.contentPosts / 5, 1) * 10;
+  const content = Math.min(metrics.contentAssets / 10, 1) * 10;
   const shops = Math.min(metrics.shopsRated / 5, 1) * 5;
   const days = Math.min(metrics.daysActive / 30, 1) * 15;
   const uploads = Math.min(metrics.uploadsCount / 10, 1) * 10;
 
-  return Math.round(products + notes + campaigns + financial + content + shops + days + uploads);
+  return Math.round(products + notes + logged + financial + content + shops + days + uploads);
 }
 
 function resolveLevel(percent: number): number {
@@ -54,9 +54,9 @@ function buildNextLevel(
   const needs: string[] = [];
   if (metrics.productsCount < 50) needs.push(`Thêm ${50 - metrics.productsCount} sản phẩm`);
   if (metrics.productsWithNotes < 10) needs.push(`Ghi note cho ${10 - metrics.productsWithNotes} sản phẩm`);
-  if (metrics.campaignsCompleted < 5) needs.push(`Hoàn thành ${5 - metrics.campaignsCompleted} chiến dịch`);
+  if (metrics.assetsLogged < 10) needs.push(`Log kết quả ${10 - metrics.assetsLogged} video`);
   if (metrics.financialRecords < 20) needs.push(`Thêm ${20 - metrics.financialRecords} giao dịch tài chính`);
-  if (metrics.contentPosts < 5) needs.push(`Thêm ${5 - metrics.contentPosts} bài đăng content`);
+  if (metrics.contentAssets < 10) needs.push(`Tạo ${10 - metrics.contentAssets} content assets`);
   if (metrics.shopsRated < 5) needs.push(`Đánh giá ${5 - metrics.shopsRated} shop`);
   if (metrics.uploadsCount < 10) needs.push(`Upload ${10 - metrics.uploadsCount} file dữ liệu`);
 
@@ -67,20 +67,20 @@ export async function calculateConfidence(): Promise<ConfidenceLevel> {
   const [
     productsCount,
     productsWithNotes,
-    campaignsTotal,
-    campaignsCompleted,
+    assetsLogged,
+    assetsPublished,
     financialRecords,
-    contentPosts,
+    contentAssets,
     shopsRated,
     uploadsCount,
     oldestProduct,
   ] = await Promise.all([
     prisma.product.count(),
     prisma.product.count({ where: { personalNotes: { not: null } } }),
-    prisma.campaign.count(),
-    prisma.campaign.count({ where: { status: "completed" } }),
+    prisma.assetMetric.count(),
+    prisma.contentAsset.count({ where: { status: "published" } }),
     prisma.financialRecord.count(),
-    prisma.contentPost.count(),
+    prisma.contentAsset.count(),
     prisma.shop.count({ where: { commissionReliability: { not: null } } }),
     prisma.importBatch.count(),
     prisma.product.findFirst({ orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
@@ -93,10 +93,10 @@ export async function calculateConfidence(): Promise<ConfidenceLevel> {
   const metrics: ConfidenceMetrics = {
     productsCount,
     productsWithNotes,
-    campaignsTotal,
-    campaignsCompleted,
+    assetsLogged,
+    assetsPublished,
     financialRecords,
-    contentPosts,
+    contentAssets,
     shopsRated,
     daysActive,
     uploadsCount,

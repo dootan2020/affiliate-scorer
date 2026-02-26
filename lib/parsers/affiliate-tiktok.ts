@@ -105,5 +105,5 @@ export function parseTikTokAffiliate(_headers: string[], rows: RawRow[]): Import
     });
   }
 
-  return { campaigns: [], financialRecords, errors };
+  return { financialRecords, errors };
 }

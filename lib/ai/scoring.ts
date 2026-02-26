@@ -79,7 +79,12 @@ function parseClaudeResponse(text: string): ClaudeScoreItem[] {
   if (!jsonMatch) {
     throw new Error("Không tìm thấy JSON array trong phản hồi Claude");
   }
-  return JSON.parse(jsonMatch[0]) as ClaudeScoreItem[];
+  try {
+    return JSON.parse(jsonMatch[0]) as ClaudeScoreItem[];
+  } catch (parseError) {
+    console.error("[parseClaudeResponse] JSON parse failed:", parseError, "Raw:", jsonMatch[0].substring(0, 200));
+    return [];
+  }
 }
 
 async function scoreBatchWithClaude(

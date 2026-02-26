@@ -99,19 +99,3 @@ export type ComplianceCheckInput = z.infer<typeof complianceCheckSchema>;
 export type CreateProductionBatchInput = z.infer<typeof createProductionBatchSchema>;
 export type UpdateProductNotesInput = z.infer<typeof updateProductNotesSchema>;
 export type UpdateSeasonalInput = z.infer<typeof updateSeasonalSchema>;
-
-export const createContentPostSchema = z.object({
-  url: z.string().min(1),
-  platform: z.string().min(1),
-  campaignId: z.string().optional(),
-  productId: z.string().optional(),
-  contentType: z.string().optional(),
-  views: z.number().int().optional(),
-  likes: z.number().int().optional(),
-  comments: z.number().int().optional(),
-  shares: z.number().int().optional(),
-  notes: z.string().optional(),
-  postedAt: z.string().optional(),
-});
-
-export type CreateContentPostInput = z.infer<typeof createContentPostSchema>;

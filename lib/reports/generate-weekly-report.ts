@@ -172,7 +172,19 @@ Chỉ output JSON, không text khác.`.trim();
     jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   }
 
-  const content: WeeklyReportContent = JSON.parse(jsonStr);
+  let content: WeeklyReportContent;
+  try {
+    content = JSON.parse(jsonStr);
+  } catch (parseError) {
+    console.error("[generateWeeklyReport] JSON parse failed:", parseError, "Raw:", jsonStr.substring(0, 200));
+    content = {
+      summary: "Không thể phân tích báo cáo tuần",
+      wins: [],
+      improvements: [],
+      next_week_focus: "",
+      playbook_update: "",
+    };
+  }
 
   // Save to DB — use DailyBrief with a special convention: briefDate = Monday of the week
   const saved = await prisma.dailyBrief.upsert({

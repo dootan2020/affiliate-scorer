@@ -1,225 +1,163 @@
 import { prisma } from "@/lib/db";
 
 export interface Anomaly {
-  type: "roas_declining" | "consecutive_loss" | "overspend" | "competition_spike" | "sales_drop";
+  type: "reward_declining" | "low_performers" | "competition_spike" | "sales_drop";
   severity: "urgent" | "warning" | "info";
-  campaignName: string | null;
   productName: string | null;
   message: string;
   suggestion: string;
-  campaignId: string | null;
-}
-
-interface DailyResult {
-  date: string;
-  spend: number;
-  revenue: number;
-  orders: number;
-}
-
-interface CampaignData {
-  id: string;
-  name: string;
-  dailyResults: unknown;
-  plannedBudgetDaily: number | null;
-  productId: string | null;
-  product: { name: string } | null;
-}
-
-interface SnapshotData {
-  productId: string;
-  totalKOL: number | null;
-  sales7d: number | null;
+  identityId: string | null;
 }
 
 const SEVERITY_ORDER: Record<Anomaly["severity"], number> = { urgent: 0, warning: 1, info: 2 };
 
-function getRecentDays(dailyResults: DailyResult[], count: number): DailyResult[] {
-  return dailyResults.slice(-count);
-}
-
-function getDailyResults(campaign: CampaignData): DailyResult[] {
-  return (campaign.dailyResults as DailyResult[] | null) ?? [];
-}
-
-// Fetch tất cả data 1 lần, truyền vào từng check function
-function checkRoasDeclining(campaigns: CampaignData[]): Anomaly[] {
-  const results: Anomaly[] = [];
-  for (const campaign of campaigns) {
-    const days = getRecentDays(getDailyResults(campaign), 3);
-    if (days.length < 3) continue;
-
-    const roasValues = days.map((d) => (d.spend > 0 ? d.revenue / d.spend : 0));
-    const isDecl = roasValues[0] > roasValues[1] && roasValues[1] > roasValues[2];
-
-    if (isDecl && roasValues[2] < 1) {
-      results.push({
-        type: "roas_declining",
-        severity: "warning",
-        campaignName: campaign.name,
-        productName: null,
-        message: `ROAS giảm liên tục 3 ngày (${roasValues.map((v) => v.toFixed(1)).join(" → ")})`,
-        suggestion: "Xem xét điều chỉnh content hoặc target audience",
-        campaignId: campaign.id,
-      });
-    }
-  }
-  return results;
-}
-
-function checkConsecutiveLoss(campaigns: CampaignData[]): Anomaly[] {
-  const results: Anomaly[] = [];
-  for (const campaign of campaigns) {
-    const days = getRecentDays(getDailyResults(campaign), 3);
-    if (days.length < 3) continue;
-
-    const allLosing = days.every((d) => d.spend > d.revenue);
-    if (allLosing) {
-      const totalLoss = days.reduce((s, d) => s + (d.spend - d.revenue), 0);
-      results.push({
-        type: "consecutive_loss",
-        severity: "urgent",
-        campaignName: campaign.name,
-        productName: null,
-        message: `Lỗ liên tục 3 ngày (tổng lỗ: ${totalLoss.toLocaleString()} VND)`,
-        suggestion: "Tạm dừng chiến dịch và đánh giá lại chiến lược",
-        campaignId: campaign.id,
-      });
-    }
-  }
-  return results;
-}
-
-function checkOverspend(campaigns: CampaignData[]): Anomaly[] {
-  const results: Anomaly[] = [];
-  for (const campaign of campaigns) {
-    const planned = campaign.plannedBudgetDaily ?? 0;
-    if (planned <= 0) continue;
-
-    const days = getRecentDays(getDailyResults(campaign), 1);
-    if (days.length === 0) continue;
-
-    const latestSpend = days[0].spend;
-    if (latestSpend > planned * 1.5) {
-      results.push({
-        type: "overspend",
-        severity: "warning",
-        campaignName: campaign.name,
-        productName: null,
-        message: `Chi tiêu ${latestSpend.toLocaleString()} VND vượt ${Math.round((latestSpend / planned - 1) * 100)}% so với kế hoạch`,
-        suggestion: `Đặt lại budget giới hạn ${planned.toLocaleString()} VND/ngày`,
-        campaignId: campaign.id,
-      });
-    }
-  }
-  return results;
-}
-
-function checkCompetitionSpike(
-  campaigns: CampaignData[],
-  snapshotMap: Map<string, SnapshotData[]>,
-): Anomaly[] {
-  const results: Anomaly[] = [];
-  for (const campaign of campaigns) {
-    if (!campaign.productId) continue;
-    const snapshots = snapshotMap.get(campaign.productId);
-    if (!snapshots || snapshots.length < 2) continue;
-
-    const [latest, prev] = snapshots;
-    const prevKOL = prev.totalKOL ?? 0;
-    const latestKOL = latest.totalKOL ?? 0;
-
-    if (prevKOL > 0 && ((latestKOL - prevKOL) / prevKOL) > 0.5) {
-      results.push({
-        type: "competition_spike",
-        severity: "warning",
-        campaignName: campaign.name,
-        productName: campaign.product?.name ?? null,
-        message: `KOL tăng từ ${prevKOL} lên ${latestKOL} (+${Math.round(((latestKOL - prevKOL) / prevKOL) * 100)}%)`,
-        suggestion: "Cạnh tranh tăng — xem xét tăng chất lượng content để khác biệt hóa",
-        campaignId: campaign.id,
-      });
-    }
-  }
-  return results;
-}
-
-function checkSalesDrop(
-  campaigns: CampaignData[],
-  snapshotMap: Map<string, SnapshotData[]>,
-): Anomaly[] {
-  const results: Anomaly[] = [];
-  for (const campaign of campaigns) {
-    if (!campaign.productId) continue;
-    const snapshots = snapshotMap.get(campaign.productId);
-    if (!snapshots || snapshots.length < 2) continue;
-
-    const [latest, prev] = snapshots;
-    const prevSales = prev.sales7d ?? 0;
-    const latestSales = latest.sales7d ?? 0;
-
-    if (prevSales > 0 && ((latestSales - prevSales) / prevSales) < -0.3) {
-      const dropPct = Math.round(((prevSales - latestSales) / prevSales) * 100);
-      results.push({
-        type: "sales_drop",
-        severity: "warning",
-        campaignName: campaign.name,
-        productName: campaign.product?.name ?? null,
-        message: `Doanh số 7 ngày giảm ${dropPct}% (${prevSales} → ${latestSales})`,
-        suggestion: "Sản phẩm đang suy giảm — xem xét chuyển sang sản phẩm khác",
-        campaignId: campaign.id,
-      });
-    }
-  }
-  return results;
-}
-
+/**
+ * Detect anomalies based on ContentAsset metrics and ProductSnapshot data.
+ * Replaces Campaign-based anomaly detection with Content Factory workflow.
+ */
 export async function detectAnomalies(): Promise<Anomaly[]> {
-  // Fetch tất cả campaigns 1 lần duy nhất
-  const campaigns = await prisma.campaign.findMany({
-    where: { status: "running" },
+  const anomalies: Anomaly[] = [];
+
+  // 1. Reward declining — published assets with rewardScore going down
+  const publishedAssets = await prisma.contentAsset.findMany({
+    where: { status: "published", metrics: { some: {} } },
     select: {
-      id: true,
-      name: true,
-      dailyResults: true,
-      plannedBudgetDaily: true,
-      productId: true,
-      product: { select: { name: true } },
+      assetCode: true,
+      productIdentityId: true,
+      productIdentity: { select: { title: true } },
+      metrics: {
+        orderBy: { capturedAt: "desc" },
+        take: 3,
+        select: { rewardScore: true },
+      },
     },
+    take: 50,
+    orderBy: { publishedAt: "desc" },
   });
 
-  // Fetch snapshots cho tất cả products liên quan (1 query thay vì N)
-  const productIds = campaigns
-    .map((c) => c.productId)
-    .filter((id): id is string => id !== null);
+  for (const asset of publishedAssets) {
+    const rewards = asset.metrics.map((m) => Number(m.rewardScore));
+    if (rewards.length < 3) continue;
 
-  const allSnapshots = productIds.length > 0
-    ? await prisma.productSnapshot.findMany({
-        where: { productId: { in: productIds } },
-        orderBy: { snapshotDate: "desc" },
-        select: { productId: true, totalKOL: true, sales7d: true },
-      })
-    : [];
-
-  // Group snapshots by productId (max 2 per product)
-  const snapshotMap = new Map<string, SnapshotData[]>();
-  for (const snap of allSnapshots) {
-    const existing = snapshotMap.get(snap.productId);
-    if (!existing) {
-      snapshotMap.set(snap.productId, [snap]);
-    } else if (existing.length < 2) {
-      existing.push(snap);
+    const declining = rewards[0] < rewards[1] && rewards[1] < rewards[2];
+    if (declining && rewards[0] < 0) {
+      anomalies.push({
+        type: "reward_declining",
+        severity: "warning",
+        productName: asset.productIdentity?.title ?? null,
+        message: `Video ${asset.assetCode} reward giảm liên tục (${rewards.map((r) => r.toFixed(1)).join(" → ")})`,
+        suggestion: "Xem xét thay đổi hook hoặc format cho sản phẩm này",
+        identityId: asset.productIdentityId,
+      });
     }
   }
 
-  // Chạy tất cả checks synchronously, mỗi function trả về mảng riêng
-  const anomalies: Anomaly[] = [
-    ...checkRoasDeclining(campaigns),
-    ...checkConsecutiveLoss(campaigns),
-    ...checkOverspend(campaigns),
-    ...checkCompetitionSpike(campaigns, snapshotMap),
-    ...checkSalesDrop(campaigns, snapshotMap),
-  ];
+  // 2. Low performers — assets with very low views after publishing
+  const lowPerformers = await prisma.contentAsset.findMany({
+    where: {
+      status: "published",
+      publishedAt: { not: null },
+      metrics: { some: { views: { lt: 100 } } },
+    },
+    select: {
+      assetCode: true,
+      productIdentityId: true,
+      productIdentity: { select: { title: true } },
+      metrics: {
+        orderBy: { capturedAt: "desc" },
+        take: 1,
+        select: { views: true, rewardScore: true },
+      },
+    },
+    take: 10,
+    orderBy: { publishedAt: "desc" },
+  });
+
+  for (const asset of lowPerformers) {
+    const latestViews = asset.metrics[0]?.views ?? 0;
+    const reward = Number(asset.metrics[0]?.rewardScore ?? 0);
+    if (latestViews < 100 && reward < -0.5) {
+      anomalies.push({
+        type: "low_performers",
+        severity: "info",
+        productName: asset.productIdentity?.title ?? null,
+        message: `Video ${asset.assetCode} chỉ ${latestViews} views, reward ${reward.toFixed(1)}`,
+        suggestion: "Cân nhắc thay đổi content strategy cho sản phẩm này",
+        identityId: asset.productIdentityId,
+      });
+    }
+  }
+
+  // 3. Competition spike — products with KOL count increasing >50%
+  const identities = await prisma.productIdentity.findMany({
+    where: { inboxState: { in: ["scored", "briefed", "published"] }, product: { isNot: null } },
+    select: {
+      id: true,
+      title: true,
+      product: { select: { id: true, name: true } },
+    },
+    take: 50,
+  });
+
+  const productIds = identities
+    .filter((i) => i.product)
+    .map((i) => i.product!.id);
+
+  if (productIds.length > 0) {
+    const allSnapshots = await prisma.productSnapshot.findMany({
+      where: { productId: { in: productIds } },
+      orderBy: { snapshotDate: "desc" },
+      select: { productId: true, totalKOL: true, sales7d: true },
+    });
+
+    // Group snapshots by productId (max 2 per product)
+    const snapshotMap = new Map<string, Array<{ totalKOL: number | null; sales7d: number | null }>>();
+    for (const snap of allSnapshots) {
+      const existing = snapshotMap.get(snap.productId);
+      if (!existing) {
+        snapshotMap.set(snap.productId, [snap]);
+      } else if (existing.length < 2) {
+        existing.push(snap);
+      }
+    }
+
+    for (const identity of identities) {
+      if (!identity.product) continue;
+      const snapshots = snapshotMap.get(identity.product.id);
+      if (!snapshots || snapshots.length < 2) continue;
+
+      const [latest, prev] = snapshots;
+
+      // Competition spike
+      const prevKOL = prev.totalKOL ?? 0;
+      const latestKOL = latest.totalKOL ?? 0;
+      if (prevKOL > 0 && (latestKOL - prevKOL) / prevKOL > 0.5) {
+        anomalies.push({
+          type: "competition_spike",
+          severity: "warning",
+          productName: identity.title ?? identity.product.name,
+          message: `KOL tăng từ ${prevKOL} lên ${latestKOL} (+${Math.round(((latestKOL - prevKOL) / prevKOL) * 100)}%)`,
+          suggestion: "Cạnh tranh tăng — xem xét tăng chất lượng content để khác biệt hóa",
+          identityId: identity.id,
+        });
+      }
+
+      // Sales drop
+      const prevSales = prev.sales7d ?? 0;
+      const latestSales = latest.sales7d ?? 0;
+      if (prevSales > 0 && (latestSales - prevSales) / prevSales < -0.3) {
+        const dropPct = Math.round(((prevSales - latestSales) / prevSales) * 100);
+        anomalies.push({
+          type: "sales_drop",
+          severity: "warning",
+          productName: identity.title ?? identity.product.name,
+          message: `Doanh số 7 ngày giảm ${dropPct}% (${prevSales} → ${latestSales})`,
+          suggestion: "Sản phẩm đang suy giảm — xem xét chuyển sang sản phẩm khác",
+          identityId: identity.id,
+        });
+      }
+    }
+  }
 
   return anomalies.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
 }

@@ -14,8 +14,6 @@ export async function GET(): Promise<NextResponse> {
         rowsTotal: true,
         rowsImported: true,
         rowsError: true,
-        campaignsCreated: true,
-        campaignsUpdated: true,
         productsCreated: true,
         productsUpdated: true,
         financialRecordsCreated: true,

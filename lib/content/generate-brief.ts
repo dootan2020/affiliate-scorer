@@ -129,7 +129,13 @@ export async function generateBrief(product: ProductInput): Promise<string> {
     jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
   }
 
-  const brief: GeneratedBrief = JSON.parse(jsonStr);
+  let brief: GeneratedBrief;
+  try {
+    brief = JSON.parse(jsonStr);
+  } catch (parseError) {
+    console.error("[generateBrief] JSON parse failed:", parseError, "Raw:", jsonStr.substring(0, 200));
+    brief = { angles: [], hooks: [], scripts: [] };
+  }
   const generationTimeMs = Date.now() - startTime;
 
   // Lưu ContentBrief

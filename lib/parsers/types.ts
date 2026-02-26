@@ -10,16 +10,6 @@ export interface ImportedDailyResult {
   notes?: string;
 }
 
-export interface ImportedCampaign {
-  name: string;
-  platform: string;
-  sourceType: string;
-  productId: string | null;
-  dailyResults: ImportedDailyResult[];
-  startDate: string | null;
-  endDate: string | null;
-}
-
 export interface ImportedFinancialRecord {
   type: string; // "ads_spend" | "commission_received" | "commission_pending"
   amount: number;
@@ -32,7 +22,6 @@ export interface ImportedFinancialRecord {
 }
 
 export interface ImportParseResult {
-  campaigns: ImportedCampaign[];
   financialRecords: ImportedFinancialRecord[];
   errors: Array<{ row: number; message: string }>;
 }

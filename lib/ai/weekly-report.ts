@@ -4,12 +4,12 @@ import { getProductLifecycle } from "@/lib/ai/lifecycle";
 export interface WeeklyReportData {
   weekStart: string;
   weekEnd: string;
-  campaigns: {
-    active: number;
-    paused: number;
-    completed: number;
-    best: { name: string; roas: number; profit: number } | null;
-    worst: { name: string; roas: number; profit: number } | null;
+  content: {
+    created: number;
+    published: number;
+    logged: number;
+    avgReward: number;
+    topAsset: { code: string; views: number; reward: number } | null;
   };
   financial: {
     income: number;
@@ -36,23 +36,40 @@ function getWeekBounds(offsetWeeks = 0): { start: Date; end: Date } {
 
 function fmt(d: Date): string { return d.toISOString().split("T")[0]; }
 
-async function getCampaignStats(start: Date, end: Date): Promise<WeeklyReportData["campaigns"]> {
-  const [active, paused, completed] = await Promise.all([
-    prisma.campaign.count({ where: { status: "running" } }),
-    prisma.campaign.count({ where: { status: "paused" } }),
-    prisma.campaign.count({ where: { status: "completed", endedAt: { gte: start, lte: end } } }),
+async function getContentStats(start: Date, end: Date): Promise<WeeklyReportData["content"]> {
+  const [created, published, metrics] = await Promise.all([
+    prisma.contentAsset.count({ where: { createdAt: { gte: start, lte: end } } }),
+    prisma.contentAsset.count({ where: { publishedAt: { gte: start, lte: end } } }),
+    prisma.assetMetric.findMany({
+      where: { capturedAt: { gte: start, lte: end } },
+      select: { rewardScore: true, views: true, contentAssetId: true },
+    }),
   ]);
-  const all = await prisma.campaign.findMany({
-    where: { status: { in: ["running", "completed"] }, updatedAt: { gte: start } },
-    select: { name: true, roas: true, profitLoss: true },
-    orderBy: { profitLoss: "desc" },
-  });
-  const best = all.length > 0
-    ? { name: all[0].name, roas: all[0].roas ?? 0, profit: all[0].profitLoss } : null;
-  const last = all[all.length - 1];
-  const worst = all.length > 1
-    ? { name: last.name, roas: last.roas ?? 0, profit: last.profitLoss } : null;
-  return { active, paused, completed, best, worst };
+
+  const logged = metrics.length;
+  const avgReward = logged > 0
+    ? metrics.reduce((s, m) => s + Number(m.rewardScore), 0) / logged
+    : 0;
+
+  // Find top asset by views
+  let topAsset: WeeklyReportData["content"]["topAsset"] = null;
+  if (metrics.length > 0) {
+    const sorted = [...metrics].sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
+    const top = sorted[0];
+    if (top.contentAssetId) {
+      const asset = await prisma.contentAsset.findUnique({
+        where: { id: top.contentAssetId },
+        select: { assetCode: true },
+      });
+      topAsset = {
+        code: asset?.assetCode ?? "unknown",
+        views: top.views ?? 0,
+        reward: Number(top.rewardScore),
+      };
+    }
+  }
+
+  return { created, published, logged, avgReward: Math.round(avgReward * 10) / 10, topAsset };
 }
 
 function sumFinancial(records: Array<{ type: string; amount: number }>): { income: number; expense: number } {
@@ -95,17 +112,20 @@ async function getTopNewProducts(start: Date, end: Date): Promise<WeeklyReportDa
   return results;
 }
 
-function buildSuggestions(c: WeeklyReportData["campaigns"], f: WeeklyReportData["financial"]): string[] {
+function buildSuggestions(
+  c: WeeklyReportData["content"],
+  f: WeeklyReportData["financial"],
+): string[] {
   const s: string[] = [];
-  if (f.profit < 0) s.push("Lợi nhuận âm tuần này — ưu tiên giảm chi tiêu và ngừng chiến dịch ROAS < 1");
+  if (f.profit < 0) s.push("Lợi nhuận âm tuần này — ưu tiên sản phẩm commission cao hơn");
   if (f.vsLastWeek !== null && f.vsLastWeek < -20)
-    s.push("Lợi nhuận giảm mạnh so với tuần trước — xem lại chiến dịch nào gây lỗ");
-  if (c.active === 0)
-    s.push("Không có chiến dịch đang chạy — bắt đầu chiến dịch mới với sản phẩm điểm cao");
-  if (c.best && c.best.roas > 2)
-    s.push(`"${c.best.name}" chạy tốt (ROAS ${c.best.roas.toFixed(1)}x) — tăng budget`);
-  if (c.worst && c.worst.profit < 0)
-    s.push(`"${c.worst.name}" đang lỗ — giảm budget hoặc dừng`);
+    s.push("Lợi nhuận giảm mạnh so với tuần trước — xem lại content strategy");
+  if (c.published === 0)
+    s.push("Chưa publish video tuần này — bắt đầu với sản phẩm điểm cao nhất trong inbox");
+  if (c.published > 0 && c.avgReward > 0.5)
+    s.push(`Reward trung bình tốt (${c.avgReward.toFixed(1)}) — tăng số lượng video`);
+  if (c.published > 0 && c.avgReward < -0.5)
+    s.push("Reward trung bình thấp — thử format/hook khác từ playbook");
   if (s.length === 0) s.push("Hoạt động ổn định — tiếp tục theo dõi và tối ưu");
   return s.slice(0, 4);
 }
@@ -126,8 +146,8 @@ async function getGoalProgress(): Promise<WeeklyReportData["goalProgress"]> {
 
 export async function generateWeeklyReport(): Promise<WeeklyReportData> {
   const { start, end } = getWeekBounds(0);
-  const [campaigns, financial, topNewProducts, goalProgress] = await Promise.all([
-    getCampaignStats(start, end),
+  const [content, financial, topNewProducts, goalProgress] = await Promise.all([
+    getContentStats(start, end),
     getFinancialStats(start, end),
     getTopNewProducts(start, end),
     getGoalProgress(),
@@ -135,10 +155,10 @@ export async function generateWeeklyReport(): Promise<WeeklyReportData> {
   return {
     weekStart: fmt(start),
     weekEnd: fmt(end),
-    campaigns,
+    content,
     financial,
     topNewProducts,
-    suggestions: buildSuggestions(campaigns, financial),
+    suggestions: buildSuggestions(content, financial),
     goalProgress,
   };
 }

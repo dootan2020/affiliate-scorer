@@ -3,8 +3,7 @@
 import { useCallback, useState } from "react";
 import { Upload, CheckCircle, XCircle, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { detectTikTokStudioFileType, FILE_TYPE_LABELS } from "@/lib/parsers/detect-tiktok-studio";
-import type { TikTokStudioFileType } from "@/lib/parsers/detect-tiktok-studio";
+import { detectTikTokStudioFileType, FILE_TYPE_LABELS, type TikTokStudioFileType } from "@/lib/parsers/detect-tiktok-studio";
 
 interface PendingFile {
   file: File;

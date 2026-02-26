@@ -8,34 +8,23 @@ export interface AnalysisFactor {
 }
 
 export interface WinLossResult {
-  campaignId: string;
+  assetId: string;
   verdict: string;
-  roas: number | null;
-  profitLoss: number;
+  rewardScore: number;
   factors: AnalysisFactor[];
   lessons: string[];
 }
 
-async function getAvgRoas(
-  where: Record<string, unknown>, excludeId: string,
+async function getAvgRewardByScope(
+  scope: string,
+  key: string,
+  excludeId: string,
 ): Promise<number | null> {
-  const camps = await prisma.campaign.findMany({
-    where: { status: "completed", verdict: { not: null }, id: { not: excludeId }, ...where },
-    select: { roas: true },
+  const weights = await prisma.learningWeightP4.findFirst({
+    where: { scope, key },
+    select: { weight: true },
   });
-  if (camps.length === 0) return null;
-  return camps.reduce((s, c) => s + (c.roas ?? 0), 0) / camps.length;
-}
-
-async function getProfitablePriceRange(): Promise<{ min: number; max: number } | null> {
-  const campaigns = await prisma.campaign.findMany({
-    where: { status: "completed", verdict: "profitable" },
-    select: { product: { select: { price: true } } },
-  });
-
-  const prices = campaigns.filter((c) => c.product).map((c) => c.product!.price);
-  if (prices.length < 2) return null;
-  return { min: Math.min(...prices), max: Math.max(...prices) };
+  return weights ? Number(weights.weight) : null;
 }
 
 async function wasNearSaleEvent(date: Date | null): Promise<string | null> {
@@ -56,7 +45,7 @@ function generateLessons(factors: AnalysisFactor[], verdict: string): string[] {
   const positives = factors.filter((f) => f.impact === "positive");
   const negatives = factors.filter((f) => f.impact === "negative");
 
-  if (verdict === "profitable" && positives.length > 0) {
+  if (verdict === "win" && positives.length > 0) {
     const combo = positives.map((f) => f.factor).join(" + ");
     lessons.push(`Combo chiến thắng: ${combo}`);
   }
@@ -67,68 +56,81 @@ function generateLessons(factors: AnalysisFactor[], verdict: string): string[] {
     }
   }
 
-  if (verdict === "break_even") {
-    lessons.push("Chiến dịch hòa vốn — cần tối ưu thêm content hoặc budget");
+  if (verdict === "neutral") {
+    lessons.push("Video trung bình — cần tối ưu thêm hook hoặc format");
   }
 
   if (factors.some((f) => f.factor === "Timing" && f.impact === "positive")) {
     lessons.push("Timing gần sự kiện sale giúp tăng hiệu quả");
   }
 
-  if (factors.some((f) => f.factor === "Cạnh tranh" && f.impact === "negative")) {
-    lessons.push("Quá nhiều KOL cạnh tranh — chọn sản phẩm ít đối thủ hơn");
-  }
-
   return lessons.length > 0 ? lessons : ["Chưa đủ dữ liệu để rút ra bài học cụ thể"];
 }
 
-export async function analyzeWinLoss(campaignId: string): Promise<WinLossResult | null> {
-  const campaign = await prisma.campaign.findUnique({
-    where: { id: campaignId },
+/**
+ * Analyze win/loss factors for a ContentAsset based on its metrics and context.
+ */
+export async function analyzeWinLoss(assetId: string): Promise<WinLossResult | null> {
+  const asset = await prisma.contentAsset.findUnique({
+    where: { id: assetId },
     include: {
-      product: true,
-      contentPosts: { select: { contentType: true, views: true, likes: true } },
+      productIdentity: { select: { title: true, product: { select: { category: true, price: true, totalKOL: true } } } },
+      metrics: { orderBy: { capturedAt: "desc" }, take: 1 },
     },
   });
 
-  if (!campaign || !campaign.verdict) return null;
+  if (!asset || asset.metrics.length === 0) return null;
+
+  const metric = asset.metrics[0];
+  const reward = Number(metric.rewardScore);
+  const verdict = reward > 0.3 ? "win" : reward < -0.3 ? "loss" : "neutral";
 
   const factors: AnalysisFactor[] = [];
-  const product = campaign.product;
+  const product = asset.productIdentity?.product;
 
-  // 1. Category analysis
-  if (product) {
-    const catRoas = await getAvgRoas({ product: { category: product.category } }, campaign.id);
-    if (catRoas !== null) {
-      const campaignRoas = campaign.roas ?? 0;
-      const diff = campaignRoas - catRoas;
+  // 1. Hook type analysis
+  if (asset.hookType) {
+    const avgWeight = await getAvgRewardByScope("hook_type", asset.hookType, assetId);
+    if (avgWeight !== null) {
+      factors.push({
+        factor: "Hook type",
+        value: asset.hookType,
+        impact: avgWeight > 1 ? "positive" : avgWeight < 0.5 ? "negative" : "neutral",
+        detail: avgWeight > 1
+          ? `Hook "${asset.hookType}" có weight cao (${avgWeight.toFixed(1)})`
+          : `Hook "${asset.hookType}" có weight thấp (${avgWeight.toFixed(1)})`,
+      });
+    }
+  }
+
+  // 2. Format analysis
+  if (asset.format) {
+    const avgWeight = await getAvgRewardByScope("format", asset.format, assetId);
+    if (avgWeight !== null) {
+      factors.push({
+        factor: "Format",
+        value: asset.format,
+        impact: avgWeight > 1 ? "positive" : avgWeight < 0.5 ? "negative" : "neutral",
+        detail: `Format "${asset.format}" weight: ${avgWeight.toFixed(1)}`,
+      });
+    }
+  }
+
+  // 3. Product category
+  if (product?.category) {
+    const catWeight = await getAvgRewardByScope("category", product.category, assetId);
+    if (catWeight !== null) {
       factors.push({
         factor: "Category",
         value: product.category,
-        impact: diff > 0.5 ? "positive" : diff < -0.5 ? "negative" : "neutral",
-        detail: diff > 0.5
-          ? `ROAS cao hơn trung bình category (${catRoas.toFixed(1)}x)`
-          : diff < -0.5
-            ? `ROAS thấp hơn trung bình category (${catRoas.toFixed(1)}x)`
-            : `ROAS gần trung bình category (${catRoas.toFixed(1)}x)`,
+        impact: catWeight > 1 ? "positive" : catWeight < 0.5 ? "negative" : "neutral",
+        detail: `Category "${product.category}" weight: ${catWeight.toFixed(1)}`,
       });
     }
+  }
 
-    // 2. Price analysis
-    const priceRange = await getProfitablePriceRange();
-    if (priceRange) {
-      const inRange = product.price >= priceRange.min && product.price <= priceRange.max;
-      factors.push({
-        factor: "Giá sản phẩm",
-        value: `${Math.round(product.price / 1000)}K VND`,
-        impact: inRange ? "positive" : "negative",
-        detail: inRange
-          ? `Giá nằm trong khoảng thành công (${Math.round(priceRange.min / 1000)}K-${Math.round(priceRange.max / 1000)}K)`
-          : `Giá ngoài khoảng thành công (${Math.round(priceRange.min / 1000)}K-${Math.round(priceRange.max / 1000)}K)`,
-      });
-    }
-
-    // 4. Competition
+  // 4. Competition
+  if (product) {
     const kol = product.totalKOL ?? 0;
     factors.push({
       factor: "Cạnh tranh",
@@ -142,49 +144,36 @@ export async function analyzeWinLoss(campaignId: string): Promise<WinLossResult 
     });
   }
 
-  // 3. Platform analysis
-  const platRoas = await getAvgRoas({ platform: campaign.platform }, campaign.id);
-  if (platRoas !== null) {
-    const diff = (campaign.roas ?? 0) - platRoas;
-    factors.push({
-      factor: "Platform",
-      value: campaign.platform,
-      impact: diff > 0.3 ? "positive" : diff < -0.3 ? "negative" : "neutral",
-      detail: `ROAS ${campaign.platform}: ${(campaign.roas ?? 0).toFixed(1)}x vs trung bình ${platRoas.toFixed(1)}x`,
-    });
-  }
-
-  // 5. Timing
-  const eventName = await wasNearSaleEvent(campaign.startedAt);
+  // 5. Timing — was it near a sale event?
+  const eventName = await wasNearSaleEvent(asset.publishedAt);
   if (eventName) {
     factors.push({
       factor: "Timing",
       value: eventName,
-      impact: campaign.verdict === "profitable" ? "positive" : "neutral",
-      detail: `Chạy gần sự kiện "${eventName}"`,
+      impact: verdict === "win" ? "positive" : "neutral",
+      detail: `Đăng gần sự kiện "${eventName}"`,
     });
   }
 
-  // 6. Content type
-  if (campaign.contentPosts.length > 0) {
-    const types = campaign.contentPosts.map((p) => p.contentType).filter(Boolean);
-    const topType = types[0] ?? "unknown";
-    const totalViews = campaign.contentPosts.reduce((s, p) => s + (p.views ?? 0), 0);
-    factors.push({
-      factor: "Content",
-      value: topType,
-      impact: totalViews > 1000 ? "positive" : totalViews > 0 ? "neutral" : "negative",
-      detail: `${types.length} bài đăng, ${totalViews.toLocaleString()} lượt xem`,
-    });
-  }
+  // 6. Views performance
+  const views = metric.views ?? 0;
+  factors.push({
+    factor: "Views",
+    value: views.toLocaleString(),
+    impact: views > 5000 ? "positive" : views < 500 ? "negative" : "neutral",
+    detail: views > 5000
+      ? "Views cao — content thu hút tốt"
+      : views < 500
+        ? "Views thấp — cần cải thiện hook/thumbnail"
+        : "Views trung bình",
+  });
 
-  const lessons = generateLessons(factors, campaign.verdict);
+  const lessons = generateLessons(factors, verdict);
 
   return {
-    campaignId: campaign.id,
-    verdict: campaign.verdict,
-    roas: campaign.roas,
-    profitLoss: campaign.profitLoss,
+    assetId: asset.id,
+    verdict,
+    rewardScore: reward,
     factors,
     lessons,
   };

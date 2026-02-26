@@ -52,41 +52,48 @@ async function scorePersonalFit(
   let t = 0;
   if (cl < 1) return 0;
 
-  const catCamps = await prisma.campaign.findMany({
-    where: { status: "completed", verdict: { not: null }, product: { category: p.category } },
-    select: { roas: true },
+  // Check learning weights for this product's category
+  const catWeight = await prisma.learningWeightP4.findFirst({
+    where: { scope: "category", key: p.category },
+    select: { weight: true },
   });
-  if (catCamps.length > 0) {
-    const avg = catCamps.reduce((s, c) => s + (c.roas ?? 0), 0) / catCamps.length;
-    const pts = avg > 2 ? 10 : avg > 1 ? 5 : -5;
+  if (catWeight) {
+    const w = Number(catWeight.weight);
+    const pts = w > 1.5 ? 10 : w > 1 ? 5 : w < 0.5 ? -5 : 0;
     t += pts;
-    ins.push(`ROAS category "${p.category}": ${avg.toFixed(1)}x → ${pts > 0 ? "+" : ""}${pts}`);
+    ins.push(`Category "${p.category}" weight: ${w.toFixed(1)} → ${pts > 0 ? "+" : ""}${pts}`);
   }
+
   if (cl < 2) return Math.max(0, Math.min(30, t));
 
-  const profCamps = await prisma.campaign.findMany({
-    where: { status: "completed", verdict: "profitable" },
-    select: { product: { select: { price: true } } },
+  // Check if product price is in a successful range based on AssetMetric data
+  const successfulAssets = await prisma.contentAsset.findMany({
+    where: {
+      metrics: { some: { rewardScore: { gt: 0 } } },
+      productIdentity: { product: { isNot: null } },
+    },
+    select: { productIdentity: { select: { product: { select: { price: true } } } } },
+    take: 50,
   });
-  if (profCamps.length > 0) {
-    const prices = profCamps.filter((c) => c.product).map((c) => c.product!.price);
-    if (prices.length > 0) {
-      const inRange = p.price >= Math.min(...prices) * 0.8 && p.price <= Math.max(...prices) * 1.2;
-      if (inRange) { t += 8; ins.push("Giá nằm trong sweet spot của bạn → +8"); }
-    }
+  const prices = successfulAssets
+    .filter((a) => a.productIdentity?.product)
+    .map((a) => a.productIdentity!.product!.price);
+  if (prices.length >= 3) {
+    const inRange = p.price >= Math.min(...prices) * 0.8 && p.price <= Math.max(...prices) * 1.2;
+    if (inRange) { t += 8; ins.push("Giá nằm trong sweet spot của bạn → +8"); }
   }
 
-  const topContent = await prisma.contentPost.groupBy({
-    by: ["contentType"],
-    where: { contentType: { not: null }, campaign: { verdict: "profitable" } },
-    _count: true,
-    orderBy: { _count: { contentType: "desc" } },
-    take: 1,
+  // Check best performing format from learning weights
+  const topFormat = await prisma.learningWeightP4.findFirst({
+    where: { scope: "format" },
+    orderBy: { weight: "desc" },
+    select: { key: true },
   });
-  if (topContent.length > 0 && topContent[0].contentType) {
+  if (topFormat) {
     t += 5;
-    ins.push(`Content thành công nhất: "${topContent[0].contentType}" → +5`);
+    ins.push(`Format thành công nhất: "${topFormat.key}" → +5`);
   }
+
   if (cl < 3) return Math.max(0, Math.min(30, t));
 
   const sr = p.shopRating ?? p.shopTrustScore ?? null;

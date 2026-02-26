@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { CalendarDays, Plus } from "lucide-react";
-import { CalendarEventForm } from "./calendar-event-form";
+import { CalendarEventForm, type CalendarEventData } from "./calendar-event-form";
 import { CalendarEventsList } from "./calendar-events-list";
-import type { CalendarEventData } from "./calendar-event-form";
 
 export function CalendarTab(): React.ReactElement {
   const [events, setEvents] = useState<CalendarEventData[]>([]);

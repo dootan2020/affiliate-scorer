@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import {
+  Sparkles, ArrowLeft, ExternalLink, Video, Radio, Users, History,
+  TrendingUp, Lightbulb, Globe, Trophy, CheckCircle2,
+} from "lucide-react";
 import { prisma } from "@/lib/db";
 import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { SeasonalTagForm } from "@/components/products/seasonal-tag-form";
@@ -18,10 +21,6 @@ import { calculateConfidence } from "@/lib/ai/confidence";
 import { formatVND, formatPercent, formatNumber, formatPlatform, formatSource } from "@/lib/utils/format";
 import { computeBadges } from "@/lib/utils/product-badges";
 import { generateContentTips, generatePlatformStrategy } from "@/lib/utils/content-suggestions";
-import {
-  ArrowLeft, ExternalLink, Video, Radio, Users, History,
-  TrendingUp, Lightbulb, Globe, Trophy, CheckCircle2,
-} from "lucide-react";
 
 interface InboxDetailPageProps {
   params: Promise<{ id: string }>;

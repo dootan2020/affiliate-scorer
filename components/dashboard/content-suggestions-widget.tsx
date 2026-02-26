@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, Sparkles, CheckCircle } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
+import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
 
 interface ProductIdentityItem {
   id: string;
@@ -21,7 +22,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/inbox?sort=score&limit=20")
+    fetchWithRetry("/api/inbox?sort=score&limit=20")
       .then((r) => r.json())
       .then((d) => {
         if (!d.data) return;

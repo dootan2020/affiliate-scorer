@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
+import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
 
 interface UpcomingEvent {
   id: string;
@@ -37,7 +38,7 @@ export function UpcomingEventsWidget(): React.ReactElement {
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
 
   useEffect(() => {
-    fetch("/api/calendar/upcoming")
+    fetchWithRetry("/api/calendar/upcoming")
       .then((r) => r.json())
       .then((d) => {
         if (Array.isArray(d.data)) setEvents(d.data);

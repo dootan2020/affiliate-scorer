@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Inbox, Sparkles, TrendingUp, Package } from "lucide-react";
+import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
 
 interface InboxStats {
   new: number;
@@ -16,7 +17,7 @@ export function InboxStatsWidget(): React.ReactElement {
   const [stats, setStats] = useState<InboxStats | null>(null);
 
   useEffect(() => {
-    fetch("/api/inbox?limit=1")
+    fetchWithRetry("/api/inbox?limit=1")
       .then((r) => r.json())
       .then((d) => {
         if (d.stats) setStats(d.stats);

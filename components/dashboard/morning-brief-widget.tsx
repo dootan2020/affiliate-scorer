@@ -11,6 +11,7 @@ import {
   BarChart3,
   Package,
 } from "lucide-react";
+import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
 
 interface ProduceItem {
   product: string;
@@ -93,7 +94,7 @@ export function MorningBriefWidget(): React.ReactElement {
       else setLoading(true);
 
       const url = refresh ? "/api/brief/today?refresh=true" : "/api/brief/today";
-      const res = await fetch(url);
+      const res = await fetchWithRetry(url);
       if (!res.ok) {
         const json = await res.json().catch(() => null);
         throw new Error(json?.error || "Không tạo được brief");

@@ -816,3 +816,13 @@ model AccountInsight {
   @@index([type])
   @@index([date])
 }
+
+// ─── SETTINGS ───
+
+model AiModelConfig {
+  id        String   @id @default(cuid())
+  taskType  String   @unique // "scoring" | "content_brief" | "morning_brief" | "weekly_report"
+  modelId   String   // e.g. "claude-sonnet-4-6"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,8 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { prisma } from "@/lib/db";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
+
+export type AiTaskType =
+  | "scoring"
+  | "content_brief"
+  | "morning_brief"
+  | "weekly_report";
 
 export const MAX_TOKENS_SCORING = 4096;
 export const MAX_TOKENS_LEARNING = 8192;
@@ -19,18 +26,32 @@ function getClient(): Anthropic {
   return new Anthropic({ apiKey });
 }
 
+export async function getModelForTask(taskType?: AiTaskType): Promise<string> {
+  if (!taskType) return DEFAULT_MODEL;
+  try {
+    const config = await prisma.aiModelConfig.findUnique({
+      where: { taskType },
+    });
+    return config?.modelId ?? DEFAULT_MODEL;
+  } catch {
+    return DEFAULT_MODEL;
+  }
+}
+
 export async function callClaude(
   systemPrompt: string,
   userPrompt: string,
-  maxTokens: number
+  maxTokens: number,
+  taskType?: AiTaskType
 ): Promise<string> {
   const client = getClient();
+  const model = await getModelForTask(taskType);
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       const response = await client.messages.create({
-        model: MODEL,
+        model,
         max_tokens: maxTokens,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],

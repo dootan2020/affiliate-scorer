@@ -16,6 +16,7 @@ import {
   ClipboardList,
   BookOpen,
   Sparkles,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -122,6 +123,20 @@ export function MobileNav(): React.ReactElement {
                   </Link>
                 );
               })}
+              <div className="border-t border-gray-100 dark:border-slate-800 my-2" />
+              <Link
+                href="/settings"
+                onClick={() => setOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                  isActive("/settings")
+                    ? "bg-orange-50 text-orange-700 font-medium dark:bg-orange-950/20 dark:text-orange-400"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+                )}
+              >
+                <Settings className="w-4 h-4 shrink-0" />
+                Cài đặt
+              </Link>
             </nav>
           </div>
         </div>

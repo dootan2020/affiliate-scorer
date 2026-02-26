@@ -98,7 +98,7 @@ Output JSON:
 
 Chỉ output JSON, không text khác.`.trim();
 
-  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 2000);
+  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 2000, "morning_brief");
 
   // Parse JSON
   let jsonStr = rawResponse.trim();

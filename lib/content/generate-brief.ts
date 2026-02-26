@@ -121,7 +121,7 @@ export async function generateBrief(product: ProductInput): Promise<string> {
   const startTime = Date.now();
   const prompt = buildBriefPrompt(product);
 
-  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 6000);
+  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 6000, "content_brief");
 
   // Parse JSON — handle markdown fences nếu có
   let jsonStr = rawResponse.trim();

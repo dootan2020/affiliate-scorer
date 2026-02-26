@@ -14,6 +14,7 @@ import {
   ClipboardList,
   BookOpen,
   Sparkles,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "./mobile-nav";
@@ -92,9 +93,21 @@ export function Sidebar(): React.ReactElement {
           })}
         </nav>
 
-        {/* Bottom: separator + theme toggle */}
-        <div className="px-3 py-4 border-t border-gray-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center justify-between px-2">
+        {/* Bottom: Settings + theme toggle */}
+        <div className="px-3 py-3 border-t border-gray-100 dark:border-slate-800 shrink-0 space-y-1">
+          <Link
+            href="/settings"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-r-xl text-sm transition-colors border-l-[3px]",
+              isActive("/settings")
+                ? "border-l-[#E87B35] bg-orange-50 text-orange-700 font-medium dark:border-l-[#FF8F47] dark:bg-orange-950/20 dark:text-orange-400"
+                : "border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200"
+            )}
+          >
+            <Settings className="w-4 h-4 shrink-0" />
+            Cài đặt
+          </Link>
+          <div className="flex items-center justify-between px-2 pt-1">
             <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
               Giao diện
             </span>

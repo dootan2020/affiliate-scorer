@@ -165,7 +165,7 @@ Output JSON:
 
 Chỉ output JSON, không text khác.`.trim();
 
-  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 1500);
+  const rawResponse = await callClaude(SYSTEM_PROMPT, prompt, 1500, "weekly_report");
 
   let jsonStr = rawResponse.trim();
   if (jsonStr.startsWith("```")) {

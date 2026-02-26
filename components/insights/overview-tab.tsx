@@ -114,9 +114,9 @@ export function OverviewTab({
 
       {/* Upcoming events */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
           <CalendarDays className="w-5 h-5 text-orange-500" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
             Sự kiện sắp tới
           </h3>
         </div>
@@ -156,9 +156,9 @@ export function OverviewTab({
 
       {/* AI data summary */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
           <Brain className="w-5 h-5 text-purple-500" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
             Dữ liệu AI
           </h3>
         </div>
@@ -184,9 +184,9 @@ export function OverviewTab({
 
       {/* Suggestions */}
       <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-4 sm:p-6 border border-orange-100 dark:border-slate-700">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
           <Lightbulb className="w-5 h-5 text-amber-500" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
             Gợi ý
           </h3>
         </div>

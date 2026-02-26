@@ -49,10 +49,10 @@ export function UpcomingEventsWidget(): React.ReactElement {
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-orange-500" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
             Sắp tới
           </h3>
         </div>

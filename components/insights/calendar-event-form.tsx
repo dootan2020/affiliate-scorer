@@ -113,7 +113,7 @@ export function CalendarEventForm({
       className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
           {editingEvent ? "Sửa sự kiện" : "Thêm sự kiện mới"}
         </h3>
         <button

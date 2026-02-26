@@ -203,7 +203,7 @@ export default async function ShopDetailPage({
                   >
                     <td className="py-2 pr-2 text-sm text-gray-900 dark:text-gray-50">
                       <Link
-                        href={`/products/${product.id}`}
+                        href={`/inbox/${product.id}`}
                         className="block truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                         title={product.name}
                       >

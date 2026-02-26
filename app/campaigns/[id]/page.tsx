@@ -157,7 +157,7 @@ export default async function CampaignDetailPage({
               <>
                 <span className="text-gray-300 dark:text-slate-700">·</span>
                 <Link
-                  href={`/products/${campaign.product.id}`}
+                  href={`/inbox/${campaign.product.id}`}
                   className="text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   {campaign.product.name}

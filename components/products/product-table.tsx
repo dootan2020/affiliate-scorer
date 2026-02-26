@@ -170,7 +170,7 @@ export function ProductTable({
             </td>
             <td className="py-3 px-3">
               <Link
-                href={`/products/${product.id}`}
+                href={`/inbox/${product.id}`}
                 className="flex items-center gap-3 group"
               >
                 <ProductImage

@@ -27,11 +27,19 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
   useEffect(() => {
     async function load(): Promise<void> {
       try {
-        // Lấy sản phẩm đã scored từ inbox
-        // Lấy SP đã scored + enriched (có score) sắp theo score giảm dần
-        const res = await fetch("/api/inbox?state=scored&limit=100&sort=score");
-        const json = await res.json() as { data?: ProductIdentityItem[] };
-        setProducts(json.data || []);
+        // Lấy tất cả SP đã scored/briefed/published từ inbox — 3 requests song song
+        const ALLOWED_STATES = ["scored", "briefed", "published"] as const;
+        const responses = await Promise.all(
+          ALLOWED_STATES.map((s) =>
+            fetch(`/api/inbox?state=${s}&limit=50&sort=score`).then(
+              (r) => r.json() as Promise<{ data?: ProductIdentityItem[] }>
+            )
+          )
+        );
+        const merged = responses.flatMap((j) => j.data || []);
+        // Sort by contentScore desc
+        merged.sort((a, b) => (b.contentScore ?? 0) - (a.contentScore ?? 0));
+        setProducts(merged);
       } catch {
         // ignore
       } finally {
@@ -83,7 +91,7 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
           <Package className="w-7 h-7 text-gray-400" />
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Chưa có sản phẩm đã scored. Vào Inbox để score sản phẩm trước.
+          Chưa có sản phẩm đã scored/briefed/published. Vào Inbox để score sản phẩm trước.
         </p>
       </div>
     );

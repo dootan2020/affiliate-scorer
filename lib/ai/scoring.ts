@@ -30,6 +30,7 @@ interface ClaudeScoreItem {
 interface ScoreOptions {
   batchId?: string;
   productIds?: string[];
+  includeAlreadyScored?: boolean;
 }
 
 const CLAUDE_BATCH_SIZE = 30;
@@ -37,7 +38,11 @@ const CLAUDE_BATCH_SIZE = 30;
 async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
   let products: ProductModel[];
 
-  if (options.productIds && options.productIds.length > 0) {
+  if (options.includeAlreadyScored) {
+    products = await prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+  } else if (options.productIds && options.productIds.length > 0) {
     products = await prisma.product.findMany({
       where: { id: { in: options.productIds } },
     });
@@ -46,7 +51,6 @@ async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
       where: { importBatchId: options.batchId },
     });
   } else {
-    // Score ALL unscored products — no limit
     products = await prisma.product.findMany({
       where: { aiScore: null },
       orderBy: { createdAt: "desc" },
@@ -222,59 +226,10 @@ export async function scoreProducts(
 
 /** Score ALL products in database (including already-scored ones) */
 export async function scoreAllProducts(): Promise<ScoredProduct[]> {
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-
-  if (products.length === 0) return [];
-
-  const weights = await getWeights();
-  const fbCount = await getFeedbackCount();
-  const usePersonalization = fbCount >= 30;
-
-  const allClaudeItems = new Map<string, ClaudeScoreItem>();
-
-  for (let i = 0; i < products.length; i += CLAUDE_BATCH_SIZE) {
-    const batch = products.slice(i, i + CLAUDE_BATCH_SIZE);
-    const batchResults = await scoreBatchWithClaude(batch, weights);
-    for (const [id, item] of batchResults) {
-      allClaudeItems.set(id, item);
-    }
-  }
-
-  const updates = await Promise.all(
-    products.map(async (product) => {
-      const claudeItem = allClaudeItems.get(product.id);
-      const scores = await mergeWithBaseScore(product, claudeItem, usePersonalization);
-      return { product, scores };
-    }),
-  );
-
-  await Promise.all(
-    updates.map(({ product, scores }) =>
-      prisma.product.update({
-        where: { id: product.id },
-        data: {
-          aiScore: scores.aiScore,
-          scoreBreakdown: scores.scoreBreakdown,
-          contentSuggestion: scores.contentSuggestion,
-          platformAdvice: scores.platformAdvice,
-          scoringVersion: scores.scoringVersion,
-        },
-      }),
-    ),
-  );
-
-  await updateRankings();
-
-  return (await prisma.product.findMany({
-    where: { id: { in: products.map((p) => p.id) } },
-    orderBy: { aiScore: "desc" },
-  })) as ScoredProduct[];
+  return scoreProducts({ includeAlreadyScored: true });
 }
 
 async function updateRankings(): Promise<void> {
-  // Dùng raw SQL với ROW_NUMBER() thay vì N updates riêng lẻ
   await prisma.$executeRaw`
     UPDATE "Product"
     SET "aiRank" = ranked.rn

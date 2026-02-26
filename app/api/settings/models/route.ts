@@ -152,9 +152,18 @@ function classifyGoogle(rawModels: unknown[]): ClassifiedModel[] {
     (m) => !m.id.includes("embedding") && !m.id.includes("aqa")
   );
 
+  // Prefer versioned models (gemini-2.5-flash) over -latest aliases (gemini-flash-latest)
+  // Sort: versioned first (higher version wins), then -latest as fallback
+  function googleSort(a: { id: string }, b: { id: string }): number {
+    const aLatest = a.id.includes("-latest");
+    const bLatest = b.id.includes("-latest");
+    if (aLatest !== bLatest) return aLatest ? 1 : -1; // versioned first
+    return versionSort(b.id, a.id); // higher version first
+  }
+
   const fast = genModels
     .filter((m) => m.id.includes("flash-lite") || m.id.includes("flash-8b"))
-    .sort((a, b) => versionSort(b.id, a.id));
+    .sort(googleSort);
 
   const balanced = genModels
     .filter(
@@ -163,11 +172,11 @@ function classifyGoogle(rawModels: unknown[]): ClassifiedModel[] {
         !m.id.includes("lite") &&
         !m.id.includes("8b")
     )
-    .sort((a, b) => versionSort(b.id, a.id));
+    .sort(googleSort);
 
   const powerful = genModels
     .filter((m) => m.id.includes("pro"))
-    .sort((a, b) => versionSort(b.id, a.id));
+    .sort(googleSort);
 
   const result: ClassifiedModel[] = [];
   if (fast[0]?.id) result.push(makeModel(fast[0].id, "fast", "google"));
@@ -215,10 +224,13 @@ function formatModelName(id: string, provider: ProviderName): string {
 
   if (provider === "google") {
     return id
+      .replace("-latest", "")
       .replace("gemini-", "Gemini ")
       .replace("-pro", " Pro")
       .replace("-flash-lite", " Flash Lite")
-      .replace("-flash", " Flash");
+      .replace("-flash", " Flash")
+      .replace("-exp", " (Preview)")
+      .trim();
   }
 
   return id;
@@ -250,7 +262,7 @@ function getFallbackModels(provider: ProviderName): ClassifiedModel[] {
       { id: "o3", name: "O3", tier: "powerful", tierLabel: "Mạnh", provider: "openai" },
     ],
     google: [
-      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", tier: "fast", tierLabel: "Nhanh", provider: "google" },
+      { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", tier: "fast", tierLabel: "Nhanh", provider: "google" },
       { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", tier: "balanced", tierLabel: "Cân bằng", provider: "google" },
       { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", tier: "powerful", tierLabel: "Mạnh", provider: "google" },
     ],

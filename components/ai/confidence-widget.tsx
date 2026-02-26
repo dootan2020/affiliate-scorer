@@ -43,7 +43,7 @@ const METRIC_THRESHOLDS: { key: keyof ConfidenceMetrics; label: string; required
 
 function getLevelColor(level: number): string {
   if (level >= 4) return "text-emerald-600 dark:text-emerald-400";
-  if (level >= 3) return "text-blue-600 dark:text-blue-400";
+  if (level >= 3) return "text-orange-600 dark:text-orange-400";
   if (level >= 2) return "text-amber-600 dark:text-amber-400";
   return "text-gray-600 dark:text-gray-400";
 }

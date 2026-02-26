@@ -108,7 +108,7 @@ export function FinancialTransactionForm({
           <select
             value={formType}
             onChange={(e) => setFormType(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
           >
             {(mode === "income" ? incomeTypes : expenseTypes).map((t) => (
               <option key={t.value} value={t.value}>
@@ -124,7 +124,7 @@ export function FinancialTransactionForm({
           <select
             value={formSource}
             onChange={(e) => setFormSource(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
           >
             {SOURCE_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>
@@ -146,7 +146,7 @@ export function FinancialTransactionForm({
             onChange={(e) => setFormAmount(e.target.value)}
             placeholder="0"
             min="0"
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
           />
         </div>
         <div>
@@ -157,7 +157,7 @@ export function FinancialTransactionForm({
             type="date"
             value={formDate}
             onChange={(e) => setFormDate(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
           />
         </div>
       </div>
@@ -171,14 +171,14 @@ export function FinancialTransactionForm({
           value={formNotes}
           onChange={(e) => setFormNotes(e.target.value)}
           placeholder="Ghi chú (tùy chọn)"
-          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={saving}
-        className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {saving ? "Đang lưu..." : "Lưu giao dịch"}
       </button>

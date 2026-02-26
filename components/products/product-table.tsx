@@ -181,7 +181,7 @@ export function ProductTable({
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-50 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-1 transition-colors">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-50 group-hover:text-orange-600 dark:group-hover:text-orange-400 line-clamp-1 transition-colors">
                       {product.name}
                     </p>
                     {product.badges && product.badges.length > 0 && (

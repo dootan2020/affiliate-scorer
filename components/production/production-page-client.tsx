@@ -138,7 +138,7 @@ export function ProductionPageClient(): React.ReactElement {
       {/* Bước 1: Chọn sản phẩm */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-sm font-bold">
+          <div className="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 text-sm font-bold">
             1
           </div>
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
@@ -157,7 +157,7 @@ export function ProductionPageClient(): React.ReactElement {
         <button
           onClick={() => void handleGenerate()}
           disabled={selectedIds.length === 0 || generating}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-3 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
+          className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-3 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
         >
           {generating ? (
             <>
@@ -228,8 +228,8 @@ export function ProductionPageClient(): React.ReactElement {
               onClick={() => handleExport("scripts")}
               className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 dark:border-slate-800 hover:border-gray-200 dark:hover:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all"
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="text-left">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-50">Scripts.md</p>

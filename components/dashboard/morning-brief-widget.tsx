@@ -64,14 +64,14 @@ function EmptyState(): React.ReactElement {
         <div className="flex flex-col sm:flex-row gap-2">
           <Link
             href="/sync"
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            className="text-sm text-orange-600 dark:text-orange-400 hover:underline font-medium"
           >
             Đồng bộ sản phẩm
           </Link>
           <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">|</span>
           <Link
             href="/production"
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            className="text-sm text-orange-600 dark:text-orange-400 hover:underline font-medium"
           >
             Sản xuất video
           </Link>
@@ -180,7 +180,7 @@ export function MorningBriefWidget(): React.ReactElement {
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
                       {item.product}
                     </p>
-                    <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded-full">
+                    <span className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950 px-1.5 py-0.5 rounded-full">
                       {item.videos} video
                     </span>
                   </div>

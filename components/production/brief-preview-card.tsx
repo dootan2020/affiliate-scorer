@@ -110,7 +110,7 @@ function AssetCard({ asset }: { asset: Asset }): React.ReactElement {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <Film className="w-4 h-4 text-blue-500" />
+          <Film className="w-4 h-4 text-orange-500" />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
             {asset.format || "Video"}
           </span>
@@ -120,9 +120,9 @@ function AssetCard({ asset }: { asset: Asset }): React.ReactElement {
       </div>
 
       {/* Hook */}
-      <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg px-3 py-2">
+      <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg px-3 py-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-blue-500 font-medium uppercase">{asset.hookType} hook</span>
+          <span className="text-xs text-orange-500 font-medium uppercase">{asset.hookType} hook</span>
           {asset.hookText && <CopyButton text={asset.hookText} />}
         </div>
         <p className="text-sm text-gray-900 dark:text-gray-50 mt-1">{asset.hookText || "—"}</p>
@@ -213,7 +213,7 @@ function AssetCard({ asset }: { asset: Asset }): React.ReactElement {
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {tags.map((tag, i) => (
-            <span key={i} className="text-xs text-blue-500 bg-blue-50 dark:bg-blue-950/20 px-2 py-0.5 rounded-full">
+            <span key={i} className="text-xs text-orange-500 bg-orange-50 dark:bg-orange-950/20 px-2 py-0.5 rounded-full">
               {String(tag)}
             </span>
           ))}

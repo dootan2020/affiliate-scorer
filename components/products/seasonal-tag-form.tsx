@@ -110,7 +110,7 @@ export function SeasonalTagForm({
                 key={p.key}
                 onClick={() => handlePreset(p.key, p.label)}
                 disabled={saving}
-                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-700 dark:hover:text-blue-300 transition-colors shadow-sm"
+                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-950 hover:text-orange-700 dark:hover:text-orange-300 transition-colors shadow-sm"
               >
                 {p.label}
               </button>

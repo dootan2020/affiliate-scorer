@@ -113,7 +113,7 @@ export function MobileNav(): React.ReactElement {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
                       active
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+                        ? "bg-orange-50 text-orange-700 font-medium dark:bg-orange-950/20 dark:text-orange-400"
                         : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
                     )}
                   >
@@ -140,7 +140,7 @@ export function MobileNav(): React.ReactElement {
                 className={cn(
                   "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px]",
                   active
-                    ? "text-blue-600 dark:text-blue-400"
+                    ? "text-orange-600 dark:text-orange-400"
                     : "text-gray-400 dark:text-gray-500"
                 )}
               >

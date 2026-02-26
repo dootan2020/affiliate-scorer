@@ -84,7 +84,7 @@ export function WinProbabilityCard({ productId }: WinProbabilityCardProps): Reac
   }
 
   const rows: ScoreRow[] = [
-    { label: "Thị trường", score: data.market, max: 40, icon: <BarChart3 className="w-4 h-4 text-blue-500" /> },
+    { label: "Thị trường", score: data.market, max: 40, icon: <BarChart3 className="w-4 h-4 text-orange-500" /> },
     { label: "Phù hợp bạn", score: data.personalFit, max: 30, icon: <User className="w-4 h-4 text-purple-500" /> },
     { label: "Timing", score: data.timing, max: 15, icon: <Calendar className="w-4 h-4 text-cyan-500" /> },
     { label: "Rủi ro", score: data.risk, max: 15, icon: <AlertTriangle className="w-4 h-4 text-amber-500" /> },
@@ -97,7 +97,7 @@ export function WinProbabilityCard({ productId }: WinProbabilityCardProps): Reac
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <Target className="w-5 h-5 text-orange-600 dark:text-orange-400" />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Win Probability</span>
         </div>
         <span className={`text-2xl font-bold ${getTextColor(pct)}`}>{pct}%</span>

@@ -79,10 +79,10 @@ export function Sidebar(): React.ReactElement {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-r-xl text-sm transition-colors border-l-[3px]",
                   active
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
-                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+                    ? "border-l-[#E87B35] bg-orange-50 text-orange-700 font-medium dark:border-l-[#FF8F47] dark:bg-orange-950/20 dark:text-orange-400"
+                    : "border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200"
                 )}
               >
                 <Icon className="w-4 h-4 shrink-0" />

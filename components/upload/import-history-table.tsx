@@ -49,7 +49,7 @@ const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   processing: {
     label: "Đang xử lý",
     className:
-      "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+      "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
   },
   pending: {
     label: "Chờ",

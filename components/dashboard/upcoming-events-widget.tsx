@@ -16,7 +16,7 @@ interface UpcomingEvent {
 function getDotColor(daysUntil: number): string {
   if (daysUntil <= 3) return "bg-rose-500";
   if (daysUntil <= 7) return "bg-amber-500";
-  if (daysUntil <= 14) return "bg-blue-500";
+  if (daysUntil <= 14) return "bg-orange-500";
   return "bg-gray-400";
 }
 
@@ -51,7 +51,7 @@ export function UpcomingEventsWidget(): React.ReactElement {
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-blue-500" />
+          <CalendarDays className="w-5 h-5 text-orange-500" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
             Sắp tới
           </h3>

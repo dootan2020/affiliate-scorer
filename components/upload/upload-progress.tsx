@@ -38,7 +38,7 @@ export function UploadProgress({
     <div className="space-y-3 rounded-2xl bg-gray-50 dark:bg-slate-800 p-4">
       {fileName && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
+          <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-300">
             {result?.format === "fastmoss"
               ? "FastMoss"
               : result?.format === "kalodata"
@@ -71,7 +71,7 @@ export function UploadProgress({
           {result.deltaSummary && (
             <div className="flex flex-wrap gap-2 pt-1">
               {result.deltaSummary.NEW > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 dark:bg-orange-950 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
                   🆕 {result.deltaSummary.NEW} mới
                 </span>
               )}

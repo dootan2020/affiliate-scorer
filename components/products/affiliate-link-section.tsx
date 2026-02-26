@@ -130,7 +130,7 @@ export function AffiliateLinkSection({
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
-        <Link2 className="w-5 h-5 text-blue-500" />
+        <Link2 className="w-5 h-5 text-orange-500" />
         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
           Link Affiliate của tôi
         </h3>
@@ -143,14 +143,14 @@ export function AffiliateLinkSection({
           value={link}
           onChange={(e) => setLink(e.target.value)}
           placeholder="https://..."
-          className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+          className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
         />
         {link && (
           <a
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 transition-colors shrink-0"
+            className="flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 hover:border-orange-300 transition-colors shrink-0"
             title="Mở link"
           >
             <ExternalLink className="w-4 h-4" />
@@ -182,7 +182,7 @@ export function AffiliateLinkSection({
         <button
           onClick={handleSaveLink}
           disabled={saving || !link.trim()}
-          className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? "Đang lưu..." : "Cập nhật link"}
         </button>

@@ -101,7 +101,7 @@ export function PlaybookPageClient(): React.ReactElement {
       {/* Stats bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-blue-500" />
+          <BarChart3 className="w-4 h-4 text-orange-500" />
           <span className="text-sm text-gray-500">
             Từ <strong className="text-gray-900 dark:text-gray-50">{data.totalLogged}</strong> videos đã log
           </span>

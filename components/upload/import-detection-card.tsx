@@ -115,7 +115,7 @@ export function ImportDetectionCard({
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
             disabled={isImporting}
-            className="w-full appearance-none rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 pr-10 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none disabled:opacity-50"
+            className="w-full appearance-none rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 pr-10 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none disabled:opacity-50"
           >
             {FILE_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -132,7 +132,7 @@ export function ImportDetectionCard({
         <button
           onClick={() => onConfirm(selectedType)}
           disabled={isImporting}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
         >
           {isImporting ? (
             <Loader2 className="w-4 h-4 animate-spin" />

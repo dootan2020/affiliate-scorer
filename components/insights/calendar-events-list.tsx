@@ -15,8 +15,8 @@ const EVENT_TYPE_BADGE: Record<string, { bg: string; text: string }> = {
     text: "text-amber-700 dark:text-amber-300",
   },
   flash_sale: {
-    bg: "bg-blue-50 dark:bg-blue-950",
-    text: "text-blue-700 dark:text-blue-300",
+    bg: "bg-orange-50 dark:bg-orange-950",
+    text: "text-orange-700 dark:text-orange-300",
   },
   custom: {
     bg: "bg-gray-100 dark:bg-slate-800",
@@ -176,7 +176,7 @@ export function CalendarEventsList({
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => onEdit(event)}
-                      className="p-2 rounded-lg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                      className="p-2 rounded-lg text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                       title="Sua"
                     >
                       <Pencil className="w-4 h-4" />

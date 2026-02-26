@@ -155,7 +155,7 @@ function InsightsPageClientInner(
               </p>
               <Link
                 href="/sync"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all text-sm"
+                className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all text-sm"
               >
                 <Upload className="w-4 h-4" />
                 Di toi Upload

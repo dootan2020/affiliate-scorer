@@ -96,7 +96,7 @@ export function WeeklyReportCard(): React.ReactElement {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-blue-500" />
+          <BarChart3 className="w-5 h-5 text-orange-500" />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
             {report ? `Báo cáo tuần — ${formatDateRange(report.weekStart, report.weekEnd)}` : "Báo cáo tuần"}
           </span>
@@ -104,7 +104,7 @@ export function WeeklyReportCard(): React.ReactElement {
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="inline-flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 font-medium shadow-sm transition-all disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 text-xs bg-orange-600 hover:bg-orange-700 text-white rounded-lg px-3 py-1.5 font-medium shadow-sm transition-all disabled:opacity-50"
         >
           <FileText className={`w-3.5 h-3.5 ${generating ? "animate-pulse" : ""}`} />
           {generating ? "Đang tạo..." : "Tạo báo cáo"}

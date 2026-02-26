@@ -52,7 +52,7 @@ export function OverviewTab({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <ShoppingBag className="w-4 h-4 text-blue-500" />
+            <ShoppingBag className="w-4 h-4 text-orange-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Sản phẩm
             </p>
@@ -115,7 +115,7 @@ export function OverviewTab({
       {/* Upcoming events */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
-          <CalendarDays className="w-5 h-5 text-blue-500" />
+          <CalendarDays className="w-5 h-5 text-orange-500" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
             Sự kiện sắp tới
           </h3>
@@ -134,7 +134,7 @@ export function OverviewTab({
                       : event.daysUntil <= 7
                         ? "bg-amber-500"
                         : event.daysUntil <= 14
-                          ? "bg-blue-500"
+                          ? "bg-orange-500"
                           : "bg-gray-400"
                   }`}
                 />
@@ -183,7 +183,7 @@ export function OverviewTab({
       </div>
 
       {/* Suggestions */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-4 sm:p-6 border border-blue-100 dark:border-slate-700">
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-4 sm:p-6 border border-orange-100 dark:border-slate-700">
         <div className="flex items-center gap-2 mb-4">
           <Lightbulb className="w-5 h-5 text-amber-500" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
@@ -193,7 +193,7 @@ export function OverviewTab({
         <ul className="space-y-2.5">
           {productsWithNotes === 0 && (
             <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-              <Pencil className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+              <Pencil className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
               <span>
                 Thêm ghi chú cho Top 10 SP để theo dõi kinh nghiệm cá
                 nhân
@@ -201,14 +201,14 @@ export function OverviewTab({
             </li>
           )}
           <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-            <Link2 className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+            <Link2 className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
             <span>
               Thêm link affiliate cho SP muốn promote để theo dõi
             </span>
           </li>
           {feedbackCount === 0 && (
             <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-              <Upload className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+              <Upload className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
               <span>
                 Upload kết quả chiến dịch đầu tiên để AI bắt đầu học
               </span>
@@ -216,7 +216,7 @@ export function OverviewTab({
           )}
           {upcomingEvents.length > 0 && (
             <li className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-              <CalendarDays className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+              <CalendarDays className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
               <span>
                 Chuẩn bị content cho{" "}
                 <strong>{upcomingEvents[0].name}</strong> (con{" "}
@@ -228,7 +228,7 @@ export function OverviewTab({
         <div className="mt-4">
           <Link
             href="/inbox"
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-sm text-orange-600 dark:text-orange-400 hover:underline"
           >
             Xem danh sách sản phẩm →
           </Link>

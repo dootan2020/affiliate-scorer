@@ -40,7 +40,7 @@ export function InboxStatsWidget(): React.ReactElement {
         </div>
         <Link
           href="/inbox"
-          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-xs text-orange-600 dark:text-orange-400 hover:underline"
         >
           Xem tất cả →
         </Link>
@@ -48,8 +48,8 @@ export function InboxStatsWidget(): React.ReactElement {
 
       <div className="grid grid-cols-4 gap-2">
         <div className="text-center">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center mx-auto mb-1">
-            <Package className="w-4 h-4 text-blue-500" />
+          <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950 flex items-center justify-center mx-auto mb-1">
+            <Package className="w-4 h-4 text-orange-500" />
           </div>
           <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">
             {stats.new || 0}

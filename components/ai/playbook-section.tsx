@@ -120,13 +120,13 @@ export function PlaybookSection(): React.ReactElement {
           {/* Insights */}
           {insights.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              <p className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
                 Insights
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {insights.map((insight) => (
-                  <div key={insight.label} className="rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 p-3">
-                    <p className="text-xs font-medium text-blue-700 dark:text-blue-300">{insight.label}</p>
+                  <div key={insight.label} className="rounded-xl bg-orange-50/50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/50 p-3">
+                    <p className="text-xs font-medium text-orange-700 dark:text-orange-300">{insight.label}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{insight.detail}</p>
                   </div>
                 ))}

@@ -51,7 +51,7 @@ export function ColumnMapping({
     <div className="space-y-4">
       {/* Header info */}
       <div className="flex items-center gap-3 flex-wrap">
-        <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
+        <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-300">
           {format === "fastmoss"
             ? "FastMoss"
             : format === "kalodata"
@@ -112,7 +112,7 @@ export function ColumnMapping({
                         onChange={(e) =>
                           handleChange(field.key, e.target.value)
                         }
-                        className="w-full appearance-none rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 pr-8 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                        className="w-full appearance-none rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 pr-8 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
                       >
                         <option value="__skip__">-- Bỏ qua --</option>
                         {headers.map((h) => (
@@ -180,7 +180,7 @@ export function ColumnMapping({
         <button
           onClick={() => onConfirm(mapping)}
           disabled={!hasValidName || isImporting}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
         >
           <Check className="w-4 h-4" />
           {isImporting ? "Đang import..." : `Xác nhận import ${totalRows} sản phẩm`}

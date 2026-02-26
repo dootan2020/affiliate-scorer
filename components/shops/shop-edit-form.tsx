@@ -162,7 +162,7 @@ export function ShopEditForm({
             <select
               value={samplePolicy}
               onChange={(e) => setSamplePolicy(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+              className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
             >
               {SAMPLE_POLICY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -182,7 +182,7 @@ export function ShopEditForm({
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Ghi chú về shop..."
-              className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
+              className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none resize-none"
             />
           </div>
 
@@ -191,7 +191,7 @@ export function ShopEditForm({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
               {saving ? "Đang lưu..." : "Lưu thay đổi"}

@@ -141,7 +141,7 @@ function QuickMode(): React.ReactElement {
       {/* URL input */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <Link2 className="w-4 h-4 text-blue-500" />
+          <Link2 className="w-4 h-4 text-orange-500" />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">Link TikTok</span>
         </div>
         <div className="flex gap-2">
@@ -151,12 +151,12 @@ function QuickMode(): React.ReactElement {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && void handleMatch()}
-            className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+            className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
           />
           <button
             onClick={() => void handleMatch()}
             disabled={!url.trim() || matching}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
           >
             {matching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Match"}
           </button>
@@ -211,7 +211,7 @@ function QuickMode(): React.ReactElement {
                   placeholder="0"
                   value={metrics[key]}
                   onChange={(e) => setMetrics({ ...metrics, [key]: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
                 />
               </div>
             ))}
@@ -219,7 +219,7 @@ function QuickMode(): React.ReactElement {
           <button
             onClick={() => void handleSave()}
             disabled={saving || !metrics.views}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Lưu"}
           </button>
@@ -338,12 +338,12 @@ function BatchMode(): React.ReactElement {
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={5}
-          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
+          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none resize-none"
         />
         <button
           onClick={() => void handleParse()}
           disabled={!text.trim() || matching}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
+          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
         >
           {matching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Parse links"}
         </button>
@@ -388,7 +388,7 @@ function BatchMode(): React.ReactElement {
                             [m.assetId!]: { ...batchMetrics[m.assetId!], [key]: e.target.value },
                           })
                         }
-                        className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                        className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
                       />
                     ))}
                   </div>
@@ -400,7 +400,7 @@ function BatchMode(): React.ReactElement {
           <button
             onClick={() => void handleSaveAll()}
             disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Lưu tất cả"}
           </button>

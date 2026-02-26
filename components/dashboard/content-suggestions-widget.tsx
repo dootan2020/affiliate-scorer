@@ -38,14 +38,14 @@ export function ContentSuggestionsWidget(): React.ReactElement {
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-blue-500" />
+          <Sparkles className="w-4 h-4 text-orange-500" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
             Nên tạo content
           </h3>
         </div>
         <Link
           href="/inbox"
-          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-xs text-orange-600 dark:text-orange-400 hover:underline"
         >
           Xem tất cả →
         </Link>
@@ -102,7 +102,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
 
               {/* Score */}
               {item.combinedScore != null && (
-                <span className="shrink-0 inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+                <span className="shrink-0 inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
                   {Number(item.combinedScore).toFixed(1)}
                 </span>
               )}
@@ -110,7 +110,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
               {/* CTA */}
               <Link
                 href={`/production?productId=${item.id}`}
-                className="shrink-0 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 whitespace-nowrap transition-colors"
+                className="shrink-0 text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 whitespace-nowrap transition-colors"
               >
                 Tạo Brief →
               </Link>

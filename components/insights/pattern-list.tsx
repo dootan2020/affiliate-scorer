@@ -27,7 +27,7 @@ const CATEGORY_COLORS: Record<PatternCategory, string> = {
   Commission: "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300",
   Trending: "bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300",
   Price: "bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300",
-  Content: "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300",
+  Content: "bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300",
   Platform: "bg-pink-50 dark:bg-pink-950 text-pink-700 dark:text-pink-300",
   General: "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300",
 };

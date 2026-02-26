@@ -64,14 +64,14 @@ export function CalendarTab(): React.ReactElement {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-blue-500" />
+          <CalendarDays className="w-5 h-5 text-orange-500" />
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
             Lịch sự kiện
           </h2>
         </div>
         <button
           onClick={openCreateForm}
-          className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
+          className="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
         >
           <Plus className="w-4 h-4" />
           Thêm sự kiện

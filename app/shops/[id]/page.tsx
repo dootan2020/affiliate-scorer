@@ -105,11 +105,11 @@ export default async function ShopDetailPage({
 
       {/* Shop header */}
       <div className="flex items-start gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
-          <Store className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+        <div className="w-14 h-14 rounded-2xl bg-orange-50 dark:bg-orange-950 flex items-center justify-center shrink-0">
+          <Store className="w-7 h-7 text-orange-600 dark:text-orange-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+          <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
             {shop.name}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">

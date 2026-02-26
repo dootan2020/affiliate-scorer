@@ -10,7 +10,7 @@ export default function ProductionPage(): React.ReactElement {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+        <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
           Sản xuất Content
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

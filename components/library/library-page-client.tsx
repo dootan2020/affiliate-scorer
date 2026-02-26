@@ -103,7 +103,7 @@ export function LibraryPageClient(): React.ReactElement {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+          <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
             Thư viện nội dung
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">

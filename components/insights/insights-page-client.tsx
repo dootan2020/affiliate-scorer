@@ -103,7 +103,7 @@ function InsightsPageClientInner(
 
       {activeTab === "feedback" && (
         <section className="space-y-4">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+          <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
             Lịch sử Feedback ({props.feedbackTable.length} bản ghi)
           </h2>
           {props.feedbackTable.length > 0 ? (
@@ -167,7 +167,7 @@ function InsightsPageClientInner(
 
       {activeTab === "playbook" && (
         <section className="space-y-4">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+          <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
             Playbook — Patterns tích luỹ từ dữ liệu
           </h2>
           <PlaybookPageClient />
@@ -179,7 +179,7 @@ function InsightsPageClientInner(
           {props.latestLog ? (
             <>
               <section className="space-y-4">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+                <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
                   Kết quả Learning — Tuần {props.latestLog.weekNumber}
                 </h2>
                 <WeeklyReport
@@ -202,7 +202,7 @@ function InsightsPageClientInner(
               </section>
 
               <section className="space-y-4">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+                <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
                   Patterns phát hiện ({props.latestLog.patternsFound.length})
                 </h2>
                 <PatternList patterns={props.latestLog.patternsFound} />

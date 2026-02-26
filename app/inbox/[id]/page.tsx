@@ -188,7 +188,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
       <div className="flex items-start gap-4">
         <ProductImage src={product.imageUrl} alt={product.name} size={80} className="w-20 h-20 rounded-xl" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50 leading-tight">
+          <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50 leading-tight">
             {product.name}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

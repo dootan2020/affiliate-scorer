@@ -65,7 +65,7 @@ export function CalendarTab(): React.ReactElement {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-orange-500" />
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+          <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
             Lịch sự kiện
           </h2>
         </div>

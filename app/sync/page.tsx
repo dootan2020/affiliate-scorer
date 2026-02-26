@@ -139,7 +139,7 @@ export default function SyncPage(): React.ReactElement {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+        <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
           Đồng bộ dữ liệu
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -154,7 +154,7 @@ export default function SyncPage(): React.ReactElement {
             <Search className="w-5 h-5 text-blue-500" />
           </div>
           <div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+            <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
               Nghiên cứu sản phẩm
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -210,7 +210,7 @@ export default function SyncPage(): React.ReactElement {
             <TrendingUp className="w-5 h-5 text-purple-500" />
           </div>
           <div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+            <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
               TikTok Studio Analytics
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -229,7 +229,7 @@ export default function SyncPage(): React.ReactElement {
             <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
               <History className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">
+            <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
               Lịch sử import
             </h2>
           </div>

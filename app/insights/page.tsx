@@ -163,7 +163,7 @@ export default async function InsightsPage(): Promise<React.ReactElement> {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+          <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
             AI Insights
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -190,7 +190,7 @@ export default async function InsightsPage(): Promise<React.ReactElement> {
 
       {/* Phase 4: AI Intelligence */}
       <div className="space-y-6 mt-8">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50">AI Intelligence</h2>
+        <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">AI Intelligence</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ConfidenceWidget />
           <WeeklyReportCard />

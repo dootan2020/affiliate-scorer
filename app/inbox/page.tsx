@@ -91,7 +91,7 @@ export default function InboxPage(): React.ReactElement {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+          <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
             Inbox
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

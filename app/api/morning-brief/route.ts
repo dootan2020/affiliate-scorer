@@ -20,22 +20,77 @@ const PRIORITY_ORDER: Record<string, number> = {
   routine: 3,
 };
 
+// In-memory cache: 5-minute TTL
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let briefCache: { data: unknown; timestamp: number } | null = null;
+
 export async function GET(): Promise<NextResponse> {
+  // Return cached response if still fresh
+  if (briefCache && Date.now() - briefCache.timestamp < CACHE_TTL_MS) {
+    return NextResponse.json(briefCache.data, {
+      headers: { "X-Cache": "HIT" },
+    });
+  }
+
   try {
     const now = new Date();
     const items: BriefItem[] = [];
 
-    // 1. Top products to create content for (scored, not yet briefed)
-    const topProducts = await prisma.productIdentity.findMany({
-      where: {
-        inboxState: "scored",
-        combinedScore: { not: null },
-      },
-      orderBy: { combinedScore: "desc" },
-      take: 5,
-      select: { id: true, title: true, combinedScore: true },
-    });
+    // Pre-compute week boundaries
+    const sevenDaysLater = new Date(now);
+    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(now);
+    weekStart.setDate(weekStart.getDate() + mondayOffset);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    // Run ALL independent queries in parallel
+    const [
+      topProducts,
+      upcomingEvents,
+      anomalyItems,
+      newProductItems,
+      weekRecords,
+      currentGoal,
+      accountStats,
+      confidence,
+    ] = await Promise.all([
+      prisma.productIdentity.findMany({
+        where: { inboxState: "scored", combinedScore: { not: null } },
+        orderBy: { combinedScore: "desc" },
+        take: 5,
+        select: { id: true, title: true, combinedScore: true },
+      }),
+      prisma.calendarEvent.findMany({
+        where: {
+          OR: [
+            { startDate: { gte: now, lte: sevenDaysLater } },
+            { prepStartDate: { gte: now, lte: sevenDaysLater } },
+          ],
+        },
+        orderBy: { startDate: "asc" },
+      }),
+      getAnomalyItems(),
+      getNewProductItems(now),
+      prisma.financialRecord.findMany({
+        where: { date: { gte: weekStart, lt: weekEnd } },
+      }),
+      prisma.goalP5.findFirst({
+        where: { periodStart: { lte: now }, periodEnd: { gte: now } },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.accountDailyStat.findMany({
+        where: { date: { gte: weekStart, lt: weekEnd } },
+        orderBy: { date: "desc" },
+      }),
+      calculateConfidence(),
+    ]);
+
+    // Build brief items from query results
     if (topProducts.length > 0) {
       const names = topProducts
         .map((p) => (p.title ?? "SP").substring(0, 20))
@@ -47,20 +102,6 @@ export async function GET(): Promise<NextResponse> {
         actionHref: "/production",
       });
     }
-
-    // 2. Upcoming events within 7 days
-    const sevenDaysLater = new Date(now);
-    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-
-    const upcomingEvents = await prisma.calendarEvent.findMany({
-      where: {
-        OR: [
-          { startDate: { gte: now, lte: sevenDaysLater } },
-          { prepStartDate: { gte: now, lte: sevenDaysLater } },
-        ],
-      },
-      orderBy: { startDate: "asc" },
-    });
 
     for (const event of upcomingEvents) {
       const eventStart = new Date(event.startDate);
@@ -75,27 +116,9 @@ export async function GET(): Promise<NextResponse> {
       });
     }
 
-    // 3. AI anomaly detection & new product discovery
-    const [anomalyItems, newProductItems] = await Promise.all([
-      getAnomalyItems(),
-      getNewProductItems(now),
-    ]);
     items.push(...anomalyItems, ...newProductItems);
 
-    // 4. Weekly financial summary (Mon to Sun)
-    const dayOfWeek = now.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const weekStart = new Date(now);
-    weekStart.setDate(weekStart.getDate() + mondayOffset);
-    weekStart.setHours(0, 0, 0, 0);
-
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-
-    const weekRecords = await prisma.financialRecord.findMany({
-      where: { date: { gte: weekStart, lt: weekEnd } },
-    });
-
+    // Financial summary
     const weekSpend = weekRecords
       .filter((r) => r.type === "ads_spend")
       .reduce((sum, r) => sum + r.amount, 0);
@@ -104,12 +127,7 @@ export async function GET(): Promise<NextResponse> {
       .reduce((sum, r) => sum + r.amount, 0);
     const weekProfit = weekRevenue - weekSpend;
 
-    // 5. Current goal progress (GoalP5)
-    const currentGoal = await prisma.goalP5.findFirst({
-      where: { periodStart: { lte: now }, periodEnd: { gte: now } },
-      orderBy: { createdAt: "desc" },
-    });
-
+    // Goal progress
     let goalData: {
       periodType: string;
       targetVideos: number | null;
@@ -137,12 +155,7 @@ export async function GET(): Promise<NextResponse> {
       };
     }
 
-    // 6. Account stats summary (last 7 days from TikTok Studio)
-    const accountStats = await prisma.accountDailyStat.findMany({
-      where: { date: { gte: weekStart, lt: weekEnd } },
-      orderBy: { date: "desc" },
-    });
-
+    // Account stats
     const accountSummary = accountStats.length > 0
       ? {
           totalViews: accountStats.reduce((s, r) => s + r.videoViews, 0),
@@ -153,7 +166,7 @@ export async function GET(): Promise<NextResponse> {
         }
       : null;
 
-    // 7. Sort by priority and build response
+    // Sort by priority
     items.sort(
       (a, b) =>
         (PRIORITY_ORDER[a.priority] ?? 99) -
@@ -167,9 +180,7 @@ export async function GET(): Promise<NextResponse> {
       weekProfit: Math.round(weekProfit),
     };
 
-    const confidence = await calculateConfidence();
-
-    return NextResponse.json({
+    const responseData = {
       data: {
         items,
         summary,
@@ -178,6 +189,13 @@ export async function GET(): Promise<NextResponse> {
         confidenceLevel: confidence.level,
         confidenceLabel: confidence.label,
       },
+    };
+
+    // Cache the response
+    briefCache = { data: responseData, timestamp: Date.now() };
+
+    return NextResponse.json(responseData, {
+      headers: { "X-Cache": "MISS" },
     });
   } catch (error) {
     const message =

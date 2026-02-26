@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 
 export interface InboxIdentity {
   id: string;
+  canonicalUrl: string | null;
+  productIdExternal: string | null;
   title: string | null;
   shopName: string | null;
   category: string | null;
@@ -93,7 +95,9 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
             {items.map((item, idx) => {
               const aiScore = item.product?.aiScore ?? null;
               const imageUrl = item.imageUrl ?? item.product?.imageUrl ?? null;
-              const name = item.title ?? "(Chưa có tên)";
+              const name = item.title
+                ?? (item.productIdExternal ? `SP #${item.productIdExternal.slice(-8)}` : null)
+                ?? "(Chưa bổ sung)";
               const contentScore = item.contentPotentialScore ? parseFloat(item.contentPotentialScore) : null;
 
               return (
@@ -119,9 +123,11 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate group-hover/link:text-orange-600 dark:group-hover/link:text-orange-400 transition-colors">
                           {name}
                         </p>
-                        {item.category && (
+                        {item.category ? (
                           <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{item.category}</p>
-                        )}
+                        ) : item.inboxState === "new" ? (
+                          <p className="text-xs text-amber-500 dark:text-amber-400">Chưa bổ sung — bấm ⋯ để enrich</p>
+                        ) : null}
                       </div>
                     </Link>
                   </td>

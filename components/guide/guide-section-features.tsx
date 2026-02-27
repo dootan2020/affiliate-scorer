@@ -49,14 +49,30 @@ export function GuideSectionFeatures(): React.ReactElement {
       {/* Sản xuất */}
       <section id="san-xuat">
         <h2>7. Sản xuất</h2>
-        <p>Nơi tạo brief nội dung bằng AI.</p>
-        <ol>
-          <li>Chọn SP (từ Hộp sản phẩm hoặc bấm &ldquo;Tạo Brief &rarr;&rdquo; ở Tổng quan)</li>
-          <li>Bấm <strong>Tạo Brief AI</strong></li>
-          <li>AI tạo: 3 câu mở đầu (hook), kịch bản chi tiết (15-60s), góc quay gợi ý, hashtags, CTA</li>
-          <li>Đọc brief &rarr; chọn hook &rarr; quay video</li>
-        </ol>
-        <p><strong>Mẹo:</strong> Dùng Sonnet hoặc Opus cho brief sáng tạo hơn. Tạo nhiều brief cho cùng 1 SP &rarr; chọn brief hay nhất.</p>
+        <p>Trung tâm sản xuất video — từ chọn sản phẩm đến xuất packs quay. Gồm 3 tab:</p>
+
+        <h3>Tab &ldquo;Đang sản xuất&rdquo; (mặc định)</h3>
+        <p>Hiện tất cả brief đang thực hiện. Mỗi brief gồm:</p>
+        <ul>
+          <li><strong>Thông tin SP:</strong> Ảnh, tên, giá, đánh giá shop, lượt bán, điểm tiềm năng</li>
+          <li><strong>3 link SP:</strong> TikTok Shop, FastMoss SP, FastMoss Shop (mở tab mới)</li>
+          <li><strong>Copy nhanh từng scene:</strong> Nút <code>Kling</code> / <code>Veo3</code> để copy prompt cho từng cảnh quay</li>
+          <li><strong>Copy script &amp; caption:</strong> Nút <code>Copy script</code>, <code>Copy tất cả</code> (caption + hashtags)</li>
+          <li><strong>Trạng thái video:</strong> Chưa quay → Đã quay → Đang edit → Đã đăng (hoặc Bỏ)</li>
+          <li><strong>Xuất Packs:</strong> 3 file — Scripts (markdown), Prompts (JSON cho Kling/Veo3), Checklist (CSV)</li>
+        </ul>
+
+        <h3>Tab &ldquo;Tạo mới&rdquo;</h3>
+        <p>Chọn SP có điểm tiềm năng từ Hộp sản phẩm → bấm <strong>Tạo Brief AI</strong>. AI tạo: câu mở đầu (hook), kịch bản chi tiết, prompt quay cho Kling/Veo3, caption, hashtags, CTA. Brief tự động lưu vào DB — không mất khi rời trang.</p>
+
+        <h3>Tab &ldquo;Đã hoàn thành&rdquo;</h3>
+        <p>Brief đã đăng video hoặc đã thay thế. Dùng để xem lại lịch sử.</p>
+
+        <h3>Tạo lại brief</h3>
+        <p>Brief không tốt? Bấm <strong>Tạo lại</strong> trên brief card. Brief cũ chuyển sang &ldquo;Đã hoàn thành&rdquo; với badge <em>(Đã thay thế)</em>, brief mới thay vào.</p>
+        <GuideCallout variant="tip">
+          Giới hạn: 3 lần tạo lại mỗi SP/ngày. Đổi model AI tại Cài đặt nếu muốn brief sáng tạo hơn.
+        </GuideCallout>
       </section>
 
       {/* Nhật ký */}

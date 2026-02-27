@@ -12,12 +12,12 @@ export function GuideWorkflowsPart2(): React.ReactElement {
       <div id="wf-brief">
         <h3>3.7 Tạo Brief nội dung bằng AI</h3>
         <FlowDiagram
-          description="Quy trình từ chọn sản phẩm đến có brief hoàn chỉnh."
+          description="Quy trình từ chọn sản phẩm đến sản xuất video."
           steps={[
-            { icon: MousePointer, title: "Chọn sản phẩm", description: "Từ Hộp SP (điểm cao) hoặc từ Tổng quan", type: "user", location: "Hộp SP" },
-            { icon: Play, title: "Bấm Tạo Brief", description: "Chờ 5-15 giây", type: "user", location: "Sản xuất" },
-            { icon: Sparkles, title: "AI tạo nội dung", items: ["3 câu mở đầu (hook)", "Kịch bản chi tiết", "Góc quay & Hashtags", "Kêu gọi hành động"], type: "ai" },
-            { icon: FileText, title: "Đọc & chọn", description: "Chọn hook hay nhất → Dùng kịch bản để quay", type: "output", location: "Sản xuất" },
+            { icon: MousePointer, title: "Chọn SP", description: "Tab Tạo mới → chọn SP điểm cao", type: "user", location: "Sản xuất" },
+            { icon: Play, title: "Tạo Brief AI", description: "Brief lưu vào DB, không mất khi rời trang", type: "user", location: "Sản xuất" },
+            { icon: Sparkles, title: "AI tạo nội dung", items: ["Hook + kịch bản", "Prompt Kling/Veo3 từng scene", "Caption + Hashtags + CTA"], type: "ai" },
+            { icon: FileText, title: "Copy & quay", description: "Copy prompt từng scene → Quay/render → Cập nhật trạng thái", type: "output", location: "Sản xuất" },
           ]}
         />
       </div>

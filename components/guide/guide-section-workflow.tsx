@@ -29,9 +29,10 @@ export function GuideSectionWorkflow(): React.ReactElement {
 
       <h3>Buổi chiều — Sản xuất video</h3>
       <ul>
-        <li>Vào <strong>Sản xuất</strong> &rarr; chọn sản phẩm &rarr; <strong>Tạo Brief AI</strong></li>
-        <li>Brief gồm: 3 câu mở đầu (hook), kịch bản chi tiết, góc quay gợi ý, hashtags</li>
-        <li>Quay video theo brief</li>
+        <li>Vào <strong>Sản xuất</strong> → tab <strong>Tạo mới</strong> → chọn SP điểm cao → <strong>Tạo Brief AI</strong></li>
+        <li>Chuyển sang tab <strong>Đang sản xuất</strong> → copy prompt Kling/Veo3 cho từng scene</li>
+        <li>Quay/render video → cập nhật trạng thái (Đã quay → Đang edit → Đã đăng)</li>
+        <li>Copy caption + hashtags → đăng TikTok</li>
       </ul>
       <p>Ví dụ brief:</p>
       <pre><code>{`Hook 1: "Bạn có biết vòng chu sa ngũ lộ là gì không?"

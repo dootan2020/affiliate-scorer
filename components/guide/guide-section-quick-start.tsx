@@ -39,8 +39,8 @@ export function GuideSectionQuickStart(): React.ReactElement {
 
       <h3>Bước 4: Tạo brief đầu tiên</h3>
       <p>
-        Hộp sản phẩm &rarr; chọn SP điểm cao &rarr; bấm <strong>Tạo Brief</strong> &rarr;
-        AI tạo kịch bản, câu mở đầu, góc quay cho video TikTok.
+        Sản xuất &rarr; tab <strong>Tạo mới</strong> &rarr; chọn SP điểm cao &rarr; bấm <strong>Tạo Brief AI</strong>.
+        Brief tự lưu vào tab <strong>Đang sản xuất</strong> — không mất khi rời trang.
       </p>
     </section>
   );

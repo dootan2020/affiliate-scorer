@@ -3,7 +3,27 @@ import { GuideCallout } from "./guide-callout";
 export function GuideSectionAiConfig(): React.ReactElement {
   return (
     <section id="cau-hinh-ai">
-      <h2>10. Cấu hình AI khuyến nghị</h2>
+      <h2>10. Cấu hình AI</h2>
+      <p>Mọi tính năng AI (chấm điểm, tạo brief, bản tin sáng, báo cáo tuần) đều cần cấu hình trước khi dùng.</p>
+
+      <h3>Cách cấu hình</h3>
+      <ol>
+        <li>Vào <strong>Cài đặt → API Keys</strong> → thêm ít nhất 1 khóa API (Anthropic, OpenAI, hoặc Google)</li>
+        <li>Bấm <strong>Kiểm tra kết nối</strong> → phải hiện &ldquo;Đã kết nối&rdquo;</li>
+        <li>Vào <strong>Cài đặt → AI Models</strong> → chọn model cho từng tác vụ:
+          <ul>
+            <li><strong>Chấm điểm SP</strong> (scoring)</li>
+            <li><strong>Tạo Brief</strong> (content_brief)</li>
+            <li><strong>Bản tin sáng</strong> (morning_brief)</li>
+            <li><strong>Báo cáo tuần</strong> (weekly_report)</li>
+          </ul>
+        </li>
+      </ol>
+      <GuideCallout variant="warning">
+        Nếu chưa cấu hình, app sẽ báo lỗi &ldquo;Chưa cấu hình AI model&rdquo; khi dùng bất kỳ tính năng AI nào. Không có model mặc định — bạn phải tự chọn.
+      </GuideCallout>
+
+      <h3>Preset khuyến nghị</h3>
       <p>3 preset tùy nhu cầu:</p>
 
       <h3>Nhanh &amp; Tiết kiệm — Cho người mới</h3>

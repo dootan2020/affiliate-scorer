@@ -11,9 +11,10 @@ export function GuideSectionFaq(): React.ReactElement {
 
       <h3>Brief AI không hay, quá chung chung?</h3>
       <ul>
-        <li>Đổi mô hình sang Sonnet 4.5 hoặc Opus 4.6 tại Cài đặt</li>
+        <li>Bấm <strong>Tạo lại</strong> trên brief card (tối đa 3 lần/SP/ngày)</li>
+        <li>Đổi mô hình sang Sonnet 4.5 hoặc Opus 4.6 tại Cài đặt → AI Models</li>
         <li>SP có mô tả chi tiết hơn → brief hay hơn</li>
-        <li>Thử tạo 2-3 brief và kết hợp phần hay nhất</li>
+        <li>Kết hợp phần hay nhất từ nhiều brief khác nhau</li>
       </ul>
 
       <h3>Upload FastMoss bị lỗi?</h3>

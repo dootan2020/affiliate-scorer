@@ -40,6 +40,29 @@ function ComplianceBadge({ status }: { status: string | null }): React.ReactElem
   );
 }
 
+const CONTENT_TYPE_BADGE: Record<string, { label: string; cls: string }> = {
+  entertainment: { label: "Giải trí", cls: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/30" },
+  education: { label: "Giáo dục", cls: "text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/30" },
+  review: { label: "Review", cls: "text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-950/30" },
+  selling: { label: "Bán hàng", cls: "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30" },
+};
+
+const FORMAT_LABELS: Record<string, string> = {
+  before_after: "Before/After",
+  product_showcase: "Product Showcase",
+  slideshow_voiceover: "Slideshow + VO",
+  tutorial_steps: "Tutorial Steps",
+  comparison: "Comparison",
+  trending_hook: "Trending Hook",
+};
+
+const SOUND_LABELS: Record<string, string> = {
+  upbeat: "Upbeat / Vui tươi",
+  calm: "Calm / Nhẹ nhàng",
+  dramatic: "Dramatic / Mạnh mẽ",
+  trending: "Trending / Viral sound",
+};
+
 export function AssetCardWithStatus({ asset, onStatusChange }: Props): React.ReactElement {
   const [expanded, setExpanded] = useState(false);
   const [showPrompts, setShowPrompts] = useState(false);
@@ -47,6 +70,10 @@ export function AssetCardWithStatus({ asset, onStatusChange }: Props): React.Rea
 
   const scenes: Scene[] = Array.isArray(asset.videoPrompts) ? asset.videoPrompts : [];
   const tags: string[] = Array.isArray(asset.hashtags) ? asset.hashtags : [];
+
+  const allKling = scenes.map((s) => s.prompt_kling).filter(Boolean).join("\n\n");
+  const allVeo3 = scenes.map((s) => s.prompt_veo3).filter(Boolean).join("\n\n");
+  const ctBadge = asset.contentType ? CONTENT_TYPE_BADGE[asset.contentType] : null;
 
   const captionWithHashtags = [
     asset.captionText || "",
@@ -77,12 +104,22 @@ export function AssetCardWithStatus({ asset, onStatusChange }: Props): React.Rea
     <div className="border border-gray-100 dark:border-slate-800 rounded-xl p-4 space-y-3">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Film className="w-4 h-4 text-orange-500" />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            {asset.format || "Video"}
+            {asset.videoFormat ? (FORMAT_LABELS[asset.videoFormat] ?? asset.videoFormat) : (asset.format || "Video")}
           </span>
           <span className="text-xs text-gray-400">{asset.assetCode}</span>
+          {ctBadge && (
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${ctBadge.cls}`}>
+              {ctBadge.label}
+            </span>
+          )}
+          {asset.targetDuration && (
+            <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
+              {asset.targetDuration}s
+            </span>
+          )}
         </div>
         <ComplianceBadge status={asset.complianceStatus} />
       </div>
@@ -125,13 +162,17 @@ export function AssetCardWithStatus({ asset, onStatusChange }: Props): React.Rea
       {/* Video Prompts — per-scene copy buttons */}
       {scenes.length > 0 && (
         <div>
-          <button
-            onClick={() => setShowPrompts(!showPrompts)}
-            className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
-          >
-            {showPrompts ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-            Video Prompts ({scenes.length} scenes)
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPrompts(!showPrompts)}
+              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
+            >
+              {showPrompts ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              Video Prompts ({scenes.length} scenes)
+            </button>
+            {allKling && <CopyButton text={allKling} label="All Kling" />}
+            {allVeo3 && <CopyButton text={allVeo3} label="All Veo3" />}
+          </div>
           {showPrompts && (
             <div className="mt-2 space-y-2">
               {scenes.map((scene) => (
@@ -189,10 +230,17 @@ export function AssetCardWithStatus({ asset, onStatusChange }: Props): React.Rea
         </div>
       )}
 
-      {/* CTA */}
-      <p className="text-xs text-gray-500">
-        <span className="font-medium">CTA:</span> {asset.ctaText || "—"}
-      </p>
+      {/* CTA + Sound style */}
+      <div className="flex items-center gap-4">
+        <p className="text-xs text-gray-500">
+          <span className="font-medium">CTA:</span> {asset.ctaText || "—"}
+        </p>
+        {asset.soundStyle && (
+          <p className="text-xs text-gray-500">
+            <span className="font-medium">Sound:</span> {SOUND_LABELS[asset.soundStyle] ?? asset.soundStyle}
+          </p>
+        )}
+      </div>
 
       {/* Compliance notes */}
       {asset.complianceNotes && (

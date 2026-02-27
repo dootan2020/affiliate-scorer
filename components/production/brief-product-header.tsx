@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, RefreshCw, Star, ShoppingBag, Loader2 } from "lucide-react";
+import { ExternalLink, RefreshCw, Star, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/ui/copy-button";
+import { ProductImage } from "@/components/products/product-image";
 import type { BriefProductInfo, ProductLinks } from "@/lib/types/production";
 
 interface Props {
@@ -68,17 +69,12 @@ export function BriefProductHeader({
   return (
     <div className="flex gap-3 pb-3 border-b border-gray-100 dark:border-slate-800">
       {/* Product image */}
-      {product.imageUrl ? (
-        <img
-          src={product.imageUrl}
-          alt={product.title || "SP"}
-          className="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-gray-100 dark:bg-slate-800"
-        />
-      ) : (
-        <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-          <ShoppingBag className="w-6 h-6 text-gray-400" />
-        </div>
-      )}
+      <ProductImage
+        src={product.imageUrl}
+        alt={product.title || "SP"}
+        size={64}
+        className="rounded-xl"
+      />
 
       <div className="flex-1 min-w-0">
         {/* Title + price */}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search, Check, Package } from "lucide-react";
+import { ProductImage } from "@/components/products/product-image";
 
 interface ProductIdentityItem {
   id: string;
@@ -136,6 +137,14 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
               >
                 {isSelected && <Check className="w-3 h-3" />}
               </div>
+
+              {/* Thumbnail */}
+              <ProductImage
+                src={p.imageUrl}
+                alt={p.title || "SP"}
+                size={36}
+                className="rounded-lg"
+              />
 
               {/* Info */}
               <div className="flex-1 min-w-0">

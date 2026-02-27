@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Download,
+  FileText,
+  FileJson,
+  FileSpreadsheet,
+  Loader2,
+} from "lucide-react";
 import { CopyButton } from "@/components/ui/copy-button";
 import { BriefProductHeader } from "./brief-product-header";
 import { AssetCardWithStatus } from "./asset-card-with-status";
@@ -13,6 +21,7 @@ interface Props {
   todayBriefCount?: number;
   collapsed?: boolean;
   showReplacedBadge?: boolean;
+  showExport?: boolean;
 }
 
 export function BriefPreviewCard({
@@ -21,16 +30,44 @@ export function BriefPreviewCard({
   todayBriefCount = 0,
   collapsed = false,
   showReplacedBadge = false,
+  showExport = false,
 }: Props): React.ReactElement {
   const [showAngles, setShowAngles] = useState(false);
   const [showAllHooks, setShowAllHooks] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
   const [assets, setAssets] = useState(brief.assets);
+  const [batchId, setBatchId] = useState<string | null>(null);
+  const [creatingBatch, setCreatingBatch] = useState(false);
 
   function handleAssetStatusChange(assetId: string, newStatus: VideoStatus): void {
     setAssets((prev) =>
       prev.map((a) => (a.id === assetId ? { ...a, status: newStatus } : a)),
     );
+  }
+
+  async function handleExport(type: "scripts" | "prompts" | "checklist"): Promise<void> {
+    let id = batchId;
+    if (!id) {
+      setCreatingBatch(true);
+      try {
+        const assetIds = assets.map((a) => a.id);
+        const res = await fetch("/api/production/create-batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assetIds }),
+        });
+        const json = (await res.json()) as { data?: { id: string } };
+        id = json.data?.id ?? null;
+        if (id) setBatchId(id);
+      } catch {
+        // silent
+      } finally {
+        setCreatingBatch(false);
+      }
+    }
+    if (id) {
+      window.open(`/api/production/${id}/export?type=${type}`, "_blank");
+    }
   }
 
   return (
@@ -123,6 +160,40 @@ export function BriefPreviewCard({
               />
             ))}
           </div>
+
+          {/* Export packs */}
+          {showExport && assets.length > 0 && (
+            <div className="pt-3 border-t border-gray-100 dark:border-slate-800">
+              <div className="flex items-center gap-2 mb-2">
+                <Download className="w-4 h-4 text-gray-400" />
+                <span className="text-xs font-medium text-gray-500">Tải Packs sản xuất</span>
+                {creatingBatch && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => void handleExport("scripts")}
+                  disabled={creatingBatch}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors disabled:opacity-50"
+                >
+                  <FileText className="w-3.5 h-3.5 text-orange-500" /> Scripts.md
+                </button>
+                <button
+                  onClick={() => void handleExport("prompts")}
+                  disabled={creatingBatch}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors disabled:opacity-50"
+                >
+                  <FileJson className="w-3.5 h-3.5 text-purple-500" /> Prompts.json
+                </button>
+                <button
+                  onClick={() => void handleExport("checklist")}
+                  disabled={creatingBatch}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors disabled:opacity-50"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" /> Checklist.csv
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

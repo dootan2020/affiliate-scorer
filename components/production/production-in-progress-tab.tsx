@@ -117,6 +117,7 @@ export function ProductionInProgressTab({ onSwitchToCreate }: Props): React.Reac
                 brief={brief}
                 onRegenerate={() => handleRegenerate(brief.id)}
                 todayBriefCount={todayCounts.get(brief.productIdentity.id) || 0}
+                showExport
               />
             ))}
           </div>

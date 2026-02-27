@@ -34,6 +34,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
               sales7d: true,
               totalKOL: true,
               imageUrl: true,
+              shopRating: true,
+              salesTotal: true,
             },
           },
           urls: { select: { url: true, urlType: true } },

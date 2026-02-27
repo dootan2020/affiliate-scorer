@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Check, Package } from "lucide-react";
+import { Search, Check, Package, Star } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 
 interface ProductIdentityItem {
@@ -10,8 +10,13 @@ interface ProductIdentityItem {
   category: string | null;
   price: number | null;
   imageUrl: string | null;
-  contentScore: number | null;
+  combinedScore: number | null;
+  contentPotentialScore: number | null;
   inboxState: string | null;
+  product: {
+    shopRating: number | null;
+    salesTotal: number | null;
+  } | null;
 }
 
 interface Props {
@@ -38,8 +43,8 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
           )
         );
         const merged = responses.flatMap((j) => j.data || []);
-        // Sort by contentScore desc
-        merged.sort((a, b) => (b.contentScore ?? 0) - (a.contentScore ?? 0));
+        // Sort by combinedScore desc
+        merged.sort((a, b) => (Number(b.combinedScore) || 0) - (Number(a.combinedScore) || 0));
         setProducts(merged);
       } catch {
         // ignore
@@ -73,6 +78,13 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
     if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1)}M`;
     if (price >= 1_000) return `${Math.round(price / 1_000)}K`;
     return price.toLocaleString("vi-VN") + "đ";
+  }
+
+  function formatSales(n: number | null | undefined): string {
+    if (!n) return "";
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+    return n.toString();
   }
 
   if (loading) {
@@ -151,24 +163,42 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
                   {p.title || "Chưa có tên"}
                 </p>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   <span className="text-xs text-gray-400">{p.category || "—"}</span>
                   <span className="text-xs text-gray-300 dark:text-slate-600">·</span>
                   <span className="text-xs text-gray-500">{formatPrice(p.price)}</span>
+                  {p.product?.shopRating != null && p.product.shopRating > 0 && (
+                    <>
+                      <span className="text-xs text-gray-300 dark:text-slate-600">·</span>
+                      <span className="inline-flex items-center gap-0.5 text-xs text-amber-600 dark:text-amber-400">
+                        <Star className="w-3 h-3 fill-current" />
+                        {p.product.shopRating.toFixed(1)}
+                      </span>
+                    </>
+                  )}
+                  {p.product?.salesTotal != null && p.product.salesTotal > 0 && (
+                    <>
+                      <span className="text-xs text-gray-300 dark:text-slate-600">·</span>
+                      <span className="text-xs text-gray-500">
+                        {formatSales(p.product.salesTotal)} đã bán
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Score */}
-              {p.contentScore != null && (
-                <div className="flex-shrink-0 text-right">
-                  <span className={`text-sm font-semibold ${
-                    p.contentScore >= 80 ? "text-emerald-600 dark:text-emerald-400" :
-                    p.contentScore >= 60 ? "text-amber-600 dark:text-amber-400" :
-                    "text-gray-500"
+              {/* Combined Score badge */}
+              {p.combinedScore != null && (
+                <div className="flex-shrink-0">
+                  <span className={`inline-flex items-center gap-0.5 text-xs font-bold px-2 py-1 rounded-lg ${
+                    Number(p.combinedScore) >= 80
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                      : Number(p.combinedScore) >= 60
+                        ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                        : "bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-gray-400"
                   }`}>
-                    {p.contentScore}
+                    🔥 {Number(p.combinedScore).toFixed(0)}
                   </span>
-                  <p className="text-[10px] text-gray-400 uppercase">Content</p>
                 </div>
               )}
             </button>

@@ -5,6 +5,22 @@ import { callAI } from "@/lib/ai/call-ai";
 import { prisma } from "@/lib/db";
 import { checkCompliance } from "./compliance";
 
+export interface ChannelContext {
+  channelId: string;
+  personaName: string;
+  personaDesc: string;
+  voiceStyle: string;
+  targetAudience: string | null;
+  editingStyle: string | null;
+}
+
+export interface BriefOptions {
+  channel?: ChannelContext | null;
+  contentType?: string | null; // entertainment | education | review | selling
+  videoFormat?: string | null; // before_after | product_showcase | slideshow_voiceover | tutorial_steps | comparison | trending_hook
+  targetDuration?: number | null; // seconds (15-60)
+}
+
 export interface ProductInput {
   id: string;
   title: string | null;
@@ -95,9 +111,79 @@ function formatTrending(deltaType: string | null, lifecycleStage: string | null)
   return parts.length > 0 ? parts.join(" — ") : "chưa rõ";
 }
 
+const CONTENT_TYPE_GOALS: Record<string, string> = {
+  entertainment: "Giải trí — mục tiêu: reach, follower. Dùng hook viral, trending, hài hước.",
+  education: "Giáo dục — mục tiêu: trust, save. Chia sẻ tips, ingredients, routine.",
+  review: "Review — mục tiêu: engagement, soft sell. Trải nghiệm SP, so sánh, cảm nhận thật.",
+  selling: "Bán hàng — mục tiêu: conversion. Demo SP, before/after, CTA rõ ràng.",
+};
+
+const VIDEO_FORMAT_GUIDE: Record<string, string> = {
+  before_after: `Format: Before/After
+- Scene 1: Trạng thái "trước" (da/tóc chưa tốt, close-up, ánh sáng tự nhiên)
+- Scene 2: Transition effect (smooth morph, magic glow)
+- Scene 3: Trạng thái "sau" (da/tóc đẹp, glowing, healthy)
+- Scene 4: Product shot (SP xoay, studio lighting, clean background)
+- Prompt Kling: nhấn mạnh transformation, smooth transition
+- CTA cuối: link sản phẩm`,
+  product_showcase: `Format: Product Showcase
+- Scene 1: SP xoay 360 chậm, studio lighting, white background
+- Scene 2: Close-up texture/chi tiết SP, macro shot
+- Scene 3: SP trong bối cảnh lifestyle (bàn trang điểm, phòng tắm)
+- Scene 4: Tay cầm SP, mở nắp/bôi (nếu phù hợp)
+- Prompt Kling: nhấn mạnh product detail, cinematic lighting`,
+  slideshow_voiceover: `Format: Slideshow + Voiceover
+- 5-7 slides: mỗi slide = 1 ảnh + text overlay ngắn
+- Slide 1: Ảnh SP chính + hook text ("Bạn có biết...?")
+- Slide 2-4: Chi tiết benefits + ảnh liên quan
+- Slide 5: Kết quả/lifestyle + CTA
+- PHẢI có voiceover_script: script TTS đầy đủ cho AI đọc
+- Sound style: calm hoặc upbeat tùy tone`,
+  tutorial_steps: `Format: Tutorial Steps
+- "3 bước skincare" hoặc "cách dùng đúng" dạng slideshow
+- Step 1, Step 2, Step 3... rõ ràng
+- Mỗi step: text overlay hướng dẫn + ảnh/video minh họa
+- Kết: kết quả + CTA sản phẩm`,
+  comparison: `Format: Comparison
+- So sánh 2 trạng thái: có vs không dùng SP, hoặc SP này vs SP khác (không nêu tên brand khác)
+- Split screen hoặc before/after layout
+- Text overlay so sánh rõ ràng
+- Kết: SP chiến thắng + CTA`,
+  trending_hook: `Format: Trending Hook
+- 3 giây đầu: hook trending viral (câu hỏi hot, controversy nhẹ, "POV khi...")
+- Phần giữa: gắn SP vào context trending 1 cách tự nhiên
+- CTA cuối: "Link ở bio" / "Giỏ hàng màu vàng"
+- Tone: vui, bắt trend, không quá bán hàng`,
+};
+
 /** Build prompt cho Claude API */
-function buildBriefPrompt(product: ProductInput): string {
-  return `
+function buildBriefPrompt(product: ProductInput, options?: BriefOptions): string {
+  const channelBlock = options?.channel ? `
+KÊNH TIKTOK:
+- Persona: ${options.channel.personaName} — ${options.channel.personaDesc}
+- Voice style: ${options.channel.voiceStyle}
+- Đối tượng: ${options.channel.targetAudience || "Nữ 18-35, quan tâm skincare"}
+- Editing style: ${options.channel.editingStyle || "fast_cut"}
+→ Tạo content phù hợp persona và voice style kênh.
+` : "";
+
+  const contentTypeBlock = options?.contentType ? `
+LOẠI CONTENT: ${CONTENT_TYPE_GOALS[options.contentType] || options.contentType}
+→ Tất cả 3 scripts PHẢI theo loại content này.
+` : "";
+
+  const videoFormatBlock = options?.videoFormat ? `
+VIDEO FORMAT:
+${VIDEO_FORMAT_GUIDE[options.videoFormat] || options.videoFormat}
+→ Tất cả 3 scripts PHẢI theo format này, mỗi script khác angle/hook.
+` : "";
+
+  const durationBlock = options?.targetDuration ? `
+THỜI LƯỢNG MỤC TIÊU: ${options.targetDuration} giây
+→ Mỗi script duration_s = ${options.targetDuration}. Chia scenes phù hợp.
+` : "";
+
+  return `${channelBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
 SẢN PHẨM:
 - Tên: ${product.title || "Chưa có tên"}
 - Giá: ${product.price ? formatVND(product.price) : "chưa rõ"}
@@ -216,9 +302,9 @@ async function callAIWithRetry(
 }
 
 /** Generate brief cho 1 SP → lưu DB */
-export async function generateBrief(product: ProductInput): Promise<string> {
+export async function generateBrief(product: ProductInput, options?: BriefOptions): Promise<string> {
   const startTime = Date.now();
-  const prompt = buildBriefPrompt(product);
+  const prompt = buildBriefPrompt(product, options);
 
   const { modelUsed, parsed: brief } = await callAIWithRetry(
     SYSTEM_PROMPT, prompt, 6000, "content_brief",
@@ -271,6 +357,12 @@ export async function generateBrief(product: ProductInput): Promise<string> {
         hashtags: script.hashtags,
         ctaText: script.cta_caption || script.cta,
         videoPrompts: script.scenes,
+        contentType: options?.contentType ?? null,
+        videoFormat: options?.videoFormat ?? null,
+        targetDuration: options?.targetDuration ?? null,
+        channelId: options?.channel?.channelId ?? null,
+        soundStyle: (script as unknown as Record<string, unknown>).sound_style as string ?? null,
+        ctaSuggestion: script.cta,
         complianceStatus: compliance.status,
         complianceNotes: compliance.hits.length > 0
           ? compliance.hits.map((h) => `[${h.level}] ${h.word}`).join("; ")

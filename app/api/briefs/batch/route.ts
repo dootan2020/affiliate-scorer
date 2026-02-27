@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateBrief } from "@/lib/content/generate-brief";
+import type { BriefOptions, ChannelContext } from "@/lib/content/generate-brief";
 import { validateBody } from "@/lib/validations/validate-body";
 import { batchBriefSchema } from "@/lib/validations/schemas-content";
 
@@ -18,7 +19,24 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     const validation = await validateBody(request, batchBriefSchema);
     if (validation.error) return validation.error;
-    const { productIdentityIds } = validation.data;
+    const { productIdentityIds, channelId, contentType, videoFormat, targetDuration } = validation.data;
+
+    // Build channel context if channelId provided
+    let briefOptions: BriefOptions = { contentType, videoFormat, targetDuration };
+    if (channelId) {
+      const channel = await prisma.tikTokChannel.findUnique({ where: { id: channelId } });
+      if (channel) {
+        const ctx: ChannelContext = {
+          channelId: channel.id,
+          personaName: channel.personaName,
+          personaDesc: channel.personaDesc,
+          voiceStyle: channel.voiceStyle,
+          targetAudience: channel.targetAudience,
+          editingStyle: channel.editingStyle,
+        };
+        briefOptions = { ...briefOptions, channel: ctx };
+      }
+    }
 
     // Lấy tất cả identities + product data cho enriched prompt
     const identities = await prisma.productIdentity.findMany({
@@ -56,7 +74,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           combinedScore: identity.combinedScore ? Number(identity.combinedScore) : null,
           lifecycleStage: identity.lifecycleStage,
           deltaType: identity.deltaType,
-        });
+        }, briefOptions);
 
         const assetCount = await prisma.contentAsset.count({
           where: { briefId },

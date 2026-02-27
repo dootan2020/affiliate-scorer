@@ -51,6 +51,13 @@ export const generateBriefSchema = z.object({
 
 export const batchBriefSchema = z.object({
   productIdentityIds: z.array(z.string().min(1)).min(1).max(10),
+  channelId: z.string().min(1).optional(),
+  contentType: z.enum(["entertainment", "education", "review", "selling"]).optional(),
+  videoFormat: z.enum([
+    "before_after", "product_showcase", "slideshow_voiceover",
+    "tutorial_steps", "comparison", "trending_hook",
+  ]).optional(),
+  targetDuration: z.number().int().min(15).max(60).optional(),
 });
 
 const VALID_ASSET_STATUSES = ["draft", "produced", "rendered", "published", "logged", "archived", "failed"] as const;

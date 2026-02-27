@@ -33,6 +33,12 @@ export interface AssetWithStatus {
   hashtags: string[];
   ctaText: string | null;
   videoPrompts: Scene[];
+  contentType: string | null;
+  videoFormat: string | null;
+  targetDuration: number | null;
+  channelId: string | null;
+  soundStyle: string | null;
+  ctaSuggestion: string | null;
   complianceStatus: string | null;
   complianceNotes: string | null;
   status: string;

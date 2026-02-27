@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sparkles,
   Loader2,
@@ -24,17 +24,65 @@ interface BatchResult {
   error?: string;
 }
 
+interface ChannelOption {
+  id: string;
+  name: string;
+  personaName: string;
+  voiceStyle: string;
+}
+
+const CONTENT_TYPES = [
+  { value: "", label: "Tự do (AI chọn)" },
+  { value: "entertainment", label: "Giải trí — reach, follower" },
+  { value: "education", label: "Giáo dục — trust, save" },
+  { value: "review", label: "Review — engagement, soft sell" },
+  { value: "selling", label: "Bán hàng — conversion" },
+] as const;
+
+const VIDEO_FORMATS = [
+  { value: "", label: "Tự do (AI chọn)" },
+  { value: "before_after", label: "Before/After — transformation" },
+  { value: "product_showcase", label: "Product Showcase — xoay, zoom" },
+  { value: "slideshow_voiceover", label: "Slideshow + Voiceover" },
+  { value: "tutorial_steps", label: "Tutorial Steps — hướng dẫn" },
+  { value: "comparison", label: "Comparison — so sánh" },
+  { value: "trending_hook", label: "Trending Hook — bắt trend" },
+] as const;
+
+const DURATIONS = [
+  { value: 0, label: "Tự do" },
+  { value: 15, label: "15s" },
+  { value: 30, label: "30s" },
+  { value: 45, label: "45s" },
+  { value: 60, label: "60s" },
+] as const;
+
+const selectCls =
+  "w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none";
+
 interface Props {
   onBriefsCreated?: () => void;
 }
 
 export function ProductionCreateTab({ onBriefsCreated }: Props): React.ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [channelId, setChannelId] = useState("");
+  const [contentType, setContentType] = useState("");
+  const [videoFormat, setVideoFormat] = useState("");
+  const [targetDuration, setTargetDuration] = useState(0);
+  const [channels, setChannels] = useState<ChannelOption[]>([]);
   const [generating, setGenerating] = useState(false);
   const [briefs, setBriefs] = useState<BriefWithProduct[]>([]);
   const [batchId, setBatchId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/channels")
+      .then((r) => r.json())
+      .then((json: { data?: ChannelOption[] }) => setChannels(json.data ?? []))
+      .catch(() => {});
+  }, []);
 
   async function handleGenerate(): Promise<void> {
     if (selectedIds.length === 0) return;
@@ -49,7 +97,13 @@ export function ProductionCreateTab({ onBriefsCreated }: Props): React.ReactElem
       const res = await fetch("/api/briefs/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productIdentityIds: selectedIds }),
+        body: JSON.stringify({
+          productIdentityIds: selectedIds,
+          ...(channelId && { channelId }),
+          ...(contentType && { contentType }),
+          ...(videoFormat && { videoFormat }),
+          ...(targetDuration > 0 && { targetDuration }),
+        }),
       });
 
       const json = (await res.json()) as { data?: BatchResult[]; error?: string };
@@ -124,6 +178,56 @@ export function ProductionCreateTab({ onBriefsCreated }: Props): React.ReactElem
           disabled={generating}
         />
       </div>
+
+      {/* Step 1.5: Content options */}
+      {selectedIds.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
+          <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
+            <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-sm font-bold">
+              ✦
+            </div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+              Tuỳ chọn content
+            </h2>
+            <span className="text-xs text-gray-400 ml-auto">Để trống = AI tự chọn</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Kênh TikTok</label>
+              <select className={selectCls} value={channelId} onChange={(e) => setChannelId(e.target.value)} disabled={generating}>
+                <option value="">Không chọn kênh</option>
+                {channels.map((ch) => (
+                  <option key={ch.id} value={ch.id}>{ch.name} ({ch.personaName})</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Loại content</label>
+              <select className={selectCls} value={contentType} onChange={(e) => setContentType(e.target.value)} disabled={generating}>
+                {CONTENT_TYPES.map((ct) => (
+                  <option key={ct.value} value={ct.value}>{ct.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Video format</label>
+              <select className={selectCls} value={videoFormat} onChange={(e) => setVideoFormat(e.target.value)} disabled={generating}>
+                {VIDEO_FORMATS.map((vf) => (
+                  <option key={vf.value} value={vf.value}>{vf.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Thời lượng</label>
+              <select className={selectCls} value={targetDuration} onChange={(e) => setTargetDuration(Number(e.target.value))} disabled={generating}>
+                {DURATIONS.map((d) => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Generate button */}
       <div className="flex items-center gap-4">

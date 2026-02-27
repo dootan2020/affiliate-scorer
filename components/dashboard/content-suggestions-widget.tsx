@@ -75,7 +75,6 @@ export function ContentSuggestionsWidget(): React.ReactElement {
               <ProductImage
                 src={item.imageUrl}
                 alt={item.title ?? "Sản phẩm"}
-                size={40}
               />
 
               {/* Info */}

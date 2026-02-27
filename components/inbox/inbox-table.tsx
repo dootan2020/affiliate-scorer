@@ -116,8 +116,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                       <ProductImage
                         src={imageUrl}
                         alt={name}
-                        size={36}
-                        className="w-9 h-9 rounded-lg shrink-0"
+                        className="rounded-lg"
                       />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate group-hover/link:text-orange-600 dark:group-hover/link:text-orange-400 transition-colors">

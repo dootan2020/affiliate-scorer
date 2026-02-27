@@ -82,7 +82,6 @@ export function AssetCard({ asset, onCopyScript }: AssetCardProps): React.ReactE
         <ProductImage
           src={asset.productIdentity.imageUrl}
           alt={asset.productIdentity.title}
-          size={40}
           className="rounded-xl"
         />
         <div className="flex-1 min-w-0">

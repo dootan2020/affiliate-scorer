@@ -154,7 +154,7 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
               <ProductImage
                 src={p.imageUrl}
                 alt={p.title || "SP"}
-                size={36}
+                size={48}
                 className="rounded-lg"
               />
 

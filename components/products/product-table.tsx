@@ -177,7 +177,6 @@ export function ProductTable({
                 <ProductImage
                   src={product.imageUrl}
                   alt={product.name}
-                  size={40}
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">

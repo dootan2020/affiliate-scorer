@@ -24,7 +24,7 @@ function buildLinks(product: BriefProductInfo): ProductLinks {
     ? `https://www.fastmoss.com/zh/e-commerce/detail/${extId}`
     : null;
 
-  const shopUrl = product.urls.find(
+  const shopUrl = (product.urls || []).find(
     (u) => u.urlType === "shop" || u.url.includes("shop-marketing"),
   );
   const fastmossShop = shopUrl?.url ?? null;

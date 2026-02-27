@@ -56,6 +56,9 @@ export async function callClaude(
         messages: [{ role: "user", content: userPrompt }],
       });
 
+      if (!response.content || !Array.isArray(response.content)) {
+        throw new Error("Claude API trả phản hồi không hợp lệ (thiếu content)");
+      }
       const textBlock = response.content.find((block) => block.type === "text");
       if (!textBlock || textBlock.type !== "text") {
         throw new Error("Không nhận được phản hồi văn bản từ Claude API");

@@ -8,13 +8,13 @@ import { ProductionCompletedTab } from "./production-completed-tab";
 type Tab = "in-progress" | "create" | "completed";
 
 const TABS: Array<{ key: Tab; label: string }> = [
-  { key: "in-progress", label: "Đang sản xuất" },
   { key: "create", label: "Tạo mới" },
+  { key: "in-progress", label: "Đang sản xuất" },
   { key: "completed", label: "Đã hoàn thành" },
 ];
 
 export function ProductionPageClient(): React.ReactElement {
-  const [activeTab, setActiveTab] = useState<Tab>("in-progress");
+  const [activeTab, setActiveTab] = useState<Tab>("create");
 
   return (
     <div className="space-y-6">

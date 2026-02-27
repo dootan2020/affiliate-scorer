@@ -473,12 +473,13 @@ model ProductIdentity {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  product     Product?
-  urls        ProductUrl[]
-  inboxItems  InboxItem[]
-  briefs      ContentBrief[]
-  assets      ContentAsset[]
-  commissions Commission[]
+  product       Product?
+  urls          ProductUrl[]
+  inboxItems    InboxItem[]
+  briefs        ContentBrief[]
+  assets        ContentAsset[]
+  commissions   Commission[]
+  galleryImages ProductGalleryImage[]
 
   @@index([inboxState])
   @@index([combinedScore(sort: Desc)])
@@ -835,4 +836,19 @@ model ApiProvider {
   lastTestedAt DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+// ─── PRODUCT GALLERY IMAGES ───
+
+model ProductGalleryImage {
+  id                String          @id @default(cuid())
+  productIdentityId String
+  productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id], onDelete: Cascade)
+  filename          String
+  mimeType          String          // "image/jpeg" | "image/png" | "image/webp"
+  data              Bytes           // PostgreSQL bytea — binary image data
+  sortOrder         Int             @default(0)
+  createdAt         DateTime        @default(now())
+
+  @@index([productIdentityId])
 }

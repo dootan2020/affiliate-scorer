@@ -50,7 +50,7 @@ export function getProviderFromModelId(modelId: string): ProviderName {
   if (modelId.startsWith("claude")) return "anthropic";
   if (modelId.startsWith("gpt") || modelId.startsWith("o1") || modelId.startsWith("o3") || modelId.startsWith("o4")) return "openai";
   if (modelId.startsWith("gemini")) return "google";
-  return "anthropic"; // fallback
+  throw new Error(`Không nhận diện được provider cho model "${modelId}". Vào Settings → AI Models để kiểm tra cấu hình.`);
 }
 
 /** Get API key for a provider from DB (encrypted) */

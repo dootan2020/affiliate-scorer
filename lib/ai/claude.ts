@@ -1,7 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db";
 
-const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 
@@ -22,23 +21,23 @@ function getClient(apiKey: string): Anthropic {
   return new Anthropic({ apiKey });
 }
 
-export async function getModelForTask(taskType?: AiTaskType): Promise<string> {
-  if (!taskType) return DEFAULT_MODEL;
-  try {
-    const config = await prisma.aiModelConfig.findUnique({
-      where: { taskType },
-    });
-    return config?.modelId ?? DEFAULT_MODEL;
-  } catch {
-    return DEFAULT_MODEL;
+export async function getModelForTask(taskType: AiTaskType): Promise<string> {
+  const config = await prisma.aiModelConfig.findUnique({
+    where: { taskType },
+  });
+  if (!config?.modelId) {
+    throw new Error(
+      `Chưa cấu hình AI model cho task "${taskType}". Vào Settings → AI Models để chọn model.`
+    );
   }
+  return config.modelId;
 }
 
 export async function callClaude(
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number,
-  taskType?: AiTaskType,
+  taskType: AiTaskType,
   apiKey?: string
 ): Promise<string> {
   if (!apiKey) {

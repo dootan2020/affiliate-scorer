@@ -13,7 +13,7 @@ export async function callAI(
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number,
-  taskType?: AiTaskType
+  taskType: AiTaskType
 ): Promise<{ text: string; modelUsed: string }> {
   const modelId = await getModelForTask(taskType);
   const provider = getProviderFromModelId(modelId);

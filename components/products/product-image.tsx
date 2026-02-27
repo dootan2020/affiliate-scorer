@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Package } from "lucide-react";
 
@@ -14,6 +15,7 @@ interface ProductImageProps {
 }
 
 const PREVIEW_SIZE = 240;
+const PREVIEW_GAP = 8;
 
 function getProxiedUrl(url: string): string {
   if (url.includes("500fd.com")) {
@@ -32,10 +34,31 @@ export function ProductImage({
   const [error, setError] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewPos, setPreviewPos] = useState({ top: 0, left: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const updatePosition = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    let top = rect.top - PREVIEW_SIZE - PREVIEW_GAP;
+    let left = centerX - PREVIEW_SIZE / 2;
+
+    // If preview would go above viewport, show below instead
+    if (top < PREVIEW_GAP) {
+      top = rect.bottom + PREVIEW_GAP;
+    }
+    // Clamp horizontally
+    left = Math.max(PREVIEW_GAP, Math.min(left, window.innerWidth - PREVIEW_SIZE - PREVIEW_GAP));
+
+    setPreviewPos({ top, left });
+  }, []);
 
   function handleMouseEnter(): void {
     if (hideTimer.current) clearTimeout(hideTimer.current);
+    updatePosition();
     setShowPreview(true);
   }
 
@@ -59,6 +82,7 @@ export function ProductImage({
 
   return (
     <div
+      ref={containerRef}
       className="relative shrink-0"
       style={{ width: size, height: size }}
       onMouseEnter={canPreview ? handleMouseEnter : undefined}
@@ -81,27 +105,29 @@ export function ProductImage({
         }}
       />
 
-      {/* Hover preview */}
-      {canPreview && showPreview && (
-        <div
-          className="absolute z-50 pointer-events-none"
-          style={{ bottom: size + 8, left: "50%", transform: "translateX(-50%)" }}
-        >
+      {/* Hover preview — portaled to body to escape overflow containers */}
+      {canPreview && showPreview && typeof document !== "undefined" &&
+        createPortal(
           <div
-            className="rounded-xl overflow-hidden shadow-xl ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-slate-900"
-            style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
+            className="fixed z-[9999] pointer-events-none"
+            style={{ top: previewPos.top, left: previewPos.left }}
           >
-            <Image
-              src={imageUrl}
-              alt={alt}
-              width={PREVIEW_SIZE}
-              height={PREVIEW_SIZE * 2}
-              className="w-full h-full object-cover"
-              unoptimized
-            />
-          </div>
-        </div>
-      )}
+            <div
+              className="rounded-xl overflow-hidden shadow-xl ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-slate-900"
+              style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
+            >
+              <Image
+                src={imageUrl}
+                alt={alt}
+                width={PREVIEW_SIZE}
+                height={PREVIEW_SIZE * 2}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

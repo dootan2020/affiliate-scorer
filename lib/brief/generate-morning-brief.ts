@@ -98,7 +98,7 @@ Output JSON:
 
 Chỉ output JSON, không text khác.`.trim();
 
-  const rawResponse = await callAI(SYSTEM_PROMPT, prompt, 2000, "morning_brief");
+  const { text: rawResponse, modelUsed } = await callAI(SYSTEM_PROMPT, prompt, 2000, "morning_brief");
 
   // Parse JSON
   let jsonStr = rawResponse.trim();
@@ -129,7 +129,7 @@ Chỉ output JSON, không text khác.`.trim();
     create: {
       briefDate: todayDate,
       content: JSON.parse(JSON.stringify(content)),
-      aiModel: "claude-haiku-4-5",
+      aiModel: modelUsed,
     },
     update: {
       content: JSON.parse(JSON.stringify(content)),

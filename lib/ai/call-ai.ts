@@ -14,7 +14,7 @@ export async function callAI(
   userPrompt: string,
   maxTokens: number,
   taskType?: AiTaskType
-): Promise<string> {
+): Promise<{ text: string; modelUsed: string }> {
   const modelId = await getModelForTask(taskType);
   const provider = getProviderFromModelId(modelId);
   const apiKey = await getApiKey(provider);
@@ -25,16 +25,22 @@ export async function callAI(
     );
   }
 
+  let text: string;
   switch (provider) {
     case "anthropic":
-      return callClaude(systemPrompt, userPrompt, maxTokens, taskType, apiKey);
+      text = await callClaude(systemPrompt, userPrompt, maxTokens, taskType, apiKey);
+      break;
     case "openai":
-      return callOpenAI(apiKey, modelId, systemPrompt, userPrompt, maxTokens);
+      text = await callOpenAI(apiKey, modelId, systemPrompt, userPrompt, maxTokens);
+      break;
     case "google":
-      return callGemini(apiKey, modelId, systemPrompt, userPrompt, maxTokens);
+      text = await callGemini(apiKey, modelId, systemPrompt, userPrompt, maxTokens);
+      break;
     default:
       throw new Error(`Provider không được hỗ trợ: ${provider}`);
   }
+
+  return { text, modelUsed: modelId };
 }
 
 // Re-export for convenience

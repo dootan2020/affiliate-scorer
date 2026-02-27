@@ -97,7 +97,7 @@ async function scoreBatchWithClaude(
 ): Promise<Map<string, ClaudeScoreItem>> {
   try {
     const { system, user } = buildScoringPrompt({ products: batch, weights });
-    const response = await callAI(system, user, MAX_TOKENS_SCORING, "scoring");
+    const { text: response } = await callAI(system, user, MAX_TOKENS_SCORING, "scoring");
     const items = parseClaudeResponse(response);
     return new Map(items.map((item) => [item.id, item]));
   } catch (error) {

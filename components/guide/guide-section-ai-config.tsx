@@ -70,6 +70,10 @@ export function GuideSectionAiConfig(): React.ReactElement {
         <strong>Khuyến nghị:</strong> Bắt đầu với preset &ldquo;Cân bằng&rdquo;. Chấm điểm dùng Haiku (nhanh, rẻ, đủ chính xác). Tạo Brief dùng Sonnet (sáng tạo hơn đáng kể). Nâng lên Opus khi cần brief đặc biệt hay.
       </GuideCallout>
 
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+        Danh sách model tự động cập nhật phiên bản mới nhất khi bạn kết nối API key.
+      </p>
+
       <h3>So sánh model</h3>
       <div className="not-prose overflow-x-auto my-4">
         <table className="w-full text-sm">

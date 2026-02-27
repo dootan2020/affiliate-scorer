@@ -165,7 +165,7 @@ Output JSON:
 
 Chỉ output JSON, không text khác.`.trim();
 
-  const rawResponse = await callAI(SYSTEM_PROMPT, prompt, 1500, "weekly_report");
+  const { text: rawResponse, modelUsed } = await callAI(SYSTEM_PROMPT, prompt, 1500, "weekly_report");
 
   let jsonStr = rawResponse.trim();
   if (jsonStr.startsWith("```")) {
@@ -199,7 +199,7 @@ Chỉ output JSON, không text khác.`.trim();
         stats: { videosCreated, videosPublished, totalViews, avgViews, weekCommission, monthCommission },
         ...content,
       })),
-      aiModel: "claude-haiku-4-5",
+      aiModel: modelUsed,
     },
     update: {
       content: JSON.parse(JSON.stringify({

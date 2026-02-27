@@ -20,9 +20,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (validation.error) return validation.error;
     const { productIdentityId } = validation.data;
 
-    // Lấy product identity
+    // Lấy product identity + product data cho enriched prompt
     const identity = await prisma.productIdentity.findUnique({
       where: { id: productIdentityId },
+      include: {
+        product: {
+          select: { shopRating: true, salesTotal: true, sales7d: true },
+        },
+      },
     });
 
     if (!identity) {
@@ -41,6 +46,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       commissionRate: identity.commissionRate ? String(identity.commissionRate) : null,
       description: identity.description,
       imageUrl: identity.imageUrl,
+      shopName: identity.shopName,
+      shopRating: identity.product?.shopRating ? Number(identity.product.shopRating) : null,
+      salesTotal: identity.product?.salesTotal ?? null,
+      combinedScore: identity.combinedScore ? Number(identity.combinedScore) : null,
+      lifecycleStage: identity.lifecycleStage,
+      deltaType: identity.deltaType,
     });
 
     // Lấy brief vừa tạo

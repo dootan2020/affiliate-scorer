@@ -5,7 +5,7 @@ import { callAI } from "@/lib/ai/call-ai";
 import { prisma } from "@/lib/db";
 import { checkCompliance } from "./compliance";
 
-interface ProductInput {
+export interface ProductInput {
   id: string;
   title: string | null;
   category: string | null;
@@ -13,6 +13,12 @@ interface ProductInput {
   commissionRate: number | string | null;
   description: string | null;
   imageUrl: string | null;
+  shopName: string | null;
+  shopRating: number | null;
+  salesTotal: number | null;
+  combinedScore: number | null;
+  lifecycleStage: string | null;
+  deltaType: string | null;
 }
 
 interface GeneratedScript {
@@ -55,6 +61,40 @@ function formatVND(price: number): string {
   return price.toLocaleString("vi-VN") + "đ";
 }
 
+function formatSalesCount(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)} triệu`;
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
+  return count.toString();
+}
+
+function formatTrending(deltaType: string | null, lifecycleStage: string | null): string {
+  const parts: string[] = [];
+
+  if (deltaType) {
+    const deltaMap: Record<string, string> = {
+      "NEW": "Sản phẩm mới",
+      "SURGE": "Đang tăng mạnh",
+      "COOL": "Đang giảm",
+      "STABLE": "Ổn định",
+      "REAPPEAR": "Quay lại trending",
+    };
+    parts.push(deltaMap[deltaType] || deltaType);
+  }
+
+  if (lifecycleStage) {
+    const stageMap: Record<string, string> = {
+      "new": "giai đoạn mới",
+      "rising": "đang lên",
+      "hot": "đang hot",
+      "peak": "đỉnh cao",
+      "declining": "đang giảm",
+    };
+    parts.push(stageMap[lifecycleStage] || lifecycleStage);
+  }
+
+  return parts.length > 0 ? parts.join(" — ") : "chưa rõ";
+}
+
 /** Build prompt cho Claude API */
 function buildBriefPrompt(product: ProductInput): string {
   return `
@@ -64,6 +104,10 @@ SẢN PHẨM:
 - Danh mục: ${product.category || "chưa rõ"}
 - Commission: ${product.commissionRate ? product.commissionRate + "%" : "chưa rõ"}
 - Mô tả: ${product.description || "không có"}
+- Shop: ${product.shopName || "chưa rõ"}${product.shopRating ? " (" + product.shopRating + " sao)" : ""}
+- Đã bán: ${product.salesTotal ? formatSalesCount(product.salesTotal) : "chưa rõ"}
+- Xu hướng: ${formatTrending(product.deltaType, product.lifecycleStage)}
+- Điểm tiềm năng: ${product.combinedScore ? product.combinedScore + "/100" : "chưa rõ"}
 
 YÊU CẦU:
 Tạo content brief đầy đủ cho sản phẩm này. Output JSON với cấu trúc:
@@ -113,7 +157,62 @@ QUY TẮC:
 - Mỗi scene 2-5 giây, tổng = duration_s
 - Hashtags mix: niche + trending + product (8-12 tags)
 - Luôn có: #tiktokmademebuyit #reviewsanpham
+- Nếu SP đã bán nhiều (>1000) → dùng hook social proof: "đã bán XX.XXX đơn"
+- Nếu shop rating cao (>4.5) → nhắc đánh giá: "shop X sao với N+ đánh giá"
+- Nếu đang SURGE/trending → dùng hook trending: "đang viral trên TikTok"
+- Nếu giá rẻ (<100K) → dùng hook giá: "dưới 100K mà chất lượng bất ngờ"
+- Nếu commission cao (>15%) → đây là SP đáng push, brief nên hấp dẫn hơn
+- Adapt tone theo xu hướng: rising/hot → urgent, stable → review dài hơn, declining → skip trending angle
 - Output CHỈ JSON, không có text khác`.trim();
+}
+
+/** Strip markdown fences from AI response */
+function stripMarkdownFences(text: string): string {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+  }
+  return cleaned;
+}
+
+/** Call AI with retry — validates JSON response before returning */
+async function callAIWithRetry(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens: number,
+  taskType: "content_brief",
+  maxRetries: number = 2,
+): Promise<{ text: string; modelUsed: string; parsed: GeneratedBrief }> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await callAI(systemPrompt, userPrompt, maxTokens, taskType);
+      const cleaned = stripMarkdownFences(result.text);
+      const parsed = JSON.parse(cleaned) as GeneratedBrief;
+
+      // Validate brief has required content
+      if (!parsed.scripts || parsed.scripts.length === 0) {
+        throw new Error("AI tạo brief không có script nào");
+      }
+      if (!parsed.hooks || parsed.hooks.length === 0) {
+        throw new Error("AI tạo brief không có hook nào");
+      }
+
+      return { text: cleaned, modelUsed: result.modelUsed, parsed };
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.warn(`[generateBrief] Lần thử ${attempt}/${maxRetries} thất bại:`, lastError.message);
+
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+      }
+    }
+  }
+
+  throw new Error(
+    `AI trả kết quả không hợp lệ sau ${maxRetries} lần thử. ${lastError?.message || ""}`,
+  );
 }
 
 /** Generate brief cho 1 SP → lưu DB */
@@ -121,21 +220,9 @@ export async function generateBrief(product: ProductInput): Promise<string> {
   const startTime = Date.now();
   const prompt = buildBriefPrompt(product);
 
-  const rawResponse = await callAI(SYSTEM_PROMPT, prompt, 6000, "content_brief");
-
-  // Parse JSON — handle markdown fences nếu có
-  let jsonStr = rawResponse.trim();
-  if (jsonStr.startsWith("```")) {
-    jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-  }
-
-  let brief: GeneratedBrief;
-  try {
-    brief = JSON.parse(jsonStr);
-  } catch (parseError) {
-    console.error("[generateBrief] JSON parse failed:", parseError, "Raw:", jsonStr.substring(0, 200));
-    brief = { angles: [], hooks: [], scripts: [] };
-  }
+  const { modelUsed, parsed: brief } = await callAIWithRetry(
+    SYSTEM_PROMPT, prompt, 6000, "content_brief",
+  );
   const generationTimeMs = Date.now() - startTime;
 
   // Lưu ContentBrief
@@ -145,7 +232,7 @@ export async function generateBrief(product: ProductInput): Promise<string> {
       angles: JSON.parse(JSON.stringify(brief.angles)),
       hooks: JSON.parse(JSON.stringify(brief.hooks)),
       scripts: JSON.parse(JSON.stringify(brief.scripts)),
-      aiModel: "claude-haiku-4-5",
+      aiModel: modelUsed,
       promptUsed: prompt,
       generationTimeMs,
     },

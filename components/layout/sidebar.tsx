@@ -16,6 +16,7 @@ import {
   TrendingUp,
   HelpCircle,
   Settings,
+  Tv,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "./mobile-nav";
@@ -39,6 +40,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/inbox", label: "Hộp sản phẩm", icon: Inbox },
       { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
       { href: "/production", label: "Sản xuất", icon: Clapperboard },
+      { href: "/channels", label: "Kênh TikTok", icon: Tv },
       { href: "/log", label: "Nhật ký", icon: FileText },
     ],
   },

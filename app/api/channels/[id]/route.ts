@@ -1,0 +1,87 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { toJsonValue } from "@/lib/utils/typed-json";
+import type { InputJsonValue } from "@/app/generated/prisma/internal/prismaNamespace";
+import { JsonNull } from "@/app/generated/prisma/internal/prismaNamespace";
+import { z } from "zod";
+
+const updateChannelSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  handle: z.string().max(100).nullable().optional(),
+  niche: z.string().optional(),
+  personaName: z.string().min(1).max(100).optional(),
+  personaDesc: z.string().min(1).max(500).optional(),
+  voiceStyle: z.enum(["casual", "professional", "energetic", "calm"]).optional(),
+  targetAudience: z.string().max(200).nullable().optional(),
+  colorPrimary: z.string().max(7).nullable().optional(),
+  colorSecondary: z.string().max(7).nullable().optional(),
+  fontStyle: z.enum(["modern", "elegant", "playful", "minimal"]).nullable().optional(),
+  editingStyle: z.enum(["fast_cut", "smooth", "cinematic", "minimal"]).nullable().optional(),
+  contentMix: z.record(z.string(), z.number()).nullable().optional(),
+  postingSchedule: z.record(z.string(), z.array(z.string())).nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
+/** Convert nullable JSON fields to Prisma-compatible values */
+function toNullableJson(val: unknown): InputJsonValue | typeof JsonNull | undefined {
+  if (val === undefined) return undefined;
+  if (val === null) return JsonNull;
+  return toJsonValue(val);
+}
+
+/** GET — single channel */
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const { id } = await params;
+  try {
+    const channel = await prisma.tikTokChannel.findUnique({ where: { id } });
+    if (!channel) return NextResponse.json({ error: "Channel not found" }, { status: 404 });
+    return NextResponse.json({ data: channel });
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch channel" }, { status: 500 });
+  }
+}
+
+/** PUT — update channel */
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const { id } = await params;
+  try {
+    const body = await req.json();
+    const { contentMix, postingSchedule, ...rest } = updateChannelSchema.parse(body);
+
+    const channel = await prisma.tikTokChannel.update({
+      where: { id },
+      data: {
+        ...rest,
+        contentMix: toNullableJson(contentMix),
+        postingSchedule: toNullableJson(postingSchedule),
+      },
+    });
+
+    return NextResponse.json({ data: channel });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: err.issues }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Failed to update channel" }, { status: 500 });
+  }
+}
+
+/** DELETE — delete channel */
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const { id } = await params;
+  try {
+    await prisma.tikTokChannel.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to delete channel" }, { status: 500 });
+  }
+}

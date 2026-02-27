@@ -19,6 +19,7 @@ import {
   HelpCircle,
   Settings,
   MoreHorizontal,
+  Tv,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/inbox", label: "Hộp sản phẩm", icon: Inbox },
       { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
       { href: "/production", label: "Sản xuất", icon: Clapperboard },
+      { href: "/channels", label: "Kênh TikTok", icon: Tv },
       { href: "/log", label: "Nhật ký", icon: FileText },
     ],
   },
@@ -70,6 +72,7 @@ const BOTTOM_TABS: NavItem[] = [
 ];
 
 const OVERFLOW_ITEMS: NavItem[] = [
+  { href: "/channels", label: "Kênh TikTok", icon: Tv },
   { href: "/sync", label: "Đồng bộ", icon: RefreshCw },
   { href: "/library", label: "Thư viện", icon: BookOpen },
   { href: "/insights", label: "Phân tích", icon: TrendingUp },

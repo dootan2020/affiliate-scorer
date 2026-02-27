@@ -480,6 +480,7 @@ model ProductIdentity {
   assets        ContentAsset[]
   commissions   Commission[]
   galleryImages ProductGalleryImage[]
+  contentSlots  ContentSlot[]
 
   @@index([inboxState])
   @@index([combinedScore(sort: Desc)])
@@ -580,6 +581,16 @@ model ContentAsset {
   // Prompts cho Kling/Veo3
   videoPrompts Json @default("[]") // [{ scene, prompt_kling, prompt_veo3, duration_s, text_overlay }]
 
+  // Content strategy (GĐ1)
+  contentType    String? // "entertainment" | "education" | "review" | "selling"
+  videoFormat    String? // "before_after" | "product_showcase" | "slideshow_voiceover" | "tutorial_steps" | "comparison" | "trending_hook"
+  targetDuration Int?    // seconds
+  channelId      String?
+  channel        TikTokChannel? @relation(fields: [channelId], references: [id])
+  hookOptions    Json?   // ["Hook 1...", "Hook 2...", "Hook 3..."]
+  soundStyle     String? // "upbeat" | "calm" | "dramatic" | "trending"
+  ctaSuggestion  String?
+
   // Compliance
   complianceStatus String? @default("unchecked") // "unchecked" | "passed" | "warning" | "blocked"
   complianceNotes  String?
@@ -607,10 +618,14 @@ model ContentAsset {
   // Phase 5: Relations
   commissions Commission[]
 
+  // GĐ1: Tracking
+  tracking VideoTracking?
+
   @@index([productIdentityId])
   @@index([status])
   @@index([productionBatchId])
   @@index([postId])
+  @@index([channelId])
 }
 
 model ProductionBatch {
@@ -836,6 +851,96 @@ model ApiProvider {
   lastTestedAt DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+// ─── GĐ1: TIKTOK CHANNEL MANAGEMENT ───
+
+model TikTokChannel {
+  id     String @id @default(cuid())
+  name   String // Tên kênh
+  handle String? // @handle TikTok
+
+  niche String @default("beauty_skincare")
+
+  // Persona
+  personaName    String  // VD: "Chi Lan Beauty"
+  personaDesc    String  // Mô tả persona
+  voiceStyle     String  @default("casual") // "casual" | "professional" | "energetic" | "calm"
+  targetAudience String? // VD: "Nữ 18-35, quan tâm skincare"
+
+  // Style Guide
+  colorPrimary  String? // Hex color
+  colorSecondary String?
+  fontStyle     String? // "modern" | "elegant" | "playful" | "minimal"
+  editingStyle  String? // "fast_cut" | "smooth" | "cinematic" | "minimal"
+
+  // Content Strategy
+  contentMix      Json? // { entertainment: 40, education: 25, review: 20, selling: 15 }
+  postingSchedule Json? // { mon: ["10:00","19:00"], tue: [...], ... }
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contentSlots  ContentSlot[]
+  contentAssets ContentAsset[]
+}
+
+model ContentSlot {
+  id        String       @id @default(cuid())
+  channelId String
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  scheduledDate DateTime @db.Date
+  scheduledTime String?  // "10:00" | "19:00"
+
+  contentType String // "entertainment" | "education" | "review" | "selling"
+  videoFormat String? // "before_after" | "product_showcase" | ...
+
+  productIdentityId String?
+  productIdentity   ProductIdentity? @relation(fields: [productIdentityId], references: [id])
+  contentAssetId    String?
+
+  status String @default("planned") // "planned" | "briefed" | "produced" | "published" | "skipped"
+  notes  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([channelId, scheduledDate])
+  @@index([scheduledDate])
+}
+
+model VideoTracking {
+  id             String       @id @default(cuid())
+  contentAssetId String       @unique
+  contentAsset   ContentAsset @relation(fields: [contentAssetId], references: [id], onDelete: Cascade)
+
+  // TikTok post
+  tiktokVideoUrl String?
+  publishedAt    DateTime?
+
+  // Performance metrics
+  views24h Int?
+  views7d  Int?
+  likes    Int?
+  comments Int?
+  shares   Int?
+  saves    Int?
+
+  // Conversion
+  clicksToShop Int?
+  orders       Int?
+  revenue      Float? // VND
+  commission   Float? // VND
+
+  // Winner detection
+  isWinner  Boolean @default(false)
+  winReason String? // "high_views" | "high_conversion" | "high_engagement"
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([isWinner])
 }
 
 // ─── PRODUCT GALLERY IMAGES ───

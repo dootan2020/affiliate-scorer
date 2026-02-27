@@ -4,6 +4,7 @@ import { QuickPasteWidget } from "@/components/dashboard/quick-paste-widget";
 import { InboxStatsWidget } from "@/components/dashboard/inbox-stats-widget";
 import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-widget";
 import { ContentSuggestionsWidget } from "@/components/dashboard/content-suggestions-widget";
+import { WinningPatternsWidget } from "@/components/dashboard/winning-patterns-widget";
 
 export const metadata: Metadata = {
   title: "Tổng quan | PASTR",
@@ -34,6 +35,9 @@ export default function DashboardPage(): React.ReactElement {
         <InboxStatsWidget />
         <UpcomingEventsWidget />
       </div>
+
+      {/* Row 4: Winning Patterns (full width) */}
+      <WinningPatternsWidget />
     </div>
   );
 }

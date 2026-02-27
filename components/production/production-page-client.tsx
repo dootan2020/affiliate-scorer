@@ -4,13 +4,15 @@ import { useState } from "react";
 import { ProductionCreateTab } from "./production-create-tab";
 import { ProductionInProgressTab } from "./production-in-progress-tab";
 import { ProductionCompletedTab } from "./production-completed-tab";
+import { CalendarTab } from "./calendar-tab";
 
-type Tab = "in-progress" | "create" | "completed";
+type Tab = "in-progress" | "create" | "completed" | "calendar";
 
 const TABS: Array<{ key: Tab; label: string }> = [
   { key: "create", label: "Tạo mới" },
   { key: "in-progress", label: "Đang sản xuất" },
   { key: "completed", label: "Đã hoàn thành" },
+  { key: "calendar", label: "Lịch đăng" },
 ];
 
 export function ProductionPageClient(): React.ReactElement {
@@ -47,6 +49,7 @@ export function ProductionPageClient(): React.ReactElement {
         />
       )}
       {activeTab === "completed" && <ProductionCompletedTab />}
+      {activeTab === "calendar" && <CalendarTab />}
     </div>
   );
 }

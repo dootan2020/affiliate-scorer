@@ -87,15 +87,19 @@ export function ProductImage({
           className="absolute z-50 pointer-events-none"
           style={{ bottom: size + 8, left: "50%", transform: "translateX(-50%)" }}
         >
-          <Image
-            src={imageUrl}
-            alt={alt}
-            width={PREVIEW_SIZE}
-            height={PREVIEW_SIZE}
-            className="rounded-xl object-cover shadow-xl ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-slate-900"
+          <div
+            className="rounded-xl overflow-hidden shadow-xl ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-slate-900"
             style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
-            unoptimized
-          />
+          >
+            <Image
+              src={imageUrl}
+              alt={alt}
+              width={PREVIEW_SIZE}
+              height={PREVIEW_SIZE * 2}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          </div>
         </div>
       )}
     </div>

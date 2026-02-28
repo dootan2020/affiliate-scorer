@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Check, Package, Star } from "lucide-react";
+import Link from "next/link";
+import { Search, Check, Package, Star, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { ProductImage } from "@/components/products/product-image";
 
@@ -24,12 +25,14 @@ interface Props {
   selected: string[];
   onSelectionChange: (ids: string[]) => void;
   disabled?: boolean;
+  initialProductId?: string | null;
 }
 
-export function ProductSelector({ selected, onSelectionChange, disabled }: Props): React.ReactElement {
+export function ProductSelector({ selected, onSelectionChange, disabled, initialProductId }: Props): React.ReactElement {
   const [products, setProducts] = useState<ProductIdentityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [didAutoSelect, setDidAutoSelect] = useState(false);
 
   useEffect(() => {
     async function load(): Promise<void> {
@@ -47,6 +50,15 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
         // Sort by combinedScore desc
         merged.sort((a, b) => (Number(b.combinedScore) || 0) - (Number(a.combinedScore) || 0));
         setProducts(merged);
+
+        // Auto-select product from URL param (inbox → production flow)
+        if (initialProductId && !didAutoSelect) {
+          const found = merged.find((p) => p.id === initialProductId);
+          if (found && !selected.includes(initialProductId)) {
+            onSelectionChange([...selected, initialProductId]);
+          }
+          setDidAutoSelect(true);
+        }
       } catch {
         toast.error("Không thể tải danh sách sản phẩm");
       } finally {
@@ -102,11 +114,17 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
-          <Package className="w-7 h-7 text-gray-400" />
+          <Inbox className="w-7 h-7 text-gray-400" />
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Chưa có sản phẩm đã scored/briefed/published. Vào Inbox để score sản phẩm trước.
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Chưa có sản phẩm đã chấm điểm. Vào Inbox để paste link và score sản phẩm trước.
         </p>
+        <Link
+          href="/inbox"
+          className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
+        >
+          Vào Inbox
+        </Link>
       </div>
     );
   }

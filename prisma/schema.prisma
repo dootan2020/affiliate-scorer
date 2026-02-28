@@ -621,6 +621,9 @@ model ContentAsset {
   // GĐ1: Tracking
   tracking VideoTracking?
 
+  // Calendar slots linked to this asset (1:1)
+  slots ContentSlot[] @relation("SlotAsset")
+
   @@index([productIdentityId])
   @@index([status])
   @@index([productionBatchId])
@@ -900,6 +903,7 @@ model ContentSlot {
   productIdentityId String?
   productIdentity   ProductIdentity? @relation(fields: [productIdentityId], references: [id])
   contentAssetId    String?
+  contentAsset      ContentAsset? @relation("SlotAsset", fields: [contentAssetId], references: [id])
 
   status String @default("planned") // "planned" | "briefed" | "produced" | "published" | "skipped"
   notes  String?
@@ -908,6 +912,7 @@ model ContentSlot {
 
   @@index([channelId, scheduledDate])
   @@index([scheduledDate])
+  @@index([contentAssetId])
 }
 
 model VideoTracking {

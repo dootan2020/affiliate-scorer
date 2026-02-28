@@ -63,9 +63,10 @@ const selectCls =
 
 interface Props {
   onBriefsCreated?: () => void;
+  initialProductId?: string | null;
 }
 
-export function ProductionCreateTab({ onBriefsCreated }: Props): React.ReactElement {
+export function ProductionCreateTab({ onBriefsCreated, initialProductId }: Props): React.ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [channelId, setChannelId] = useState("");
   const [contentType, setContentType] = useState("");
@@ -79,7 +80,7 @@ export function ProductionCreateTab({ onBriefsCreated }: Props): React.ReactElem
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
 
   useEffect(() => {
-    fetch("/api/channels")
+    fetch("/api/channels?active=true")
       .then((r) => r.json())
       .then((json: { data?: ChannelOption[] }) => setChannels(json.data ?? []))
       .catch(() => toast.error("Không thể tải danh sách kênh"));
@@ -183,6 +184,7 @@ export function ProductionCreateTab({ onBriefsCreated }: Props): React.ReactElem
           selected={selectedIds}
           onSelectionChange={setSelectedIds}
           disabled={generating}
+          initialProductId={initialProductId}
         />
       </div>
 

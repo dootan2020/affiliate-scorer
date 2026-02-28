@@ -18,10 +18,14 @@ const createChannelSchema = z.object({
   postingSchedule: z.record(z.string(), z.array(z.string())).optional(),
 });
 
-/** GET — list all channels */
-export async function GET(): Promise<NextResponse> {
+/** GET — list channels. ?active=true → only active channels */
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
+    const { searchParams } = new URL(req.url);
+    const activeOnly = searchParams.get("active") === "true";
+
     const channels = await prisma.tikTokChannel.findMany({
+      where: activeOnly ? { isActive: true } : undefined,
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ data: channels });

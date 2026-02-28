@@ -12,6 +12,7 @@ export interface ChannelContext {
   voiceStyle: string;
   targetAudience: string | null;
   editingStyle: string | null;
+  niche: string | null;
 }
 
 export interface BriefOptions {
@@ -161,10 +162,11 @@ function buildBriefPrompt(product: ProductInput, options?: BriefOptions): string
   const channelBlock = options?.channel ? `
 KÊNH TIKTOK:
 - Persona: ${options.channel.personaName} — ${options.channel.personaDesc}
+- Niche: ${options.channel.niche || "chung"}
 - Voice style: ${options.channel.voiceStyle}
 - Đối tượng: ${options.channel.targetAudience || "Nữ 18-35, quan tâm skincare"}
 - Editing style: ${options.channel.editingStyle || "fast_cut"}
-→ Tạo content phù hợp persona và voice style kênh.
+→ Tạo content phù hợp persona, niche và voice style kênh.
 ` : "";
 
   const contentTypeBlock = options?.contentType ? `

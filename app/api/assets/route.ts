@@ -8,10 +8,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const statusParam = searchParams.get("status"); // comma-separated
     const limit = parseInt(searchParams.get("limit") || "50", 10);
 
+    const productIdentityId = searchParams.get("productIdentityId");
+
     const where: Record<string, unknown> = {};
     if (statusParam) {
       const statuses = statusParam.split(",").map((s) => s.trim());
       where.status = { in: statuses };
+    }
+    if (productIdentityId) {
+      where.productIdentityId = productIdentityId;
     }
 
     const assets = await prisma.contentAsset.findMany({

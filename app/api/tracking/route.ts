@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod/v4";
+import { syncSlotStatusFromAsset } from "@/lib/content/sync-slot-status";
 
 const createTrackingSchema = z.object({
   contentAssetId: z.string().min(1),
@@ -135,6 +136,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         data: { status: "published" },
       });
     }
+
+    // Sync linked calendar slots: mark as published + propagate winner
+    await syncSlotStatusFromAsset(parsed.contentAssetId, "published", isWinner);
 
     return NextResponse.json({ data: tracking });
   } catch (err) {

@@ -24,6 +24,7 @@ interface SlotData {
   notes: string | null;
   productIdentity: { id: string; title: string | null; imageUrl: string | null } | null;
   channel: { id: string; name: string } | null;
+  contentAsset: { id: string; assetCode: string; status: string; hookText: string | null } | null;
 }
 
 interface ChannelOption {
@@ -34,6 +35,13 @@ interface ChannelOption {
 interface ProductOption {
   id: string;
   title: string | null;
+}
+
+interface AssetOption {
+  id: string;
+  assetCode: string;
+  hookText: string | null;
+  status: string;
 }
 
 const CONTENT_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -99,6 +107,8 @@ export function CalendarTab(): React.ReactElement {
   const [newSlotType, setNewSlotType] = useState("review");
   const [newSlotFormat, setNewSlotFormat] = useState("");
   const [newSlotProduct, setNewSlotProduct] = useState("");
+  const [newSlotAsset, setNewSlotAsset] = useState("");
+  const [availableAssets, setAvailableAssets] = useState<AssetOption[]>([]);
 
   const week = useMemo(() => getWeekRange(currentDate), [currentDate.getTime()]);
   const weekStartStr = formatDateLocal(week.start);
@@ -131,7 +141,7 @@ export function CalendarTab(): React.ReactElement {
 
   // Fetch channels on mount
   useEffect(() => {
-    fetch("/api/channels")
+    fetch("/api/channels?active=true")
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
         return r.json();
@@ -163,6 +173,19 @@ export function CalendarTab(): React.ReactElement {
           .catch(() => setProducts([]));
       });
   }, []);
+
+  // Fetch assets when product selection changes (for slot→asset linking)
+  useEffect(() => {
+    if (!newSlotProduct) {
+      setAvailableAssets([]);
+      setNewSlotAsset("");
+      return;
+    }
+    fetch(`/api/assets?productIdentityId=${newSlotProduct}`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((json: { data?: AssetOption[] }) => setAvailableAssets(json.data ?? []))
+      .catch(() => setAvailableAssets([]));
+  }, [newSlotProduct]);
 
   // Fetch slots when channel or week changes
   useEffect(() => {
@@ -200,6 +223,7 @@ export function CalendarTab(): React.ReactElement {
           contentType: newSlotType,
           videoFormat: newSlotFormat || undefined,
           productIdentityId: newSlotProduct || undefined,
+          contentAssetId: newSlotAsset || undefined,
         }),
       });
       if (!res.ok) {
@@ -209,6 +233,7 @@ export function CalendarTab(): React.ReactElement {
       toast.success("Đã thêm slot mới");
       setAdding(null);
       setNewSlotProduct("");
+      setNewSlotAsset("");
       void fetchSlots();
     } catch {
       toast.error("Lỗi kết nối khi tạo slot");
@@ -395,7 +420,12 @@ export function CalendarTab(): React.ReactElement {
                           {cfg.label}
                         </span>
                       )}
-                      {slot.productIdentity && (
+                      {slot.contentAsset && (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 px-1.5 py-0.5 rounded-full shrink-0 font-mono">
+                          {slot.contentAsset.assetCode}
+                        </span>
+                      )}
+                      {slot.productIdentity && !slot.contentAsset && (
                         <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded-full shrink-0">
                           <Package className="w-2.5 h-2.5" />
                           SP
@@ -454,10 +484,22 @@ export function CalendarTab(): React.ReactElement {
                     {products.length > 0 && (
                       <div>
                         <label className="block text-[10px] text-gray-400 mb-0.5">Sản phẩm (tuỳ chọn)</label>
-                        <select className={selectCls + " w-full"} value={newSlotProduct} onChange={(e) => setNewSlotProduct(e.target.value)}>
+                        <select className={selectCls + " w-full"} value={newSlotProduct} onChange={(e) => { setNewSlotProduct(e.target.value); setNewSlotAsset(""); }}>
                           <option value="">Không gắn SP</option>
                           {products.map((p) => (
                             <option key={p.id} value={p.id}>{p.title ?? `SP ${p.id.slice(-6)}`}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {/* Asset selector — appears after product selected */}
+                    {availableAssets.length > 0 && (
+                      <div>
+                        <label className="block text-[10px] text-gray-400 mb-0.5">Video/Asset (tuỳ chọn)</label>
+                        <select className={selectCls + " w-full"} value={newSlotAsset} onChange={(e) => setNewSlotAsset(e.target.value)}>
+                          <option value="">Không gắn video</option>
+                          {availableAssets.map((a) => (
+                            <option key={a.id} value={a.id}>{a.assetCode} — {a.hookText?.slice(0, 40) || a.status}</option>
                           ))}
                         </select>
                       </div>

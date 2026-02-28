@@ -25,6 +25,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     let briefOptions: BriefOptions = { contentType, videoFormat, targetDuration };
     if (channelId) {
       const channel = await prisma.tikTokChannel.findUnique({ where: { id: channelId } });
+      if (channel && !channel.isActive) {
+        return NextResponse.json(
+          { error: "Kênh đã tạm dừng. Chọn kênh khác hoặc kích hoạt lại kênh." },
+          { status: 400 },
+        );
+      }
       if (channel) {
         const ctx: ChannelContext = {
           channelId: channel.id,
@@ -33,6 +39,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           voiceStyle: channel.voiceStyle,
           targetAudience: channel.targetAudience,
           editingStyle: channel.editingStyle,
+          niche: channel.niche,
         };
         briefOptions = { ...briefOptions, channel: ctx };
       }

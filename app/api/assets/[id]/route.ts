@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateBody } from "@/lib/validations/validate-body";
 import { updateAssetSchema } from "@/lib/validations/schemas-content";
+import { syncSlotStatusFromAsset } from "@/lib/content/sync-slot-status";
 
 export async function PATCH(
   request: Request,
@@ -39,6 +40,11 @@ export async function PATCH(
       where: { id },
       data: updateData,
     });
+
+    // Sync linked calendar slots when status changes
+    if (body.status) {
+      await syncSlotStatusFromAsset(id, body.status);
+    }
 
     return NextResponse.json({
       data: updated,

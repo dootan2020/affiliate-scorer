@@ -9,6 +9,7 @@ const createSlotSchema = z.object({
   contentType: z.enum(["entertainment", "education", "review", "selling"]),
   videoFormat: z.string().optional(),
   productIdentityId: z.string().optional(),
+  contentAssetId: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       include: {
         productIdentity: { select: { id: true, title: true, imageUrl: true } },
         channel: { select: { id: true, name: true } },
+        contentAsset: { select: { id: true, assetCode: true, status: true, hookText: true } },
       },
       orderBy: [{ scheduledDate: "asc" }, { scheduledTime: "asc" }],
     });
@@ -59,6 +61,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         contentType: parsed.contentType,
         videoFormat: parsed.videoFormat ?? null,
         productIdentityId: parsed.productIdentityId ?? null,
+        contentAssetId: parsed.contentAssetId ?? null,
         notes: parsed.notes ?? null,
       },
     });

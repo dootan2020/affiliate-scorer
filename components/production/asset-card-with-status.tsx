@@ -9,9 +9,18 @@ import {
   ShieldAlert,
   ShieldCheck,
 } from "lucide-react";
+import { toast } from "sonner";
 import { CopyButton } from "@/components/ui/copy-button";
 import { VideoStatusRadio } from "./video-status-radio";
 import type { AssetWithStatus, Scene, VideoStatus } from "@/lib/types/production";
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Bản nháp",
+  produced: "Đã quay",
+  rendered: "Đã render",
+  published: "Đã đăng",
+  archived: "Lưu trữ",
+};
 
 interface Props {
   asset: AssetWithStatus;
@@ -83,18 +92,28 @@ export function AssetCardWithStatus({ asset, onStatusChange }: Props): React.Rea
     .trim();
 
   async function handleStatusChange(newStatus: VideoStatus): Promise<void> {
+    const previousStatus = asset.status as VideoStatus;
     setUpdatingStatus(true);
+    // Optimistic update
+    onStatusChange?.(asset.id, newStatus);
     try {
       const res = await fetch(`/api/assets/${asset.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) {
-        onStatusChange?.(asset.id, newStatus);
+      if (!res.ok) {
+        // Revert optimistic update
+        onStatusChange?.(asset.id, previousStatus);
+        const body = await res.json().catch(() => null);
+        toast.error((body as { error?: string } | null)?.error ?? "Không thể cập nhật trạng thái");
+      } else {
+        toast.success(`Chuyển sang "${STATUS_LABELS[newStatus] ?? newStatus}"`);
       }
     } catch {
-      // silent fail — status reverts on reload
+      // Revert optimistic update
+      onStatusChange?.(asset.id, previousStatus);
+      toast.error("Lỗi kết nối khi cập nhật trạng thái video");
     } finally {
       setUpdatingStatus(false);
     }

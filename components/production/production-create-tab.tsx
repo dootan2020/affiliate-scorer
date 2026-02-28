@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 import { ProductSelector } from "./product-selector";
 import { BriefPreviewCard } from "./brief-preview-card";
 import type { BriefWithProduct } from "@/lib/types/production";
@@ -81,7 +82,7 @@ export function ProductionCreateTab({ onBriefsCreated }: Props): React.ReactElem
     fetch("/api/channels")
       .then((r) => r.json())
       .then((json: { data?: ChannelOption[] }) => setChannels(json.data ?? []))
-      .catch(() => {});
+      .catch(() => toast.error("Không thể tải danh sách kênh"));
   }, []);
 
   async function handleGenerate(): Promise<void> {
@@ -143,10 +144,16 @@ export function ProductionCreateTab({ onBriefsCreated }: Props): React.ReactElem
 
       const failed = results.filter((r) => r.status === "error");
       if (failed.length > 0) {
-        setError(`${failed.length} sản phẩm lỗi: ${failed.map((f) => f.error).join("; ")}`);
+        const msg = `${failed.length} sản phẩm lỗi: ${failed.map((f) => f.error).join("; ")}`;
+        setError(msg);
+        toast.error(msg);
+      } else if (loadedBriefs.length > 0) {
+        toast.success(`Đã tạo ${loadedBriefs.length} briefs (${allAssetIds.length} video)`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Lỗi không xác định");
+      const msg = err instanceof Error ? err.message : "Lỗi không xác định";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setGenerating(false);
       setProgress(null);

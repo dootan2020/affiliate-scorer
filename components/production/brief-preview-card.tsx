@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { CopyButton } from "@/components/ui/copy-button";
 import { BriefProductHeader } from "./brief-product-header";
 import { ProductGallery } from "./product-gallery";
@@ -61,7 +62,7 @@ export function BriefPreviewCard({
         id = json.data?.id ?? null;
         if (id) setBatchId(id);
       } catch {
-        // silent
+        toast.error("Không thể tạo batch export");
       } finally {
         setCreatingBatch(false);
       }

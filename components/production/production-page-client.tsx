@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ProductionCreateTab } from "./production-create-tab";
 import { ProductionInProgressTab } from "./production-in-progress-tab";
 import { ProductionCompletedTab } from "./production-completed-tab";
@@ -40,19 +41,21 @@ export function ProductionPageClient(): React.ReactElement {
       </nav>
 
       {/* Tab content */}
-      {activeTab === "in-progress" && (
-        <ProductionInProgressTab
-          onSwitchToCreate={() => setActiveTab("create")}
-        />
-      )}
-      {activeTab === "create" && (
-        <ProductionCreateTab
-          onBriefsCreated={() => setActiveTab("in-progress")}
-        />
-      )}
-      {activeTab === "completed" && <ProductionCompletedTab />}
-      {activeTab === "calendar" && <CalendarTab />}
-      {activeTab === "tracking" && <TrackingTab />}
+      <ErrorBoundary fallbackTitle="Lỗi hiển thị tab">
+        {activeTab === "in-progress" && (
+          <ProductionInProgressTab
+            onSwitchToCreate={() => setActiveTab("create")}
+          />
+        )}
+        {activeTab === "create" && (
+          <ProductionCreateTab
+            onBriefsCreated={() => setActiveTab("in-progress")}
+          />
+        )}
+        {activeTab === "completed" && <ProductionCompletedTab />}
+        {activeTab === "calendar" && <CalendarTab />}
+        {activeTab === "tracking" && <TrackingTab />}
+      </ErrorBoundary>
     </div>
   );
 }

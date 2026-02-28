@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, Inbox } from "lucide-react";
+import { toast } from "sonner";
 import { BriefPreviewCard } from "./brief-preview-card";
 import type { BriefWithProduct } from "@/lib/types/production";
 
@@ -35,10 +36,14 @@ export function ProductionInProgressTab({ onSwitchToCreate }: Props): React.Reac
   const fetchBriefs = useCallback(async () => {
     try {
       const res = await fetch("/api/briefs?status=active&limit=50");
+      if (!res.ok) {
+        toast.error(`Lỗi tải briefs (${res.status})`);
+        return;
+      }
       const json = (await res.json()) as { data?: BriefWithProduct[] };
       setBriefs(json.data || []);
     } catch {
-      // silent
+      toast.error("Không thể tải danh sách briefs");
     } finally {
       setLoading(false);
     }
@@ -51,10 +56,13 @@ export function ProductionInProgressTab({ onSwitchToCreate }: Props): React.Reac
   async function handleRegenerate(briefId: string): Promise<void> {
     const res = await fetch(`/api/briefs/${briefId}/regenerate`, { method: "POST" });
     if (res.ok) {
+      toast.success("Đã tạo lại brief thành công");
       await fetchBriefs();
     } else {
       const json = (await res.json()) as { error?: string };
-      throw new Error(json.error || "Lỗi tạo lại brief");
+      const msg = json.error || "Lỗi tạo lại brief";
+      toast.error(msg);
+      throw new Error(msg);
     }
   }
 

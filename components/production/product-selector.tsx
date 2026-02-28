@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search, Check, Package, Star } from "lucide-react";
+import { toast } from "sonner";
 import { ProductImage } from "@/components/products/product-image";
 
 interface ProductIdentityItem {
@@ -47,7 +48,7 @@ export function ProductSelector({ selected, onSelectionChange, disabled }: Props
         merged.sort((a, b) => (Number(b.combinedScore) || 0) - (Number(a.combinedScore) || 0));
         setProducts(merged);
       } catch {
-        // ignore
+        toast.error("Không thể tải danh sách sản phẩm");
       } finally {
         setLoading(false);
       }

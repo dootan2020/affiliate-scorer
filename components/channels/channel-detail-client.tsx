@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
 
@@ -72,6 +73,26 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   useEffect(() => {
     void fetchChannel();
   }, [fetchChannel]);
+
+  async function handleToggleActive(): Promise<void> {
+    if (!channel) return;
+    const newActive = !channel.isActive;
+    try {
+      const res = await fetch(`/api/channels/${channelId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: newActive }),
+      });
+      if (res.ok) {
+        setChannel({ ...channel, isActive: newActive });
+        toast.success(newActive ? "Kênh đã kích hoạt" : "Kênh đã tạm dừng");
+      } else {
+        toast.error("Không thể cập nhật trạng thái kênh");
+      }
+    } catch {
+      toast.error("Lỗi kết nối");
+    }
+  }
 
   async function handleDelete(): Promise<void> {
     if (!confirm("Xoá kênh này? Hành động không thể hoàn tác.")) return;
@@ -188,6 +209,22 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Active toggle */}
+            <button
+              onClick={() => void handleToggleActive()}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                channel.isActive
+                  ? "bg-emerald-500"
+                  : "bg-gray-300 dark:bg-slate-600"
+              }`}
+              title={channel.isActive ? "Tạm dừng kênh" : "Kích hoạt kênh"}
+            >
+              <span
+                className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                  channel.isActive ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
             <button
               onClick={() => setEditing(true)}
               className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"

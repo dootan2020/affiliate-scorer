@@ -10,6 +10,7 @@ import {
   BarChart3,
   AlertCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface TrackingEntry {
   id: string;
@@ -121,7 +122,7 @@ export function TrackingTab(): React.ReactElement {
       const json = (await res.json()) as { data?: UnpublishedAsset[] };
       setAssets(json.data ?? []);
     } catch {
-      setAssets([]);
+      toast.error("Không thể tải danh sách video");
     }
   }, []);
 
@@ -155,11 +156,12 @@ export function TrackingTab(): React.ReactElement {
         setError((body as { error?: string } | null)?.error ?? "Không thể lưu kết quả");
         return;
       }
+      toast.success("Đã lưu kết quả video");
       setShowForm(false);
       resetForm();
       void fetchTracking();
     } catch {
-      setError("Lỗi kết nối khi lưu kết quả");
+      toast.error("Lỗi kết nối khi lưu kết quả");
     } finally {
       setSaving(false);
     }
@@ -192,10 +194,12 @@ export function TrackingTab(): React.ReactElement {
         return;
       }
       const json = (await res.json()) as { message?: string };
-      setImportMsg(json.message || "Import xong");
+      const msg = json.message || "Import xong";
+      setImportMsg(msg);
+      toast.success(msg);
       void fetchTracking();
     } catch {
-      setError("Lỗi import CSV. Kiểm tra file và thử lại.");
+      toast.error("Lỗi import CSV. Kiểm tra file và thử lại.");
     } finally {
       setImporting(false);
       e.target.value = "";

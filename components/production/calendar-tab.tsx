@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Package,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface SlotData {
   id: string;
@@ -202,14 +203,15 @@ export function CalendarTab(): React.ReactElement {
         }),
       });
       if (!res.ok) {
-        setError("Không thể tạo slot. Thử lại.");
+        toast.error("Không thể tạo slot. Thử lại.");
         return;
       }
+      toast.success("Đã thêm slot mới");
       setAdding(null);
       setNewSlotProduct("");
       void fetchSlots();
     } catch {
-      setError("Lỗi kết nối khi tạo slot");
+      toast.error("Lỗi kết nối khi tạo slot");
     } finally {
       setSaving(false);
     }
@@ -221,12 +223,13 @@ export function CalendarTab(): React.ReactElement {
     try {
       const res = await fetch(`/api/calendar/slots/${slotId}`, { method: "DELETE" });
       if (!res.ok) {
-        setError("Không thể xoá slot");
+        toast.error("Không thể xoá slot");
         return;
       }
+      toast.success("Đã xoá slot");
       void fetchSlots();
     } catch {
-      setError("Lỗi kết nối khi xoá slot");
+      toast.error("Lỗi kết nối khi xoá slot");
     }
   }
 

@@ -10,6 +10,7 @@ import {
   PackageOpen,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface GalleryImageMeta {
   id: string;
@@ -33,10 +34,11 @@ export function ProductGallery({ productIdentityId, mainImageUrl }: Props): Reac
   const fetchImages = useCallback(async () => {
     try {
       const res = await fetch(`/api/products/${productIdentityId}/gallery`);
+      if (!res.ok) return;
       const json = (await res.json()) as { data: GalleryImageMeta[] };
       setImages(json.data ?? []);
     } catch {
-      // silent
+      // Gallery load is non-critical, no toast needed
     } finally {
       setLoading(false);
     }
@@ -61,10 +63,13 @@ export function ProductGallery({ productIdentityId, mainImageUrl }: Props): Reac
         body: formData,
       });
       if (res.ok) {
+        toast.success("Đã tải ảnh lên");
         await fetchImages();
+      } else {
+        toast.error("Không thể tải ảnh lên");
       }
     } catch {
-      // silent
+      toast.error("Lỗi kết nối khi tải ảnh");
     } finally {
       setUploading(false);
     }
@@ -72,14 +77,18 @@ export function ProductGallery({ productIdentityId, mainImageUrl }: Props): Reac
 
   async function handleDelete(imageId: string): Promise<void> {
     try {
-      await fetch(`/api/products/${productIdentityId}/gallery`, {
+      const res = await fetch(`/api/products/${productIdentityId}/gallery`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageId }),
       });
-      setImages((prev) => prev.filter((img) => img.id !== imageId));
+      if (res.ok) {
+        setImages((prev) => prev.filter((img) => img.id !== imageId));
+      } else {
+        toast.error("Không thể xoá ảnh");
+      }
     } catch {
-      // silent
+      toast.error("Lỗi kết nối khi xoá ảnh");
     }
   }
 

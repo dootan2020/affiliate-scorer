@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
@@ -22,6 +22,18 @@ interface ChannelData {
   editingStyle: string | null;
   isActive: boolean;
   createdAt: string;
+  // New fields
+  subNiche: string | null;
+  usp: string | null;
+  contentPillars: string[] | null;
+  hookBank: string[] | null;
+  contentMix: Record<string, number> | null;
+  postsPerDay: number | null;
+  postingSchedule: Record<string, { times: string[]; focus: string }> | null;
+  seriesSchedule: Array<{ name: string; dayOfWeek: string; contentPillar: string }> | null;
+  ctaTemplates: Record<string, string> | null;
+  competitorChannels: Array<{ handle: string; followers: string; whyReference: string }> | null;
+  generatedByAi: boolean;
 }
 
 const VOICE_LABELS: Record<string, string> = {
@@ -43,6 +55,13 @@ const FONT_LABELS: Record<string, string> = {
   elegant: "Sang trọng",
   playful: "Vui tươi",
   minimal: "Tối giản",
+};
+
+const MIX_LABELS: Record<string, string> = {
+  entertainment: "Giải trí",
+  education: "Giáo dục",
+  review: "Review",
+  selling: "Bán hàng",
 };
 
 interface Props {
@@ -144,16 +163,27 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           initial={{
             id: channel.id,
             name: channel.name,
-            handle: channel.handle ?? undefined,
+            handle: channel.handle,
             niche: channel.niche,
             personaName: channel.personaName,
             personaDesc: channel.personaDesc,
             voiceStyle: channel.voiceStyle,
-            targetAudience: channel.targetAudience ?? undefined,
-            colorPrimary: channel.colorPrimary ?? undefined,
-            colorSecondary: channel.colorSecondary ?? undefined,
-            fontStyle: channel.fontStyle ?? undefined,
-            editingStyle: channel.editingStyle ?? undefined,
+            targetAudience: channel.targetAudience,
+            colorPrimary: channel.colorPrimary,
+            colorSecondary: channel.colorSecondary,
+            fontStyle: channel.fontStyle,
+            editingStyle: channel.editingStyle,
+            subNiche: channel.subNiche,
+            usp: channel.usp,
+            contentPillars: channel.contentPillars,
+            hookBank: channel.hookBank,
+            contentMix: channel.contentMix,
+            postsPerDay: channel.postsPerDay,
+            postingSchedule: channel.postingSchedule,
+            seriesSchedule: channel.seriesSchedule,
+            ctaTemplates: channel.ctaTemplates,
+            competitorChannels: channel.competitorChannels,
+            generatedByAi: channel.generatedByAi,
           }}
           onSaved={() => {
             setEditing(false);
@@ -164,6 +194,14 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
       </div>
     );
   }
+
+  const pillars = channel.contentPillars ?? [];
+  const hooks = channel.hookBank ?? [];
+  const mix = channel.contentMix;
+  const schedule = channel.postingSchedule;
+  const series = channel.seriesSchedule ?? [];
+  const cta = channel.ctaTemplates;
+  const competitors = channel.competitorChannels ?? [];
 
   return (
     <div className="space-y-6">
@@ -177,7 +215,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
       {error && (
         <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
           <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto text-rose-400 hover:text-rose-600 text-xs">✕</button>
+          <button onClick={() => setError(null)} className="ml-auto text-rose-400 hover:text-rose-600 text-xs">x</button>
         </div>
       )}
 
@@ -196,6 +234,11 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-50">
                   {channel.name}
                 </h2>
+                {channel.generatedByAi && (
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400">
+                    <Sparkles className="w-3 h-3" /> Tạo bởi AI
+                  </span>
+                )}
                 {!channel.isActive && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500">
                     Tạm dừng
@@ -209,13 +252,10 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Active toggle */}
             <button
               onClick={() => void handleToggleActive()}
               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                channel.isActive
-                  ? "bg-emerald-500"
-                  : "bg-gray-300 dark:bg-slate-600"
+                channel.isActive ? "bg-emerald-500" : "bg-gray-300 dark:bg-slate-600"
               }`}
               title={channel.isActive ? "Tạm dừng kênh" : "Kích hoạt kênh"}
             >
@@ -242,12 +282,14 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           </div>
         </div>
 
-        {/* Info grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Info grid — existing fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <InfoSection title="Persona">
             <InfoRow label="Tên nhân vật" value={channel.personaName} />
             <InfoRow label="Mô tả" value={channel.personaDesc} />
             <InfoRow label="Đối tượng" value={channel.targetAudience ?? "—"} />
+            {channel.subNiche && <InfoRow label="Sub-niche" value={channel.subNiche} />}
+            {channel.usp && <InfoRow label="USP" value={channel.usp} />}
           </InfoSection>
 
           <InfoSection title="Phong cách">
@@ -281,6 +323,139 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
             <InfoRow label="Trạng thái" value={channel.isActive ? "Đang hoạt động" : "Tạm dừng"} />
           </InfoSection>
         </div>
+
+        {/* New expert fields */}
+
+        {/* Content Pillars */}
+        {pillars.length > 0 && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
+            <InfoSection title="Content Pillars">
+              <div className="flex flex-wrap gap-2">
+                {pillars.map((p, i) => (
+                  <span key={i} className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/30 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </InfoSection>
+          </div>
+        )}
+
+        {/* Hook Bank */}
+        {hooks.length > 0 && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
+            <InfoSection title={`Hook Bank (${hooks.length})`}>
+              <ol className="space-y-1">
+                {hooks.map((h, i) => (
+                  <li key={i} className="text-sm text-gray-700 dark:text-gray-300 flex gap-2">
+                    <span className="text-xs text-gray-400 w-5 text-right shrink-0">{i + 1}.</span>
+                    {h}
+                  </li>
+                ))}
+              </ol>
+            </InfoSection>
+          </div>
+        )}
+
+        {/* Content Mix */}
+        {mix && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
+            <InfoSection title="Content Mix">
+              <div className="space-y-2">
+                {Object.entries(mix).map(([key, val]) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <span className="text-xs text-gray-500 w-16">{MIX_LABELS[key] ?? key}</span>
+                    <div className="flex-1 h-4 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-blue-500 dark:bg-blue-400 transition-all"
+                        style={{ width: `${val}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-10 text-right">{val}%</span>
+                  </div>
+                ))}
+              </div>
+            </InfoSection>
+          </div>
+        )}
+
+        {/* Posting Schedule */}
+        {(channel.postsPerDay || schedule) && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
+            <InfoSection title="Lịch đăng">
+              {channel.postsPerDay && (
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                  <strong>{channel.postsPerDay}</strong> post/ngày
+                </p>
+              )}
+              {schedule && (
+                <div className="grid grid-cols-7 gap-2">
+                  {Object.entries(schedule).map(([day, s]) => (
+                    <div key={day} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
+                      <p className="text-xs font-medium text-gray-500 uppercase mb-1">{day}</p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">{s.times?.join(", ")}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{s.focus}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </InfoSection>
+          </div>
+        )}
+
+        {/* Series Schedule */}
+        {series.length > 0 && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
+            <InfoSection title="Series Schedule">
+              <div className="space-y-2">
+                {series.map((s, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                    <span className="font-medium">{s.name}</span>
+                    <span className="text-gray-400">—</span>
+                    <span className="text-xs text-gray-500">{s.dayOfWeek}</span>
+                    <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-400">
+                      {s.contentPillar}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </InfoSection>
+          </div>
+        )}
+
+        {/* CTA Templates */}
+        {cta && Object.values(cta).some(Boolean) && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
+            <InfoSection title="CTA Templates">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {Object.entries(cta).map(([key, val]) => val ? (
+                  <div key={key} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">
+                    <p className="text-xs font-medium text-gray-500 mb-1">{MIX_LABELS[key] ?? key}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{val}</p>
+                  </div>
+                ) : null)}
+              </div>
+            </InfoSection>
+          </div>
+        )}
+
+        {/* Competitor Channels */}
+        {competitors.length > 0 && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6">
+            <InfoSection title="Kênh tham khảo">
+              <div className="space-y-2">
+                {competitors.map((c, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{c.handle}</span>
+                    <span className="text-xs text-gray-400">({c.followers})</span>
+                    <span className="text-gray-400">—</span>
+                    <span className="text-gray-600 dark:text-gray-400">{c.whyReference}</span>
+                  </div>
+                ))}
+              </div>
+            </InfoSection>
+          </div>
+        )}
       </div>
     </div>
   );

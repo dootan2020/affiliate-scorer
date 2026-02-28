@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { toJsonValue } from "@/lib/utils/typed-json";
+import type { InputJsonValue } from "@/app/generated/prisma/internal/prismaNamespace";
+import { JsonNull } from "@/app/generated/prisma/internal/prismaNamespace";
 import { z } from "zod";
+
+/** Convert nullable JSON fields to Prisma-compatible values */
+function toNullableJson(val: unknown): InputJsonValue | typeof JsonNull | undefined {
+  if (val === undefined) return undefined;
+  if (val === null) return JsonNull;
+  return toJsonValue(val);
+}
 
 const createChannelSchema = z.object({
   name: z.string().min(1).max(100),
@@ -14,8 +24,27 @@ const createChannelSchema = z.object({
   colorSecondary: z.string().max(7).optional(),
   fontStyle: z.enum(["modern", "elegant", "playful", "minimal"]).optional(),
   editingStyle: z.enum(["fast_cut", "smooth", "cinematic", "minimal"]).optional(),
+  // New expert fields
+  subNiche: z.string().max(200).optional(),
+  usp: z.string().max(500).optional(),
+  contentPillars: z.array(z.string()).optional(),
+  hookBank: z.array(z.string()).optional(),
   contentMix: z.record(z.string(), z.number()).optional(),
-  postingSchedule: z.record(z.string(), z.array(z.string())).optional(),
+  postsPerDay: z.number().int().min(1).max(10).optional(),
+  postingSchedule: z.record(z.string(), z.unknown()).optional(),
+  seriesSchedule: z.array(z.object({
+    name: z.string(),
+    dayOfWeek: z.string(),
+    contentPillar: z.string(),
+  })).optional(),
+  ctaTemplates: z.record(z.string(), z.string()).optional(),
+  competitorChannels: z.array(z.object({
+    handle: z.string(),
+    followers: z.string(),
+    whyReference: z.string(),
+  })).optional(),
+  generatedByAi: z.boolean().optional(),
+  aiGeneratedAt: z.string().datetime().optional(),
 });
 
 /** GET — list channels. ?active=true → only active channels */
@@ -38,10 +67,24 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const body = await req.json();
-    const parsed = createChannelSchema.parse(body);
+    const {
+      contentPillars, hookBank, contentMix, postingSchedule,
+      seriesSchedule, ctaTemplates, competitorChannels,
+      aiGeneratedAt, ...rest
+    } = createChannelSchema.parse(body);
 
     const channel = await prisma.tikTokChannel.create({
-      data: parsed,
+      data: {
+        ...rest,
+        contentPillars: toNullableJson(contentPillars),
+        hookBank: toNullableJson(hookBank),
+        contentMix: toNullableJson(contentMix),
+        postingSchedule: toNullableJson(postingSchedule),
+        seriesSchedule: toNullableJson(seriesSchedule),
+        ctaTemplates: toNullableJson(ctaTemplates),
+        competitorChannels: toNullableJson(competitorChannels),
+        aiGeneratedAt: aiGeneratedAt ? new Date(aiGeneratedAt) : undefined,
+      },
     });
 
     return NextResponse.json({ data: channel }, { status: 201 });

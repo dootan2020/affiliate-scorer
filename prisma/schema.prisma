@@ -877,9 +877,25 @@ model TikTokChannel {
   fontStyle     String? // "modern" | "elegant" | "playful" | "minimal"
   editingStyle  String? // "fast_cut" | "smooth" | "cinematic" | "minimal"
 
+  // Sub-niche & Positioning
+  subNiche           String?
+  usp                String?
+
   // Content Strategy
-  contentMix      Json? // { entertainment: 40, education: 25, review: 20, selling: 15 }
-  postingSchedule Json? // { mon: ["10:00","19:00"], tue: [...], ... }
+  contentPillars     Json?   // string[]
+  hookBank           Json?   // string[]
+  contentMix         Json?   // { entertainment: 40, education: 25, review: 20, selling: 15 }
+  postsPerDay        Int?
+  postingSchedule    Json?   // { mon: { times: ["10:00","19:00"], focus: "review" }, ... }
+  seriesSchedule     Json?   // [{ name, dayOfWeek, contentPillar }]
+
+  // CTA & Competitors
+  ctaTemplates       Json?   // { entertainment, education, review, selling }
+  competitorChannels Json?   // [{ handle, followers, whyReference }]
+
+  // AI Generation metadata
+  generatedByAi      Boolean  @default(false)
+  aiGeneratedAt      DateTime?
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

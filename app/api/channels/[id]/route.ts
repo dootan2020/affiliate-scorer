@@ -17,8 +17,27 @@ const updateChannelSchema = z.object({
   colorSecondary: z.string().max(7).nullable().optional(),
   fontStyle: z.enum(["modern", "elegant", "playful", "minimal"]).nullable().optional(),
   editingStyle: z.enum(["fast_cut", "smooth", "cinematic", "minimal"]).nullable().optional(),
+  // New expert fields
+  subNiche: z.string().max(200).nullable().optional(),
+  usp: z.string().max(500).nullable().optional(),
+  contentPillars: z.array(z.string()).nullable().optional(),
+  hookBank: z.array(z.string()).nullable().optional(),
   contentMix: z.record(z.string(), z.number()).nullable().optional(),
-  postingSchedule: z.record(z.string(), z.array(z.string())).nullable().optional(),
+  postsPerDay: z.number().int().min(1).max(10).nullable().optional(),
+  postingSchedule: z.record(z.string(), z.unknown()).nullable().optional(),
+  seriesSchedule: z.array(z.object({
+    name: z.string(),
+    dayOfWeek: z.string(),
+    contentPillar: z.string(),
+  })).nullable().optional(),
+  ctaTemplates: z.record(z.string(), z.string()).nullable().optional(),
+  competitorChannels: z.array(z.object({
+    handle: z.string(),
+    followers: z.string(),
+    whyReference: z.string(),
+  })).nullable().optional(),
+  generatedByAi: z.boolean().optional(),
+  aiGeneratedAt: z.string().datetime().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -52,14 +71,24 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await req.json();
-    const { contentMix, postingSchedule, ...rest } = updateChannelSchema.parse(body);
+    const {
+      contentPillars, hookBank, contentMix, postingSchedule,
+      seriesSchedule, ctaTemplates, competitorChannels,
+      aiGeneratedAt, ...rest
+    } = updateChannelSchema.parse(body);
 
     const channel = await prisma.tikTokChannel.update({
       where: { id },
       data: {
         ...rest,
+        contentPillars: toNullableJson(contentPillars),
+        hookBank: toNullableJson(hookBank),
         contentMix: toNullableJson(contentMix),
         postingSchedule: toNullableJson(postingSchedule),
+        seriesSchedule: toNullableJson(seriesSchedule),
+        ctaTemplates: toNullableJson(ctaTemplates),
+        competitorChannels: toNullableJson(competitorChannels),
+        aiGeneratedAt: aiGeneratedAt ? new Date(aiGeneratedAt) : aiGeneratedAt === null ? null : undefined,
       },
     });
 

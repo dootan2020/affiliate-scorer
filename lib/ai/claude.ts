@@ -7,6 +7,7 @@ const BASE_DELAY_MS = 1000;
 export type AiTaskType =
   | "scoring"
   | "content_brief"
+  | "channel_profile"
   | "morning_brief"
   | "weekly_report";
 

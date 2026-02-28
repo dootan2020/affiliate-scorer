@@ -1,249 +1,306 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles, PenLine, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import type { ChannelProfileResult } from "@/lib/content/channel-profile-types";
+import { ChannelProfilePreview } from "./channel-profile-preview";
+import { ChannelManualForm, emptyProfile } from "./channel-manual-form";
 
-interface ChannelData {
+interface ChannelInitial {
   id?: string;
-  name: string;
-  handle: string;
-  niche: string;
-  personaName: string;
-  personaDesc: string;
-  voiceStyle: string;
-  targetAudience: string;
-  colorPrimary: string;
-  colorSecondary: string;
-  fontStyle: string;
-  editingStyle: string;
+  name?: string;
+  handle?: string | null;
+  niche?: string;
+  personaName?: string;
+  personaDesc?: string;
+  voiceStyle?: string;
+  targetAudience?: string | null;
+  colorPrimary?: string | null;
+  colorSecondary?: string | null;
+  fontStyle?: string | null;
+  editingStyle?: string | null;
+  subNiche?: string | null;
+  usp?: string | null;
+  contentPillars?: string[] | null;
+  hookBank?: string[] | null;
+  contentMix?: Record<string, number> | null;
+  postsPerDay?: number | null;
+  postingSchedule?: Record<string, { times: string[]; focus: string }> | null;
+  seriesSchedule?: Array<{ name: string; dayOfWeek: string; contentPillar: string }> | null;
+  ctaTemplates?: Record<string, string> | null;
+  competitorChannels?: Array<{ handle: string; followers: string; whyReference: string }> | null;
+  generatedByAi?: boolean;
 }
 
 interface Props {
-  initial?: Partial<ChannelData>;
+  initial?: Partial<ChannelInitial>;
   onSaved: () => void;
   onCancel: () => void;
 }
 
-const VOICE_OPTIONS = [
-  { value: "casual", label: "Tự nhiên — giọng Gen Z, thân thiện" },
-  { value: "professional", label: "Chuyên nghiệp — giọng tin cậy, rõ ràng" },
-  { value: "energetic", label: "Năng động — giọng hào hứng, nhanh" },
-  { value: "calm", label: "Nhẹ nhàng — giọng thư giãn, ASMR" },
-];
-
-const FONT_OPTIONS = [
-  { value: "modern", label: "Hiện đại" },
-  { value: "elegant", label: "Sang trọng" },
-  { value: "playful", label: "Vui tươi" },
-  { value: "minimal", label: "Tối giản" },
-];
-
-const EDIT_OPTIONS = [
-  { value: "fast_cut", label: "Cắt nhanh — nhịp nhanh, nhiều transition" },
-  { value: "smooth", label: "Mượt — chuyển cảnh nhẹ, slow-mo" },
-  { value: "cinematic", label: "Cinematic — ánh sáng đẹp, chuyển cảnh mạnh" },
-  { value: "minimal", label: "Tối giản — ít hiệu ứng, tập trung SP" },
-];
-
 const inputCls =
   "w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none";
-
 const labelCls = "block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1";
+
+const TONE_OPTIONS = [
+  { value: "Vui vẻ Gen Z", label: "Vui vẻ Gen Z" },
+  { value: "Chuyên gia uy tín", label: "Chuyên gia uy tín" },
+  { value: "Chị gái tâm sự", label: "Chị gái tâm sự" },
+  { value: "Honest review thẳng thắn", label: "Honest review thẳng thắn" },
+];
+
+function initialToProfile(initial: Partial<ChannelInitial>): ChannelProfileResult {
+  const base = emptyProfile();
+  return {
+    ...base,
+    name: initial.name ?? base.name,
+    handle: initial.handle ?? base.handle,
+    personaName: initial.personaName ?? base.personaName,
+    personaDesc: initial.personaDesc ?? base.personaDesc,
+    subNiche: initial.subNiche ?? base.subNiche,
+    usp: initial.usp ?? base.usp,
+    contentPillars: (initial.contentPillars as string[]) ?? base.contentPillars,
+    hookBank: (initial.hookBank as string[]) ?? base.hookBank,
+    contentMix: initial.contentMix
+      ? {
+          entertainment: initial.contentMix.entertainment ?? 40,
+          education: initial.contentMix.education ?? 25,
+          review: initial.contentMix.review ?? 20,
+          selling: initial.contentMix.selling ?? 15,
+        }
+      : base.contentMix,
+    contentMixReason: "",
+    postsPerDay: initial.postsPerDay ?? base.postsPerDay,
+    postingSchedule: (initial.postingSchedule as ChannelProfileResult["postingSchedule"]) ?? base.postingSchedule,
+    seriesSchedule: (initial.seriesSchedule as ChannelProfileResult["seriesSchedule"]) ?? base.seriesSchedule,
+    ctaTemplates: initial.ctaTemplates
+      ? {
+          entertainment: initial.ctaTemplates.entertainment ?? "",
+          education: initial.ctaTemplates.education ?? "",
+          review: initial.ctaTemplates.review ?? "",
+          selling: initial.ctaTemplates.selling ?? "",
+        }
+      : base.ctaTemplates,
+    competitorChannels: (initial.competitorChannels as ChannelProfileResult["competitorChannels"]) ?? base.competitorChannels,
+    voiceStyle: initial.voiceStyle ?? base.voiceStyle,
+    editingStyle: initial.editingStyle ?? base.editingStyle,
+    fontStyle: initial.fontStyle ?? base.fontStyle,
+    colorPrimary: initial.colorPrimary ?? base.colorPrimary,
+    colorSecondary: initial.colorSecondary ?? base.colorSecondary,
+  };
+}
 
 export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactElement {
   const isEdit = !!initial?.id;
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<ChannelData>({
-    name: initial?.name ?? "",
-    handle: initial?.handle ?? "",
-    niche: initial?.niche ?? "beauty_skincare",
-    personaName: initial?.personaName ?? "",
-    personaDesc: initial?.personaDesc ?? "",
-    voiceStyle: initial?.voiceStyle ?? "casual",
-    targetAudience: initial?.targetAudience ?? "Nữ 18-35, quan tâm skincare",
-    colorPrimary: initial?.colorPrimary ?? "#E87B35",
-    colorSecondary: initial?.colorSecondary ?? "#FFD6B0",
-    fontStyle: initial?.fontStyle ?? "modern",
-    editingStyle: initial?.editingStyle ?? "fast_cut",
-  });
+  const hasExistingData = isEdit && (initial?.contentPillars?.length ?? 0) > 0;
 
-  function update(key: keyof ChannelData, value: string): void {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const [tab, setTab] = useState<"ai" | "manual">(hasExistingData ? "manual" : "ai");
+  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // AI input fields
+  const [aiNiche, setAiNiche] = useState(initial?.niche ?? "");
+  const [aiAudience, setAiAudience] = useState(initial?.targetAudience ?? "");
+  const [aiTone, setAiTone] = useState(TONE_OPTIONS[0].value);
+
+  // Profile (shared between AI result and manual editing)
+  const [profile, setProfile] = useState<ChannelProfileResult | null>(
+    hasExistingData ? initialToProfile(initial!) : null,
+  );
+  const [wasAiGenerated, setWasAiGenerated] = useState(initial?.generatedByAi ?? false);
+
+  async function handleGenerate(): Promise<void> {
+    if (!aiNiche || !aiAudience) {
+      toast.error("Vui lòng nhập Niche và Đối tượng mục tiêu");
+      return;
+    }
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/channels/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ niche: aiNiche, targetAudience: aiAudience, tone: aiTone }),
+      });
+      const json = await res.json() as { data?: ChannelProfileResult; error?: string };
+      if (!res.ok || !json.data) {
+        throw new Error(json.error ?? `Lỗi ${res.status}`);
+      }
+      setProfile(json.data);
+      setWasAiGenerated(true);
+      toast.success("AI đã tạo profile kênh. Kiểm tra và chỉnh sửa nếu cần.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Lỗi không xác định";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setGenerating(false);
+    }
   }
 
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!form.name || !form.personaName || !form.personaDesc) return;
+  async function handleSave(): Promise<void> {
+    if (!profile) return;
+    if (!profile.name || !profile.personaName || !profile.personaDesc) {
+      toast.error("Vui lòng nhập Tên kênh, Tên nhân vật, Mô tả persona");
+      return;
+    }
+
+    // Validate content mix = 100%
+    const mixTotal = profile.contentMix.entertainment + profile.contentMix.education
+      + profile.contentMix.review + profile.contentMix.selling;
+    if (mixTotal !== 100) {
+      toast.error(`Content Mix phải tổng = 100% (hiện tại: ${mixTotal}%)`);
+      return;
+    }
 
     setSaving(true);
     setError(null);
     try {
       const url = isEdit ? `/api/channels/${initial!.id}` : "/api/channels";
       const method = isEdit ? "PUT" : "POST";
+      const payload = {
+        name: profile.name,
+        handle: profile.handle || undefined,
+        niche: aiNiche || profile.subNiche || "beauty_skincare",
+        personaName: profile.personaName,
+        personaDesc: profile.personaDesc,
+        voiceStyle: profile.voiceStyle,
+        targetAudience: aiAudience || undefined,
+        colorPrimary: profile.colorPrimary || undefined,
+        colorSecondary: profile.colorSecondary || undefined,
+        fontStyle: profile.fontStyle || undefined,
+        editingStyle: profile.editingStyle || undefined,
+        subNiche: profile.subNiche || undefined,
+        usp: profile.usp || undefined,
+        contentPillars: profile.contentPillars.filter(Boolean),
+        hookBank: profile.hookBank.filter(Boolean),
+        contentMix: profile.contentMix,
+        postsPerDay: profile.postsPerDay,
+        postingSchedule: profile.postingSchedule,
+        seriesSchedule: profile.seriesSchedule,
+        ctaTemplates: profile.ctaTemplates,
+        competitorChannels: profile.competitorChannels,
+        generatedByAi: wasAiGenerated,
+        aiGeneratedAt: wasAiGenerated ? new Date().toISOString() : undefined,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
+        toast.success(isEdit ? "Đã cập nhật kênh" : "Đã tạo kênh mới");
         onSaved();
       } else {
-        const body = await res.json().catch(() => null);
-        setError((body as { error?: string } | null)?.error ?? `Lỗi ${isEdit ? "cập nhật" : "tạo"} kênh (${res.status})`);
+        const body = await res.json().catch(() => null) as { error?: string } | null;
+        throw new Error(body?.error ?? `Lỗi ${res.status}`);
       }
-    } catch {
-      setError("Lỗi kết nối. Thử lại.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Lỗi kết nối";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <form
-      onSubmit={(e) => void handleSubmit(e)}
-      className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-5"
-    >
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 space-y-5">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
         {isEdit ? "Sửa kênh" : "Tạo kênh mới"}
       </h3>
 
-      {/* Basic info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Tên kênh *</label>
-          <input
-            className={inputCls}
-            value={form.name}
-            onChange={(e) => update("name", e.target.value)}
-            placeholder="VD: Chi Lan Beauty"
-            required
-          />
-        </div>
-        <div>
-          <label className={labelCls}>@Handle TikTok</label>
-          <input
-            className={inputCls}
-            value={form.handle}
-            onChange={(e) => update("handle", e.target.value)}
-            placeholder="VD: chilanbeauty"
-          />
-        </div>
-      </div>
+      {/* Tabs */}
+      <nav className="flex items-center gap-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-xl p-1">
+        <button
+          type="button"
+          onClick={() => setTab("ai")}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            tab === "ai"
+              ? "bg-white dark:bg-slate-700 shadow-sm text-gray-900 dark:text-gray-50"
+              : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+          }`}
+        >
+          <Sparkles className="w-4 h-4" /> AI Tạo tự động
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("manual")}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            tab === "manual"
+              ? "bg-white dark:bg-slate-700 shadow-sm text-gray-900 dark:text-gray-50"
+              : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+          }`}
+        >
+          <PenLine className="w-4 h-4" /> Tự điền
+        </button>
+      </nav>
 
-      {/* Persona */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Tên nhân vật *</label>
-          <input
-            className={inputCls}
-            value={form.personaName}
-            onChange={(e) => update("personaName", e.target.value)}
-            placeholder="VD: Chi Lan"
-            required
-          />
+      {/* AI Tab — input fields */}
+      {tab === "ai" && !profile && (
+        <div className="space-y-4">
+          <div>
+            <label className={labelCls}>Niche cụ thể *</label>
+            <input
+              className={inputCls}
+              value={aiNiche}
+              onChange={(e) => setAiNiche(e.target.value)}
+              placeholder="VD: Skincare cho da dầu mụn"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Đối tượng mục tiêu *</label>
+            <input
+              className={inputCls}
+              value={aiAudience}
+              onChange={(e) => setAiAudience(e.target.value)}
+              placeholder="VD: Nữ 18-30, sinh viên/nhân viên văn phòng, budget trung bình"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Tone mong muốn *</label>
+            <select className={inputCls} value={aiTone} onChange={(e) => setAiTone(e.target.value)}>
+              {TONE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleGenerate()}
+            disabled={generating}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Đang tạo profile... (~15 giây)
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                AI Tạo Profile Kênh
+              </>
+            )}
+          </button>
         </div>
-        <div>
-          <label className={labelCls}>Đối tượng mục tiêu</label>
-          <input
-            className={inputCls}
-            value={form.targetAudience}
-            onChange={(e) => update("targetAudience", e.target.value)}
-            placeholder="VD: Nữ 18-35, quan tâm skincare"
-          />
-        </div>
-      </div>
+      )}
 
-      <div>
-        <label className={labelCls}>Mô tả persona *</label>
-        <textarea
-          className={inputCls + " min-h-[80px] resize-y"}
-          value={form.personaDesc}
-          onChange={(e) => update("personaDesc", e.target.value)}
-          placeholder="VD: Cô gái Gen Z yêu skincare, giọng tự nhiên, hay chia sẻ tips chăm da bình dân..."
-          required
+      {/* AI Tab — after generation, show editable preview */}
+      {tab === "ai" && profile && (
+        <ChannelProfilePreview profile={profile} onChange={setProfile} />
+      )}
+
+      {/* Manual Tab */}
+      {tab === "manual" && (
+        <ChannelManualForm
+          profile={profile}
+          onChange={setProfile}
         />
-      </div>
-
-      {/* Voice & Style */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className={labelCls}>Giọng nói / Tone</label>
-          <select
-            className={inputCls}
-            value={form.voiceStyle}
-            onChange={(e) => update("voiceStyle", e.target.value)}
-          >
-            {VOICE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>Phong cách edit</label>
-          <select
-            className={inputCls}
-            value={form.editingStyle}
-            onChange={(e) => update("editingStyle", e.target.value)}
-          >
-            {EDIT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Colors & Font */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div>
-          <label className={labelCls}>Màu chính</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={form.colorPrimary}
-              onChange={(e) => update("colorPrimary", e.target.value)}
-              className="w-9 h-9 rounded-lg border border-gray-200 dark:border-slate-700 cursor-pointer"
-            />
-            <span className="text-xs text-gray-400">{form.colorPrimary}</span>
-          </div>
-        </div>
-        <div>
-          <label className={labelCls}>Màu phụ</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={form.colorSecondary}
-              onChange={(e) => update("colorSecondary", e.target.value)}
-              className="w-9 h-9 rounded-lg border border-gray-200 dark:border-slate-700 cursor-pointer"
-            />
-            <span className="text-xs text-gray-400">{form.colorSecondary}</span>
-          </div>
-        </div>
-        <div className="col-span-2">
-          <label className={labelCls}>Font style</label>
-          <select
-            className={inputCls}
-            value={form.fontStyle}
-            onChange={(e) => update("fontStyle", e.target.value)}
-          >
-            {FONT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Preview */}
-      <div className="rounded-xl bg-gray-50 dark:bg-slate-800/50 p-4">
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Preview</p>
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          Kênh <strong>{form.name || "..."}</strong> sẽ tạo content với tone{" "}
-          <strong>{VOICE_OPTIONS.find((o) => o.value === form.voiceStyle)?.label.split(" — ")[0]}</strong>,
-          style edit{" "}
-          <strong>{EDIT_OPTIONS.find((o) => o.value === form.editingStyle)?.label.split(" — ")[0]}</strong>,
-          nhắm đến <strong>{form.targetAudience || "..."}</strong>.
-        </p>
-      </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -252,24 +309,36 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex items-center gap-3 pt-2">
-        <button
-          type="submit"
-          disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
-        >
-          {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-          {isEdit ? "Lưu thay đổi" : "Tạo kênh"}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 font-medium transition-colors"
-        >
-          Hủy
-        </button>
-      </div>
-    </form>
+      {/* Actions — show once profile exists or in manual mode */}
+      {(profile || tab === "manual") && (
+        <div className="flex items-center gap-3 pt-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={saving || !profile}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isEdit ? "Lưu thay đổi" : "Lưu kênh"}
+          </button>
+          {tab === "ai" && profile && (
+            <button
+              type="button"
+              onClick={() => { setProfile(null); setWasAiGenerated(false); }}
+              className="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 font-medium transition-colors inline-flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Generate lại
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 font-medium transition-colors"
+          >
+            Hủy
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

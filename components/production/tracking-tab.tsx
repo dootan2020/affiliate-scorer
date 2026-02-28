@@ -8,6 +8,7 @@ import {
   Plus,
   X,
   BarChart3,
+  AlertCircle,
 } from "lucide-react";
 
 interface TrackingEntry {
@@ -34,7 +35,7 @@ interface TrackingEntry {
     contentType: string | null;
     videoFormat: string | null;
     hookText: string | null;
-    productIdentity: { id: string; title: string | null; imageUrl: string | null };
+    productIdentity: { id: string; title: string | null; imageUrl: string | null } | null;
   };
 }
 
@@ -43,7 +44,7 @@ interface UnpublishedAsset {
   assetCode: string | null;
   format: string | null;
   hookText: string | null;
-  productIdentity: { title: string | null };
+  productIdentity: { title: string | null } | null;
 }
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -78,6 +79,7 @@ export function TrackingTab(): React.ReactElement {
   const [showForm, setShowForm] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [assets, setAssets] = useState<UnpublishedAsset[]>([]);
 
   // Form state
@@ -94,11 +96,18 @@ export function TrackingTab(): React.ReactElement {
 
   const fetchTracking = useCallback(async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/tracking");
+      if (!res.ok) {
+        setError(`Lỗi tải kết quả (${res.status})`);
+        setEntries([]);
+        return;
+      }
       const json = (await res.json()) as { data?: TrackingEntry[] };
       setEntries(json.data ?? []);
     } catch {
+      setError("Không thể tải kết quả. Kiểm tra kết nối mạng.");
       setEntries([]);
     } finally {
       setLoading(false);
@@ -108,6 +117,7 @@ export function TrackingTab(): React.ReactElement {
   const fetchAssets = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch("/api/assets?status=draft,produced,rendered,published&limit=50");
+      if (!res.ok) return;
       const json = (await res.json()) as { data?: UnpublishedAsset[] };
       setAssets(json.data ?? []);
     } catch {
@@ -123,8 +133,9 @@ export function TrackingTab(): React.ReactElement {
   async function handleSubmit(): Promise<void> {
     if (!formAssetId) return;
     setSaving(true);
+    setError(null);
     try {
-      await fetch("/api/tracking", {
+      const res = await fetch("/api/tracking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,11 +150,16 @@ export function TrackingTab(): React.ReactElement {
           commission: formCommission ? parseFloat(formCommission) : undefined,
         }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError((body as { error?: string } | null)?.error ?? "Không thể lưu kết quả");
+        return;
+      }
       setShowForm(false);
       resetForm();
       void fetchTracking();
     } catch {
-      // silent
+      setError("Lỗi kết nối khi lưu kết quả");
     } finally {
       setSaving(false);
     }
@@ -166,15 +182,20 @@ export function TrackingTab(): React.ReactElement {
     if (!file) return;
     setImporting(true);
     setImportMsg(null);
+    setError(null);
     try {
       const form = new FormData();
       form.append("file", file);
       const res = await fetch("/api/tracking/import-csv", { method: "POST", body: form });
+      if (!res.ok) {
+        setError(`Lỗi import CSV (${res.status})`);
+        return;
+      }
       const json = (await res.json()) as { message?: string };
       setImportMsg(json.message || "Import xong");
       void fetchTracking();
     } catch {
-      setImportMsg("Lỗi import CSV");
+      setError("Lỗi import CSV. Kiểm tra file và thử lại.");
     } finally {
       setImporting(false);
       e.target.value = "";
@@ -189,6 +210,15 @@ export function TrackingTab(): React.ReactElement {
 
   return (
     <div className="space-y-4">
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+          <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto text-rose-400 hover:text-rose-600 text-xs">✕</button>
+        </div>
+      )}
+
       {/* Action bar */}
       <div className="flex items-center gap-3 flex-wrap">
         <button

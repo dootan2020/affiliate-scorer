@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,6 +8,8 @@ import {
   Loader2,
   Trash2,
   Calendar,
+  AlertCircle,
+  Package,
 } from "lucide-react";
 
 interface SlotData {
@@ -26,6 +28,11 @@ interface SlotData {
 interface ChannelOption {
   id: string;
   name: string;
+}
+
+interface ProductOption {
+  id: string;
+  title: string | null;
 }
 
 const CONTENT_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -57,8 +64,12 @@ function getWeekRange(date: Date): { start: Date; end: Date } {
   return { start, end };
 }
 
-function formatDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+/** Format date as YYYY-MM-DD in LOCAL timezone (avoids UTC shift) */
+function formatDateLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function formatDisplay(d: Date): string {
@@ -74,45 +85,85 @@ export function CalendarTab(): React.ReactElement {
   const [channels, setChannels] = useState<ChannelOption[]>([]);
   const [selectedChannel, setSelectedChannel] = useState("");
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState<string | null>(null); // date string of day being added to
+  const [channelsLoaded, setChannelsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [adding, setAdding] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Product options for linking
+  const [products, setProducts] = useState<ProductOption[]>([]);
 
   // New slot form state
   const [newSlotTime, setNewSlotTime] = useState("19:00");
   const [newSlotType, setNewSlotType] = useState("review");
   const [newSlotFormat, setNewSlotFormat] = useState("");
+  const [newSlotProduct, setNewSlotProduct] = useState("");
 
-  const week = getWeekRange(currentDate);
+  const week = useMemo(() => getWeekRange(currentDate), [currentDate.getTime()]);
+  const weekStartStr = formatDateLocal(week.start);
+  const weekEndStr = formatDateLocal(week.end);
 
   const fetchSlots = useCallback(async (): Promise<void> => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
-        start: formatDate(week.start),
-        end: formatDate(week.end),
+        start: weekStartStr,
+        end: weekEndStr,
       });
       if (selectedChannel) params.set("channelId", selectedChannel);
       const res = await fetch(`/api/calendar/slots?${params}`);
+      if (!res.ok) {
+        setError(`Lỗi tải lịch (${res.status})`);
+        setSlots([]);
+        return;
+      }
       const json = (await res.json()) as { data?: SlotData[] };
       setSlots(json.data ?? []);
     } catch {
+      setError("Không thể tải lịch đăng. Kiểm tra kết nối mạng.");
       setSlots([]);
     } finally {
       setLoading(false);
     }
-  }, [week.start.toISOString(), week.end.toISOString(), selectedChannel]);
+  }, [weekStartStr, weekEndStr, selectedChannel]);
 
+  // Fetch channels on mount
   useEffect(() => {
     fetch("/api/channels")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
       .then((json: { data?: ChannelOption[] }) => {
         const chs = json.data ?? [];
         setChannels(chs);
         if (chs.length > 0 && !selectedChannel) setSelectedChannel(chs[0].id);
       })
-      .catch(() => {});
+      .catch(() => {
+        setError("Không thể tải danh sách kênh");
+      })
+      .finally(() => {
+        setChannelsLoaded(true);
+        setLoading(false);
+      });
   }, []);
 
+  // Fetch scored products for linking
+  useEffect(() => {
+    fetch("/api/inbox?state=scored&limit=50")
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((json: { data?: ProductOption[] }) => setProducts(json.data ?? []))
+      .catch(() => {
+        // Fallback — try ProductIdentity directly
+        fetch("/api/products?limit=50")
+          .then((r) => r.ok ? r.json() : Promise.reject())
+          .then((json: { data?: ProductOption[] }) => setProducts(json.data ?? []))
+          .catch(() => setProducts([]));
+      });
+  }, []);
+
+  // Fetch slots when channel or week changes
   useEffect(() => {
     if (selectedChannel) void fetchSlots();
   }, [selectedChannel, fetchSlots]);
@@ -136,8 +187,9 @@ export function CalendarTab(): React.ReactElement {
   async function handleAddSlot(dateStr: string): Promise<void> {
     if (!selectedChannel) return;
     setSaving(true);
+    setError(null);
     try {
-      await fetch("/api/calendar/slots", {
+      const res = await fetch("/api/calendar/slots", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -146,12 +198,18 @@ export function CalendarTab(): React.ReactElement {
           scheduledTime: newSlotTime || undefined,
           contentType: newSlotType,
           videoFormat: newSlotFormat || undefined,
+          productIdentityId: newSlotProduct || undefined,
         }),
       });
+      if (!res.ok) {
+        setError("Không thể tạo slot. Thử lại.");
+        return;
+      }
       setAdding(null);
+      setNewSlotProduct("");
       void fetchSlots();
     } catch {
-      // silent
+      setError("Lỗi kết nối khi tạo slot");
     } finally {
       setSaving(false);
     }
@@ -159,11 +217,16 @@ export function CalendarTab(): React.ReactElement {
 
   async function handleDeleteSlot(slotId: string): Promise<void> {
     if (!confirm("Xoá slot này?")) return;
+    setError(null);
     try {
-      await fetch(`/api/calendar/slots/${slotId}`, { method: "DELETE" });
+      const res = await fetch(`/api/calendar/slots/${slotId}`, { method: "DELETE" });
+      if (!res.ok) {
+        setError("Không thể xoá slot");
+        return;
+      }
       void fetchSlots();
     } catch {
-      // silent
+      setError("Lỗi kết nối khi xoá slot");
     }
   }
 
@@ -175,10 +238,12 @@ export function CalendarTab(): React.ReactElement {
     days.push(d);
   }
 
-  // Group slots by date
+  // Group slots by date (use local date format for matching)
   const slotsByDate: Record<string, SlotData[]> = {};
   for (const slot of slots) {
-    const key = slot.scheduledDate.slice(0, 10);
+    // Parse scheduledDate from API (ISO or date string) and format locally
+    const slotDate = new Date(slot.scheduledDate);
+    const key = formatDateLocal(slotDate);
     if (!slotsByDate[key]) slotsByDate[key] = [];
     slotsByDate[key].push(slot);
   }
@@ -190,10 +255,28 @@ export function CalendarTab(): React.ReactElement {
     typeCounts[slot.contentType] = (typeCounts[slot.contentType] || 0) + 1;
   }
 
-  const today = formatDate(new Date());
+  const today = formatDateLocal(new Date());
+
+  // Show empty state if channels haven't loaded yet
+  if (!channelsLoaded) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+          <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto text-rose-400 hover:text-rose-600 text-xs">✕</button>
+        </div>
+      )}
+
       {/* Controls */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -228,33 +311,41 @@ export function CalendarTab(): React.ReactElement {
       </div>
 
       {/* Stats bar */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm px-4 py-3">
-        <div className="flex items-center gap-4 flex-wrap text-xs">
-          <span className="font-medium text-gray-700 dark:text-gray-300">
-            Tuần này: <strong>{totalSlots}</strong> slots
-          </span>
-          {Object.entries(CONTENT_TYPE_CONFIG).map(([key, cfg]) => (
-            <span key={key} className={cfg.color}>
-              {cfg.label}: <strong>{typeCounts[key] || 0}</strong>
+      {channels.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm px-4 py-3">
+          <div className="flex items-center gap-4 flex-wrap text-xs">
+            <span className="font-medium text-gray-700 dark:text-gray-300">
+              Tuần này: <strong>{totalSlots}</strong> slots
             </span>
-          ))}
+            {Object.entries(CONTENT_TYPE_CONFIG).map(([key, cfg]) => (
+              <span key={key} className={cfg.color}>
+                {cfg.label}: <strong>{typeCounts[key] || 0}</strong>
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Week list */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-        </div>
-      ) : channels.length === 0 ? (
+      {channels.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Calendar className="w-8 h-8 text-gray-400 mb-3" />
-          <p className="text-sm text-gray-500">Tạo kênh TikTok trước để dùng lịch đăng</p>
+          <p className="text-sm text-gray-500 mb-4">Tạo kênh TikTok trước để dùng lịch đăng</p>
+          <a
+            href="/channels"
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm transition-all"
+          >
+            Tạo kênh
+          </a>
+        </div>
+      ) : loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
         </div>
       ) : (
         <div className="space-y-2">
           {days.map((day, dayIdx) => {
-            const dateStr = formatDate(day);
+            const dateStr = formatDateLocal(day);
             const daySlots = slotsByDate[dateStr] || [];
             const isToday = dateStr === today;
 
@@ -301,6 +392,12 @@ export function CalendarTab(): React.ReactElement {
                           {cfg.label}
                         </span>
                       )}
+                      {slot.productIdentity && (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded-full shrink-0">
+                          <Package className="w-2.5 h-2.5" />
+                          SP
+                        </span>
+                      )}
                       <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
                         {slot.productIdentity?.title || slot.notes || "—"}
                       </span>
@@ -317,51 +414,67 @@ export function CalendarTab(): React.ReactElement {
 
                 {/* Add slot inline form */}
                 {adding === dateStr && (
-                  <div className="mt-2 pt-2 border-t border-gray-100 dark:border-slate-800 flex items-end gap-2 flex-wrap">
-                    <div>
-                      <label className="block text-[10px] text-gray-400 mb-0.5">Giờ</label>
-                      <input
-                        type="time"
-                        value={newSlotTime}
-                        onChange={(e) => setNewSlotTime(e.target.value)}
-                        className={selectCls + " w-24"}
-                      />
+                  <div className="mt-2 pt-2 border-t border-gray-100 dark:border-slate-800 space-y-2">
+                    <div className="flex items-end gap-2 flex-wrap">
+                      <div>
+                        <label className="block text-[10px] text-gray-400 mb-0.5">Giờ</label>
+                        <input
+                          type="time"
+                          value={newSlotTime}
+                          onChange={(e) => setNewSlotTime(e.target.value)}
+                          className={selectCls + " w-24"}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-400 mb-0.5">Loại</label>
+                        <select className={selectCls} value={newSlotType} onChange={(e) => setNewSlotType(e.target.value)}>
+                          <option value="entertainment">Giải trí</option>
+                          <option value="education">Giáo dục</option>
+                          <option value="review">Review</option>
+                          <option value="selling">Bán hàng</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-400 mb-0.5">Format</label>
+                        <select className={selectCls} value={newSlotFormat} onChange={(e) => setNewSlotFormat(e.target.value)}>
+                          <option value="">Tự do</option>
+                          <option value="before_after">Before/After</option>
+                          <option value="product_showcase">Product Showcase</option>
+                          <option value="slideshow_voiceover">Slideshow + VO</option>
+                          <option value="tutorial_steps">Tutorial Steps</option>
+                          <option value="comparison">Comparison</option>
+                          <option value="trending_hook">Trending Hook</option>
+                        </select>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-[10px] text-gray-400 mb-0.5">Loại</label>
-                      <select className={selectCls} value={newSlotType} onChange={(e) => setNewSlotType(e.target.value)}>
-                        <option value="entertainment">Giải trí</option>
-                        <option value="education">Giáo dục</option>
-                        <option value="review">Review</option>
-                        <option value="selling">Bán hàng</option>
-                      </select>
+                    {/* Product selector */}
+                    {products.length > 0 && (
+                      <div>
+                        <label className="block text-[10px] text-gray-400 mb-0.5">Sản phẩm (tuỳ chọn)</label>
+                        <select className={selectCls + " w-full"} value={newSlotProduct} onChange={(e) => setNewSlotProduct(e.target.value)}>
+                          <option value="">Không gắn SP</option>
+                          {products.map((p) => (
+                            <option key={p.id} value={p.id}>{p.title ?? `SP ${p.id.slice(-6)}`}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => void handleAddSlot(dateStr)}
+                        disabled={saving}
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                        Thêm
+                      </button>
+                      <button
+                        onClick={() => setAdding(null)}
+                        className="text-xs text-gray-400 hover:text-gray-700 px-3 py-2 transition-colors"
+                      >
+                        Huỷ
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-[10px] text-gray-400 mb-0.5">Format</label>
-                      <select className={selectCls} value={newSlotFormat} onChange={(e) => setNewSlotFormat(e.target.value)}>
-                        <option value="">Tự do</option>
-                        <option value="before_after">Before/After</option>
-                        <option value="product_showcase">Product Showcase</option>
-                        <option value="slideshow_voiceover">Slideshow + VO</option>
-                        <option value="tutorial_steps">Tutorial Steps</option>
-                        <option value="comparison">Comparison</option>
-                        <option value="trending_hook">Trending Hook</option>
-                      </select>
-                    </div>
-                    <button
-                      onClick={() => void handleAddSlot(dateStr)}
-                      disabled={saving}
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-50 flex items-center gap-1"
-                    >
-                      {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                      Thêm
-                    </button>
-                    <button
-                      onClick={() => setAdding(null)}
-                      className="text-xs text-gray-400 hover:text-gray-700 px-3 py-2 transition-colors"
-                    >
-                      Huỷ
-                    </button>
                   </div>
                 )}
               </div>

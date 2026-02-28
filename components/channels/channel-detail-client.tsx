@@ -54,6 +54,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchChannel = useCallback(async (): Promise<void> => {
     try {
@@ -75,11 +76,16 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   async function handleDelete(): Promise<void> {
     if (!confirm("Xoá kênh này? Hành động không thể hoàn tác.")) return;
     setDeleting(true);
+    setError(null);
     try {
       const res = await fetch(`/api/channels/${channelId}`, { method: "DELETE" });
-      if (res.ok) router.push("/channels");
+      if (res.ok) {
+        router.push("/channels");
+      } else {
+        setError("Không thể xoá kênh. Thử lại.");
+      }
     } catch {
-      // silent
+      setError("Lỗi kết nối khi xoá kênh");
     } finally {
       setDeleting(false);
     }
@@ -146,6 +152,13 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
       >
         <ArrowLeft className="w-4 h-4" /> Danh sách kênh
       </Link>
+
+      {error && (
+        <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
+          <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
+          <button onClick={() => setError(null)} className="ml-auto text-rose-400 hover:text-rose-600 text-xs">✕</button>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
         {/* Header */}

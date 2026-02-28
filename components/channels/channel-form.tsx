@@ -53,6 +53,7 @@ const labelCls = "block text-xs font-medium text-gray-600 dark:text-gray-400 mb-
 export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactElement {
   const isEdit = !!initial?.id;
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ChannelData>({
     name: initial?.name ?? "",
     handle: initial?.handle ?? "",
@@ -76,6 +77,7 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
     if (!form.name || !form.personaName || !form.personaDesc) return;
 
     setSaving(true);
+    setError(null);
     try {
       const url = isEdit ? `/api/channels/${initial!.id}` : "/api/channels";
       const method = isEdit ? "PUT" : "POST";
@@ -84,9 +86,14 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (res.ok) onSaved();
+      if (res.ok) {
+        onSaved();
+      } else {
+        const body = await res.json().catch(() => null);
+        setError((body as { error?: string } | null)?.error ?? `Lỗi ${isEdit ? "cập nhật" : "tạo"} kênh (${res.status})`);
+      }
     } catch {
-      // silent
+      setError("Lỗi kết nối. Thử lại.");
     } finally {
       setSaving(false);
     }
@@ -237,6 +244,13 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
           nhắm đến <strong>{form.targetAudience || "..."}</strong>.
         </p>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
+          <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-3 pt-2">

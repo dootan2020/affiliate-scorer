@@ -27,14 +27,20 @@ export function ChannelListClient(): React.ReactElement {
   const [channels, setChannels] = useState<ChannelSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function fetchChannels(): Promise<void> {
+    setError(null);
     try {
       const res = await fetch("/api/channels");
+      if (!res.ok) {
+        setError(`Lỗi tải kênh (${res.status})`);
+        return;
+      }
       const json = (await res.json()) as { data: ChannelSummary[] };
       setChannels(json.data ?? []);
     } catch {
-      // silent
+      setError("Không thể tải danh sách kênh. Kiểm tra kết nối mạng.");
     } finally {
       setLoading(false);
     }
@@ -76,6 +82,12 @@ export function ChannelListClient(): React.ReactElement {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
+          <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
+          <button onClick={() => setError(null)} className="ml-auto text-rose-400 hover:text-rose-600 text-xs">✕</button>
+        </div>
+      )}
       {showForm && (
         <ChannelForm
           onSaved={() => {

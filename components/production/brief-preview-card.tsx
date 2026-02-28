@@ -13,7 +13,6 @@ import {
 import { toast } from "sonner";
 import { CopyButton } from "@/components/ui/copy-button";
 import { BriefProductHeader } from "./brief-product-header";
-import { ProductGallery } from "./product-gallery";
 import { AssetCardWithStatus } from "./asset-card-with-status";
 import type { BriefWithProduct, VideoStatus } from "@/lib/types/production";
 
@@ -79,12 +78,6 @@ export function BriefPreviewCard({
         product={brief.productIdentity}
         onRegenerate={onRegenerate}
         todayBriefCount={todayBriefCount}
-      />
-
-      {/* Product gallery */}
-      <ProductGallery
-        productIdentityId={brief.productIdentity.id}
-        mainImageUrl={brief.productIdentity.imageUrl}
       />
 
       {/* Replaced badge */}

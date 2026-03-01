@@ -5,6 +5,7 @@ import { validateBody } from "@/lib/validations/validate-body";
 import { updateAssetSchema } from "@/lib/validations/schemas-content";
 import { syncSlotStatusFromAsset } from "@/lib/content/sync-slot-status";
 import { validateTransition } from "@/lib/state-machines/transitions";
+import { checkBatchCompletion } from "@/lib/services/batch-status";
 
 export async function PATCH(
   request: Request,
@@ -60,6 +61,11 @@ export async function PATCH(
     // Sync linked calendar slots when status changes
     if (body.status) {
       await syncSlotStatusFromAsset(id, body.status);
+    }
+
+    // Auto-check batch completion when asset reaches terminal state
+    if (body.status && existing.productionBatchId) {
+      await checkBatchCompletion(existing.productionBatchId);
     }
 
     return NextResponse.json({

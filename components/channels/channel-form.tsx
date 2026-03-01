@@ -25,6 +25,10 @@ interface ChannelInitial {
   contentPillars?: string[] | null;
   hookBank?: string[] | null;
   contentMix?: Record<string, number> | null;
+  contentPillarDetails?: Array<{ pillar: string; aiFeasibility: string; recommendedFormats: string[]; productionNotes: string }> | null;
+  videoFormats?: Array<{ contentType: string; primaryFormat: string; secondaryFormat: string; aiToolSuggestion: string; productionNotes: string }> | null;
+  productionStyle?: string | null;
+  productionStyleReason?: string | null;
   postsPerDay?: number | null;
   postingSchedule?: Record<string, { times: string[]; focus: string }> | null;
   seriesSchedule?: Array<{ name: string; dayOfWeek: string; contentPillar: string }> | null;
@@ -61,16 +65,20 @@ function initialToProfile(initial: Partial<ChannelInitial>): ChannelProfileResul
     subNiche: initial.subNiche ?? base.subNiche,
     usp: initial.usp ?? base.usp,
     contentPillars: (initial.contentPillars as string[]) ?? base.contentPillars,
+    contentPillarDetails: (initial.contentPillarDetails as ChannelProfileResult["contentPillarDetails"]) ?? base.contentPillarDetails,
     hookBank: (initial.hookBank as string[]) ?? base.hookBank,
     contentMix: initial.contentMix
       ? {
-          entertainment: initial.contentMix.entertainment ?? 40,
-          education: initial.contentMix.education ?? 25,
-          review: initial.contentMix.review ?? 20,
-          selling: initial.contentMix.selling ?? 15,
+          entertainment: initial.contentMix.entertainment ?? 20,
+          education: initial.contentMix.education ?? 30,
+          review: initial.contentMix.review ?? 30,
+          selling: initial.contentMix.selling ?? 20,
         }
       : base.contentMix,
     contentMixReason: "",
+    videoFormats: (initial.videoFormats as ChannelProfileResult["videoFormats"]) ?? base.videoFormats,
+    productionStyle: (initial.productionStyle as ChannelProfileResult["productionStyle"]) ?? base.productionStyle,
+    productionStyleReason: initial.productionStyleReason ?? base.productionStyleReason,
     postsPerDay: initial.postsPerDay ?? base.postsPerDay,
     postingSchedule: (initial.postingSchedule as ChannelProfileResult["postingSchedule"]) ?? base.postingSchedule,
     seriesSchedule: (initial.seriesSchedule as ChannelProfileResult["seriesSchedule"]) ?? base.seriesSchedule,
@@ -177,6 +185,10 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
         contentPillars: profile.contentPillars.filter(Boolean),
         hookBank: profile.hookBank.filter(Boolean),
         contentMix: profile.contentMix,
+        contentPillarDetails: profile.contentPillarDetails.length > 0 ? profile.contentPillarDetails : undefined,
+        videoFormats: profile.videoFormats.length > 0 ? profile.videoFormats : undefined,
+        productionStyle: profile.productionStyle || undefined,
+        productionStyleReason: profile.productionStyleReason || undefined,
         postsPerDay: profile.postsPerDay,
         postingSchedule: profile.postingSchedule,
         seriesSchedule: profile.seriesSchedule,

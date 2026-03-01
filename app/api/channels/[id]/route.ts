@@ -30,6 +30,21 @@ const updateChannelSchema = z.object({
     dayOfWeek: z.string(),
     contentPillar: z.string(),
   })).nullable().optional(),
+  contentPillarDetails: z.array(z.object({
+    pillar: z.string(),
+    aiFeasibility: z.enum(["high", "medium", "low"]),
+    recommendedFormats: z.array(z.string()),
+    productionNotes: z.string(),
+  })).nullable().optional(),
+  videoFormats: z.array(z.object({
+    contentType: z.string(),
+    primaryFormat: z.string(),
+    secondaryFormat: z.string(),
+    aiToolSuggestion: z.string(),
+    productionNotes: z.string(),
+  })).nullable().optional(),
+  productionStyle: z.enum(["voiceover_broll", "talking_head", "product_showcase", "hybrid"]).nullable().optional(),
+  productionStyleReason: z.string().max(500).nullable().optional(),
   ctaTemplates: z.record(z.string(), z.string()).nullable().optional(),
   competitorChannels: z.array(z.object({
     handle: z.string(),
@@ -74,6 +89,7 @@ export async function PUT(
     const {
       contentPillars, hookBank, contentMix, postingSchedule,
       seriesSchedule, ctaTemplates, competitorChannels,
+      contentPillarDetails, videoFormats,
       aiGeneratedAt, ...rest
     } = updateChannelSchema.parse(body);
 
@@ -86,6 +102,8 @@ export async function PUT(
         contentMix: toNullableJson(contentMix),
         postingSchedule: toNullableJson(postingSchedule),
         seriesSchedule: toNullableJson(seriesSchedule),
+        contentPillarDetails: toNullableJson(contentPillarDetails),
+        videoFormats: toNullableJson(videoFormats),
         ctaTemplates: toNullableJson(ctaTemplates),
         competitorChannels: toNullableJson(competitorChannels),
         aiGeneratedAt: aiGeneratedAt ? new Date(aiGeneratedAt) : aiGeneratedAt === null ? null : undefined,

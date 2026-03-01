@@ -889,6 +889,12 @@ model TikTokChannel {
   postingSchedule    Json?   // { mon: { times: ["10:00","19:00"], focus: "review" }, ... }
   seriesSchedule     Json?   // [{ name, dayOfWeek, contentPillar }]
 
+  // AI Video Production
+  contentPillarDetails Json?  // [{ pillar, aiFeasibility, recommendedFormats, productionNotes }]
+  videoFormats         Json?  // [{ contentType, primaryFormat, secondaryFormat, aiToolSuggestion, productionNotes }]
+  productionStyle      String? // "voiceover_broll" | "talking_head" | "product_showcase" | "hybrid"
+  productionStyleReason String?
+
   // CTA & Competitors
   ctaTemplates       Json?   // { entertainment, education, review, selling }
   competitorChannels Json?   // [{ handle, followers, whyReference }]

@@ -4,6 +4,14 @@ export interface ChannelProfileInput {
   tone: string;
 }
 
+export interface VideoFormatRecommendation {
+  contentType: string;
+  primaryFormat: string;
+  secondaryFormat: string;
+  aiToolSuggestion: string;
+  productionNotes: string;
+}
+
 export interface ChannelProfileResult {
   name: string;
   handle: string;
@@ -12,6 +20,12 @@ export interface ChannelProfileResult {
   subNiche: string;
   usp: string;
   contentPillars: string[];
+  contentPillarDetails: Array<{
+    pillar: string;
+    aiFeasibility: "high" | "medium" | "low";
+    recommendedFormats: string[];
+    productionNotes: string;
+  }>;
   hookBank: string[];
   contentMix: {
     entertainment: number;
@@ -20,6 +34,9 @@ export interface ChannelProfileResult {
     selling: number;
   };
   contentMixReason: string;
+  videoFormats: VideoFormatRecommendation[];
+  productionStyle: "voiceover_broll" | "talking_head" | "product_showcase" | "hybrid";
+  productionStyleReason: string;
   postsPerDay: number;
   postingSchedule: Record<string, { times: string[]; focus: string }>;
   seriesSchedule: Array<{

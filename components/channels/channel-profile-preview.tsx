@@ -176,6 +176,68 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
         </div>
       </section>
 
+      {/* Production Style */}
+      <section className={sectionCls}>
+        <h4 className={sectionTitle}>🎬 Production Style</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Phong cách sản xuất</label>
+            <select className={inputCls} value={profile.productionStyle} onChange={(e) => update("productionStyle", e.target.value as ChannelProfileResult["productionStyle"])}>
+              <option value="voiceover_broll">Voiceover + B-roll</option>
+              <option value="talking_head">Talking Head</option>
+              <option value="product_showcase">Product Showcase</option>
+              <option value="hybrid">Hybrid (kết hợp)</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Lý do</label>
+            <input className={inputCls} value={profile.productionStyleReason} onChange={(e) => update("productionStyleReason", e.target.value)} placeholder="Tại sao chọn style này?" />
+          </div>
+        </div>
+      </section>
+
+      {/* Content Pillar Details — AI Feasibility */}
+      {profile.contentPillarDetails.length > 0 && (
+        <section className={sectionCls}>
+          <h4 className={sectionTitle}>🤖 AI Feasibility per Pillar</h4>
+          <div className="space-y-2">
+            {profile.contentPillarDetails.map((d, i) => (
+              <div key={i} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.pillar}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    d.aiFeasibility === "high" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                    : d.aiFeasibility === "medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                    : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400"
+                  }`}>
+                    AI: {d.aiFeasibility}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{d.productionNotes}</p>
+                <p className="text-xs text-gray-400 mt-0.5">Formats: {d.recommendedFormats.join(", ")}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Video Formats */}
+      {profile.videoFormats.length > 0 && (
+        <section className={sectionCls}>
+          <h4 className={sectionTitle}>📹 Video Format Mapping</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {profile.videoFormats.map((vf, i) => (
+              <div key={i} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">
+                <p className="text-xs font-medium text-gray-500 uppercase mb-1">{vf.contentType}</p>
+                <p className="text-sm text-gray-900 dark:text-gray-100">{vf.primaryFormat} <span className="text-gray-400">/ {vf.secondaryFormat}</span></p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Tool: {vf.aiToolSuggestion}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{vf.productionNotes}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Content Mix */}
       <section className={sectionCls}>
         <h4 className={sectionTitle}>📊 Content Mix</h4>

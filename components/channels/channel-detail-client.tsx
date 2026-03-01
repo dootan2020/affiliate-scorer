@@ -28,6 +28,10 @@ interface ChannelData {
   contentPillars: string[] | null;
   hookBank: string[] | null;
   contentMix: Record<string, number> | null;
+  contentPillarDetails: Array<{ pillar: string; aiFeasibility: string; recommendedFormats: string[]; productionNotes: string }> | null;
+  videoFormats: Array<{ contentType: string; primaryFormat: string; secondaryFormat: string; aiToolSuggestion: string; productionNotes: string }> | null;
+  productionStyle: string | null;
+  productionStyleReason: string | null;
   postsPerDay: number | null;
   postingSchedule: Record<string, { times: string[]; focus: string }> | null;
   seriesSchedule: Array<{ name: string; dayOfWeek: string; contentPillar: string }> | null;
@@ -55,6 +59,13 @@ const FONT_LABELS: Record<string, string> = {
   elegant: "Sang trọng",
   playful: "Vui tươi",
   minimal: "Tối giản",
+};
+
+const PRODUCTION_LABELS: Record<string, string> = {
+  voiceover_broll: "Voiceover + B-roll",
+  talking_head: "Talking Head",
+  product_showcase: "Product Showcase",
+  hybrid: "Hybrid",
 };
 
 const MIX_LABELS: Record<string, string> = {
@@ -178,6 +189,10 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
             contentPillars: channel.contentPillars,
             hookBank: channel.hookBank,
             contentMix: channel.contentMix,
+            contentPillarDetails: channel.contentPillarDetails,
+            videoFormats: channel.videoFormats,
+            productionStyle: channel.productionStyle,
+            productionStyleReason: channel.productionStyleReason,
             postsPerDay: channel.postsPerDay,
             postingSchedule: channel.postingSchedule,
             seriesSchedule: channel.seriesSchedule,
@@ -196,8 +211,10 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   }
 
   const pillars = channel.contentPillars ?? [];
+  const pillarDetails = channel.contentPillarDetails ?? [];
   const hooks = channel.hookBank ?? [];
   const mix = channel.contentMix;
+  const vFormats = channel.videoFormats ?? [];
   const schedule = channel.postingSchedule;
   const series = channel.seriesSchedule ?? [];
   const cta = channel.ctaTemplates;
@@ -331,17 +348,77 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           </InfoSection>
         </div>
 
-        {/* New expert fields */}
+        {/* Production Style */}
+        {channel.productionStyle && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
+            <InfoSection title="Production Style">
+              <div className="flex items-center gap-3">
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                  channel.productionStyle === "hybrid" ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400"
+                  : channel.productionStyle === "voiceover_broll" ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
+                  : channel.productionStyle === "talking_head" ? "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
+                  : "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400"
+                }`}>
+                  {PRODUCTION_LABELS[channel.productionStyle] ?? channel.productionStyle}
+                </span>
+                {channel.productionStyleReason && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{channel.productionStyleReason}</span>
+                )}
+              </div>
+            </InfoSection>
+          </div>
+        )}
 
-        {/* Content Pillars */}
+        {/* Content Pillars with AI Feasibility */}
         {pillars.length > 0 && (
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
             <InfoSection title="Content Pillars">
-              <div className="flex flex-wrap gap-2">
-                {pillars.map((p, i) => (
-                  <span key={i} className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/30 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
-                    {p}
-                  </span>
+              {pillarDetails.length > 0 ? (
+                <div className="space-y-2">
+                  {pillarDetails.map((d, i) => (
+                    <div key={i} className="flex items-start gap-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.pillar}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            d.aiFeasibility === "high" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                            : d.aiFeasibility === "medium" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400"
+                          }`}>
+                            AI: {d.aiFeasibility}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{d.productionNotes}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Formats: {d.recommendedFormats.join(", ")}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {pillars.map((p, i) => (
+                    <span key={i} className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/30 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
+                      {p}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </InfoSection>
+          </div>
+        )}
+
+        {/* Video Formats */}
+        {vFormats.length > 0 && (
+          <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
+            <InfoSection title="Video Format Mapping">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {vFormats.map((vf, i) => (
+                  <div key={i} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">
+                    <p className="text-xs font-medium text-gray-500 uppercase mb-1">{MIX_LABELS[vf.contentType] ?? vf.contentType}</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100">{vf.primaryFormat} <span className="text-gray-400">/ {vf.secondaryFormat}</span></p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Tool: {vf.aiToolSuggestion}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{vf.productionNotes}</p>
+                  </div>
                 ))}
               </div>
             </InfoSection>

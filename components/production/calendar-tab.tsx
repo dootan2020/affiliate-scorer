@@ -57,6 +57,7 @@ const STATUS_ICONS: Record<string, string> = {
   planned: "⏳",
   briefed: "📝",
   produced: "🎬",
+  rendered: "🎞️",
   published: "✅",
   skipped: "⏭️",
 };

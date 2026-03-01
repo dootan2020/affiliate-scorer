@@ -560,6 +560,11 @@ model ContentBrief {
 
   status String @default("generated") // "generated" | "reviewed" | "exported"
 
+  // Character-driven content
+  formatSlug String? // FormatTemplate slug used for this brief
+  qcStatus   String? // "pass" | "warn"
+  qcDetails  Json?   // [{check, status, message}]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -926,10 +931,13 @@ model TikTokChannel {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  contentSlots  ContentSlot[]
-  contentAssets ContentAsset[]
-  briefs        ContentBrief[]
-  refreshLogs   TacticalRefreshLog[]
+  contentSlots    ContentSlot[]
+  contentAssets   ContentAsset[]
+  briefs          ContentBrief[]
+  refreshLogs     TacticalRefreshLog[]
+  characterBible  CharacterBible?
+  formatTemplates FormatTemplate[]
+  ideaMatrixItems IdeaMatrixItem[]
 }
 
 model ContentSlot {
@@ -1023,4 +1031,108 @@ model ProductGalleryImage {
   createdAt         DateTime        @default(now())
 
   @@index([productIdentityId])
+}
+
+// ─── CHARACTER-DRIVEN CONTENT SYSTEM ───
+
+model CharacterBible {
+  id        String        @id @default(cuid())
+  channelId String        @unique
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  // Layer 1: Core Belief + Fear + Red Lines
+  coreValues     Json?   // string[] — 3 core beliefs
+  coreFear       String?
+  crisisResponse String?
+  redLines       Json?   // string[] — things character never does
+
+  // Layer 2: Relationship Web
+  relationships Json? // [{name, role, personality, catchphrase, dynamic}]
+
+  // Layer 3: World Rules
+  worldRules  Json? // [{rule, effect}]
+  weaknesses  Json? // string[] — cute weaknesses
+
+  // Layer 4: Origin Story
+  originWound  String?
+  originVow    String?
+  originSymbol String?
+
+  // Layer 5: Living Space
+  livingSpaces Json? // [{name, mood, visualDesc}]
+
+  // Layer 6: Story Arc
+  storyArcs Json? // [{chapter, weeks, title, description}]
+
+  // Layer 7: Language + Ritual
+  catchphrases    Json? // string[]
+  insideJokes     Json? // string[]
+  rituals         Json? // string[]
+  vocabularyRules Json? // string[] — words to always/never use
+
+  // Consistency Locks
+  visualLocks Json? // {props: string[], texture: string, colorPalette: string}
+  voiceDna    Json? // {tone: string, pace: string, signature: string}
+
+  // Meta
+  generatedByAi   Boolean   @default(false)
+  aiGeneratedAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model FormatTemplate {
+  id        String        @id @default(cuid())
+  channelId String
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  name        String
+  slug        String
+  description String?
+  goal        String? // what this format achieves
+
+  // Structure templates
+  hookTemplate  String? // template for hook section
+  bodyTemplate  String? // template for body section
+  proofTemplate String? // template for proof/evidence section
+  ctaTemplate   String? // template for CTA section
+
+  exampleScript String? // full example script
+
+  isDefault Boolean @default(false)
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([channelId, slug])
+  @@index([channelId])
+}
+
+model IdeaMatrixItem {
+  id        String        @id @default(cuid())
+  channelId String
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  // Cross reference
+  bibleLayer  String // "core_beliefs" | "relationships" | "world_rules" | "origin" | "living_spaces" | "story_arcs" | "language"
+  layerDetail String // specific element from that layer
+  formatSlug  String // slug of FormatTemplate
+
+  // Idea content
+  ideaTitle       String
+  hookSuggestions Json?   // string[] — 2-3 hook ideas
+  angle           String?
+  notes           String?
+
+  // Status tracking
+  status  String  @default("fresh") // "fresh" | "picked" | "briefed" | "dismissed"
+  briefId String? // linked ContentBrief when status = "briefed"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([channelId, status])
+  @@index([channelId, bibleLayer])
 }

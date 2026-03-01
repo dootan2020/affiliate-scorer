@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock, BookOpen, Layers, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
 import { TacticalRefreshDialog } from "./tactical-refresh-dialog";
+import { CharacterBibleEditor } from "./character-bible-editor";
+import { FormatBankList } from "./format-bank-list";
+import { IdeaMatrixGrid } from "./idea-matrix-grid";
 import { Button } from "@/components/ui/button";
 
 interface ChannelData {
@@ -264,6 +267,8 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
     );
   }
 
+  const [activeTab, setActiveTab] = useState<"overview" | "bible" | "formats" | "matrix">("overview");
+
   const pillars = channel.contentPillars ?? [];
   const pillarDetails = channel.contentPillarDetails ?? [];
   const hooks = channel.hookBank ?? [];
@@ -273,6 +278,13 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   const series = channel.seriesSchedule ?? [];
   const cta = channel.ctaTemplates;
   const competitors = channel.competitorChannels ?? [];
+
+  const TABS = [
+    { key: "overview" as const, label: "Tổng quan", icon: LayoutGrid },
+    { key: "bible" as const, label: "Character Bible", icon: BookOpen },
+    { key: "formats" as const, label: "Format Bank", icon: Layers },
+    { key: "matrix" as const, label: "Idea Matrix", icon: Lightbulb },
+  ];
 
   return (
     <div className="space-y-6">
@@ -392,7 +404,31 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           </div>
         )}
 
-        {/* Info grid — existing fields */}
+        {/* Tab navigation */}
+        <nav className="flex items-center gap-1 bg-gray-100/80 dark:bg-slate-800/50 rounded-xl p-1 mb-6">
+          {TABS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === key
+                  ? "bg-white dark:bg-slate-900 shadow-sm text-gray-900 dark:text-gray-100"
+                  : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Tab content */}
+        {activeTab === "bible" && <CharacterBibleEditor channelId={channelId} />}
+        {activeTab === "formats" && <FormatBankList channelId={channelId} />}
+        {activeTab === "matrix" && <IdeaMatrixGrid channelId={channelId} />}
+
+        {/* Overview tab — existing content */}
+        {activeTab === "overview" && <>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <InfoSection title="Persona">
             <InfoRow label="Tên nhân vật" value={channel.personaName} />
@@ -628,6 +664,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
             </InfoSection>
           </div>
         )}
+        </>}
       </div>
 
       <TacticalRefreshDialog

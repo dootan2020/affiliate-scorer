@@ -4,6 +4,10 @@
 import { callAI } from "@/lib/ai/call-ai";
 import { prisma } from "@/lib/db";
 import { checkCompliance } from "./compliance";
+import type { CharacterBibleData } from "./character-bible-types";
+import type { FormatTemplateData } from "./format-template-types";
+import { buildCharacterBlock, buildFormatBlock } from "./build-character-prompt-block";
+import { runConsistencyQc } from "./consistency-qc";
 
 export interface ChannelContext {
   channelId: string;
@@ -20,6 +24,8 @@ export interface BriefOptions {
   contentType?: string | null; // entertainment | education | review | selling
   videoFormat?: string | null; // before_after | product_showcase | slideshow_voiceover | tutorial_steps | comparison | trending_hook
   targetDuration?: number | null; // seconds (15-60)
+  characterBible?: CharacterBibleData | null;
+  formatTemplate?: FormatTemplateData | null;
 }
 
 export interface ProductInput {
@@ -185,7 +191,15 @@ THỜI LƯỢNG MỤC TIÊU: ${options.targetDuration} giây
 → Mỗi script duration_s = ${options.targetDuration}. Chia scenes phù hợp.
 ` : "";
 
-  return `${channelBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
+  const characterBlock = options?.characterBible
+    ? `\n${buildCharacterBlock(options.characterBible)}\n`
+    : "";
+
+  const formatBlock = options?.formatTemplate
+    ? `\n${buildFormatBlock(options.formatTemplate)}\n`
+    : "";
+
+  return `${channelBlock}${characterBlock}${formatBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
 SẢN PHẨM:
 - Tên: ${product.title || "Chưa có tên"}
 - Giá: ${product.price ? formatVND(product.price) : "chưa rõ"}
@@ -334,6 +348,21 @@ export async function generateBrief(product: ProductInput, options?: BriefOption
     return checkCompliance(fullText);
   });
 
+  // Run consistency QC if character bible provided
+  const qcResults = brief.scripts.map((script) =>
+    runConsistencyQc(
+      script.full_script,
+      script.hook,
+      script.cta,
+      options?.characterBible ?? null,
+    ),
+  );
+  // Aggregate QC for the brief overall
+  const briefQcOverall = qcResults.some((r) => r.overall === "warn") ? "warn" : "pass";
+  const briefQcDetails = qcResults.flatMap((r, i) =>
+    r.checks.map((c) => ({ script: i + 1, ...c })),
+  );
+
   // Atomic DB writes: brief + assets + inboxState in single transaction
   const savedBriefId = await prisma.$transaction(async (tx) => {
     // Optimistic lock: re-check state inside transaction
@@ -357,6 +386,9 @@ export async function generateBrief(product: ProductInput, options?: BriefOption
         aiModel: modelUsed,
         promptUsed: prompt,
         generationTimeMs,
+        formatSlug: options?.formatTemplate?.slug ?? null,
+        qcStatus: briefQcOverall,
+        qcDetails: briefQcDetails,
       },
     });
 

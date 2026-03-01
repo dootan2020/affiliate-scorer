@@ -59,6 +59,7 @@ export const batchBriefSchema = z.object({
     "tutorial_steps", "comparison", "trending_hook",
   ]).optional(),
   targetDuration: z.number().int().min(15).max(60).optional(),
+  formatSlug: z.string().optional(),
 });
 
 const VALID_ASSET_STATUSES = ["draft", "produced", "rendered", "published", "logged", "archived", "failed"] as const;

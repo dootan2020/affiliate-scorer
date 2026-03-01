@@ -44,7 +44,24 @@ export async function POST(request: Request): Promise<NextResponse> {
       editingStyle: channel.editingStyle,
       niche: channel.niche,
     };
-    const briefOptions: BriefOptions = { channel: channelCtx, contentType, videoFormat, targetDuration };
+
+    // Fetch character bible + optional format template
+    const { formatSlug } = validation.data;
+    const [characterBible, formatTemplate] = await Promise.all([
+      prisma.characterBible.findUnique({ where: { channelId } }),
+      formatSlug
+        ? prisma.formatTemplate.findUnique({ where: { channelId_slug: { channelId, slug: formatSlug } } })
+        : null,
+    ]);
+
+    const briefOptions: BriefOptions = {
+      channel: channelCtx,
+      contentType,
+      videoFormat,
+      targetDuration,
+      characterBible: characterBible as unknown as import("@/lib/content/character-bible-types").CharacterBibleData | null,
+      formatTemplate: formatTemplate as unknown as import("@/lib/content/format-template-types").FormatTemplateData | null,
+    };
 
     // Lấy tất cả identities + product data cho enriched prompt
     const identities = await prisma.productIdentity.findMany({

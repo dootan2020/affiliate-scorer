@@ -1,4 +1,6 @@
 // POST /api/upload/products — Parse file, return batchId immediately, process in background.
+export const maxDuration = 60;
+
 import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { parseFile } from "@/lib/parsers/parse-file";

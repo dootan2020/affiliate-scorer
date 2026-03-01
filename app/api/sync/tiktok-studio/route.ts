@@ -1,3 +1,5 @@
+export const maxDuration = 60;
+
 import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { detectTikTokStudioFileType, FILE_TYPE_LABELS } from "@/lib/parsers/detect-tiktok-studio";

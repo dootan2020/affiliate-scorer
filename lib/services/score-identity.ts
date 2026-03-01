@@ -36,6 +36,8 @@ const IDENTITY_INCLUDE = {
   },
 } as const;
 
+const UPDATE_CHUNK = 50;
+
 function computeScores(identity: IdentityWithProduct): {
   contentPotentialScore: number;
   marketScore: number | null;
@@ -75,7 +77,7 @@ function computeScores(identity: IdentityWithProduct): {
   return { contentPotentialScore: contentScore, marketScore, combinedScore, inboxState };
 }
 
-/** Score specific identities by ID. Returns count scored. */
+/** Score specific identities by ID using batch $transaction. Returns count scored. */
 export async function syncIdentityScores(identityIds: string[]): Promise<number> {
   if (identityIds.length === 0) return 0;
 
@@ -84,45 +86,62 @@ export async function syncIdentityScores(identityIds: string[]): Promise<number>
     include: IDENTITY_INCLUDE,
   });
 
-  let scored = 0;
-  for (const identity of identities) {
-    const scores = computeScores(identity);
-    await prisma.productIdentity.update({
-      where: { id: identity.id },
-      data: {
-        contentPotentialScore: scores.contentPotentialScore,
-        marketScore: scores.marketScore,
-        combinedScore: scores.combinedScore,
-        inboxState: scores.inboxState,
-      },
-    });
-    scored++;
+  const updates = identities.map((identity) => ({
+    id: identity.id,
+    scores: computeScores(identity),
+  }));
+
+  // Batch update in $transaction chunks
+  for (let i = 0; i < updates.length; i += UPDATE_CHUNK) {
+    const chunk = updates.slice(i, i + UPDATE_CHUNK);
+    await prisma.$transaction(
+      chunk.map(({ id, scores }) =>
+        prisma.productIdentity.update({
+          where: { id },
+          data: {
+            contentPotentialScore: scores.contentPotentialScore,
+            marketScore: scores.marketScore,
+            combinedScore: scores.combinedScore,
+            inboxState: scores.inboxState,
+          },
+        }),
+      ),
+    );
   }
-  return scored;
+
+  return updates.length;
 }
 
-/** Score ALL non-archived identities. Returns count scored. */
+/** Score ALL non-archived identities using batch $transaction. Returns count scored. */
 export async function syncAllIdentityScores(): Promise<number> {
   const identities = await prisma.productIdentity.findMany({
     where: { inboxState: { not: "archived" } },
     include: IDENTITY_INCLUDE,
   });
 
-  let scored = 0;
-  for (const identity of identities) {
-    const scores = computeScores(identity);
-    await prisma.productIdentity.update({
-      where: { id: identity.id },
-      data: {
-        contentPotentialScore: scores.contentPotentialScore,
-        marketScore: scores.marketScore,
-        combinedScore: scores.combinedScore,
-        inboxState: scores.inboxState,
-      },
-    });
-    scored++;
+  const updates = identities.map((identity) => ({
+    id: identity.id,
+    scores: computeScores(identity),
+  }));
+
+  for (let i = 0; i < updates.length; i += UPDATE_CHUNK) {
+    const chunk = updates.slice(i, i + UPDATE_CHUNK);
+    await prisma.$transaction(
+      chunk.map(({ id, scores }) =>
+        prisma.productIdentity.update({
+          where: { id },
+          data: {
+            contentPotentialScore: scores.contentPotentialScore,
+            marketScore: scores.marketScore,
+            combinedScore: scores.combinedScore,
+            inboxState: scores.inboxState,
+          },
+        }),
+      ),
+    );
   }
-  return scored;
+
+  return updates.length;
 }
 
 /** Score a single identity. Returns score data. */

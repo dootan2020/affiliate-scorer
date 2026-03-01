@@ -38,16 +38,36 @@ function isPriceSimilar(a: number, b: number): boolean {
   return Math.abs(a - b) / max <= 0.1;
 }
 
+/**
+ * Deduplicate products — O(n) via tiktokUrl Map, fuzzy fallback only for URL-less.
+ * FastMoss products always have tiktokUrl, so fuzzy loop is typically skipped.
+ */
 export function deduplicateProducts(
-  products: NormalizedProduct[]
+  products: NormalizedProduct[],
 ): NormalizedProduct[] {
-  const result: NormalizedProduct[] = [];
+  const urlMap = new Map<string, NormalizedProduct>();
+  const withoutUrl: NormalizedProduct[] = [];
 
+  // Pass 1: O(n) dedup by tiktokUrl
   for (const product of products) {
+    if (product.tiktokUrl) {
+      const key = product.tiktokUrl.toLowerCase().trim();
+      if (!urlMap.has(key)) {
+        urlMap.set(key, product);
+      }
+    } else {
+      withoutUrl.push(product);
+    }
+  }
+
+  const result = Array.from(urlMap.values());
+
+  // Pass 2: O(m²) fuzzy match only for URL-less products (m ≈ 0 for FastMoss)
+  for (const product of withoutUrl) {
     const isDuplicate = result.some(
       (existing) =>
         similarity(existing.name, product.name) > 0.8 &&
-        isPriceSimilar(existing.price, product.price)
+        isPriceSimilar(existing.price, product.price),
     );
     if (!isDuplicate) {
       result.push(product);

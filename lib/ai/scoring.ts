@@ -34,6 +34,8 @@ interface ScoreOptions {
 }
 
 const CLAUDE_BATCH_SIZE = 30;
+const CLAUDE_CONCURRENCY = 3;
+const DB_WRITE_CHUNK = 50;
 
 async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
   let products: ProductModel[];
@@ -57,20 +59,29 @@ async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
     });
   }
 
-  // Enrich with real trending from historical snapshots
-  for (const product of products) {
-    if (product.salesGrowth7d !== null) continue;
+  // Batch trending enrichment: 1 query instead of N findFirst
+  const needsTrending = products
+    .filter((p) => p.salesGrowth7d === null)
+    .map((p) => p.id);
 
-    const latestSnapshot = await prisma.productSnapshot.findFirst({
-      where: { productId: product.id },
+  if (needsTrending.length > 0) {
+    const snapshots = await prisma.productSnapshot.findMany({
+      where: { productId: { in: needsTrending } },
       orderBy: { snapshotDate: "desc" },
-      select: { sales7d: true },
+      distinct: ["productId"],
+      select: { productId: true, sales7d: true },
     });
 
-    if (latestSnapshot) {
-      const realTrending = computeRealTrending(product.sales7d, latestSnapshot.sales7d);
-      if (realTrending !== null) {
-        product.salesGrowth7d = realTrending;
+    const snapMap = new Map(snapshots.map((s) => [s.productId, s.sales7d]));
+
+    for (const product of products) {
+      if (product.salesGrowth7d !== null) continue;
+      const prevSales = snapMap.get(product.id);
+      if (prevSales !== undefined) {
+        const realTrending = computeRealTrending(product.sales7d, prevSales);
+        if (realTrending !== null) {
+          product.salesGrowth7d = realTrending;
+        }
       }
     }
   }
@@ -178,14 +189,27 @@ export async function scoreProducts(
   const fbCount = await getFeedbackCount();
   const usePersonalization = fbCount >= 30;
 
-  // Process in batches for Claude API
+  // Split into Claude batches
+  const batches: ProductModel[][] = [];
+  for (let i = 0; i < products.length; i += CLAUDE_BATCH_SIZE) {
+    batches.push(products.slice(i, i + CLAUDE_BATCH_SIZE));
+  }
+
+  // Process Claude batches with concurrency limit
   const allClaudeItems = new Map<string, ClaudeScoreItem>();
 
-  for (let i = 0; i < products.length; i += CLAUDE_BATCH_SIZE) {
-    const batch = products.slice(i, i + CLAUDE_BATCH_SIZE);
-    const batchResults = await scoreBatchWithClaude(batch, weights);
-    for (const [id, item] of batchResults) {
-      allClaudeItems.set(id, item);
+  for (let i = 0; i < batches.length; i += CLAUDE_CONCURRENCY) {
+    const concurrentBatches = batches.slice(i, i + CLAUDE_CONCURRENCY);
+    const results = await Promise.allSettled(
+      concurrentBatches.map((batch) => scoreBatchWithClaude(batch, weights)),
+    );
+
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        for (const [id, item] of result.value) {
+          allClaudeItems.set(id, item);
+        }
+      }
     }
   }
 
@@ -198,21 +222,24 @@ export async function scoreProducts(
     }),
   );
 
-  // Write all scores to DB
-  await Promise.all(
-    updates.map(({ product, scores }) =>
-      prisma.product.update({
-        where: { id: product.id },
-        data: {
-          aiScore: scores.aiScore,
-          scoreBreakdown: scores.scoreBreakdown,
-          contentSuggestion: scores.contentSuggestion,
-          platformAdvice: scores.platformAdvice,
-          scoringVersion: scores.scoringVersion,
-        },
-      }),
-    ),
-  );
+  // Write scores to DB in $transaction chunks (instead of N individual updates)
+  for (let i = 0; i < updates.length; i += DB_WRITE_CHUNK) {
+    const chunk = updates.slice(i, i + DB_WRITE_CHUNK);
+    await prisma.$transaction(
+      chunk.map(({ product, scores }) =>
+        prisma.product.update({
+          where: { id: product.id },
+          data: {
+            aiScore: scores.aiScore,
+            scoreBreakdown: scores.scoreBreakdown,
+            contentSuggestion: scores.contentSuggestion,
+            platformAdvice: scores.platformAdvice,
+            scoringVersion: scores.scoringVersion,
+          },
+        }),
+      ),
+    );
+  }
 
   await updateRankings();
 

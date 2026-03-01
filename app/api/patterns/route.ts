@@ -8,6 +8,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const channelId = request.nextUrl.searchParams.get("channelId") || undefined;
 
+    // Validate channel exists and is active if channelId provided
+    if (channelId) {
+      const channel = await prisma.tikTokChannel.findUnique({ where: { id: channelId }, select: { id: true, isActive: true } });
+      if (!channel) {
+        return NextResponse.json({ error: "Không tìm thấy kênh" }, { status: 404 });
+      }
+      if (!channel.isActive) {
+        return NextResponse.json({ error: "Kênh đã tạm dừng" }, { status: 400 });
+      }
+    }
+
     const patterns = await prisma.userPattern.findMany({
       orderBy: [
         { patternType: "asc" }, // winning first

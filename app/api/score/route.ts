@@ -10,7 +10,10 @@ const ScoreRequestSchema = z.object({
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json().catch(() => ({}))) as unknown;
+    const body = await request.json().catch((err: unknown) => {
+      console.error("[POST /api/score] JSON parse failed:", err);
+      return {};
+    }) as unknown;
     const parsed = ScoreRequestSchema.safeParse(body);
 
     if (!parsed.success) {

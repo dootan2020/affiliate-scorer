@@ -15,7 +15,7 @@ interface ProviderStatus {
 
 export async function GET(): Promise<NextResponse> {
   try {
-    const dbRecords = await prisma.apiProvider.findMany();
+    const dbRecords = await prisma.apiProvider.findMany({ take: 50 });
     const dbMap = new Map(dbRecords.map((r) => [r.provider, r]));
 
     const providers: ProviderStatus[] = PROVIDER_NAMES.map((provider) => {

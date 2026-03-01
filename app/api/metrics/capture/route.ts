@@ -1,33 +1,33 @@
 // Phase 4: POST /api/metrics/capture — Chrome extension endpoint (sẵn sàng)
 import { NextResponse } from "next/server";
+import { z } from "zod/v4";
 import { prisma } from "@/lib/db";
 import { calculateReward } from "@/lib/learning/reward-score";
 import { updateLearningWeights } from "@/lib/learning/update-weights";
+import { validateBody } from "@/lib/validations/validate-body";
 
-interface ExtensionPayload {
-  platform: string;
-  post_id: string;
-  post_url: string;
-  captured_at: string;
-  metrics: {
-    views: number;
-    likes: number;
-    comments: number;
-    shares: number;
-    saves: number;
-    avg_watch_time_s?: number;
-    completion_rate?: number;
-    followers_gained?: number;
-  };
-}
+const extensionPayloadSchema = z.object({
+  platform: z.string().min(1),
+  post_id: z.string().min(1),
+  post_url: z.string().min(1),
+  captured_at: z.string().optional(),
+  metrics: z.object({
+    views: z.number(),
+    likes: z.number(),
+    comments: z.number(),
+    shares: z.number(),
+    saves: z.number(),
+    avg_watch_time_s: z.number().optional(),
+    completion_rate: z.number().optional(),
+    followers_gained: z.number().optional(),
+  }),
+});
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as ExtensionPayload;
-
-    if (!body.post_id || !body.metrics) {
-      return NextResponse.json({ error: "Missing post_id or metrics" }, { status: 400 });
-    }
+    const validation = await validateBody(request, extensionPayloadSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Match asset by post_id
     const asset = await prisma.contentAsset.findFirst({

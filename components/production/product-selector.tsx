@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, Check, Package, Star, Inbox } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { ProductImage } from "@/components/products/product-image";
 
 interface ProductIdentityItem {
@@ -119,12 +120,9 @@ export function ProductSelector({ selected, onSelectionChange, disabled, initial
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Chưa có sản phẩm đã chấm điểm. Vào Inbox để paste link và score sản phẩm trước.
         </p>
-        <Link
-          href="/inbox"
-          className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
-        >
-          Vào Inbox
-        </Link>
+        <Button asChild>
+          <Link href="/inbox">Vào Inbox</Link>
+        </Button>
       </div>
     );
   }

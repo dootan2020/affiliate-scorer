@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod/v4";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
 
-interface UpdateFinancialBody {
-  type?: string;
-  amount?: number;
-  source?: string;
-  productId?: string | null;
-  campaignId?: string | null;
-  date?: string;
-  notes?: string | null;
-}
+const updateFinancialSchema = z.object({
+  type: z.string().optional(),
+  amount: z.number().optional(),
+  source: z.string().optional(),
+  productId: z.string().nullable().optional(),
+  campaignId: z.string().nullable().optional(),
+  date: z.string().optional(),
+  notes: z.string().nullable().optional(),
+});
 
 export async function PATCH(
   request: NextRequest,
@@ -17,7 +19,9 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as UpdateFinancialBody;
+    const validation = await validateBody(request, updateFinancialSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Check record exists
     const existing = await prisma.financialRecord.findUnique({ where: { id } });
@@ -26,16 +30,6 @@ export async function PATCH(
         { error: "Không tìm thấy bản ghi tài chính", code: "NOT_FOUND" },
         { status: 404 }
       );
-    }
-
-    // Validate amount if provided
-    if (body.amount !== undefined) {
-      if (typeof body.amount !== "number" || isNaN(body.amount)) {
-        return NextResponse.json(
-          { error: "amount phải là số hợp lệ", code: "INVALID_AMOUNT" },
-          { status: 400 }
-        );
-      }
     }
 
     // Parse date if provided

@@ -6,6 +6,7 @@ import {
   TrendingUp, Lightbulb, Globe, Trophy, CheckCircle2,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { Button } from "@/components/ui/button";
 import { ScoreBreakdown } from "@/components/products/score-breakdown";
 import { SeasonalTagForm } from "@/components/products/seasonal-tag-form";
 import { ProductImage } from "@/components/products/product-image";
@@ -271,13 +272,12 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
 
       {/* Create Brief Button */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <Link
-          href={`/production?productId=${product.id}`}
-          className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
-        >
-          <Sparkles className="w-4 h-4" />
-          Tạo Brief AI
-        </Link>
+        <Button asChild className="w-full sm:w-auto">
+          <Link href={`/production?productId=${product.id}`}>
+            <Sparkles className="w-4 h-4" />
+            Tạo Brief AI
+          </Link>
+        </Button>
       </div>
 
       {/* KOL/Competition Stats */}

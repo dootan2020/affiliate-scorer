@@ -27,7 +27,7 @@ function isValidModelId(modelId: string): boolean {
 
 export async function GET(): Promise<NextResponse> {
   try {
-    const configs = await prisma.aiModelConfig.findMany();
+    const configs = await prisma.aiModelConfig.findMany({ take: 50 });
     const map: Record<string, string> = {};
     for (const c of configs) {
       map[c.taskType] = c.modelId;

@@ -53,6 +53,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const body = await req.json();
     const parsed = createSlotSchema.parse(body);
 
+    // Validate channel exists and is active
+    const channel = await prisma.tikTokChannel.findUnique({
+      where: { id: parsed.channelId },
+      select: { id: true, isActive: true },
+    });
+    if (!channel) {
+      return NextResponse.json({ error: "Không tìm thấy kênh", code: "CHANNEL_NOT_FOUND" }, { status: 404 });
+    }
+    if (!channel.isActive) {
+      return NextResponse.json({ error: "Kênh đã tạm dừng", code: "CHANNEL_INACTIVE" }, { status: 400 });
+    }
+
     const slot = await prisma.contentSlot.create({
       data: {
         channelId: parsed.channelId,

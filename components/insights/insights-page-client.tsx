@@ -12,6 +12,7 @@ import { PatternList } from "./pattern-list";
 import { WeeklyReport } from "./weekly-report";
 import { PlaybookPageClient } from "@/components/playbook/playbook-page-client";
 import { MessageSquare, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 interface LatestLogData {
@@ -155,13 +156,12 @@ function InsightsPageClientInner(
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
                 Upload kết quả chiến dịch tại trang Upload để AI bắt đầu học.
               </p>
-              <Link
-                href="/sync"
-                className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all text-sm"
-              >
-                <Upload className="w-4 h-4" />
-                Di toi Upload
-              </Link>
+              <Button asChild>
+                <Link href="/sync">
+                  <Upload className="w-4 h-4" />
+                  Đi tới Upload
+                </Link>
+              </Button>
             </div>
           )}
         </section>

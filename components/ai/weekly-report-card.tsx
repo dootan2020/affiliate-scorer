@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { BarChart3, FileText, TrendingUp, TrendingDown, Lightbulb } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { formatVND } from "@/lib/utils/format";
 
 interface CampaignSummary {
@@ -101,14 +102,10 @@ export function WeeklyReportCard(): React.ReactElement {
             {report ? `Báo cáo tuần — ${formatDateRange(report.weekStart, report.weekEnd)}` : "Báo cáo tuần"}
           </h3>
         </div>
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          className="inline-flex items-center gap-1.5 text-xs bg-orange-600 hover:bg-orange-700 text-white rounded-lg px-3 py-1.5 font-medium shadow-sm transition-all disabled:opacity-50"
-        >
+        <Button size="xs" onClick={handleGenerate} disabled={generating}>
           <FileText className={`w-3.5 h-3.5 ${generating ? "animate-pulse" : ""}`} />
           {generating ? "Đang tạo..." : "Tạo báo cáo"}
-        </button>
+        </Button>
       </div>
 
       {error && <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>}

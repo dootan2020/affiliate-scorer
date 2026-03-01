@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function NotFoundPage(): React.ReactElement {
   return (
@@ -13,12 +14,9 @@ export default function NotFoundPage(): React.ReactElement {
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
         Trang bạn tìm kiếm không tồn tại hoặc đã bị xóa.
       </p>
-      <Link
-        href="/"
-        className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all w-full sm:w-auto text-center"
-      >
-        Về trang chủ
-      </Link>
+      <Button asChild className="w-full sm:w-auto">
+        <Link href="/">Về trang chủ</Link>
+      </Button>
     </div>
   );
 }

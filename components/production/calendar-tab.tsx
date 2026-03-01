@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Package,
 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -378,12 +379,9 @@ export function CalendarTab(): React.ReactElement {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Calendar className="w-8 h-8 text-gray-400 mb-3" />
           <p className="text-sm text-gray-500 mb-4">Tạo kênh TikTok trước để dùng lịch đăng</p>
-          <a
-            href="/channels"
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm transition-all"
-          >
-            Tạo kênh
-          </a>
+          <Button asChild>
+            <Link href="/channels">Tạo kênh</Link>
+          </Button>
         </div>
       ) : loading ? (
         <div className="space-y-2 animate-pulse">

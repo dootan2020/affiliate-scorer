@@ -15,7 +15,10 @@ async function testAnthropic(apiKey: string): Promise<{ success: boolean; error?
       },
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => null);
+      const body = await res.json().catch((err: unknown) => {
+        console.error(`[api-keys/test] JSON parse failed:`, err);
+        return null;
+      });
       return { success: false, error: body?.error?.message ?? `HTTP ${res.status}` };
     }
     return { success: true };
@@ -30,7 +33,10 @@ async function testOpenAI(apiKey: string): Promise<{ success: boolean; error?: s
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => null);
+      const body = await res.json().catch((err: unknown) => {
+        console.error(`[api-keys/test] JSON parse failed:`, err);
+        return null;
+      });
       return { success: false, error: body?.error?.message ?? `HTTP ${res.status}` };
     }
     return { success: true };
@@ -45,7 +51,10 @@ async function testGoogle(apiKey: string): Promise<{ success: boolean; error?: s
       `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`
     );
     if (!res.ok) {
-      const body = await res.json().catch(() => null);
+      const body = await res.json().catch((err: unknown) => {
+        console.error(`[api-keys/test] JSON parse failed:`, err);
+        return null;
+      });
       return { success: false, error: body?.error?.message ?? `HTTP ${res.status}` };
     }
     return { success: true };

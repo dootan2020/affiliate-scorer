@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod/v4";
 import { prisma } from "@/lib/db";
+import { validateBody } from "@/lib/validations/validate-body";
 
-interface UpdateCalendarBody {
-  name?: string;
-  eventType?: string;
-  startDate?: string;
-  endDate?: string;
-  prepStartDate?: string | null;
-  platforms?: string[];
-  notes?: string | null;
-  recurring?: boolean;
-}
+const updateCalendarSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  eventType: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  prepStartDate: z.string().nullable().optional(),
+  platforms: z.array(z.string()).optional(),
+  notes: z.string().nullable().optional(),
+  recurring: z.boolean().optional(),
+});
 
 export async function PATCH(
   request: NextRequest,
@@ -18,7 +20,9 @@ export async function PATCH(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const body = (await request.json()) as UpdateCalendarBody;
+    const validation = await validateBody(request, updateCalendarSchema);
+    if (validation.error) return validation.error;
+    const body = validation.data;
 
     // Check event exists
     const existing = await prisma.calendarEvent.findUnique({ where: { id } });

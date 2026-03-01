@@ -1,17 +1,21 @@
 // Phase 4: POST /api/log/match — Parse TikTok links, return matched assets
 import { NextResponse } from "next/server";
+import { z } from "zod/v4";
 import { matchTikTokLink } from "@/lib/learning/match-tiktok-link";
+import { validateBody } from "@/lib/validations/validate-body";
+
+const matchLinksSchema = z.object({
+  links: z.array(z.string().min(1)).min(1, "Thiếu danh sách links").max(100),
+});
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as { links?: string[] };
-
-    if (!body.links || body.links.length === 0) {
-      return NextResponse.json({ error: "Thiếu danh sách links" }, { status: 400 });
-    }
+    const validation = await validateBody(request, matchLinksSchema);
+    if (validation.error) return validation.error;
+    const { links } = validation.data;
 
     const results = [];
-    for (const link of body.links) {
+    for (const link of links) {
       const trimmed = link.trim();
       if (!trimmed) continue;
       const match = await matchTikTokLink(trimmed);

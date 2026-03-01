@@ -9,6 +9,7 @@ import { deduplicateProducts } from "@/lib/utils/dedup";
 import { scoreProducts } from "@/lib/ai/scoring";
 import { syncProductIdentity } from "@/lib/inbox/sync-identity";
 import { syncIdentityScores } from "@/lib/services/score-identity";
+import { getProductLifecycle } from "@/lib/ai/lifecycle";
 import { createEmptyDeltaSummary } from "@/lib/inbox/delta-classification";
 import type { DeltaSummary } from "@/lib/inbox/delta-classification";
 import type { NormalizedProduct } from "@/lib/utils/normalize";
@@ -293,13 +294,25 @@ export async function POST(
         // Find all identities linked to products in this batch
         const linkedIdentities = await prisma.product.findMany({
           where: { importBatchId: batch.id, identityId: { not: null } },
-          select: { identityId: true },
+          select: { identityId: true, id: true },
         });
         const identityIds = linkedIdentities
           .map((p) => p.identityId)
           .filter((id): id is string => id != null);
         if (identityIds.length > 0) {
           await syncIdentityScores(identityIds);
+        }
+
+        // Recalculate lifecycle for affected products (#10)
+        for (const lp of linkedIdentities) {
+          if (!lp.identityId) continue;
+          try {
+            const lifecycle = await getProductLifecycle(lp.id);
+            await prisma.productIdentity.update({
+              where: { id: lp.identityId },
+              data: { lifecycleStage: lifecycle.stage },
+            });
+          } catch { /* lifecycle recalc non-blocking */ }
         }
       })
       .catch((err) => {

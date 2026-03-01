@@ -52,7 +52,14 @@ export async function POST(request: Request): Promise<NextResponse> {
       completionRate: body.metrics.completion_rate,
     });
 
-    // Save metrics
+    // Get previous latest metric for delta calculation (re-capture for logged assets)
+    const previousMetric = await prisma.assetMetric.findFirst({
+      where: { contentAssetId: asset.id },
+      orderBy: { capturedAt: "desc" },
+      select: { rewardScore: true },
+    });
+
+    // Save metrics (allows multiple records per asset for re-capture)
     const metric = await prisma.assetMetric.create({
       data: {
         contentAssetId: asset.id,
@@ -71,17 +78,22 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     });
 
-    // Update weights (channel-specific + global)
-    await updateLearningWeights(
-      {
-        hookType: asset.hookType,
-        format: asset.format,
-        angle: asset.angle,
-        category: asset.productIdentity?.category || null,
-        channelId: asset.channelId || null,
-      },
-      reward,
-    );
+    // Update weights: use delta reward if re-capturing logged asset (#5)
+    const previousReward = previousMetric ? Number(previousMetric.rewardScore) : 0;
+    const deltaReward = previousMetric ? reward - previousReward : reward;
+
+    if (Math.abs(deltaReward) > 0.01) {
+      await updateLearningWeights(
+        {
+          hookType: asset.hookType,
+          format: asset.format,
+          angle: asset.angle,
+          category: asset.productIdentity?.category || null,
+          channelId: asset.channelId || null,
+        },
+        deltaReward,
+      );
+    }
 
     return NextResponse.json({
       data: {

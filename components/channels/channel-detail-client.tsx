@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
@@ -39,6 +39,13 @@ interface ChannelData {
   ctaTemplates: Record<string, string> | null;
   competitorChannels: Array<{ handle: string; followers: string; whyReference: string }> | null;
   generatedByAi: boolean;
+  stats?: {
+    totalAssets: number;
+    publishedAssets: number;
+    totalSlots: number;
+    totalBriefs: number;
+    lastRefresh: string | null;
+  };
 }
 
 const VOICE_LABELS: Record<string, string> = {
@@ -336,6 +343,26 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           </div>
         </div>
 
+        {/* Aggregate stats row */}
+        {channel.stats && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 pt-2">
+            <StatCard icon={<Film className="w-4 h-4 text-blue-500" />} label="Tổng Assets" value={channel.stats.totalAssets} sub={`${channel.stats.publishedAssets} đã đăng`} />
+            <StatCard icon={<LayoutGrid className="w-4 h-4 text-emerald-500" />} label="Slots" value={channel.stats.totalSlots} />
+            <StatCard icon={<FileText className="w-4 h-4 text-orange-500" />} label="Briefs" value={channel.stats.totalBriefs} />
+            <div className="rounded-xl bg-gray-50 dark:bg-slate-800/50 p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <span className="text-xs text-gray-500 dark:text-gray-400">Cập nhật lần cuối</span>
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {channel.stats.lastRefresh
+                  ? new Date(channel.stats.lastRefresh).toLocaleDateString("vi-VN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+                  : "Chưa refresh"}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Info grid — existing fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <InfoSection title="Persona">
@@ -383,7 +410,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
             <InfoSection title="Production Style">
               <div className="flex items-center gap-3">
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   channel.productionStyle === "hybrid" ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400"
                   : channel.productionStyle === "voiceover_broll" ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
                   : channel.productionStyle === "talking_head" ? "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
@@ -427,7 +454,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {pillars.map((p, i) => (
-                    <span key={i} className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/30 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
+                    <span key={i} className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/30 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
                       {p}
                     </span>
                   ))}
@@ -601,6 +628,19 @@ function InfoRow({ label, value }: { label: string; value: string }): React.Reac
     <div>
       <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
       <p className="text-sm text-gray-900 dark:text-gray-100">{value}</p>
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub?: string }): React.ReactElement {
+  return (
+    <div className="rounded-xl bg-gray-50 dark:bg-slate-800/50 p-3">
+      <div className="flex items-center gap-1.5 mb-1">
+        {icon}
+        <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+      </div>
+      <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">{value}</p>
+      {sub && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
     </div>
   );
 }

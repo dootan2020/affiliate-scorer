@@ -52,8 +52,8 @@ export function QuickEnrichModal({ identityId, onClose, onSaved }: QuickEnrichMo
             personalNotes: d.personalNotes || "",
           });
         }
-      } catch {
-        // Ignore
+      } catch (e) {
+        console.error("[quick-enrich-modal]", e);
       } finally {
         setLoading(false);
       }

@@ -107,8 +107,8 @@ export function PlaybookSection(): React.ReactElement {
 
       {winning.length === 0 && losing.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
-            <BookOpen className="w-7 h-7 text-gray-400 dark:text-gray-500" />
+          <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+            <BookOpen className="w-6 h-6 text-gray-400 dark:text-gray-500" />
           </div>
           <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">Chưa có playbook</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">

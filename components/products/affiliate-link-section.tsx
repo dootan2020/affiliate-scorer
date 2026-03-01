@@ -162,7 +162,7 @@ export function AffiliateLinkSection({
       <div className="mt-3 flex items-center gap-4">
         {statusConfig && (
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${statusConfig.badgeClass}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig.badgeClass}`}
           >
             <span
               className={`w-2 h-2 rounded-full ${statusConfig.dotClass}`}

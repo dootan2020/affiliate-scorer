@@ -128,7 +128,7 @@ function InsightsPageClientInner(
                           <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50">{fb.adROAS != null ? `${fb.adROAS.toFixed(2)}x` : "—"}</td>
                           <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50">{fb.revenue != null ? `${fb.revenue.toLocaleString()}đ` : "—"}</td>
                           <td className="py-3 px-4">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                               fb.overallSuccess === "success" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
                               : fb.overallSuccess === "moderate" ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
                               : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
@@ -146,8 +146,8 @@ function InsightsPageClientInner(
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                <MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+              <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                <MessageSquare className="w-6 h-6 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
                 Chưa có dữ liệu
@@ -212,8 +212,8 @@ function InsightsPageClientInner(
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                <MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+              <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                <MessageSquare className="w-6 h-6 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
                 Chưa có dữ liệu learning

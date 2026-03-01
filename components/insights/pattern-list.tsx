@@ -63,7 +63,7 @@ export function PatternList({ patterns }: PatternListProps) {
         return (
           <div key={idx} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 flex items-start gap-3">
             <span
-              className={`shrink-0 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${CATEGORY_COLORS[category]}`}
+              className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${CATEGORY_COLORS[category]}`}
             >
               {category}
             </span>

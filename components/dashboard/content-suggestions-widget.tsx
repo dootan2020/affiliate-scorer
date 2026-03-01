@@ -91,7 +91,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
 
               {/* Score */}
               {item.combinedScore != null && (
-                <span className="shrink-0 inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
+                <span className="shrink-0 inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
                   {Number(item.combinedScore).toFixed(1)}
                 </span>
               )}

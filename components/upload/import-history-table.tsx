@@ -147,7 +147,7 @@ export function ImportHistoryTable({
                 </td>
                 <td className="py-3 px-4">
                   <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}
                   >
                     {status.label}
                   </span>

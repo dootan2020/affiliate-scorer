@@ -96,11 +96,11 @@ export function AssetCard({ asset, onCopyScript }: AssetCardProps): React.ReactE
 
       {/* Badges */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyle}`}>
+        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusStyle}`}>
           {statusLabel}
         </span>
         {formatLabel && (
-          <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
+          <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
             {formatLabel}
           </span>
         )}

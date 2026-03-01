@@ -52,7 +52,7 @@ export function UpcomingEventsWidget(): React.ReactElement {
   if (events.length === 0) return <></>;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-5">
       <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-orange-500" />

@@ -54,7 +54,7 @@ export async function generateMorningBrief(): Promise<string> {
         periodEnd: { gte: today },
       },
     }),
-    // Active channels with today's slot counts + draft counts
+    // Active channels with today's slot counts + draft counts + tracking aggregates
     prisma.tikTokChannel.findMany({
       where: { isActive: true },
       select: {
@@ -68,6 +68,9 @@ export async function generateMorningBrief(): Promise<string> {
           where: { status: "draft" },
           select: { id: true },
         },
+        _count: {
+          select: { contentAssets: true },
+        },
       },
     }),
   ]);
@@ -80,20 +83,31 @@ export async function generateMorningBrief(): Promise<string> {
     .slice(0, 3)
     .map((w) => w.key);
 
-  // Build channel summary
+  // Build channel summary with classification
   const channelLines = activeChannels.map((ch) => {
     const totalSlots = ch.contentSlots.length;
     const planned = ch.contentSlots.filter((s) => s.status === "planned").length;
     const briefed = ch.contentSlots.filter((s) => s.status === "briefed").length;
     const draftCount = ch.contentAssets.length;
-    return `- ${ch.name} (${ch.personaName}): ${totalSlots} slots today (${planned} planned, ${briefed} briefed), ${draftCount} draft videos`;
+    const totalAssets = ch._count.contentAssets;
+
+    let classification: string;
+    if (totalAssets === 0) {
+      classification = "Kênh mới — cần tạo brief đầu tiên";
+    } else if (draftCount > 0) {
+      classification = `Có ${draftCount} draft chờ xuất bản`;
+    } else {
+      classification = `${totalAssets} assets tổng`;
+    }
+
+    return `- ${ch.name} (${ch.personaName}): ${classification} | ${totalSlots} slots today (${planned} planned, ${briefed} briefed)`;
   });
 
   const prompt = `
 Tạo Morning Brief cho ngày ${todayStr}.
 
 KÊNH HOẠT ĐỘNG:
-${channelLines.length > 0 ? channelLines.join("\n") : "Chưa có kênh nào"}
+${channelLines.length > 0 ? channelLines.join("\n") : "CHƯA CÓ KÊNH — đề xuất tạo kênh đầu tiên"}
 
 SẢN PHẨM MỚI (chưa tạo content):
 ${newProducts.length > 0

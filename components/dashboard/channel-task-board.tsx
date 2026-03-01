@@ -152,9 +152,9 @@ function MetricBadge({ label, value, color }: { label: string; value: number; co
   };
 
   return (
-    <div className={`rounded-lg px-2 py-1.5 text-center ${colorMap[color] || colorMap.blue}`}>
+    <div className={`rounded-lg px-2 py-1.5 text-center overflow-hidden ${colorMap[color] || colorMap.blue}`}>
       <p className="text-base font-semibold">{value}</p>
-      <p className="text-[10px] leading-tight">{label}</p>
+      <p className="text-[10px] leading-tight truncate">{label}</p>
     </div>
   );
 }

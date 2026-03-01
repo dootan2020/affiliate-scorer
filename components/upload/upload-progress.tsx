@@ -39,7 +39,7 @@ export function UploadProgress({
     <div className="space-y-3 rounded-2xl bg-gray-50 dark:bg-slate-800 p-4">
       {fileName && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-300">
+          <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
             {result?.format === "fastmoss"
               ? "FastMoss"
               : result?.format === "kalodata"
@@ -72,27 +72,27 @@ export function UploadProgress({
           {result.deltaSummary && (
             <div className="flex flex-wrap gap-2 pt-1">
               {result.deltaSummary.NEW > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 dark:bg-orange-950 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 dark:bg-orange-950 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
                   🆕 {result.deltaSummary.NEW} mới
                 </span>
               )}
               {result.deltaSummary.SURGE > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                   🚀 {result.deltaSummary.SURGE} tăng mạnh
                 </span>
               )}
               {result.deltaSummary.COOL > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 dark:bg-rose-950 px-2.5 py-0.5 text-xs font-medium text-rose-700 dark:text-rose-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 dark:bg-rose-950 px-2 py-0.5 text-xs font-medium text-rose-700 dark:text-rose-400">
                   ❄️ {result.deltaSummary.COOL} giảm
                 </span>
               )}
               {result.deltaSummary.STABLE > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-gray-500 dark:text-gray-400">
                   ➡️ {result.deltaSummary.STABLE} ổn định
                 </span>
               )}
               {result.deltaSummary.REAPPEAR > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
                   🔄 {result.deltaSummary.REAPPEAR} quay lại
                 </span>
               )}

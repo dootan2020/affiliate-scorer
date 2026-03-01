@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, Inbox } from "lucide-react";
+import { AlertTriangle, Loader2, Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { BriefPreviewCard } from "./brief-preview-card";
 import type { BriefWithProduct } from "@/lib/types/production";
@@ -32,18 +32,23 @@ function groupByDay(briefs: BriefWithProduct[]): Map<string, BriefWithProduct[]>
 export function ProductionInProgressTab({ onSwitchToCreate }: Props): React.ReactElement {
   const [briefs, setBriefs] = useState<BriefWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchBriefs = useCallback(async () => {
+    setFetchError(null);
     try {
       const res = await fetch("/api/briefs?status=active&limit=50");
       if (!res.ok) {
         toast.error(`Lỗi tải briefs (${res.status})`);
+        setFetchError("Không thể tải danh sách briefs");
         return;
       }
       const json = (await res.json()) as { data?: BriefWithProduct[] };
       setBriefs(json.data || []);
-    } catch {
+    } catch (e) {
+      console.error("[production-in-progress-tab]", e);
       toast.error("Không thể tải danh sách briefs");
+      setFetchError("Không thể tải danh sách briefs");
     } finally {
       setLoading(false);
     }
@@ -74,11 +79,23 @@ export function ProductionInProgressTab({ onSwitchToCreate }: Props): React.Reac
     );
   }
 
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center py-12 text-center">
+        <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
+          <AlertTriangle className="w-6 h-6 text-amber-500" />
+        </div>
+        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
+        <button onClick={() => { setLoading(true); setFetchError(null); void fetchBriefs(); }} className="text-sm text-blue-600 hover:underline">Thử lại</button>
+      </div>
+    );
+  }
+
   if (briefs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-          <Inbox className="w-8 h-8 text-gray-400" />
+        <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+          <Inbox className="w-6 h-6 text-gray-400" />
         </div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
           Chưa có brief nào

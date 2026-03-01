@@ -113,8 +113,8 @@ export function ProductSelector({ selected, onSelectionChange, disabled, initial
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
-          <Inbox className="w-7 h-7 text-gray-400" />
+        <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+          <Inbox className="w-6 h-6 text-gray-400" />
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Chưa có sản phẩm đã chấm điểm. Vào Inbox để paste link và score sản phẩm trước.

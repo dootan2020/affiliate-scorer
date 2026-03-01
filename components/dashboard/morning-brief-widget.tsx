@@ -10,6 +10,7 @@ import {
   Lightbulb,
   BarChart3,
   Package,
+  Tv,
 } from "lucide-react";
 import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
 
@@ -25,8 +26,15 @@ interface NewProductAlert {
   why: string;
 }
 
+interface ChannelTask {
+  channel: string;
+  action: string;
+  priority: number;
+}
+
 interface BriefContent {
   greeting: string;
+  channel_tasks?: ChannelTask[];
   produce_today: ProduceItem[];
   new_products_alert: NewProductAlert[];
   yesterday_recap: string;
@@ -160,6 +168,38 @@ export function MorningBriefWidget(): React.ReactElement {
       <p className="text-sm text-gray-600 dark:text-gray-300">
         {content.greeting}
       </p>
+
+      {/* Channel Tasks */}
+      {content.channel_tasks && content.channel_tasks.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium flex items-center gap-1">
+            <Tv className="w-3.5 h-3.5" />
+            Việc cần làm theo kênh
+          </p>
+          {content.channel_tasks
+            .sort((a, b) => a.priority - b.priority)
+            .map((task, i) => (
+              <div
+                key={`channel-task-${i}`}
+                className="flex items-start gap-2.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 px-3 py-2.5"
+              >
+                <span className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-0.5 w-5 shrink-0">
+                  {task.priority}.
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+                      {task.channel}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                    {task.action}
+                  </p>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
 
       {/* Produce Today */}
       {content.produce_today.length > 0 && (

@@ -4,6 +4,7 @@ import { MorningBriefWidget } from "@/components/dashboard/morning-brief-widget"
 import { QuickPasteWidget } from "@/components/dashboard/quick-paste-widget";
 import { ContentSuggestionsWidget } from "@/components/dashboard/content-suggestions-widget";
 import { WinningPatternsWidget } from "@/components/dashboard/winning-patterns-widget";
+import { OrphanAlertWidget } from "@/components/dashboard/orphan-alert-widget";
 
 export const metadata: Metadata = {
   title: "Tổng quan | PASTR",
@@ -15,6 +16,9 @@ export default function DashboardPage(): React.ReactElement {
       <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
         Tổng quan
       </h1>
+
+      {/* Orphan data alert — only shows if orphans exist */}
+      <OrphanAlertWidget />
 
       {/* Row 1: Channel Task Board (full width) — THE main widget */}
       <ChannelTaskBoard />

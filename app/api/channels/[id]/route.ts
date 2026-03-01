@@ -63,16 +63,50 @@ function toNullableJson(val: unknown): InputJsonValue | typeof JsonNull | undefi
   return toJsonValue(val);
 }
 
-/** GET — single channel */
+/** GET — single channel with aggregate stats */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const { id } = await params;
   try {
-    const channel = await prisma.tikTokChannel.findUnique({ where: { id } });
+    const channel = await prisma.tikTokChannel.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            contentAssets: true,
+            contentSlots: true,
+            briefs: true,
+            refreshLogs: true,
+          },
+        },
+        contentAssets: {
+          where: { status: "published" },
+          select: { id: true },
+        },
+        refreshLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
+        },
+      },
+    });
     if (!channel) return NextResponse.json({ error: "Channel not found" }, { status: 404 });
-    return NextResponse.json({ data: channel });
+
+    const { _count, contentAssets: publishedAssets, refreshLogs, ...channelData } = channel;
+    return NextResponse.json({
+      data: {
+        ...channelData,
+        stats: {
+          totalAssets: _count.contentAssets,
+          publishedAssets: publishedAssets.length,
+          totalSlots: _count.contentSlots,
+          totalBriefs: _count.briefs,
+          lastRefresh: refreshLogs[0]?.createdAt ?? null,
+        },
+      },
+    });
   } catch {
     return NextResponse.json({ error: "Failed to fetch channel" }, { status: 500 });
   }

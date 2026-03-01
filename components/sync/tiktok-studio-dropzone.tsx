@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { Upload, CheckCircle, XCircle, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 import { detectTikTokStudioFileType, FILE_TYPE_LABELS, type TikTokStudioFileType } from "@/lib/parsers/detect-tiktok-studio";
+import { useImportPolling } from "@/lib/hooks/use-import-polling";
 
 interface PendingFile {
   file: File;
@@ -14,10 +16,55 @@ interface PendingFile {
   errors: string[];
 }
 
+interface PolledFileResult {
+  fileName: string;
+  status: "done" | "error" | "skipped";
+  count: number;
+  errors: string[];
+}
+
 export function TikTokStudioDropzone(): React.ReactElement {
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [pollingBatchId, setPollingBatchId] = useState<string | null>(null);
+
+  const { status: liveStatus, isPolling } = useImportPolling(pollingBatchId);
+
+  // When polling completes, update file statuses from server results
+  const applyPolledResults = useCallback((fileResults: PolledFileResult[]) => {
+    const resultMap = new Map(fileResults.map((r) => [r.fileName, r]));
+    setFiles((prev) =>
+      prev.map((f) => {
+        if (f.status !== "processing") return f;
+        const r = resultMap.get(f.file.name);
+        if (!r) return { ...f, status: "done" as const, count: 0, errors: [] };
+        return { ...f, status: r.status as PendingFile["status"], count: r.count, errors: r.errors };
+      }),
+    );
+  }, []);
+
+  // React to polling completion
+  const prevTerminalRef = useRef(false);
+  useEffect(() => {
+    if (liveStatus?.isTerminal && pollingBatchId && !prevTerminalRef.current) {
+      prevTerminalRef.current = true;
+      const errorLog = liveStatus.errorLog as { fileResults?: PolledFileResult[] } | null;
+      if (errorLog?.fileResults) {
+        applyPolledResults(errorLog.fileResults);
+      } else {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.status === "processing" ? { ...f, status: "done" as const } : f,
+          ),
+        );
+      }
+      setPollingBatchId(null);
+    }
+    if (!liveStatus?.isTerminal) {
+      prevTerminalRef.current = false;
+    }
+  }, [liveStatus?.isTerminal, pollingBatchId, liveStatus?.errorLog, applyPolledResults]);
 
   const addFiles = useCallback((incoming: File[]) => {
     const next: PendingFile[] = incoming.map((f) => {
@@ -32,7 +79,6 @@ export function TikTokStudioDropzone(): React.ReactElement {
       };
     });
     setFiles((prev) => {
-      // Avoid duplicates by name
       const existingNames = new Set(prev.map((p) => p.file.name));
       return [...prev, ...next.filter((f) => !existingNames.has(f.file.name))];
     });
@@ -85,27 +131,25 @@ export function TikTokStudioDropzone(): React.ReactElement {
 
       if (!res.ok) throw new Error(data.error ?? "Lỗi server");
 
-      const resultMap = new Map<
-        string,
-        { status: string; count: number; errors: string[] }
-      >();
-      for (const r of data.data?.results ?? []) {
-        resultMap.set(r.fileName, r);
+      // Apply skipped results immediately
+      if (data.data?.skipped) {
+        const skippedMap = new Map(
+          (data.data.skipped as Array<{ fileName: string; status: string; errors: string[] }>)
+            .map((s) => [s.fileName, s]),
+        );
+        setFiles((prev) =>
+          prev.map((f) => {
+            const s = skippedMap.get(f.file.name);
+            if (s) return { ...f, status: "skipped" as const, errors: s.errors };
+            return f;
+          }),
+        );
       }
 
-      setFiles((prev) =>
-        prev.map((f) => {
-          if (f.status !== "processing") return f;
-          const r = resultMap.get(f.file.name);
-          if (!r) return f;
-          return {
-            ...f,
-            status: r.status as PendingFile["status"],
-            count: r.count,
-            errors: r.errors,
-          };
-        }),
-      );
+      // Start polling for background results
+      if (data.data?.batchId) {
+        setPollingBatchId(data.data.batchId);
+      }
     } catch (err) {
       setFiles((prev) =>
         prev.map((f) =>
@@ -124,6 +168,7 @@ export function TikTokStudioDropzone(): React.ReactElement {
   }
 
   const pendingCount = files.filter((f) => f.status === "pending").length;
+  const isProcessing = isPolling || files.some((f) => f.status === "processing");
 
   return (
     <div className="space-y-4">
@@ -208,14 +253,29 @@ export function TikTokStudioDropzone(): React.ReactElement {
         </div>
       )}
 
+      {/* Progress bar while polling */}
+      {isProcessing && liveStatus && (
+        <div className="space-y-1.5 rounded-xl bg-gray-50 dark:bg-slate-800/50 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Đang xử lý {liveStatus.rowsProcessed}/{liveStatus.recordCount} file...
+            </p>
+            {liveStatus.progress > 0 && (
+              <span className="text-xs text-gray-400">{liveStatus.progress}%</span>
+            )}
+          </div>
+          <Progress value={liveStatus.progress} className="h-2" />
+        </div>
+      )}
+
       {/* Upload button */}
-      {pendingCount > 0 && (
+      {pendingCount > 0 && !isProcessing && (
         <button
           onClick={handleUpload}
           disabled={isUploading}
           className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all text-sm"
         >
-          {isUploading ? "Đang import..." : `Import ${pendingCount} file`}
+          {isUploading ? "Đang gửi..." : `Import ${pendingCount} file`}
         </button>
       )}
     </div>

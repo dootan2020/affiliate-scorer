@@ -10,6 +10,7 @@ import {
 import { ColumnMapping } from "@/components/upload/column-mapping";
 import { ImportHistoryTable } from "@/components/upload/import-history-table";
 import { TikTokStudioDropzone } from "@/components/sync/tiktok-studio-dropzone";
+import { useImportPolling } from "@/lib/hooks/use-import-polling";
 import { Search, TrendingUp, History } from "lucide-react";
 
 interface PreviewData {
@@ -44,7 +45,11 @@ export function SyncPageContent(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewData | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [pollingBatchId, setPollingBatchId] = useState<string | null>(null);
   const [importHistory, setImportHistory] = useState<ImportRecord[]>([]);
+
+  // Poll import progress after upload
+  const { status: liveStatus, isPolling } = useImportPolling(pollingBatchId);
 
   const fetchImportHistory = useCallback(async () => {
     try {
@@ -55,6 +60,13 @@ export function SyncPageContent(): React.ReactElement {
       // Silently fail — history is not critical
     }
   }, []);
+
+  // Refresh history when polling completes
+  useEffect(() => {
+    if (liveStatus?.isTerminal) {
+      fetchImportHistory();
+    }
+  }, [liveStatus?.isTerminal, fetchImportHistory]);
 
   useEffect(() => {
     fetchImportHistory();
@@ -101,6 +113,7 @@ export function SyncPageContent(): React.ReactElement {
 
     setIsImporting(true);
     setError(null);
+    setPollingBatchId(null);
 
     try {
       const formData = new FormData();
@@ -118,8 +131,10 @@ export function SyncPageContent(): React.ReactElement {
         throw new Error(data.error || "Lỗi import");
       }
 
+      // Server returns immediately with batchId — start polling
       setResult(data.data);
       setPreview(null);
+      setPollingBatchId(data.data.batchId);
       toast.success(data.message);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Lỗi không xác định";
@@ -200,6 +215,8 @@ export function SyncPageContent(): React.ReactElement {
           isUploading={false}
           result={result}
           error={error}
+          liveStatus={liveStatus}
+          isPolling={isPolling}
         />
       </div>
 

@@ -1,18 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { prisma } from "@/lib/db";
 import { detectTikTokStudioFileType, FILE_TYPE_LABELS } from "@/lib/parsers/detect-tiktok-studio";
-import { parseTikTokStudioOverview } from "@/lib/parsers/tiktok-studio-overview";
-import { parseTikTokStudioFollowerActivity } from "@/lib/parsers/tiktok-studio-follower-activity";
-import { parseTikTokStudioContent } from "@/lib/parsers/tiktok-studio-content";
-import { parseTikTokStudioInsights } from "@/lib/parsers/tiktok-studio-insights";
+import { processTikTokStudioBatch } from "@/lib/import/process-tiktok-studio-batch";
 import type { TikTokStudioFileType } from "@/lib/parsers/detect-tiktok-studio";
 
-interface FileResult {
+interface PreparedFile {
   fileName: string;
   type: TikTokStudioFileType;
   typeLabel: string;
-  status: "success" | "partial" | "error" | "skipped";
-  count: number;
-  errors: string[];
+  buffer: ArrayBuffer;
+}
+
+interface SkippedFile {
+  fileName: string;
+  type: TikTokStudioFileType;
+  typeLabel: string;
+  reason: string;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -29,89 +32,68 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const results: FileResult[] = [];
-    const batchId = `tiktok_studio_${Date.now()}`;
+    // Phase 1: Read all file buffers (fast, stays in request)
+    const prepared: PreparedFile[] = [];
+    const skipped: SkippedFile[] = [];
 
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
-        results.push({
+        skipped.push({
           fileName: file.name,
           type: "unknown",
           typeLabel: FILE_TYPE_LABELS.unknown,
-          status: "error",
-          count: 0,
-          errors: ["File quá lớn (tối đa 10MB)"],
+          reason: "File quá lớn (tối đa 10MB)",
         });
         continue;
       }
 
       const fileType = detectTikTokStudioFileType(file.name);
-      const typeLabel = FILE_TYPE_LABELS[fileType];
-
       if (fileType === "unknown") {
-        results.push({
+        skipped.push({
           fileName: file.name,
           type: fileType,
-          typeLabel,
-          status: "skipped",
-          count: 0,
-          errors: ["Không nhận diện được loại file TikTok Studio"],
+          typeLabel: FILE_TYPE_LABELS[fileType],
+          reason: "Không nhận diện được loại file TikTok Studio",
         });
         continue;
       }
 
-      try {
-        const buffer = await file.arrayBuffer();
-        let parseResult: { count: number; errors: string[] };
-
-        if (fileType === "overview") {
-          parseResult = await parseTikTokStudioOverview(buffer, batchId);
-        } else if (fileType === "follower_activity") {
-          parseResult = await parseTikTokStudioFollowerActivity(buffer, batchId);
-        } else if (fileType === "content") {
-          parseResult = await parseTikTokStudioContent(buffer, batchId);
-        } else {
-          parseResult = await parseTikTokStudioInsights(buffer, fileType, batchId);
-        }
-
-        const status =
-          parseResult.errors.length === 0
-            ? "success"
-            : parseResult.count > 0
-              ? "partial"
-              : "error";
-
-        results.push({
-          fileName: file.name,
-          type: fileType,
-          typeLabel,
-          status,
-          count: parseResult.count,
-          errors: parseResult.errors,
-        });
-      } catch (err) {
-        results.push({
-          fileName: file.name,
-          type: fileType,
-          typeLabel,
-          status: "error",
-          count: 0,
-          errors: [err instanceof Error ? err.message : "Lỗi không xác định"],
-        });
-      }
+      prepared.push({
+        fileName: file.name,
+        type: fileType,
+        typeLabel: FILE_TYPE_LABELS[fileType],
+        buffer: await file.arrayBuffer(),
+      });
     }
 
-    const totalImported = results.reduce((sum, r) => sum + r.count, 0);
-    const hasErrors = results.some((r) => r.status === "error");
-    const allOk = results.every((r) => r.status === "success");
+    if (prepared.length === 0) {
+      return NextResponse.json({
+        data: { results: skipped.map((s) => ({ ...s, status: "skipped", count: 0, errors: [s.reason] })) },
+        message: "Không có file hợp lệ để import",
+      });
+    }
 
+    // Phase 2: Create ImportBatch for tracking
+    const batch = await prisma.importBatch.create({
+      data: {
+        source: "tiktok_studio",
+        fileName: prepared.map((f) => f.fileName).join(", "),
+        recordCount: prepared.length,
+        status: "pending",
+      },
+    });
+
+    // Phase 3: Kick off background processing
+    after(() => processTikTokStudioBatch(batch.id, prepared));
+
+    // Return immediately
     return NextResponse.json({
-      data: { results, batchId, totalImported },
-      message: allOk
-        ? `Import thành công ${totalImported} bản ghi`
-        : hasErrors
-          ? `Import hoàn thành với một số lỗi (${totalImported} bản ghi)`
-          : `Import hoàn thành ${totalImported} bản ghi`,
+      data: {
+        batchId: batch.id,
+        fileCount: prepared.length,
+        skipped: skipped.map((s) => ({ ...s, status: "skipped", count: 0, errors: [s.reason] })),
+      },
+      message: `Đang import ${prepared.length} file TikTok Studio...`,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Lỗi không xác định";

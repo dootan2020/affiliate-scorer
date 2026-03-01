@@ -201,7 +201,19 @@ model ImportBatch {
   recordCount Int
   importDate  DateTime @default(now())
 
+  // Background processing status
+  status          String @default("pending") // "pending" | "processing" | "completed" | "failed" | "partial"
+  rowsProcessed   Int    @default(0)
+  rowsCreated     Int    @default(0)
+  rowsUpdated     Int    @default(0)
+  rowsError       Int    @default(0)
+  scoringStatus   String @default("pending") // "pending" | "processing" | "completed" | "failed"
+  errorLog        Json?
+  completedAt     DateTime?
+
   snapshots ProductSnapshot[]
+
+  @@index([status])
 }
 
 // ─── GENERIC DATA IMPORTS (ROADMAP: 13 source types) ───

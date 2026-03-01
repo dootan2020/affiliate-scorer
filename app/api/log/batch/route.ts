@@ -79,13 +79,14 @@ export async function POST(request: Request): Promise<NextResponse> {
         }
         await prisma.contentAsset.update({ where: { id: item.assetId }, data: updateData });
 
-        // Update weights
+        // Update weights (channel-specific + global)
         await updateLearningWeights(
           {
             hookType: asset.hookType,
             format: asset.format,
             angle: asset.angle,
             category: asset.productIdentity?.category || null,
+            channelId: asset.channelId || null,
           },
           reward,
         );

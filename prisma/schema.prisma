@@ -694,8 +694,9 @@ model AssetMetric {
 model LearningWeightP4 {
   id String @id @default(cuid())
 
-  scope String // "hook_type" | "format" | "angle" | "category" | "price_range"
-  key   String // VD: "result", "review_short", "Mỹ phẩm"
+  scope     String // "hook_type" | "format" | "angle" | "category" | "price_range"
+  key       String // VD: "result", "review_short", "Mỹ phẩm"
+  channelId String @default("") // "" = global weight (all channels), "clxxxx" = channel-specific
 
   weight      Decimal @default(0) @db.Decimal(10, 4)
   sampleCount Int     @default(0)
@@ -707,8 +708,9 @@ model LearningWeightP4 {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([scope, key])
+  @@unique([scope, key, channelId])
   @@index([scope])
+  @@index([channelId])
 }
 
 model UserPattern {

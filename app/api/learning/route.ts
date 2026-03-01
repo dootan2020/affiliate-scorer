@@ -1,12 +1,13 @@
 // Phase 4: GET /api/learning/weights — xem learning weights
 //          POST /api/learning/decay — trigger decay
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getWeights } from "@/lib/learning/update-weights";
 import { applyDecay } from "@/lib/learning/decay";
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const weights = await getWeights();
+    const channelId = request.nextUrl.searchParams.get("channelId") || undefined;
+    const weights = await getWeights(channelId);
 
     // Group by scope
     const grouped: Record<string, typeof weights> = {};
@@ -15,7 +16,7 @@ export async function GET(): Promise<NextResponse> {
       grouped[w.scope].push(w);
     }
 
-    return NextResponse.json({ data: { weights, grouped } });
+    return NextResponse.json({ data: { weights, grouped, channelId: channelId || "global" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Lỗi không xác định";
     return NextResponse.json({ error: message }, { status: 500 });

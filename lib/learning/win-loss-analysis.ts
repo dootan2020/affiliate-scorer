@@ -96,8 +96,9 @@ export async function analyzeAsset(
 }
 
 async function getAvgByScope(scope: string, key: string): Promise<number> {
+  // "" = global weight (all channels)
   const w = await prisma.learningWeightP4.findUnique({
-    where: { scope_key: { scope, key } },
+    where: { scope_key_channelId: { scope, key, channelId: "" } },
   });
   return w ? Number(w.avgReward) : 0;
 }

@@ -1,4 +1,5 @@
 // Phase 4: Learning weights update — running average + log-quantity bonus
+// Supports per-channel AND global weights. Each metric update writes to both.
 import { prisma } from "@/lib/db";
 
 interface AssetContext {
@@ -6,9 +7,11 @@ interface AssetContext {
   format: string | null;
   angle: string | null;
   category: string | null;
+  channelId?: string | null;
 }
 
-/** Update learning weights khi có reward mới */
+/** Update learning weights khi có reward mới.
+ *  Writes both channel-specific AND global weights. */
 export async function updateLearningWeights(
   asset: AssetContext,
   reward: number,
@@ -21,13 +24,23 @@ export async function updateLearningWeights(
   ].filter((u): u is { scope: string; key: string } => Boolean(u.key));
 
   for (const { scope, key } of updates) {
-    await upsertWeight(scope, key, reward);
+    // Channel-specific weight
+    if (asset.channelId) {
+      await upsertWeight(scope, key, reward, asset.channelId);
+    }
+    // "" = global weight (all channels), "clxxxx" = channel-specific
+    await upsertWeight(scope, key, reward, "");
   }
 }
 
-async function upsertWeight(scope: string, key: string, reward: number): Promise<void> {
+async function upsertWeight(
+  scope: string,
+  key: string,
+  reward: number,
+  channelId: string, // "" = global weight (all channels), "clxxxx" = channel-specific
+): Promise<void> {
   const existing = await prisma.learningWeightP4.findUnique({
-    where: { scope_key: { scope, key } },
+    where: { scope_key_channelId: { scope, key, channelId } },
   });
 
   if (existing) {
@@ -51,6 +64,7 @@ async function upsertWeight(scope: string, key: string, reward: number): Promise
       data: {
         scope,
         key,
+        channelId, // "" = global weight (all channels), "clxxxx" = channel-specific
         weight: reward,
         sampleCount: 1,
         avgReward: reward,
@@ -60,18 +74,48 @@ async function upsertWeight(scope: string, key: string, reward: number): Promise
   }
 }
 
-/** Get all weights cho playbook/brief generation */
-export async function getWeights(): Promise<
-  Array<{ scope: string; key: string; weight: number; sampleCount: number; avgReward: number }>
+/** Get weights, optionally filtered by channelId.
+ *  If channelId provided: returns channel + global weights (channel takes priority).
+ *  If not: returns global weights only. */
+export async function getWeights(channelId?: string): Promise<
+  Array<{ scope: string; key: string; weight: number; sampleCount: number; avgReward: number; channelId: string }>
 > {
+  const where = channelId
+    ? { channelId: { in: [channelId, ""] } }
+    : { channelId: "" };
+
   const weights = await prisma.learningWeightP4.findMany({
+    where,
     orderBy: { weight: "desc" },
   });
+
+  // If channelId provided, deduplicate: prefer channel-specific over global
+  if (channelId) {
+    const seen = new Map<string, typeof weights[0]>();
+    for (const w of weights) {
+      const mapKey = `${w.scope}:${w.key}`;
+      const existing = seen.get(mapKey);
+      // Channel-specific wins over global ("")
+      if (!existing || (w.channelId !== "" && existing.channelId === "")) {
+        seen.set(mapKey, w);
+      }
+    }
+    return Array.from(seen.values()).map((w) => ({
+      scope: w.scope,
+      key: w.key,
+      weight: Number(w.weight),
+      sampleCount: w.sampleCount,
+      avgReward: Number(w.avgReward),
+      channelId: w.channelId,
+    }));
+  }
+
   return weights.map((w) => ({
     scope: w.scope,
     key: w.key,
     weight: Number(w.weight),
     sampleCount: w.sampleCount,
     avgReward: Number(w.avgReward),
+    channelId: w.channelId,
   }));
 }

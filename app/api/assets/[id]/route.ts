@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { validateBody } from "@/lib/validations/validate-body";
 import { updateAssetSchema } from "@/lib/validations/schemas-content";
 import { syncSlotStatusFromAsset } from "@/lib/content/sync-slot-status";
+import { validateTransition } from "@/lib/state-machines/transitions";
 
 export async function PATCH(
   request: Request,
@@ -24,9 +25,24 @@ export async function PATCH(
       );
     }
 
+    // Validate state transition
+    if (body.status && body.status !== existing.status) {
+      const check = validateTransition("assetStatus", existing.status, body.status);
+      if (!check.valid) {
+        return NextResponse.json({ error: check.error }, { status: 400 });
+      }
+    }
+
     // Build update data
     const updateData: Record<string, unknown> = {};
-    if (body.status) updateData.status = body.status;
+    if (body.status) {
+      updateData.status = body.status;
+      // Reset compliance when retrying failed asset
+      if (body.status === "draft" && existing.status === "failed") {
+        updateData.complianceStatus = "unchecked";
+        updateData.complianceNotes = null;
+      }
+    }
     if (body.publishedUrl) {
       updateData.publishedUrl = body.publishedUrl;
       updateData.publishedAt = new Date();

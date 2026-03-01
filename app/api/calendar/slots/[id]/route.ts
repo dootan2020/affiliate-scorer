@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod/v4";
+import { validateTransition } from "@/lib/state-machines/transitions";
 
 const updateSlotSchema = z.object({
   scheduledDate: z.string().optional(),
@@ -9,7 +10,7 @@ const updateSlotSchema = z.object({
   videoFormat: z.string().nullable().optional(),
   productIdentityId: z.string().nullable().optional(),
   contentAssetId: z.string().nullable().optional(),
-  status: z.enum(["planned", "briefed", "produced", "published", "skipped"]).optional(),
+  status: z.enum(["planned", "briefed", "produced", "rendered", "published", "skipped"]).optional(),
   notes: z.string().nullable().optional(),
 });
 
@@ -22,6 +23,20 @@ export async function PUT(
   try {
     const body = await req.json();
     const parsed = updateSlotSchema.parse(body);
+
+    // Validate state transition if status is changing
+    if (parsed.status) {
+      const existing = await prisma.contentSlot.findUnique({
+        where: { id },
+        select: { status: true },
+      });
+      if (existing && parsed.status !== existing.status) {
+        const check = validateTransition("slotStatus", existing.status, parsed.status);
+        if (!check.valid) {
+          return NextResponse.json({ error: check.error }, { status: 400 });
+        }
+      }
+    }
 
     const data: Record<string, unknown> = { ...parsed };
     if (parsed.scheduledDate) data.scheduledDate = new Date(parsed.scheduledDate);

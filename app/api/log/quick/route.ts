@@ -7,6 +7,7 @@ import { analyzeAsset } from "@/lib/learning/win-loss-analysis";
 import { matchTikTokLink, extractPostId } from "@/lib/learning/match-tiktok-link";
 import { validateBody } from "@/lib/validations/validate-body";
 import { quickLogSchema } from "@/lib/validations/schemas-content";
+import { validateTransition } from "@/lib/state-machines/transitions";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
@@ -65,8 +66,17 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     });
 
+    // Validate transition → logged (skip if already logged — allow re-capture)
+    if (asset.status !== "logged") {
+      const check = validateTransition("assetStatus", asset.status, "logged");
+      if (!check.valid) {
+        return NextResponse.json({ error: check.error }, { status: 400 });
+      }
+    }
+
     // Update asset status → logged + publishedUrl
-    const updateData: Record<string, unknown> = { status: "logged" };
+    const updateData: Record<string, unknown> = {};
+    if (asset.status !== "logged") updateData.status = "logged";
     if (body.tiktokUrl) {
       updateData.publishedUrl = body.tiktokUrl;
       const postId = extractPostId(body.tiktokUrl);

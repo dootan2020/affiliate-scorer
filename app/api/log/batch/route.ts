@@ -6,6 +6,7 @@ import { updateLearningWeights } from "@/lib/learning/update-weights";
 import { extractPostId } from "@/lib/learning/match-tiktok-link";
 import { validateBody } from "@/lib/validations/validate-body";
 import { batchLogSchema } from "@/lib/validations/schemas-content";
+import { validateTransition } from "@/lib/state-machines/transitions";
 
 interface BatchResult {
   assetId: string;
@@ -58,8 +59,18 @@ export async function POST(request: Request): Promise<NextResponse> {
           },
         });
 
+        // Validate transition → logged (skip if already logged — allow re-capture)
+        if (asset.status !== "logged") {
+          const check = validateTransition("assetStatus", asset.status, "logged");
+          if (!check.valid) {
+            results.push({ assetId: item.assetId, assetCode: asset.assetCode, rewardScore: 0, status: "error", error: check.error });
+            continue;
+          }
+        }
+
         // Update asset
-        const updateData: Record<string, unknown> = { status: "logged" };
+        const updateData: Record<string, unknown> = {};
+        if (asset.status !== "logged") updateData.status = "logged";
         if (item.tiktokUrl) {
           updateData.publishedUrl = item.tiktokUrl;
           const postId = extractPostId(item.tiktokUrl);

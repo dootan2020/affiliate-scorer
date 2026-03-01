@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateBody } from "@/lib/validations/validate-body";
 import { updateInboxItemSchema } from "@/lib/validations/schemas-content";
+import { validateTransition } from "@/lib/state-machines/transitions";
 
 export async function GET(
   _request: NextRequest,
@@ -75,7 +76,22 @@ export async function PUT(
       (f) => f in rawBody && rawBody[f] !== null && rawBody[f] !== "",
     );
 
-    if (hasMetadata) {
+    // Validate explicit inboxState transition
+    if (updateData.inboxState && typeof updateData.inboxState === "string") {
+      const current = await prisma.productIdentity.findUnique({
+        where: { id },
+        select: { inboxState: true },
+      });
+      if (current) {
+        const check = validateTransition("inboxState", current.inboxState, updateData.inboxState as string);
+        if (!check.valid) {
+          return NextResponse.json({ error: check.error }, { status: 400 });
+        }
+      }
+    }
+
+    // Auto-enrich: new → enriched when metadata is added
+    if (hasMetadata && !updateData.inboxState) {
       const current = await prisma.productIdentity.findUnique({
         where: { id },
         select: { inboxState: true },

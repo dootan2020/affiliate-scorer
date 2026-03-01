@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
@@ -90,13 +90,18 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   const [refreshOpen, setRefreshOpen] = useState(false);
 
   const fetchChannel = useCallback(async (): Promise<void> => {
+    setError(null);
     try {
       const res = await fetch(`/api/channels/${channelId}`);
-      if (!res.ok) { setChannel(null); return; }
+      if (!res.ok) {
+        if (res.status === 404) { setChannel(null); }
+        else { setError("Lỗi tải kênh"); }
+        return;
+      }
       const json = (await res.json()) as { data: ChannelData };
       setChannel(json.data);
     } catch {
-      setChannel(null);
+      setError("Lỗi kết nối");
     } finally {
       setLoading(false);
     }
@@ -153,6 +158,22 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   }
 
   if (!channel) {
+    if (error) {
+      return (
+        <div className="flex flex-col items-center py-16 text-center">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
+            <AlertTriangle className="w-6 h-6 text-amber-500" />
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">{error}</p>
+          <button
+            onClick={() => { setLoading(true); void fetchChannel(); }}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="text-center py-16">
         <p className="text-gray-500 dark:text-gray-400 mb-4">Không tìm thấy kênh</p>
@@ -482,7 +503,8 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                 </p>
               )}
               {schedule && (
-                <div className="grid grid-cols-7 gap-2">
+                <div className="overflow-x-auto">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
                   {Object.entries(schedule).map(([day, s]) => (
                     <div key={day} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
                       <p className="text-xs font-medium text-gray-500 uppercase mb-1">{day}</p>
@@ -490,6 +512,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                       <p className="text-[10px] text-gray-400 mt-0.5">{s.focus}</p>
                     </div>
                   ))}
+                </div>
                 </div>
               )}
             </InfoSection>

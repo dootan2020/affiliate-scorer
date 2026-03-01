@@ -1,9 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { Trophy, TrendingDown, Minus } from "lucide-react";
 import type { LogResult } from "./log-types";
 
-export function LogRewardResult({ result }: { result: LogResult }): React.ReactElement {
+interface Props {
+  result: LogResult;
+  onLogAnother?: () => void;
+}
+
+export function LogRewardResult({ result, onLogAnother }: Props): React.ReactElement {
   const { rewardScore, analysis } = result;
   const VerdictIcon = analysis.verdict === "win" ? Trophy :
     analysis.verdict === "loss" ? TrendingDown : Minus;
@@ -47,6 +53,23 @@ export function LogRewardResult({ result }: { result: LogResult }): React.ReactE
           ))}
         </div>
       )}
+
+      <div className="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-slate-800">
+        {onLogAnother && (
+          <button
+            onClick={onLogAnother}
+            className="text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
+          >
+            Log thêm
+          </button>
+        )}
+        <Link
+          href="/log"
+          className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+        >
+          Xem log →
+        </Link>
+      </div>
     </div>
   );
 }

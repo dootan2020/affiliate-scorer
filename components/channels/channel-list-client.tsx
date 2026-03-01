@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus, Tv, Loader2 } from "lucide-react";
 import { ChannelForm } from "./channel-form";
 
@@ -24,6 +25,7 @@ const VOICE_LABELS: Record<string, string> = {
 };
 
 export function ChannelListClient(): React.ReactElement {
+  const router = useRouter();
   const [channels, setChannels] = useState<ChannelSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -90,9 +92,10 @@ export function ChannelListClient(): React.ReactElement {
       )}
       {showForm && (
         <ChannelForm
-          onSaved={() => {
+          onSaved={(id) => {
             setShowForm(false);
-            void fetchChannels();
+            if (id) { router.push(`/channels/${id}`); }
+            else { void fetchChannels(); }
           }}
           onCancel={() => setShowForm(false)}
         />

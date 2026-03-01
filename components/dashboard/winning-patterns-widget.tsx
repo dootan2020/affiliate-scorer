@@ -65,7 +65,7 @@ export function WinningPatternsWidget(): React.ReactElement {
     fetch("/api/tracking/patterns")
       .then((r) => r.json())
       .then((json: { data?: PatternData }) => setData(json.data ?? null))
-      .catch(() => {})
+      .catch((e) => { console.error("[winning-patterns-widget]", e); })
       .finally(() => setLoading(false));
   }, []);
 

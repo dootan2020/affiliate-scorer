@@ -239,7 +239,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
       </div>
 
       {/* Key Metrics */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-4 sm:p-5 border border-orange-100 dark:border-slate-700">
+      <div className="bg-orange-50 dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-orange-100 dark:border-slate-700">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Hoa hồng/đơn</p>
@@ -282,7 +282,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
 
       {/* KOL/Competition Stats */}
       {(product.totalKOL !== null || product.totalVideos !== null || product.totalLivestreams !== null) && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-800/50 p-4 text-center">
             <Users className="w-5 h-5 text-orange-500 mx-auto mb-1" />
             <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">{formatNumber(product.totalKOL ?? 0)}</p>

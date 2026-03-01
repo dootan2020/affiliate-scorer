@@ -39,7 +39,7 @@ interface ChannelInitial {
 
 interface Props {
   initial?: Partial<ChannelInitial>;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   onCancel: () => void;
 }
 
@@ -205,7 +205,8 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
       });
       if (res.ok) {
         toast.success(isEdit ? "Đã cập nhật kênh" : "Đã tạo kênh mới");
-        onSaved();
+        const body = await res.json().catch(() => null) as { data?: { id?: string } } | null;
+        onSaved(body?.data?.id);
       } else {
         const body = await res.json().catch(() => null) as { error?: string } | null;
         throw new Error(body?.error ?? `Lỗi ${res.status}`);

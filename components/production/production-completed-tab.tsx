@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import { BriefPreviewCard } from "./brief-preview-card";
 import type { BriefWithProduct } from "@/lib/types/production";
 
@@ -27,19 +27,23 @@ function groupByDay(briefs: BriefWithProduct[]): Map<string, BriefWithProduct[]>
 export function ProductionCompletedTab(): React.ReactElement {
   const [briefs, setBriefs] = useState<BriefWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  async function load(): Promise<void> {
+    setFetchError(null);
+    try {
+      const res = await fetch("/api/briefs?status=completed&limit=50");
+      const json = (await res.json()) as { data?: BriefWithProduct[] };
+      setBriefs(json.data || []);
+    } catch (e) {
+      setFetchError("Lỗi tải danh sách brief");
+      console.error("[production-completed-tab]", e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function load(): Promise<void> {
-      try {
-        const res = await fetch("/api/briefs?status=completed&limit=50");
-        const json = (await res.json()) as { data?: BriefWithProduct[] };
-        setBriefs(json.data || []);
-      } catch {
-        // silent
-      } finally {
-        setLoading(false);
-      }
-    }
     void load();
   }, []);
 
@@ -47,6 +51,18 @@ export function ProductionCompletedTab(): React.ReactElement {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center py-12 text-center">
+        <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
+          <AlertTriangle className="w-6 h-6 text-amber-500" />
+        </div>
+        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
+        <button onClick={() => { setLoading(true); void load(); }} className="text-sm text-blue-600 hover:underline">Thử lại</button>
       </div>
     );
   }

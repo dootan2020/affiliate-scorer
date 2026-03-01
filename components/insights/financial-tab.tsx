@@ -108,7 +108,7 @@ export function FinancialTab(): React.ReactElement {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Thu</p>
           <p className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">

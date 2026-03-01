@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 
 export interface UploadResult {
@@ -97,6 +98,13 @@ export function UploadProgress({
               )}
             </div>
           )}
+
+          <Link
+            href="/inbox"
+            className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
+          >
+            Xem Inbox →
+          </Link>
         </div>
       )}
 

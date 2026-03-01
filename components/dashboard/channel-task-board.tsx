@@ -23,7 +23,7 @@ export function ChannelTaskBoard(): React.ReactElement {
     fetch("/api/dashboard/channel-tasks")
       .then((r) => r.json())
       .then((json: { data?: ChannelTask[] }) => setTasks(json.data ?? []))
-      .catch(() => {})
+      .catch((e) => { console.error("[channel-task-board]", e); })
       .finally(() => setLoading(false));
   }, []);
 

@@ -31,7 +31,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
           .slice(0, 8);
         setItems(filtered);
       })
-      .catch(() => {})
+      .catch((e) => { console.error("[content-suggestions-widget]", e); })
       .finally(() => setLoading(false));
   }, []);
 

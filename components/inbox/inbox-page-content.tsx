@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Inbox, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, Inbox, ChevronLeft, ChevronRight } from "lucide-react";
 import { PasteLinkBox } from "@/components/inbox/paste-link-box";
 import { QuickEnrichModal } from "@/components/inbox/quick-enrich-modal";
 import { InboxTable, type InboxIdentity } from "@/components/inbox/inbox-table";
@@ -49,9 +49,11 @@ export function InboxPageContent(): React.ReactElement {
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [enrichId, setEnrichId] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const params = new URLSearchParams();
       if (activeTab) params.set("state", activeTab);
@@ -67,8 +69,9 @@ export function InboxPageContent(): React.ReactElement {
         setTotal(json.pagination.total);
         setStats(json.stats);
       }
-    } catch {
-      // silent
+    } catch (e) {
+      setFetchError("Lỗi tải danh sách sản phẩm");
+      console.error("[inbox-page-content]", e);
     } finally {
       setLoading(false);
     }
@@ -135,7 +138,15 @@ export function InboxPageContent(): React.ReactElement {
       </div>
 
       {/* Content */}
-      {loading ? (
+      {fetchError ? (
+        <div className="flex flex-col items-center py-12 text-center">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
+            <AlertTriangle className="w-6 h-6 text-amber-500" />
+          </div>
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
+          <button onClick={() => void fetchItems()} className="text-sm text-blue-600 hover:underline">Thử lại</button>
+        </div>
+      ) : loading ? (
         <TableSkeleton />
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">

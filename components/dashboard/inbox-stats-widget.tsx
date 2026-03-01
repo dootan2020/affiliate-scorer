@@ -22,7 +22,7 @@ export function InboxStatsWidget(): React.ReactElement {
       .then((d) => {
         if (d.stats) setStats(d.stats);
       })
-      .catch(() => {});
+      .catch((e) => { console.error("[inbox-stats-widget]", e); });
   }, []);
 
   if (!stats) return <></>;
@@ -47,7 +47,7 @@ export function InboxStatsWidget(): React.ReactElement {
         </Link>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div className="text-center">
           <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950 flex items-center justify-center mx-auto mb-1">
             <Package className="w-4 h-4 text-orange-500" />

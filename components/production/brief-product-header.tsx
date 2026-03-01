@@ -98,7 +98,7 @@ export function BriefProductHeader({
           )}
           {product.combinedScore && (
             <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-              {Number(product.combinedScore).toFixed(0)}đ
+              {Number(product.combinedScore).toFixed(0)} điểm
             </span>
           )}
         </div>

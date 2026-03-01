@@ -7,6 +7,7 @@ import {
   Lightbulb,
   RefreshCw,
   Loader2,
+  AlertTriangle,
   BarChart3,
   Brain,
 } from "lucide-react";
@@ -47,15 +48,18 @@ export function PlaybookPageClient({ channelId }: PlaybookProps = {}): React.Rea
   const [data, setData] = useState<PlaybookData | null>(null);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   async function load(): Promise<void> {
+    setFetchError(null);
     try {
       const params = channelId ? `?channelId=${channelId}` : "";
       const res = await fetch(`/api/patterns${params}`);
       const json = await res.json() as { data?: PlaybookData };
       if (json.data) setData(json.data);
-    } catch {
-      // ignore
+    } catch (e) {
+      setFetchError("Lỗi tải playbook");
+      console.error("[playbook-page-client]", e);
     } finally {
       setLoading(false);
     }
@@ -67,8 +71,9 @@ export function PlaybookPageClient({ channelId }: PlaybookProps = {}): React.Rea
       const params = channelId ? `?channelId=${channelId}` : "";
       await fetch(`/api/patterns${params}`, { method: "POST" });
       await load();
-    } catch {
-      // ignore
+    } catch (e) {
+      setFetchError("Lỗi tạo lại playbook");
+      console.error("[playbook-page-client] regenerate", e);
     } finally {
       setRegenerating(false);
     }
@@ -82,6 +87,18 @@ export function PlaybookPageClient({ channelId }: PlaybookProps = {}): React.Rea
         {[1, 2, 3].map((i) => (
           <div key={i} className="h-24 bg-gray-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
         ))}
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center py-12 text-center">
+        <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
+          <AlertTriangle className="w-6 h-6 text-amber-500" />
+        </div>
+        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
+        <button onClick={() => { setLoading(true); void load(); }} className="text-sm text-blue-600 hover:underline">Thử lại</button>
       </div>
     );
   }

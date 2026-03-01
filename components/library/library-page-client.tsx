@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, Search, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { AssetCard, type AssetCardData } from "./asset-card";
 
 const STATUS_OPTIONS = [
@@ -50,6 +50,7 @@ export function LibraryPageClient(): React.ReactElement {
   const [productSearch, setProductSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const totalPages = Math.ceil(total / PAGE_LIMIT);
 
@@ -65,12 +66,14 @@ export function LibraryPageClient(): React.ReactElement {
       if (format) params.set("format", format);
       if (productSearch) params.set("productSearch", productSearch);
 
+      setFetchError(null);
       const res = await fetch(`/api/library?${params.toString()}`);
       const json = await res.json() as LibraryResponse;
       setAssets(json.data ?? []);
       setTotal(json.total ?? 0);
-    } catch {
-      // silently ignore
+    } catch (e) {
+      setFetchError("Lỗi tải thư viện nội dung");
+      console.error("[library-page-client]", e);
     } finally {
       setLoading(false);
     }
@@ -171,7 +174,15 @@ export function LibraryPageClient(): React.ReactElement {
       </div>
 
       {/* Grid */}
-      {loading ? (
+      {fetchError ? (
+        <div className="flex flex-col items-center py-12 text-center">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center mb-3">
+            <AlertTriangle className="w-6 h-6 text-amber-500" />
+          </div>
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
+          <button onClick={() => void load()} className="text-sm text-blue-600 hover:underline">Thử lại</button>
+        </div>
+      ) : loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="h-48 bg-gray-100 dark:bg-slate-800 rounded-2xl animate-pulse" />

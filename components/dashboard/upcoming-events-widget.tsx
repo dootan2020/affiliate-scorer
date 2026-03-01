@@ -43,7 +43,7 @@ export function UpcomingEventsWidget(): React.ReactElement {
       .then((d) => {
         if (Array.isArray(d.data)) setEvents(d.data);
       })
-      .catch(() => {});
+      .catch((e) => { console.error("[upcoming-events-widget]", e); });
   }, []);
 
   if (events.length === 0) return <></>;

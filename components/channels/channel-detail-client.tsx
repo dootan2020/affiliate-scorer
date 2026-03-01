@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Pencil, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Pencil, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
@@ -264,6 +264,13 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                   channel.isActive ? "translate-x-6" : "translate-x-1"
                 }`}
               />
+            </button>
+            <button
+              onClick={() => window.open(`/api/channels/${channelId}/export`, "_blank")}
+              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+              title="Tải kênh (.json)"
+            >
+              <Download className="w-3.5 h-3.5" /> Tải
             </button>
             <button
               onClick={() => setEditing(true)}

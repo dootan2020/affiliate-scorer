@@ -30,18 +30,20 @@ export async function GET(
     }
 
     const safeName = channel.name
-      .replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF ]/g, "")
+      .replace(/[^a-zA-Z0-9 ]/g, "")
       .replace(/\s+/g, "-")
       .toLowerCase()
-      .slice(0, 50);
-    const filename = `channel-${safeName}-${new Date().toISOString().slice(0, 10)}.json`;
+      .slice(0, 50) || "export";
+    const date = new Date().toISOString().slice(0, 10);
+    const filename = `channel-${safeName}-${date}.json`;
+    const encodedName = encodeURIComponent(`${channel.name}-${date}.json`);
 
     const json = JSON.stringify(channel, safeReplacer, 2);
 
     return new NextResponse(json, {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodedName}`,
       },
     });
   } catch (err) {

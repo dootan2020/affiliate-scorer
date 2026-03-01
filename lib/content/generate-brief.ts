@@ -303,94 +303,122 @@ async function callAIWithRetry(
   );
 }
 
-/** Generate brief cho 1 SP → lưu DB */
+/** Generate brief cho 1 SP → lưu DB (atomic transaction) */
 export async function generateBrief(product: ProductInput, options?: BriefOptions): Promise<string> {
+  // Pre-check: verify product is in a state that allows brief generation
+  const identity = await prisma.productIdentity.findUnique({
+    where: { id: product.id },
+    select: { inboxState: true },
+  });
+
+  if (!identity) throw new Error("Không tìm thấy sản phẩm");
+
+  const allowedStates = ["scored", "enriched", "briefed"];
+  if (!allowedStates.includes(identity.inboxState)) {
+    throw new Error(
+      `Không thể tạo brief: sản phẩm đang ở "${identity.inboxState}", cần [${allowedStates.join(", ")}]`,
+    );
+  }
+
+  // AI call — OUTSIDE transaction (slow, external service)
   const startTime = Date.now();
   const prompt = buildBriefPrompt(product, options);
-
   const { modelUsed, parsed: brief } = await callAIWithRetry(
     SYSTEM_PROMPT, prompt, 6000, "content_brief",
   );
   const generationTimeMs = Date.now() - startTime;
 
-  // Lưu ContentBrief
-  const savedBrief = await prisma.contentBrief.create({
-    data: {
-      productIdentityId: product.id,
-      channelId: options?.channel?.channelId ?? null,
-      angles: JSON.parse(JSON.stringify(brief.angles)),
-      hooks: JSON.parse(JSON.stringify(brief.hooks)),
-      scripts: JSON.parse(JSON.stringify(brief.scripts)),
-      aiModel: modelUsed,
-      promptUsed: prompt,
-      generationTimeMs,
-    },
-  });
-
-  // Tạo ContentAssets từ scripts (with retry for unique constraint race condition)
-  const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-
-  for (let i = 0; i < brief.scripts.length; i++) {
-    const script = brief.scripts[i];
+  // Pre-compute compliance for all scripts (outside transaction)
+  const complianceResults = brief.scripts.map((script) => {
     const fullText = [script.full_script, script.caption, script.cta].join(" ");
-    const compliance = checkCompliance(fullText);
-
-    // Retry loop: COUNT inside transaction + retry on unique violation
-    let created = false;
-    for (let attempt = 0; attempt < 3 && !created; attempt++) {
-      try {
-        const assetNum = await prisma.$transaction(async (tx) => {
-          const count = await tx.contentAsset.count({
-            where: { createdAt: { gte: todayStart } },
-          });
-          return count + 1;
-        });
-        const assetCode = `A-${today}-${String(assetNum).padStart(4, "0")}`;
-
-        await prisma.contentAsset.create({
-          data: {
-            assetCode,
-            productIdentityId: product.id,
-            briefId: savedBrief.id,
-            hookText: script.hook,
-            hookType: script.hook_type,
-            format: script.format,
-            angle: brief.angles[i] || brief.angles[0],
-            scriptText: script.full_script,
-            captionText: script.caption,
-            hashtags: script.hashtags,
-            ctaText: script.cta_caption || script.cta,
-            videoPrompts: script.scenes,
-            contentType: options?.contentType ?? null,
-            videoFormat: options?.videoFormat ?? null,
-            targetDuration: options?.targetDuration ?? null,
-            channelId: options?.channel?.channelId ?? null,
-            soundStyle: (script as unknown as Record<string, unknown>).sound_style as string ?? null,
-            ctaSuggestion: script.cta,
-            complianceStatus: compliance.status,
-            complianceNotes: compliance.hits.length > 0
-              ? compliance.hits.map((h) => `[${h.level}] ${h.word}`).join("; ")
-              : null,
-            status: "draft",
-          },
-        });
-        created = true;
-      } catch (error) {
-        const isUniqueViolation = error instanceof Error
-          && error.message.includes("Unique constraint");
-        if (!isUniqueViolation || attempt === 2) throw error;
-        // Unique constraint → retry with fresh count
-      }
-    }
-  }
-
-  // Update identity state → briefed
-  await prisma.productIdentity.update({
-    where: { id: product.id },
-    data: { inboxState: "briefed" },
+    return checkCompliance(fullText);
   });
 
-  return savedBrief.id;
+  // Atomic DB writes: brief + assets + inboxState in single transaction
+  const savedBriefId = await prisma.$transaction(async (tx) => {
+    // Optimistic lock: re-check state inside transaction
+    const current = await tx.productIdentity.findUnique({
+      where: { id: product.id },
+      select: { inboxState: true },
+    });
+
+    if (!current || !allowedStates.includes(current.inboxState)) {
+      throw new Error("Trạng thái sản phẩm đã thay đổi (có request đồng thời?)");
+    }
+
+    // Create brief
+    const savedBrief = await tx.contentBrief.create({
+      data: {
+        productIdentityId: product.id,
+        channelId: options?.channel?.channelId ?? null,
+        angles: JSON.parse(JSON.stringify(brief.angles)),
+        hooks: JSON.parse(JSON.stringify(brief.hooks)),
+        scripts: JSON.parse(JSON.stringify(brief.scripts)),
+        aiModel: modelUsed,
+        promptUsed: prompt,
+        generationTimeMs,
+      },
+    });
+
+    // Create assets inside same transaction
+    // NOTE: 3 assets/brief hiện tại. Nếu tăng → chuyển sang createMany batch insert
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const baseCount = await tx.contentAsset.count({
+      where: { createdAt: { gte: todayStart } },
+    });
+
+    for (let i = 0; i < brief.scripts.length; i++) {
+      const script = brief.scripts[i];
+      const compliance = complianceResults[i];
+      const assetCode = `A-${today}-${String(baseCount + 1 + i).padStart(4, "0")}`;
+
+      await tx.contentAsset.create({
+        data: {
+          assetCode,
+          productIdentityId: product.id,
+          briefId: savedBrief.id,
+          hookText: script.hook,
+          hookType: script.hook_type,
+          format: script.format,
+          angle: brief.angles[i] || brief.angles[0],
+          scriptText: script.full_script,
+          captionText: script.caption,
+          hashtags: script.hashtags,
+          ctaText: script.cta_caption || script.cta,
+          videoPrompts: script.scenes,
+          contentType: options?.contentType ?? null,
+          videoFormat: options?.videoFormat ?? null,
+          targetDuration: options?.targetDuration ?? null,
+          channelId: options?.channel?.channelId ?? null,
+          soundStyle: (script as unknown as Record<string, unknown>).sound_style as string ?? null,
+          ctaSuggestion: script.cta,
+          complianceStatus: compliance.status,
+          complianceNotes: compliance.hits.length > 0
+            ? compliance.hits.map((h) => `[${h.level}] ${h.word}`).join("; ")
+            : null,
+          status: "draft",
+        },
+      });
+    }
+
+    // Update inboxState atomically with optimistic lock
+    const updated = await tx.productIdentity.updateMany({
+      where: {
+        id: product.id,
+        inboxState: { in: allowedStates },
+      },
+      data: { inboxState: "briefed" },
+    });
+
+    if (updated.count === 0) {
+      throw new Error("Brief đồng thời — request khác đã xử lý sản phẩm này");
+    }
+
+    return savedBrief.id;
+  });
+
+  return savedBriefId;
 }

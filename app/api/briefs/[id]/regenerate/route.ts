@@ -41,11 +41,18 @@ export async function POST(
       );
     }
 
-    // 3. Mark old brief as replaced
-    await prisma.contentBrief.update({
-      where: { id },
-      data: { status: "replaced" },
-    });
+    // 3. Mark old brief as replaced + archive orphan draft assets (atomic)
+    await prisma.$transaction([
+      prisma.contentBrief.update({
+        where: { id },
+        data: { status: "replaced" },
+      }),
+      // Archive draft assets from replaced brief (produced/published assets stay)
+      prisma.contentAsset.updateMany({
+        where: { briefId: id, status: "draft" },
+        data: { status: "archived" },
+      }),
+    ]);
 
     // 4. Fetch product data for brief generation
     const identity = await prisma.productIdentity.findUnique({

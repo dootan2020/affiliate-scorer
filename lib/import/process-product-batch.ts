@@ -97,11 +97,16 @@ export async function processProductBatch(
 
   } catch (err) {
     console.error("processProductBatch fatal:", err);
-    await updateBatchProgress(batchId, {
-      status: "failed",
-      errorLog: { fatal: err instanceof Error ? err.message : "Unknown" },
-      completedAt: new Date(),
-    });
+    try {
+      await updateBatchProgress(batchId, {
+        status: "failed",
+        scoringStatus: "failed",
+        errorLog: { fatal: err instanceof Error ? err.message : "Unknown" },
+        completedAt: new Date(),
+      });
+    } catch (updateErr) {
+      console.error("Failed to update batch status after fatal:", updateErr);
+    }
   }
 }
 

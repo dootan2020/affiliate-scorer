@@ -146,9 +146,18 @@ export function TikTokStudioDropzone(): React.ReactElement {
         );
       }
 
-      // Start polling for background results
+      // Start polling for background results, or reset if all skipped
       if (data.data?.batchId) {
         setPollingBatchId(data.data.batchId);
+      } else {
+        // No batchId = all files were skipped/invalid, reset stuck "processing" files
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.status === "processing"
+              ? { ...f, status: "skipped" as const, errors: ["Không có file hợp lệ"] }
+              : f,
+          ),
+        );
       }
     } catch (err) {
       setFiles((prev) =>

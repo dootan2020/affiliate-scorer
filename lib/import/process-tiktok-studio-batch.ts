@@ -97,10 +97,15 @@ export async function processTikTokStudioBatch(
     });
   } catch (err) {
     console.error("processTikTokStudioBatch fatal:", err);
-    await updateBatchProgress(batchId, {
-      status: "failed",
-      errorLog: { fatal: err instanceof Error ? err.message : "Unknown", fileResults } as unknown as InputJsonValue,
-      completedAt: new Date(),
-    });
+    try {
+      await updateBatchProgress(batchId, {
+        status: "failed",
+        scoringStatus: "failed",
+        errorLog: { fatal: err instanceof Error ? err.message : "Unknown", fileResults } as unknown as InputJsonValue,
+        completedAt: new Date(),
+      });
+    } catch (updateErr) {
+      console.error("Failed to update batch status after fatal:", updateErr);
+    }
   }
 }

@@ -20,6 +20,7 @@ export interface ImportStatus {
 }
 
 const POLL_INTERVAL = 3000;
+const MAX_POLLS = 100; // ~5 minutes safety limit
 
 /** Poll /api/imports/[id]/status until terminal state. */
 export function useImportPolling(batchId: string | null): {
@@ -29,6 +30,7 @@ export function useImportPolling(batchId: string | null): {
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCountRef = useRef(0);
 
   // Effect to manage polling lifecycle
   useEffect(() => {
@@ -40,11 +42,27 @@ export function useImportPolling(batchId: string | null): {
       return;
     }
 
+    pollCountRef.current = 0;
+
     // Initial state update is acceptable for polling setup
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsPolling(true);
 
-    const pollFn = async () => {
+    const stopPolling = (): void => {
+      setIsPolling(false);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+
+    const pollFn = async (): Promise<void> => {
+      pollCountRef.current++;
+      if (pollCountRef.current > MAX_POLLS) {
+        stopPolling();
+        return;
+      }
+
       try {
         const res = await fetch(`/api/imports/${batchId}/status`);
         if (!res.ok) return;
@@ -52,13 +70,7 @@ export function useImportPolling(batchId: string | null): {
         const s = data.data as ImportStatus;
         setStatus(s);
 
-        if (s.isTerminal) {
-          setIsPolling(false);
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-        }
+        if (s.isTerminal) stopPolling();
       } catch {
         // network error, keep polling
       }

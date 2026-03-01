@@ -532,6 +532,10 @@ model ContentBrief {
   productIdentityId String
   productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id])
 
+  // Channel (nullable for migration — new briefs enforce via API)
+  channelId String?
+  channel   TikTokChannel? @relation(fields: [channelId], references: [id])
+
   // Generated content
   angles  Json @default("[]") // 5 angles
   hooks   Json @default("[]") // 10 hooks
@@ -550,6 +554,7 @@ model ContentBrief {
   assets ContentAsset[]
 
   @@index([productIdentityId])
+  @@index([channelId])
 }
 
 model ContentAsset {
@@ -909,6 +914,7 @@ model TikTokChannel {
 
   contentSlots  ContentSlot[]
   contentAssets ContentAsset[]
+  briefs        ContentBrief[]
   refreshLogs   TacticalRefreshLog[]
 }
 

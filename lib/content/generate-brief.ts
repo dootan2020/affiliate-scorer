@@ -317,6 +317,7 @@ export async function generateBrief(product: ProductInput, options?: BriefOption
   const savedBrief = await prisma.contentBrief.create({
     data: {
       productIdentityId: product.id,
+      channelId: options?.channel?.channelId ?? null,
       angles: JSON.parse(JSON.stringify(brief.angles)),
       hooks: JSON.parse(JSON.stringify(brief.hooks)),
       scripts: JSON.parse(JSON.stringify(brief.scripts)),

@@ -1,11 +1,13 @@
 // Phase 4: GET /api/patterns — xem playbook
 //          POST /api/patterns — regenerate patterns
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { regeneratePatterns } from "@/lib/learning/pattern-detection";
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
+    const channelId = request.nextUrl.searchParams.get("channelId") || undefined;
+
     const patterns = await prisma.userPattern.findMany({
       orderBy: [
         { patternType: "asc" }, // winning first
@@ -13,8 +15,24 @@ export async function GET(): Promise<NextResponse> {
       ],
     });
 
-    const winning = patterns.filter((p) => p.patternType === "winning");
-    const losing = patterns.filter((p) => p.patternType === "losing");
+    // Filter patterns by channel if channelId provided
+    let filteredPatterns = patterns;
+    if (channelId) {
+      // Get asset IDs for this channel
+      const channelAssetIds = await prisma.contentAsset.findMany({
+        where: { channelId },
+        select: { id: true },
+      });
+      const channelAssetIdSet = new Set(channelAssetIds.map((a) => a.id));
+
+      filteredPatterns = patterns.filter((p) => {
+        const assetIds = (p.assetIds as string[]) || [];
+        return assetIds.some((id) => channelAssetIdSet.has(id));
+      });
+    }
+
+    const winning = filteredPatterns.filter((p) => p.patternType === "winning");
+    const losing = filteredPatterns.filter((p) => p.patternType === "losing");
 
     // Top insights từ learning weights
     const weights = await prisma.learningWeightP4.findMany({
@@ -59,8 +77,12 @@ export async function GET(): Promise<NextResponse> {
       });
     }
 
-    // Total videos logged
-    const totalLogged = await prisma.assetMetric.count();
+    // Total videos logged (filtered by channel if applicable)
+    const totalLogged = channelId
+      ? await prisma.assetMetric.count({
+          where: { contentAsset: { channelId } },
+        })
+      : await prisma.assetMetric.count();
 
     return NextResponse.json({
       data: { winning, losing, insights, totalLogged },

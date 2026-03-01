@@ -21,29 +21,30 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (validation.error) return validation.error;
     const { productIdentityIds, channelId, contentType, videoFormat, targetDuration } = validation.data;
 
-    // Build channel context if channelId provided
-    let briefOptions: BriefOptions = { contentType, videoFormat, targetDuration };
-    if (channelId) {
-      const channel = await prisma.tikTokChannel.findUnique({ where: { id: channelId } });
-      if (channel && !channel.isActive) {
-        return NextResponse.json(
-          { error: "Kênh đã tạm dừng. Chọn kênh khác hoặc kích hoạt lại kênh." },
-          { status: 400 },
-        );
-      }
-      if (channel) {
-        const ctx: ChannelContext = {
-          channelId: channel.id,
-          personaName: channel.personaName,
-          personaDesc: channel.personaDesc,
-          voiceStyle: channel.voiceStyle,
-          targetAudience: channel.targetAudience,
-          editingStyle: channel.editingStyle,
-          niche: channel.niche,
-        };
-        briefOptions = { ...briefOptions, channel: ctx };
-      }
+    // Build channel context (channelId is required)
+    const channel = await prisma.tikTokChannel.findUnique({ where: { id: channelId } });
+    if (!channel) {
+      return NextResponse.json(
+        { error: "Không tìm thấy kênh. Vui lòng chọn kênh hợp lệ." },
+        { status: 404 },
+      );
     }
+    if (!channel.isActive) {
+      return NextResponse.json(
+        { error: "Kênh đã tạm dừng. Chọn kênh khác hoặc kích hoạt lại kênh." },
+        { status: 400 },
+      );
+    }
+    const channelCtx: ChannelContext = {
+      channelId: channel.id,
+      personaName: channel.personaName,
+      personaDesc: channel.personaDesc,
+      voiceStyle: channel.voiceStyle,
+      targetAudience: channel.targetAudience,
+      editingStyle: channel.editingStyle,
+      niche: channel.niche,
+    };
+    const briefOptions: BriefOptions = { channel: channelCtx, contentType, videoFormat, targetDuration };
 
     // Lấy tất cả identities + product data cho enriched prompt
     const identities = await prisma.productIdentity.findMany({

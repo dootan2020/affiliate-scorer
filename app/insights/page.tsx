@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { InsightsPageClient } from "@/components/insights/insights-page-client";
 import { TriggerLearningButton } from "@/components/insights/trigger-learning-button";
+import { ChannelFilter } from "@/components/insights/channel-filter";
 import { ConfidenceWidget } from "@/components/ai/confidence-widget";
 import { WeeklyReportCard } from "@/components/ai/weekly-report-card";
 import { PlaybookSection } from "@/components/ai/playbook-section";
@@ -151,13 +152,31 @@ function getConfidenceLabel(feedbackCount: number): string {
   return "Rất thấp";
 }
 
-export default async function InsightsPage(): Promise<React.ReactElement> {
-  const [insights, overview] = await Promise.all([
+interface InsightsPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function InsightsPage({ searchParams }: InsightsPageProps): Promise<React.ReactElement> {
+  const params = await searchParams;
+  const channelId = typeof params.channelId === "string" ? params.channelId : undefined;
+
+  const [insights, overview, channels] = await Promise.all([
     getInsights(),
     getOverviewData(),
+    prisma.tikTokChannel.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, personaName: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   const confidenceLabel = getConfidenceLabel(insights.totalFeedbackCount);
+
+  const channelOptions = channels.map((ch) => ({
+    id: ch.id,
+    name: ch.name,
+    personaName: ch.personaName,
+  }));
 
   return (
     <div className="space-y-6">
@@ -170,7 +189,10 @@ export default async function InsightsPage(): Promise<React.ReactElement> {
             Phân tích từ {insights.totalFeedbackCount} feedback thực tế
           </p>
         </div>
-        <TriggerLearningButton />
+        <div className="flex items-center gap-3">
+          <ChannelFilter channels={channelOptions} currentChannelId={channelId} />
+          <TriggerLearningButton />
+        </div>
       </div>
 
       <InsightsPageClient
@@ -186,6 +208,7 @@ export default async function InsightsPage(): Promise<React.ReactElement> {
         latestLog={insights.latestLog}
         accuracyTrend={insights.accuracyTrend}
         feedbackTable={insights.feedbackTable}
+        channelId={channelId}
       />
 
       {/* Phase 4: AI Intelligence */}

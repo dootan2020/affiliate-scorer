@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
+import { ChannelTaskBoard } from "@/components/dashboard/channel-task-board";
 import { MorningBriefWidget } from "@/components/dashboard/morning-brief-widget";
 import { QuickPasteWidget } from "@/components/dashboard/quick-paste-widget";
-import { InboxStatsWidget } from "@/components/dashboard/inbox-stats-widget";
-import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-widget";
 import { ContentSuggestionsWidget } from "@/components/dashboard/content-suggestions-widget";
 import { WinningPatternsWidget } from "@/components/dashboard/winning-patterns-widget";
 
@@ -17,7 +16,10 @@ export default function DashboardPage(): React.ReactElement {
         Tổng quan
       </h1>
 
-      {/* Row 1: Morning Brief (2/3) + Quick Paste (1/3) */}
+      {/* Row 1: Channel Task Board (full width) — THE main widget */}
+      <ChannelTaskBoard />
+
+      {/* Row 2: Morning Brief (2/3) + Quick Paste (1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <MorningBriefWidget />
@@ -27,16 +29,10 @@ export default function DashboardPage(): React.ReactElement {
         </div>
       </div>
 
-      {/* Row 2: Content Suggestions (full width) */}
+      {/* Row 3: Content Suggestions */}
       <ContentSuggestionsWidget />
 
-      {/* Row 3: Inbox Pipeline + Upcoming Events */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <InboxStatsWidget />
-        <UpcomingEventsWidget />
-      </div>
-
-      {/* Row 4: Winning Patterns (full width) */}
+      {/* Row 4: Winning Patterns */}
       <WinningPatternsWidget />
     </div>
   );

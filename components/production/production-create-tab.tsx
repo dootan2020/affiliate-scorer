@@ -64,11 +64,12 @@ const selectCls =
 interface Props {
   onBriefsCreated?: () => void;
   initialProductId?: string | null;
+  initialChannelId?: string | null;
 }
 
-export function ProductionCreateTab({ onBriefsCreated, initialProductId }: Props): React.ReactElement {
+export function ProductionCreateTab({ onBriefsCreated, initialProductId, initialChannelId }: Props): React.ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [channelId, setChannelId] = useState("");
+  const [channelId, setChannelId] = useState(initialChannelId ?? "");
   const [contentType, setContentType] = useState("");
   const [videoFormat, setVideoFormat] = useState("");
   const [targetDuration, setTargetDuration] = useState(0);
@@ -87,7 +88,7 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId }: Props
   }, []);
 
   async function handleGenerate(): Promise<void> {
-    if (selectedIds.length === 0) return;
+    if (selectedIds.length === 0 || !channelId) return;
 
     setGenerating(true);
     setError(null);
@@ -101,7 +102,7 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId }: Props
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productIdentityIds: selectedIds,
-          ...(channelId && { channelId }),
+          channelId,
           ...(contentType && { contentType }),
           ...(videoFormat && { videoFormat }),
           ...(targetDuration > 0 && { targetDuration }),
@@ -168,10 +169,57 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId }: Props
 
   const totalAssets = briefs.reduce((sum, b) => sum + b.assets.length, 0);
 
+  const selectedChannel = channels.find((ch) => ch.id === channelId);
+
   return (
     <div className="space-y-6">
-      {/* Step 1: Select products */}
+      {/* Step 0: Select channel (REQUIRED) */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
+        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
+          <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-sm font-bold">
+            0
+          </div>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+            Chọn kênh TikTok
+          </h2>
+          <span className="text-xs text-rose-500 ml-1">*bắt buộc</span>
+        </div>
+        {channels.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Chưa có kênh nào. <a href="/channels" className="text-blue-600 hover:underline">Tạo kênh mới</a>
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {channels.map((ch) => (
+              <button
+                key={ch.id}
+                onClick={() => setChannelId(ch.id)}
+                disabled={generating}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
+                  channelId === ch.id
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 ring-2 ring-blue-500/20"
+                    : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
+                } disabled:opacity-50`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold ${
+                  channelId === ch.id
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                }`}>
+                  {ch.name.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{ch.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{ch.personaName} · {ch.voiceStyle}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Step 1: Select products (disabled until channel selected) */}
+      <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 ${!channelId ? "opacity-50 pointer-events-none" : ""}`}>
         <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
           <div className="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 text-sm font-bold">
             1
@@ -179,17 +227,22 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId }: Props
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
             Chọn sản phẩm từ Inbox
           </h2>
+          {selectedChannel && (
+            <span className="text-xs text-blue-600 dark:text-blue-400 ml-auto">
+              Kênh: {selectedChannel.name}
+            </span>
+          )}
         </div>
         <ProductSelector
           selected={selectedIds}
           onSelectionChange={setSelectedIds}
-          disabled={generating}
+          disabled={generating || !channelId}
           initialProductId={initialProductId}
         />
       </div>
 
-      {/* Step 1.5: Content options */}
-      {selectedIds.length > 0 && (
+      {/* Content options */}
+      {selectedIds.length > 0 && channelId && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
           <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
             <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-sm font-bold">
@@ -200,16 +253,7 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId }: Props
             </h2>
             <span className="text-xs text-gray-400 ml-auto">Để trống = AI tự chọn</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Kênh TikTok</label>
-              <select className={selectCls} value={channelId} onChange={(e) => setChannelId(e.target.value)} disabled={generating}>
-                <option value="">Không chọn kênh</option>
-                {channels.map((ch) => (
-                  <option key={ch.id} value={ch.id}>{ch.name} ({ch.personaName})</option>
-                ))}
-              </select>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Loại content</label>
               <select className={selectCls} value={contentType} onChange={(e) => setContentType(e.target.value)} disabled={generating}>
@@ -242,7 +286,7 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId }: Props
       <div className="flex items-center gap-4">
         <button
           onClick={() => void handleGenerate()}
-          disabled={selectedIds.length === 0 || generating}
+          disabled={selectedIds.length === 0 || !channelId || generating}
           className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-3 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
         >
           {generating ? (

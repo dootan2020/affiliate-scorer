@@ -65,6 +65,8 @@ export interface InsightsPageClientProps {
   accuracyTrend: AccuracyPoint[];
   // Feedback data
   feedbackTable: FeedbackRow[];
+  // Channel filter
+  channelId?: string;
 }
 
 function InsightsPageClientInner(
@@ -170,7 +172,7 @@ function InsightsPageClientInner(
           <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
             Playbook — Patterns tích luỹ từ dữ liệu
           </h2>
-          <PlaybookPageClient />
+          <PlaybookPageClient channelId={props.channelId} />
         </section>
       )}
 

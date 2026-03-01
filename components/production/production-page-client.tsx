@@ -22,6 +22,7 @@ const TABS: Array<{ key: Tab; label: string; step: number }> = [
 export function ProductionPageClient(): React.ReactElement {
   const searchParams = useSearchParams();
   const initialProductId = searchParams.get("productId");
+  const initialChannelId = searchParams.get("channel");
   const [activeTab, setActiveTab] = useState<Tab>("create");
 
   return (
@@ -61,6 +62,7 @@ export function ProductionPageClient(): React.ReactElement {
           <ProductionCreateTab
             onBriefsCreated={() => setActiveTab("in-progress")}
             initialProductId={initialProductId}
+            initialChannelId={initialChannelId}
           />
         )}
         {activeTab === "completed" && <ProductionCompletedTab />}

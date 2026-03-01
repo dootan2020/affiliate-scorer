@@ -4,6 +4,7 @@ import { callAI } from "@/lib/ai/call-ai";
 
 interface BriefContent {
   greeting: string;
+  channel_tasks?: Array<{ channel: string; action: string; priority: number }>;
   produce_today: Array<{ product: string; reason: string; videos: number; priority: number }>;
   new_products_alert: Array<{ product: string; why: string }>;
   yesterday_recap: string;
@@ -18,8 +19,13 @@ export async function generateMorningBrief(): Promise<string> {
   const today = new Date();
   const todayStr = today.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" });
 
+  // Today boundaries for channel queries
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
   // Gather data
-  const [newProducts, briefedProducts, yesterdayMetrics, topWeights, currentGoal] = await Promise.all([
+  const [newProducts, briefedProducts, yesterdayMetrics, topWeights, currentGoal, activeChannels] = await Promise.all([
     // SP mới chưa tạo content
     prisma.productIdentity.findMany({
       where: { inboxState: { in: ["scored", "enriched"] } },
@@ -48,6 +54,22 @@ export async function generateMorningBrief(): Promise<string> {
         periodEnd: { gte: today },
       },
     }),
+    // Active channels with today's slot counts + draft counts
+    prisma.tikTokChannel.findMany({
+      where: { isActive: true },
+      select: {
+        name: true,
+        personaName: true,
+        contentSlots: {
+          where: { scheduledDate: { gte: todayStart, lt: tomorrowStart } },
+          select: { status: true },
+        },
+        contentAssets: {
+          where: { status: "draft" },
+          select: { id: true },
+        },
+      },
+    }),
   ]);
 
   // Top hook/format
@@ -58,8 +80,20 @@ export async function generateMorningBrief(): Promise<string> {
     .slice(0, 3)
     .map((w) => w.key);
 
+  // Build channel summary
+  const channelLines = activeChannels.map((ch) => {
+    const totalSlots = ch.contentSlots.length;
+    const planned = ch.contentSlots.filter((s) => s.status === "planned").length;
+    const briefed = ch.contentSlots.filter((s) => s.status === "briefed").length;
+    const draftCount = ch.contentAssets.length;
+    return `- ${ch.name} (${ch.personaName}): ${totalSlots} slots today (${planned} planned, ${briefed} briefed), ${draftCount} draft videos`;
+  });
+
   const prompt = `
 Tạo Morning Brief cho ngày ${todayStr}.
+
+KÊNH HOẠT ĐỘNG:
+${channelLines.length > 0 ? channelLines.join("\n") : "Chưa có kênh nào"}
 
 SẢN PHẨM MỚI (chưa tạo content):
 ${newProducts.length > 0
@@ -89,6 +123,7 @@ ${currentGoal
 Output JSON:
 {
   "greeting": "Chào buổi sáng ngắn gọn",
+  "channel_tasks": [{ "channel": "Tên kênh", "action": "Việc cần làm hôm nay cho kênh này", "priority": 1 }],
   "produce_today": [{ "product": "Tên SP", "reason": "Tại sao", "videos": 3, "priority": 1 }],
   "new_products_alert": [{ "product": "Tên SP", "why": "Tại sao đáng chú ý" }],
   "yesterday_recap": "1-2 câu tóm tắt",
@@ -113,6 +148,7 @@ Chỉ output JSON, không text khác.`.trim();
     console.error("[generateMorningBrief] JSON parse failed:", parseError, "Raw:", jsonStr.substring(0, 200));
     content = {
       greeting: "Chào buổi sáng!",
+      channel_tasks: [],
       produce_today: [],
       new_products_alert: [],
       yesterday_recap: "Không thể phân tích dữ liệu hôm qua",

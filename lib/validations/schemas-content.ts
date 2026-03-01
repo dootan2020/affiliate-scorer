@@ -51,7 +51,7 @@ export const generateBriefSchema = z.object({
 
 export const batchBriefSchema = z.object({
   productIdentityIds: z.array(z.string().min(1)).min(1).max(10),
-  channelId: z.string().min(1).optional(),
+  channelId: z.string().min(1),
   contentType: z.enum(["entertainment", "education", "review", "selling"]).optional(),
   videoFormat: z.enum([
     "before_after", "product_showcase", "slideshow_voiceover",

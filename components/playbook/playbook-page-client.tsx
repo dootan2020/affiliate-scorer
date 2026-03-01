@@ -39,14 +39,19 @@ function formatViews(v: number | null): string {
   return String(v);
 }
 
-export function PlaybookPageClient(): React.ReactElement {
+interface PlaybookProps {
+  channelId?: string;
+}
+
+export function PlaybookPageClient({ channelId }: PlaybookProps = {}): React.ReactElement {
   const [data, setData] = useState<PlaybookData | null>(null);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
 
   async function load(): Promise<void> {
     try {
-      const res = await fetch("/api/patterns");
+      const params = channelId ? `?channelId=${channelId}` : "";
+      const res = await fetch(`/api/patterns${params}`);
       const json = await res.json() as { data?: PlaybookData };
       if (json.data) setData(json.data);
     } catch {
@@ -59,7 +64,8 @@ export function PlaybookPageClient(): React.ReactElement {
   async function handleRegenerate(): Promise<void> {
     setRegenerating(true);
     try {
-      await fetch("/api/patterns", { method: "POST" });
+      const params = channelId ? `?channelId=${channelId}` : "";
+      await fetch(`/api/patterns${params}`, { method: "POST" });
       await load();
     } catch {
       // ignore
@@ -68,7 +74,7 @@ export function PlaybookPageClient(): React.ReactElement {
     }
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [channelId]);
 
   if (loading) {
     return (

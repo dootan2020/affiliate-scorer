@@ -5,7 +5,6 @@ import { syncProductIdentity } from "@/lib/inbox/sync-identity";
 import { scoreProducts } from "@/lib/ai/scoring";
 import { syncIdentityScores } from "@/lib/services/score-identity";
 import { getProductLifecycle } from "@/lib/ai/lifecycle";
-import { createEmptyDeltaSummary } from "@/lib/inbox/delta-classification";
 import { updateBatchProgress } from "@/lib/import/update-batch-progress";
 import type { NormalizedProduct } from "@/lib/utils/normalize";
 
@@ -24,7 +23,6 @@ export async function processProductBatch(
   let created = 0;
   let updated = 0;
   let errors = 0;
-  const deltaSummary = createEmptyDeltaSummary();
 
   try {
     await updateBatchProgress(batchId, { status: "processing" });

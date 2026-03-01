@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export interface ImportStatus {
   id: string;
@@ -30,38 +30,44 @@ export function useImportPolling(batchId: string | null): {
   const [isPolling, setIsPolling] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const poll = useCallback(async (id: string) => {
-    try {
-      const res = await fetch(`/api/imports/${id}/status`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const s = data.data as ImportStatus;
-      setStatus(s);
-
-      if (s.isTerminal) {
-        setIsPolling(false);
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-      }
-    } catch {
-      // network error, keep polling
-    }
-  }, []);
-
+  // Effect to manage polling lifecycle
   useEffect(() => {
     if (!batchId) {
-      setStatus(null);
-      setIsPolling(false);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       return;
     }
 
+    // Initial state update is acceptable for polling setup
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsPolling(true);
-    // Immediate first poll
-    poll(batchId);
 
-    intervalRef.current = setInterval(() => poll(batchId), POLL_INTERVAL);
+    const pollFn = async () => {
+      try {
+        const res = await fetch(`/api/imports/${batchId}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const s = data.data as ImportStatus;
+        setStatus(s);
+
+        if (s.isTerminal) {
+          setIsPolling(false);
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        }
+      } catch {
+        // network error, keep polling
+      }
+    };
+
+    void pollFn();
+    intervalRef.current = setInterval(() => {
+      void pollFn();
+    }, POLL_INTERVAL);
 
     return () => {
       if (intervalRef.current) {
@@ -69,7 +75,7 @@ export function useImportPolling(batchId: string | null): {
         intervalRef.current = null;
       }
     };
-  }, [batchId, poll]);
+  }, [batchId]); // Only depend on batchId to avoid re-creating effect
 
   return { status, isPolling };
 }

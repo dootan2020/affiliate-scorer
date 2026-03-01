@@ -223,7 +223,7 @@ export function TacticalRefreshDialog({
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-blue-600" />
+            <RefreshCw className="w-5 h-5 text-primary" />
             Refresh Tactics
           </DialogTitle>
           <DialogDescription>
@@ -265,7 +265,7 @@ export function TacticalRefreshDialog({
                 checked={useTracking}
                 onChange={(e) => setUseTracking(e.target.checked)}
                 disabled={trackingDisabled || phase === "generating"}
-                className="mt-0.5 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-orange-500/20 disabled:opacity-50"
+                className="mt-0.5 rounded border-gray-300 dark:border-slate-600 accent-[#E87B35] focus:ring-orange-500/20 disabled:opacity-50"
               />
               <div>
                 <label
@@ -301,8 +301,8 @@ export function TacticalRefreshDialog({
         {phase === "reviewing" && (
           <div className="space-y-4">
             {analysisNotes && (
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4">
-                <p className="text-sm text-blue-800 dark:text-blue-300">{analysisNotes}</p>
+              <div className="bg-orange-50 dark:bg-orange-950/30 rounded-xl p-4">
+                <p className="text-sm text-orange-800 dark:text-orange-300">{analysisNotes}</p>
               </div>
             )}
 
@@ -314,7 +314,7 @@ export function TacticalRefreshDialog({
                     key={i}
                     className={`border rounded-xl p-3 transition-colors cursor-pointer ${
                       selected.has(i)
-                        ? "border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/20"
+                        ? "border-orange-300 dark:border-orange-700 bg-orange-50/50 dark:bg-orange-950/20"
                         : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                     }`}
                     onClick={() => toggleSelection(i)}
@@ -322,7 +322,7 @@ export function TacticalRefreshDialog({
                     <div className="flex items-start gap-3">
                       <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
                         selected.has(i)
-                          ? "bg-blue-600 border-blue-600"
+                          ? "bg-primary border-primary"
                           : "border-gray-300 dark:border-slate-600"
                       }`}>
                         {selected.has(i) && <Check className="w-3 h-3 text-white" />}
@@ -368,7 +368,6 @@ export function TacticalRefreshDialog({
             <Button
               onClick={() => void handleGenerate()}
               disabled={!canGenerate || phase === "generating"}
-              className="bg-blue-600 hover:bg-blue-700"
             >
               {phase === "generating" ? (
                 <>
@@ -396,7 +395,6 @@ export function TacticalRefreshDialog({
               <Button
                 onClick={() => void handleApply()}
                 disabled={selected.size === 0}
-                className="bg-blue-600 hover:bg-blue-700"
               >
                 <Check className="w-4 h-4" />
                 Áp dụng {selected.size}/{suggestions.length} đã chọn
@@ -407,7 +405,6 @@ export function TacticalRefreshDialog({
           {phase === "applying" && (
             <Button
               disabled
-              className="bg-blue-600 hover:bg-blue-700"
             >
               <Loader2 className="w-4 h-4 animate-spin" />
               Đang áp dụng...
@@ -473,7 +470,7 @@ function HistorySection({
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {relativeTime(entry.createdAt)}
                       </span>
-                      <span className="text-[10px] bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded-full px-2 py-0.5 font-medium">
+                      <span className="text-[10px] bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 rounded-full px-2 py-0.5 font-medium">
                         {appliedCount} áp dụng
                       </span>
                       {entry.usedTracking && (
@@ -494,8 +491,8 @@ function HistorySection({
                 {isExpanded && (
                   <div className="pb-3 space-y-2">
                     {entry.analysisNotes && (
-                      <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
-                        <p className="text-xs text-blue-800 dark:text-blue-300">{entry.analysisNotes}</p>
+                      <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
+                        <p className="text-xs text-orange-800 dark:text-orange-300">{entry.analysisNotes}</p>
                       </div>
                     )}
                     {entrySuggestions.length > 0 && (

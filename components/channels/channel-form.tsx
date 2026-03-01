@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Sparkles, PenLine, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { ChannelProfileResult } from "@/lib/content/channel-profile-types";
 import { ChannelProfilePreview } from "./channel-profile-preview";
@@ -281,11 +282,10 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
               ))}
             </select>
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => void handleGenerate()}
             disabled={generating}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
           >
             {generating ? (
               <>
@@ -298,7 +298,7 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
                 AI Tạo Profile Kênh
               </>
             )}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -325,15 +325,14 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
       {/* Actions — show once profile exists or in manual mode */}
       {(profile || tab === "manual") && (
         <div className="flex items-center gap-3 pt-2 flex-wrap">
-          <button
+          <Button
             type="button"
             onClick={() => void handleSave()}
             disabled={saving || !profile}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {isEdit ? "Lưu thay đổi" : "Lưu kênh"}
-          </button>
+          </Button>
           {tab === "ai" && profile && (
             <button
               type="button"

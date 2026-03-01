@@ -152,7 +152,7 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
               </Button>
             </div>
           ))}
-          <Button type="button" variant="link" onClick={() => addListItem("contentPillars")} className="text-blue-600 hover:text-blue-700 px-0">
+          <Button type="button" variant="link" onClick={() => addListItem("contentPillars")} className="text-primary hover:text-primary/80 px-0">
             <Plus className="w-4 h-4" /> Thêm pillar
           </Button>
         </div>
@@ -171,7 +171,7 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
               </Button>
             </div>
           ))}
-          <Button type="button" variant="link" onClick={() => addListItem("hookBank")} className="text-blue-600 hover:text-blue-700 px-0">
+          <Button type="button" variant="link" onClick={() => addListItem("hookBank")} className="text-primary hover:text-primary/80 px-0">
             <Plus className="w-4 h-4" /> Thêm hook
           </Button>
         </div>
@@ -231,7 +231,7 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
               <div key={i} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">
                 <p className="text-xs font-medium text-gray-500 uppercase mb-1">{vf.contentType}</p>
                 <p className="text-sm text-gray-900 dark:text-gray-100">{vf.primaryFormat} <span className="text-gray-400">/ {vf.secondaryFormat}</span></p>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Tool: {vf.aiToolSuggestion}</p>
+                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Tool: {vf.aiToolSuggestion}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{vf.productionNotes}</p>
               </div>
             ))}
@@ -321,7 +321,7 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
               </Button>
             </div>
           ))}
-          <Button type="button" variant="link" onClick={() => addSeries()} className="text-blue-600 hover:text-blue-700 px-0">
+          <Button type="button" variant="link" onClick={() => addSeries()} className="text-primary hover:text-primary/80 px-0">
             <Plus className="w-4 h-4" /> Thêm series
           </Button>
         </div>
@@ -361,7 +361,7 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
               </Button>
             </div>
           ))}
-          <Button type="button" variant="link" onClick={() => addCompetitor()} className="text-blue-600 hover:text-blue-700 px-0">
+          <Button type="button" variant="link" onClick={() => addCompetitor()} className="text-primary hover:text-primary/80 px-0">
             <Plus className="w-4 h-4" /> Thêm kênh
           </Button>
         </div>

@@ -87,10 +87,7 @@ export function ChannelListClient(): React.ReactElement {
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
           Tạo kênh TikTok đầu tiên với persona, style guide để bắt đầu sản xuất content
         </p>
-        <Button
-          className="bg-blue-600 hover:bg-blue-700"
-          onClick={() => setShowForm(true)}
-        >
+        <Button onClick={() => setShowForm(true)}>
           Tạo kênh đầu tiên
         </Button>
       </div>
@@ -119,7 +116,6 @@ export function ChannelListClient(): React.ReactElement {
       {!showForm && (
         <Button
           size="sm"
-          className="bg-blue-600 hover:bg-blue-700"
           onClick={() => setShowForm(true)}
         >
           <Plus className="w-4 h-4" />
@@ -137,7 +133,7 @@ export function ChannelListClient(): React.ReactElement {
             <div className="flex items-start gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
-                style={{ backgroundColor: ch.colorPrimary ?? "#3b82f6" }}
+                style={{ backgroundColor: ch.colorPrimary ?? "#E87B35" }}
               >
                 {ch.name.charAt(0).toUpperCase()}
               </div>

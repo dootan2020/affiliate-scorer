@@ -208,7 +208,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
     return (
       <div className="text-center py-16">
         <p className="text-gray-500 dark:text-gray-400 mb-4">Không tìm thấy kênh</p>
-        <Link href="/channels" className="text-blue-600 hover:underline text-sm">
+        <Link href="/channels" className="text-primary hover:underline text-sm">
           Quay lại danh sách
         </Link>
       </div>
@@ -296,7 +296,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           <div className="flex items-center gap-4">
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold shrink-0"
-              style={{ backgroundColor: channel.colorPrimary ?? "#3b82f6" }}
+              style={{ backgroundColor: channel.colorPrimary ?? "#E87B35" }}
             >
               {channel.name.charAt(0).toUpperCase()}
             </div>
@@ -306,7 +306,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                   {channel.name}
                 </h2>
                 {channel.generatedByAi && (
-                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400">
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400">
                     <Sparkles className="w-3 h-3" /> Tạo bởi AI
                   </span>
                 )}
@@ -375,7 +375,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* Aggregate stats row */}
         {channel.stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 pt-2">
-            <StatCard icon={<Film className="w-4 h-4 text-blue-500" />} label="Tổng Assets" value={channel.stats.totalAssets} sub={`${channel.stats.publishedAssets} đã đăng`} />
+            <StatCard icon={<Film className="w-4 h-4 text-orange-500" />} label="Tổng Assets" value={channel.stats.totalAssets} sub={`${channel.stats.publishedAssets} đã đăng`} />
             <StatCard icon={<LayoutGrid className="w-4 h-4 text-emerald-500" />} label="Slots" value={channel.stats.totalSlots} />
             <StatCard icon={<FileText className="w-4 h-4 text-orange-500" />} label="Briefs" value={channel.stats.totalBriefs} />
             <div className="rounded-xl bg-gray-50 dark:bg-slate-800/50 p-3">
@@ -440,7 +440,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
             <InfoSection title="Production Style">
               <div className="flex items-center gap-3">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  channel.productionStyle === "hybrid" ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400"
+                  channel.productionStyle === "hybrid" ? "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400"
                   : channel.productionStyle === "voiceover_broll" ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
                   : channel.productionStyle === "talking_head" ? "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
                   : "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400"
@@ -483,7 +483,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {pillars.map((p, i) => (
-                    <span key={i} className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/30 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
+                    <span key={i} className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950/30 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-400">
                       {p}
                     </span>
                   ))}
@@ -502,7 +502,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                   <div key={i} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">
                     <p className="text-xs font-medium text-gray-500 uppercase mb-1">{MIX_LABELS[vf.contentType] ?? vf.contentType}</p>
                     <p className="text-sm text-gray-900 dark:text-gray-100">{vf.primaryFormat} <span className="text-gray-400">/ {vf.secondaryFormat}</span></p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Tool: {vf.aiToolSuggestion}</p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Tool: {vf.aiToolSuggestion}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{vf.productionNotes}</p>
                   </div>
                 ))}
@@ -537,7 +537,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                     <span className="text-xs text-gray-500 w-16">{MIX_LABELS[key] ?? key}</span>
                     <div className="flex-1 h-4 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-blue-500 dark:bg-blue-400 transition-all"
+                        className="h-full rounded-full bg-primary transition-all"
                         style={{ width: `${val}%` }}
                       />
                     </div>

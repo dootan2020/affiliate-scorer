@@ -22,6 +22,7 @@ import {
   Tv,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface NavItem {
   href: string;
@@ -86,13 +87,14 @@ function ThemeToggle(): React.ReactElement | null {
   useEffect(() => setMounted(true), []);
   if (!mounted) return <div className="w-9 h-9" />;
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
       aria-label="Chuyển giao diện"
     >
       {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-    </button>
+    </Button>
   );
 }
 
@@ -159,13 +161,14 @@ export function MobileNav(): React.ReactElement {
     <>
       {/* Top bar */}
       <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-14 px-4 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 md:hidden">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setDrawerOpen(true)}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
           aria-label="Mở menu"
         >
           <Menu className="w-5 h-5" />
-        </button>
+        </Button>
         <span className="text-base font-semibold text-gray-900 dark:text-gray-50">PASTR</span>
         <ThemeToggle />
       </header>
@@ -177,13 +180,14 @@ export function MobileNav(): React.ReactElement {
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-900 shadow-xl flex flex-col">
             <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200 dark:border-slate-800">
               <span className="text-base font-semibold text-gray-900 dark:text-gray-50">PASTR</span>
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => setDrawerOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                 aria-label="Đóng menu"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
             <nav className="flex-1 px-3 py-4 overflow-y-auto">
               {NAV_GROUPS.map((group, gi) => (

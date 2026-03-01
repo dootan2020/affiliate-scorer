@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface TrackingEntry {
   id: string;
@@ -225,13 +226,13 @@ export function TrackingTab(): React.ReactElement {
 
       {/* Action bar */}
       <div className="flex items-center gap-3 flex-wrap">
-        <button
+        <Button
           onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-sm font-medium shadow-sm transition-all"
+          className="bg-blue-600 hover:bg-blue-700"
         >
           {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           {showForm ? "Đóng form" : "Nhập kết quả"}
-        </button>
+        </Button>
         <label className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors cursor-pointer">
           {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
           Import CSV từ TikTok Studio
@@ -291,14 +292,14 @@ export function TrackingTab(): React.ReactElement {
               <input className={inputCls + " w-full"} type="number" value={formCommission} onChange={(e) => setFormCommission(e.target.value)} />
             </div>
           </div>
-          <button
+          <Button
             onClick={() => void handleSubmit()}
             disabled={!formAssetId || saving}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm transition-all disabled:opacity-50 flex items-center gap-2"
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             Lưu kết quả
-          </button>
+          </Button>
         </div>
       )}
 
@@ -314,8 +315,28 @@ export function TrackingTab(): React.ReactElement {
 
       {/* Results table */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        <div className="space-y-4 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+                <div className="h-3 w-16 bg-gray-200 dark:bg-slate-700 rounded mb-2" />
+                <div className="h-6 w-12 bg-gray-100 dark:bg-slate-800 rounded" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-4 space-y-3">
+              <div className="h-3 w-full bg-gray-100 dark:bg-slate-800 rounded" />
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center gap-4 py-2">
+                  <div className="h-4 w-40 bg-gray-100 dark:bg-slate-800 rounded flex-1" />
+                  <div className="h-4 w-12 bg-gray-100 dark:bg-slate-800 rounded" />
+                  <div className="h-4 w-12 bg-gray-100 dark:bg-slate-800 rounded" />
+                  <div className="h-4 w-12 bg-gray-100 dark:bg-slate-800 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">

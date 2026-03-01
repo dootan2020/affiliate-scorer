@@ -11,6 +11,7 @@ import {
   BarChart3,
   Brain,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Pattern {
   id: string;
@@ -98,7 +99,7 @@ export function PlaybookPageClient({ channelId }: PlaybookProps = {}): React.Rea
           <AlertTriangle className="w-6 h-6 text-amber-500" />
         </div>
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
-        <button onClick={() => { setLoading(true); void load(); }} className="text-sm text-blue-600 hover:underline">Thử lại</button>
+        <Button variant="link" onClick={() => { setLoading(true); void load(); }}>Thử lại</Button>
       </div>
     );
   }
@@ -129,14 +130,16 @@ export function PlaybookPageClient({ channelId }: PlaybookProps = {}): React.Rea
             Từ <strong className="text-gray-900 dark:text-gray-50">{data.totalLogged}</strong> videos đã log
           </span>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => void handleRegenerate()}
           disabled={regenerating}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
+          className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-50"
         >
           {regenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Cập nhật patterns
-        </button>
+        </Button>
       </div>
 
       {/* Winning patterns */}

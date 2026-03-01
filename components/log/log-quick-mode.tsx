@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Link2, Loader2, Check, AlertCircle, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { LogRewardResult } from "./log-reward-result";
 import type { MatchResult, MetricsInput, LogResult } from "./log-types";
 import { EMPTY_METRICS } from "./log-types";
@@ -84,13 +85,13 @@ export function LogQuickMode(): React.ReactElement {
             onKeyDown={(e) => e.key === "Enter" && void handleMatch()}
             className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
           />
-          <button
+          <Button
             onClick={() => void handleMatch()}
             disabled={!url.trim() || matching}
-            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700"
           >
             {matching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Match"}
-          </button>
+          </Button>
         </div>
 
         {/* Match result */}
@@ -147,13 +148,13 @@ export function LogQuickMode(): React.ReactElement {
               </div>
             ))}
           </div>
-          <button
+          <Button
             onClick={() => void handleSave()}
             disabled={saving || !metrics.views}
-            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Lưu"}
-          </button>
+          </Button>
         </div>
       )}
 

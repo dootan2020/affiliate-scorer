@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Trash2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ───
 
@@ -355,10 +356,12 @@ export function SettingsPageClient(): React.ReactElement {
                     {currentStatus.lastChars}
                   </p>
                 </div>
-                <button
+                <Button
                   onClick={() => void handleDeleteKey()}
                   disabled={deleting}
-                  className="p-2 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
                   title="Xoá API key"
                 >
                   {deleting ? (
@@ -366,7 +369,7 @@ export function SettingsPageClient(): React.ReactElement {
                   ) : (
                     <Trash2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -397,14 +400,14 @@ export function SettingsPageClient(): React.ReactElement {
                   placeholder={`Nhập ${currentProviderConfig.label} API key`}
                   className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-mono"
                 />
-                <button
+                <Button
                   onClick={() => void handleTestAndSave()}
                   disabled={testing || !keyInput.trim()}
-                  className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shrink-0"
+                  className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 shrink-0"
                 >
                   {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   Kiểm tra
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -438,9 +441,16 @@ export function SettingsPageClient(): React.ReactElement {
             </p>
 
             {loadingModels ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                <span className="ml-2 text-sm text-gray-400">Đang tải danh sách models...</span>
+              <div className="space-y-3 animate-pulse">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-xl">
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-4 w-36 bg-gray-200 dark:bg-slate-700 rounded" />
+                      <div className="h-3 w-56 bg-gray-100 dark:bg-slate-700/50 rounded" />
+                    </div>
+                    <div className="h-9 w-full sm:w-64 bg-gray-200 dark:bg-slate-700 rounded-xl" />
+                  </div>
+                ))}
               </div>
             ) : sortedModels.length === 0 ? (
               <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-slate-800 rounded-xl">
@@ -485,14 +495,14 @@ export function SettingsPageClient(): React.ReactElement {
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 Models lấy trực tiếp từ API {currentProviderConfig.label}
               </p>
-              <button
+              <Button
                 onClick={() => void handleSaveModels()}
                 disabled={saving || sortedModels.length === 0}
-                className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Lưu cấu hình
-              </button>
+              </Button>
             </div>
           </>
         )}

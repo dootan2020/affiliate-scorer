@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const EVENT_TYPE_OPTIONS = [
   { value: "mega_sale", label: "Mega Sale" },
@@ -116,13 +117,15 @@ export function CalendarEventForm({
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
           {editingEvent ? "Sửa sự kiện" : "Thêm sự kiện mới"}
         </h3>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
           <X className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
 
       <div>
@@ -214,17 +217,17 @@ export function CalendarEventForm({
         />
       </div>
 
-      <button
+      <Button
         type="submit"
         disabled={saving}
-        className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
       >
         {saving
           ? "Đang lưu..."
           : editingEvent
             ? "Cập nhật sự kiện"
             : "Thêm sự kiện"}
-      </button>
+      </Button>
     </form>
   );
 }

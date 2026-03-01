@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Plus, Wallet } from "lucide-react";
 import { FinancialTransactionForm } from "./financial-transaction-form";
+import { Button } from "@/components/ui/button";
 import {
   FinancialRecordsTable,
   isIncomeType,
@@ -89,21 +90,25 @@ export function FinancialTab(): React.ReactElement {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => navigateMonth(-1)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-400 transition-colors"
+            className="text-gray-500 dark:text-gray-400"
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
+          </Button>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px] text-center">
             {getMonthLabel(month)}
           </span>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => navigateMonth(1)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-400 transition-colors"
+            className="text-gray-500 dark:text-gray-400"
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -138,20 +143,22 @@ export function FinancialTab(): React.ReactElement {
 
       {/* Action buttons */}
       <div className="flex items-center gap-2">
-        <button
+        <Button
+          variant="ghost"
           onClick={() => openForm("income")}
-          className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+          className="bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300"
         >
           <Plus className="w-4 h-4" />
           Thêm thu
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
           onClick={() => openForm("expense")}
-          className="inline-flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+          className="bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300"
         >
           <Plus className="w-4 h-4" />
           Thêm chi
-        </button>
+        </Button>
       </div>
 
       {/* Add form */}

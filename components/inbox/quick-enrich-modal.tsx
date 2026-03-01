@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface QuickEnrichModalProps {
   identityId: string;
@@ -96,12 +97,14 @@ export function QuickEnrichModal({ identityId, onClose, onSaved }: QuickEnrichMo
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md p-6 relative">
         {/* Close button */}
-        <button
+        <Button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+          variant="ghost"
+          size="icon-sm"
+          className="absolute top-4 right-4"
         >
           <X className="w-4 h-4 text-gray-400" />
-        </button>
+        </Button>
 
         <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
           Thêm thông tin nhanh
@@ -111,8 +114,29 @@ export function QuickEnrichModal({ identityId, onClose, onSaved }: QuickEnrichMo
         </p>
 
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <div className="space-y-4 animate-pulse">
+            <div>
+              <div className="h-3 w-20 bg-gray-200 dark:bg-slate-700 rounded mb-1" />
+              <div className="h-10 w-full bg-gray-100 dark:bg-slate-800 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="h-3 w-16 bg-gray-200 dark:bg-slate-700 rounded mb-1" />
+                <div className="h-10 w-full bg-gray-100 dark:bg-slate-800 rounded-xl" />
+              </div>
+              <div>
+                <div className="h-3 w-24 bg-gray-200 dark:bg-slate-700 rounded mb-1" />
+                <div className="h-10 w-full bg-gray-100 dark:bg-slate-800 rounded-xl" />
+              </div>
+            </div>
+            <div>
+              <div className="h-3 w-16 bg-gray-200 dark:bg-slate-700 rounded mb-1" />
+              <div className="h-10 w-full bg-gray-100 dark:bg-slate-800 rounded-xl" />
+            </div>
+            <div>
+              <div className="h-3 w-14 bg-gray-200 dark:bg-slate-700 rounded mb-1" />
+              <div className="h-16 w-full bg-gray-100 dark:bg-slate-800 rounded-xl" />
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -187,20 +211,21 @@ export function QuickEnrichModal({ identityId, onClose, onSaved }: QuickEnrichMo
             </div>
 
             <div className="flex items-center gap-3 pt-2">
-              <button
+              <Button
                 onClick={onClose}
-                className="flex-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+                variant="secondary"
+                className="flex-1"
               >
                 Bỏ qua
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Lưu
-              </button>
+              </Button>
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@
 import { toast } from "sonner";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface FinancialRecord {
   id: string;
@@ -147,14 +148,16 @@ export function FinancialRecordsTable({
                     {record.notes ?? "\u2014"}
                   </td>
                   <td className="py-3 px-4">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={() => handleDelete(record.id)}
                       disabled={deleting === record.id}
-                      className="text-gray-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors disabled:opacity-50"
+                      className="text-gray-400 hover:text-rose-500 dark:hover:text-rose-400"
                       title="Xóa"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}

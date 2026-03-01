@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { AlertTriangle, Loader2, Inbox } from "lucide-react";
+import { AlertTriangle, Inbox } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { BriefPreviewCard } from "./brief-preview-card";
 import type { BriefWithProduct } from "@/lib/types/production";
@@ -73,8 +74,22 @@ export function ProductionInProgressTab({ onSwitchToCreate }: Props): React.Reac
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <div className="space-y-6 animate-pulse">
+        <div className="h-3 w-20 bg-gray-200 dark:bg-slate-700 rounded" />
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-slate-700 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-48 bg-gray-200 dark:bg-slate-700 rounded" />
+                  <div className="h-3 w-32 bg-gray-100 dark:bg-slate-800 rounded" />
+                </div>
+              </div>
+              <div className="h-20 bg-gray-50 dark:bg-slate-800/50 rounded-xl" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -86,7 +101,7 @@ export function ProductionInProgressTab({ onSwitchToCreate }: Props): React.Reac
           <AlertTriangle className="w-6 h-6 text-amber-500" />
         </div>
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
-        <button onClick={() => { setLoading(true); setFetchError(null); void fetchBriefs(); }} className="text-sm text-blue-600 hover:underline">Thử lại</button>
+        <Button variant="link" onClick={() => { setLoading(true); setFetchError(null); void fetchBriefs(); }}>Thử lại</Button>
       </div>
     );
   }
@@ -104,12 +119,12 @@ export function ProductionInProgressTab({ onSwitchToCreate }: Props): React.Reac
           Tạo brief mới từ tab &quot;Tạo mới&quot; để bắt đầu sản xuất video.
         </p>
         {onSwitchToCreate && (
-          <button
+          <Button
             onClick={onSwitchToCreate}
-            className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
+            className="bg-orange-600 hover:bg-orange-700"
           >
             Tạo mới
-          </button>
+          </Button>
         )}
       </div>
     );

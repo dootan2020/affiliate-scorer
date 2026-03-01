@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Sparkles, CheckCircle } from "lucide-react";
+import { Sparkles, CheckCircle } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
 
@@ -53,9 +53,17 @@ export function ContentSuggestionsWidget(): React.ReactElement {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-          <span className="ml-2 text-sm text-gray-400">Đang tải...</span>
+        <div className="space-y-2 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-3 rounded-xl px-3 py-2.5">
+              <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-slate-700 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 w-3/4 bg-gray-200 dark:bg-slate-700 rounded" />
+                <div className="h-2.5 w-1/2 bg-gray-100 dark:bg-slate-800 rounded" />
+              </div>
+              <div className="w-10 h-5 bg-gray-100 dark:bg-slate-800 rounded-full shrink-0" />
+            </div>
+          ))}
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">

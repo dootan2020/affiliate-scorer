@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
 import { TacticalRefreshDialog } from "./tactical-refresh-dialog";
+import { Button } from "@/components/ui/button";
 
 interface ChannelData {
   id: string;
@@ -158,8 +159,31 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      <div className="space-y-6 animate-pulse">
+        <div className="h-4 w-32 bg-gray-200 dark:bg-slate-700 rounded-lg" />
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-14 h-14 rounded-xl bg-gray-200 dark:bg-slate-700" />
+            <div className="space-y-2 flex-1">
+              <div className="h-5 w-48 bg-gray-200 dark:bg-slate-700 rounded-lg" />
+              <div className="h-3 w-24 bg-gray-100 dark:bg-slate-800 rounded" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-20 bg-gray-100 dark:bg-slate-800 rounded-xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-3 w-20 bg-gray-200 dark:bg-slate-700 rounded" />
+                <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded" />
+                <div className="h-4 w-3/4 bg-gray-100 dark:bg-slate-800 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -172,12 +196,12 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
             <AlertTriangle className="w-6 h-6 text-amber-500" />
           </div>
           <p className="text-gray-700 dark:text-gray-300 mb-4">{error}</p>
-          <button
+          <Button
+            variant="link"
             onClick={() => { setLoading(true); void fetchChannel(); }}
-            className="text-sm text-blue-600 hover:underline"
           >
             Thử lại
-          </button>
+          </Button>
         </div>
       );
     }
@@ -312,34 +336,39 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                 }`}
               />
             </button>
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => window.open(`/api/channels/${channelId}/export`, "_blank")}
-              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
               title="Tải kênh (.json)"
             >
               <Download className="w-3.5 h-3.5" /> Tải
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setRefreshOpen(true)}
-              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
               title="Refresh tactics dựa trên trending"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Refresh
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setEditing(true)}
-              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" /> Sửa
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => void handleDelete()}
               disabled={deleting}
-              className="inline-flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+              className="bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-950/50"
             >
               {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
               Xoá
-            </button>
+            </Button>
           </div>
         </div>
 

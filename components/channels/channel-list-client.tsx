@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Tv, Loader2 } from "lucide-react";
+import { Plus, Tv } from "lucide-react";
 import { ChannelForm } from "./channel-form";
+import { Button } from "@/components/ui/button";
 
 interface ChannelSummary {
   id: string;
@@ -54,8 +55,22 @@ export function ChannelListClient(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      <div className="space-y-4 animate-pulse">
+        <div className="h-9 w-32 bg-gray-200 dark:bg-slate-700 rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-slate-700" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 bg-gray-200 dark:bg-slate-700 rounded" />
+                  <div className="h-3 w-20 bg-gray-100 dark:bg-slate-800 rounded" />
+                  <div className="h-3 w-40 bg-gray-100 dark:bg-slate-800 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -72,12 +87,12 @@ export function ChannelListClient(): React.ReactElement {
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
           Tạo kênh TikTok đầu tiên với persona, style guide để bắt đầu sản xuất content
         </p>
-        <button
+        <Button
+          className="bg-blue-600 hover:bg-blue-700"
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all"
         >
           Tạo kênh đầu tiên
-        </button>
+        </Button>
       </div>
     );
   }
@@ -102,13 +117,14 @@ export function ChannelListClient(): React.ReactElement {
       )}
 
       {!showForm && (
-        <button
+        <Button
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700"
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-sm font-medium shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           Thêm kênh
-        </button>
+        </Button>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

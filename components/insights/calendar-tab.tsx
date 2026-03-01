@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { CalendarDays, Plus } from "lucide-react";
 import { CalendarEventForm, type CalendarEventData } from "./calendar-event-form";
 import { CalendarEventsList } from "./calendar-events-list";
+import { Button } from "@/components/ui/button";
 
 export function CalendarTab(): React.ReactElement {
   const [events, setEvents] = useState<CalendarEventData[]>([]);
@@ -69,13 +70,13 @@ export function CalendarTab(): React.ReactElement {
             Lịch sự kiện
           </h2>
         </div>
-        <button
+        <Button
           onClick={openCreateForm}
-          className="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
+          className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
         >
           <Plus className="w-4 h-4" />
           Thêm sự kiện
-        </button>
+        </Button>
       </div>
 
       {/* Form */}

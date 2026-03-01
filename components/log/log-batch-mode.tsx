@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Check, AlertCircle } from "lucide-react";
 import type { MatchResult, MetricsInput } from "./log-types";
+import { Button } from "@/components/ui/button";
 import { EMPTY_METRICS } from "./log-types";
 
 export function LogBatchMode(): React.ReactElement {
@@ -106,13 +107,13 @@ export function LogBatchMode(): React.ReactElement {
           rows={5}
           className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none resize-none"
         />
-        <button
+        <Button
           onClick={() => void handleParse()}
           disabled={!text.trim() || matching}
-          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
+          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700"
         >
           {matching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Parse links"}
-        </button>
+        </Button>
       </div>
 
       {/* Match results + metrics */}
@@ -163,13 +164,13 @@ export function LogBatchMode(): React.ReactElement {
             ))}
           </div>
 
-          <button
+          <Button
             onClick={() => void handleSaveAll()}
             disabled={saving}
-            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-2.5 font-medium shadow-sm transition-all disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Lưu tất cả"}
-          </button>
+          </Button>
         </div>
       )}
 

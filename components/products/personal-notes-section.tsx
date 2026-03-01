@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Star, Plus, X, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PersonalNotesSectionProps {
   productId: string;
@@ -177,13 +178,13 @@ export function PersonalNotesSection({
 
       {/* Save + Timestamp */}
       <div className="mt-5 flex items-center justify-between">
-        <button
+        <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
         >
           {saving ? "Đang lưu..." : "Lưu"}
-        </button>
+        </Button>
         {lastSaved && (
           <span className="text-xs text-gray-400 dark:text-gray-500">
             Cập nhật: {lastSaved.toLocaleDateString("vi-VN")}

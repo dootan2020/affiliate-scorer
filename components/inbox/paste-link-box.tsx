@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ClipboardPaste, Loader2, Link2, Package, Film, Store, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface PasteResult {
   total: number;
@@ -66,10 +67,10 @@ export function PasteLinkBox({ onComplete, compact }: PasteLinkBoxProps): React.
             className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none resize-none placeholder:text-gray-400"
           />
         </div>
-        <button
+        <Button
           onClick={handleSubmit}
           disabled={loading || !text.trim()}
-          className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-4 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -77,7 +78,7 @@ export function PasteLinkBox({ onComplete, compact }: PasteLinkBoxProps): React.
             <ClipboardPaste className="w-4 h-4" />
           )}
           Thêm vào Inbox
-        </button>
+        </Button>
       </div>
     );
   }
@@ -99,10 +100,10 @@ export function PasteLinkBox({ onComplete, compact }: PasteLinkBoxProps): React.
       </div>
 
       <div className="flex items-center gap-3">
-        <button
+        <Button
           onClick={handleSubmit}
           disabled={loading || !text.trim()}
-          className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -110,7 +111,7 @@ export function PasteLinkBox({ onComplete, compact }: PasteLinkBoxProps): React.
             <ClipboardPaste className="w-4 h-4" />
           )}
           Thêm vào Inbox
-        </button>
+        </Button>
 
         {text.trim() && (
           <span className="text-xs text-gray-400">

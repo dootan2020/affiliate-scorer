@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 import type { CalendarEventData } from "./calendar-event-form";
+import { Button } from "@/components/ui/button";
 
 const EVENT_TYPE_BADGE: Record<string, { bg: string; text: string }> = {
   mega_sale: {
@@ -174,21 +175,25 @@ export function CalendarEventsList({
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onEdit(event)}
-                      className="p-2 rounded-lg text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                      className="text-gray-400 hover:text-orange-600 dark:hover:text-orange-400"
                       title="Sua"
                     >
                       <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleDelete(event.id)}
                       disabled={deleting === event.id}
-                      className="p-2 rounded-lg text-gray-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                      className="text-gray-400 hover:text-rose-500 dark:hover:text-rose-400"
                       title="Xóa"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );

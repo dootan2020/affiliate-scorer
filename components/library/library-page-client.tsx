@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Search, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { AssetCard, type AssetCardData } from "./asset-card";
 
 const STATUS_OPTIONS = [
@@ -146,12 +147,13 @@ export function LibraryPageClient(): React.ReactElement {
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all"
           />
-          <button
+          <Button
+            size="icon"
             onClick={handleSearch}
-            className="p-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition-all"
+            className="bg-orange-600 hover:bg-orange-700"
           >
             <Search className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -180,7 +182,7 @@ export function LibraryPageClient(): React.ReactElement {
             <AlertTriangle className="w-6 h-6 text-amber-500" />
           </div>
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
-          <button onClick={() => void load()} className="text-sm text-blue-600 hover:underline">Thử lại</button>
+          <Button variant="link" onClick={() => void load()}>Thử lại</Button>
         </div>
       ) : loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -221,23 +223,27 @@ export function LibraryPageClient(): React.ReactElement {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="p-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+            className="text-gray-600 dark:text-gray-400"
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
+          </Button>
           <span className="text-sm text-gray-600 dark:text-gray-400 min-w-[80px] text-center">
             {page} / {totalPages}
           </span>
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className="p-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+            className="text-gray-600 dark:text-gray-400"
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       )}
     </div>

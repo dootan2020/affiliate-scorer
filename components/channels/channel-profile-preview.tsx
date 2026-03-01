@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Trash2, AlertTriangle } from "lucide-react";
 import type { ChannelProfileResult } from "@/lib/content/channel-profile-types";
+import { Button } from "@/components/ui/button";
 
 const inputCls =
   "w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none";
@@ -146,14 +147,14 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
           {profile.contentPillars.map((pillar, i) => (
             <div key={i} className="flex items-center gap-2">
               <input className={inputCls} value={pillar} onChange={(e) => updateListItem("contentPillars", i, e.target.value)} />
-              <button type="button" onClick={() => removeListItem("contentPillars", i)} className="text-gray-400 hover:text-rose-500 transition-colors shrink-0">
+              <Button type="button" variant="ghost" size="icon-xs" onClick={() => removeListItem("contentPillars", i)} className="text-gray-400 hover:text-rose-500 shrink-0">
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           ))}
-          <button type="button" onClick={() => addListItem("contentPillars")} className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Button type="button" variant="link" onClick={() => addListItem("contentPillars")} className="text-blue-600 hover:text-blue-700 px-0">
             <Plus className="w-4 h-4" /> Thêm pillar
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -165,14 +166,14 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
             <div key={i} className="flex items-center gap-2">
               <span className="text-xs text-gray-400 w-6 text-right shrink-0">{i + 1}.</span>
               <input className={inputCls} value={hook} onChange={(e) => updateListItem("hookBank", i, e.target.value)} />
-              <button type="button" onClick={() => removeListItem("hookBank", i)} className="text-gray-400 hover:text-rose-500 transition-colors shrink-0">
+              <Button type="button" variant="ghost" size="icon-xs" onClick={() => removeListItem("hookBank", i)} className="text-gray-400 hover:text-rose-500 shrink-0">
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           ))}
-          <button type="button" onClick={() => addListItem("hookBank")} className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Button type="button" variant="link" onClick={() => addListItem("hookBank")} className="text-blue-600 hover:text-blue-700 px-0">
             <Plus className="w-4 h-4" /> Thêm hook
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -315,14 +316,14 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
               <input className={inputCls + " flex-1"} value={s.name} onChange={(e) => updateSeries(i, "name", e.target.value)} placeholder="Tên series" />
               <input className={inputCls + " w-28"} value={s.dayOfWeek} onChange={(e) => updateSeries(i, "dayOfWeek", e.target.value)} placeholder="Thứ mấy" />
               <input className={inputCls + " w-32"} value={s.contentPillar} onChange={(e) => updateSeries(i, "contentPillar", e.target.value)} placeholder="Pillar" />
-              <button type="button" onClick={() => removeSeries(i)} className="text-gray-400 hover:text-rose-500 transition-colors shrink-0">
+              <Button type="button" variant="ghost" size="icon-xs" onClick={() => removeSeries(i)} className="text-gray-400 hover:text-rose-500 shrink-0">
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           ))}
-          <button type="button" onClick={() => addSeries()} className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Button type="button" variant="link" onClick={() => addSeries()} className="text-blue-600 hover:text-blue-700 px-0">
             <Plus className="w-4 h-4" /> Thêm series
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -355,14 +356,14 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
               <input className={inputCls + " w-36"} value={c.handle} onChange={(e) => updateCompetitor(i, "handle", e.target.value)} placeholder="@handle" />
               <input className={inputCls + " w-24"} value={c.followers} onChange={(e) => updateCompetitor(i, "followers", e.target.value)} placeholder="Followers" />
               <input className={inputCls + " flex-1"} value={c.whyReference} onChange={(e) => updateCompetitor(i, "whyReference", e.target.value)} placeholder="Lý do tham khảo" />
-              <button type="button" onClick={() => removeCompetitor(i)} className="text-gray-400 hover:text-rose-500 transition-colors shrink-0">
+              <Button type="button" variant="ghost" size="icon-xs" onClick={() => removeCompetitor(i)} className="text-gray-400 hover:text-rose-500 shrink-0">
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           ))}
-          <button type="button" onClick={() => addCompetitor()} className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Button type="button" variant="link" onClick={() => addCompetitor()} className="text-blue-600 hover:text-blue-700 px-0">
             <Plus className="w-4 h-4" /> Thêm kênh
-          </button>
+          </Button>
         </div>
       </section>
 

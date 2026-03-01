@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import type { TacticalSuggestion, TacticalRefreshLogEntry } from "@/lib/content/tactical-refresh-types";
 
 interface ChannelData {
@@ -364,10 +365,10 @@ export function TacticalRefreshDialog({
 
         <DialogFooter>
           {(phase === "inputting" || phase === "generating") && (
-            <button
+            <Button
               onClick={() => void handleGenerate()}
               disabled={!canGenerate || phase === "generating"}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               {phase === "generating" ? (
                 <>
@@ -380,37 +381,37 @@ export function TacticalRefreshDialog({
                   Phân tích & đề xuất
                 </>
               )}
-            </button>
+            </Button>
           )}
 
           {phase === "reviewing" && suggestions.length > 0 && (
             <>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => onOpenChange(false)}
-                className="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 font-medium transition-colors"
               >
-                <X className="w-4 h-4 inline mr-1" />
+                <X className="w-4 h-4" />
                 Bỏ qua
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => void handleApply()}
                 disabled={selected.size === 0}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 <Check className="w-4 h-4" />
                 Áp dụng {selected.size}/{suggestions.length} đã chọn
-              </button>
+              </Button>
             </>
           )}
 
           {phase === "applying" && (
-            <button
+            <Button
               disabled
-              className="bg-blue-600 text-white rounded-xl px-5 py-2.5 font-medium opacity-50 inline-flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               <Loader2 className="w-4 h-4 animate-spin" />
               Đang áp dụng...
-            </button>
+            </Button>
           )}
         </DialogFooter>
       </DialogContent>
@@ -435,10 +436,11 @@ function HistorySection({
 }): React.ReactElement {
   return (
     <div className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={() => setHistoryOpen(!historyOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
+        className="w-full justify-between px-4 py-3 h-auto font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-none"
       >
         <span className="flex items-center gap-2">
           <History className="w-4 h-4 text-gray-400" />
@@ -448,7 +450,7 @@ function HistorySection({
           </span>
         </span>
         <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${historyOpen ? "rotate-180" : ""}`} />
-      </button>
+      </Button>
 
       {historyOpen && (
         <div className="border-t border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
@@ -459,10 +461,11 @@ function HistorySection({
 
             return (
               <div key={entry.id} className="px-4">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setExpandedLogId(isExpanded ? null : entry.id)}
-                  className="w-full flex items-center gap-3 py-3 text-left"
+                  className="w-full justify-start gap-3 py-3 h-auto rounded-none"
                 >
                   <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -486,7 +489,7 @@ function HistorySection({
                     )}
                   </div>
                   <ChevronDown className={`w-3.5 h-3.5 text-gray-300 transition-transform shrink-0 ${isExpanded ? "rotate-180" : ""}`} />
-                </button>
+                </Button>
 
                 {isExpanded && (
                   <div className="pb-3 space-y-2">

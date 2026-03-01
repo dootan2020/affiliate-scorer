@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -24,12 +25,12 @@ export default function ErrorPage({
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
         {error.message || "Không thể tải trang. Vui lòng thử lại."}
       </p>
-      <button
+      <Button
         onClick={reset}
-        className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all w-full sm:w-auto"
+        className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 w-full sm:w-auto"
       >
         Thử lại
-      </button>
+      </Button>
     </div>
   );
 }

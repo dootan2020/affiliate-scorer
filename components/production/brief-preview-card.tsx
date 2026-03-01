@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { BriefProductHeader } from "./brief-product-header";
 import { AssetCardWithStatus } from "./asset-card-with-status";
@@ -89,13 +90,15 @@ export function BriefPreviewCard({
 
       {/* Collapse toggle for completed tab */}
       {collapsed && (
-        <button
+        <Button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
+          variant="ghost"
+          size="xs"
+          className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 gap-1 h-auto p-0"
         >
           {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           {isCollapsed ? "Xem chi tiết" : "Thu gọn"} · {assets.length} video
-        </button>
+        </Button>
       )}
 
       {!isCollapsed && (
@@ -103,13 +106,15 @@ export function BriefPreviewCard({
           {/* Angles */}
           {brief.angles && brief.angles.length > 0 && (
             <div>
-              <button
+              <Button
                 onClick={() => setShowAngles(!showAngles)}
-                className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
+                variant="ghost"
+                size="xs"
+                className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 gap-1 h-auto p-0"
               >
                 {showAngles ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                 {brief.angles.length} angles
-              </button>
+              </Button>
               {showAngles && (
                 <ul className="mt-1.5 space-y-1">
                   {brief.angles.map((angle, i) => (
@@ -125,13 +130,15 @@ export function BriefPreviewCard({
           {/* All Hooks */}
           {brief.hooks && brief.hooks.length > 0 && (
             <div>
-              <button
+              <Button
                 onClick={() => setShowAllHooks(!showAllHooks)}
-                className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
+                variant="ghost"
+                size="xs"
+                className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 gap-1 h-auto p-0"
               >
                 {showAllHooks ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                 Tất cả câu mở đầu ({brief.hooks.length})
-              </button>
+              </Button>
               {showAllHooks && (
                 <div className="mt-2 space-y-1.5">
                   {brief.hooks.map((hook, i) => (
@@ -171,27 +178,33 @@ export function BriefPreviewCard({
                 {creatingBatch && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
+                <Button
                   onClick={() => void handleExport("scripts")}
                   disabled={creatingBatch}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors disabled:opacity-50"
+                  variant="outline"
+                  size="xs"
+                  className="border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 gap-1.5"
                 >
                   <FileText className="w-3.5 h-3.5 text-orange-500" /> Scripts.md
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => void handleExport("prompts")}
                   disabled={creatingBatch}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors disabled:opacity-50"
+                  variant="outline"
+                  size="xs"
+                  className="border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 gap-1.5"
                 >
                   <FileJson className="w-3.5 h-3.5 text-purple-500" /> Prompts.json
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => void handleExport("checklist")}
                   disabled={creatingBatch}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors disabled:opacity-50"
+                  variant="outline"
+                  size="xs"
+                  className="border-gray-100 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800/50 gap-1.5"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" /> Checklist.csv
-                </button>
+                </Button>
               </div>
             </div>
           )}

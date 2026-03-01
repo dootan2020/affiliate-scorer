@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Inbox, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PasteLinkBox } from "@/components/inbox/paste-link-box";
 import { QuickEnrichModal } from "@/components/inbox/quick-enrich-modal";
 import { InboxTable, type InboxIdentity } from "@/components/inbox/inbox-table";
@@ -144,7 +145,7 @@ export function InboxPageContent(): React.ReactElement {
             <AlertTriangle className="w-6 h-6 text-amber-500" />
           </div>
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{fetchError}</p>
-          <button onClick={() => void fetchItems()} className="text-sm text-blue-600 hover:underline">Thử lại</button>
+          <Button variant="link" onClick={() => void fetchItems()}>Thử lại</Button>
         </div>
       ) : loading ? (
         <TableSkeleton />
@@ -171,23 +172,25 @@ export function InboxPageContent(): React.ReactElement {
             </p>
             {totalPages > 1 && (
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="p-2 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                  variant="secondary"
+                  size="icon"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                </button>
+                </Button>
                 <span className="text-sm text-gray-600 dark:text-gray-300 tabular-nums">
                   {page} / {totalPages}
                 </span>
-                <button
+                <Button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="p-2 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                  variant="secondary"
+                  size="icon"
                 >
                   <ChevronRight className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             )}
           </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface LearningResult {
   accuracy: number;
@@ -41,17 +42,17 @@ export function TriggerLearningButton() {
   }
 
   return (
-    <button
+    <Button
       onClick={handleTrigger}
       disabled={loading}
-      className="inline-flex items-center bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 disabled:opacity-50 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all w-full sm:w-auto justify-center"
+      className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 w-full sm:w-auto"
     >
       {loading ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <RefreshCw className="mr-2 h-4 w-4" />
+        <RefreshCw className="h-4 w-4" />
       )}
       {loading ? "Đang chạy..." : "Chạy Learning"}
-    </button>
+    </Button>
   );
 }

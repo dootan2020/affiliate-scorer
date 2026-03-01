@@ -12,6 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { ProductSelector } from "./product-selector";
 import { BriefPreviewCard } from "./brief-preview-card";
 import type { BriefWithProduct } from "@/lib/types/production";
@@ -284,10 +285,11 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId, initial
 
       {/* Generate button */}
       <div className="flex items-center gap-4">
-        <button
+        <Button
           onClick={() => void handleGenerate()}
           disabled={selectedIds.length === 0 || !channelId || generating}
-          className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 text-white rounded-xl px-6 py-3 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
+          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-700"
+          size="lg"
         >
           {generating ? (
             <>
@@ -300,7 +302,7 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId, initial
               Tạo Briefs ({selectedIds.length} SP × 3 video = {selectedIds.length * 3})
             </>
           )}
-        </button>
+        </Button>
         {progress && (
           <span className="text-sm text-gray-500">
             {progress.current}/{progress.total} hoàn thành
@@ -381,9 +383,10 @@ function ExportButton({
   };
 
   return (
-    <button
+    <Button
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 dark:border-slate-800 hover:border-gray-200 dark:hover:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all"
+      variant="ghost"
+      className="flex items-center gap-3 h-auto px-4 py-3 border border-gray-100 dark:border-slate-800 hover:border-gray-200 dark:hover:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 justify-start"
     >
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorMap[color] || colorMap.orange}`}>
         <Icon className="w-5 h-5" />
@@ -393,6 +396,6 @@ function ExportButton({
         <p className="text-xs text-gray-400">{sub}</p>
       </div>
       <Download className="w-4 h-4 text-gray-400 ml-auto" />
-    </button>
+    </Button>
   );
 }

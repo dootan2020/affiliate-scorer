@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown, Sparkles, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TargetField {
   key: string;
@@ -177,22 +178,22 @@ export function ColumnMapping({
 
       {/* Actions */}
       <div className="flex items-center gap-3 pt-2">
-        <button
+        <Button
           onClick={() => onConfirm(mapping)}
           disabled={!hasValidName || isImporting}
-          className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
+          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-600"
         >
           <Check className="w-4 h-4" />
           {isImporting ? "Đang import..." : `Xác nhận import ${totalRows} sản phẩm`}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
           onClick={onCancel}
           disabled={isImporting}
-          className="inline-flex items-center gap-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 font-medium transition-colors"
         >
           <X className="w-4 h-4" />
           Hủy
-        </button>
+        </Button>
         {!hasValidName && (
           <p className="text-sm text-rose-500">
             Phải chọn cột cho "Tên sản phẩm"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy, TrendingUp, BarChart3, Loader2 } from "lucide-react";
+import { Trophy, TrendingUp, BarChart3 } from "lucide-react";
 
 interface FormatStat {
   format: string;
@@ -71,9 +71,22 @@ export function WinningPatternsWidget(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4 animate-pulse">
+        <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-slate-800">
+          <div className="w-5 h-5 rounded bg-gray-200 dark:bg-slate-700" />
+          <div className="h-5 w-40 bg-gray-200 dark:bg-slate-700 rounded-lg" />
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-start gap-2">
+              <div className="w-3.5 h-3.5 rounded bg-gray-200 dark:bg-slate-700 mt-0.5 shrink-0" />
+              <div className="flex-1 space-y-1">
+                <div className="h-2.5 w-20 bg-gray-100 dark:bg-slate-800 rounded" />
+                <div className="h-3.5 w-3/4 bg-gray-200 dark:bg-slate-700 rounded" />
+                <div className="h-2.5 w-1/2 bg-gray-100 dark:bg-slate-800 rounded" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

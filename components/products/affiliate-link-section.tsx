@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link2, ExternalLink, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AffiliateLinkSectionProps {
   productId: string;
@@ -179,23 +180,23 @@ export function AffiliateLinkSection({
 
       {/* Buttons */}
       <div className="mt-4 flex items-center gap-2">
-        <button
+        <Button
           onClick={handleSaveLink}
           disabled={saving || !link.trim()}
-          className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 text-white rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
         >
           {saving ? "Đang lưu..." : "Cập nhật link"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
           onClick={handleCheckLink}
           disabled={checking || !link.trim()}
-          className="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw
             className={`w-4 h-4 ${checking ? "animate-spin" : ""}`}
           />
           {checking ? "Đang kiểm tra..." : "Kiểm tra link"}
-        </button>
+        </Button>
       </div>
     </div>
   );

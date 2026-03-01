@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Sun,
-  Loader2,
   RefreshCw,
   Sparkles,
   Lightbulb,
@@ -13,6 +12,7 @@ import {
   Tv,
 } from "lucide-react";
 import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
+import { Button } from "@/components/ui/button";
 
 interface ProduceItem {
   product: string;
@@ -124,11 +124,19 @@ export function MorningBriefWidget(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-          <span className="ml-2 text-sm text-gray-400">Đang tạo brief...</span>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 space-y-4 animate-pulse">
+        <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-slate-800">
+          <div className="w-5 h-5 rounded bg-gray-200 dark:bg-slate-700" />
+          <div className="h-5 w-48 bg-gray-200 dark:bg-slate-700 rounded-lg" />
         </div>
+        <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded" />
+        <div className="h-4 w-5/6 bg-gray-100 dark:bg-slate-800 rounded" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-14 bg-gray-50 dark:bg-slate-800/50 rounded-xl" />
+          ))}
+        </div>
+        <div className="h-10 bg-gray-50 dark:bg-slate-800/50 rounded-xl" />
       </div>
     );
   }
@@ -153,15 +161,16 @@ export function MorningBriefWidget(): React.ReactElement {
             Bản tin sáng — {formatTodayString()}
           </h3>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={() => fetchBrief(true)}
           disabled={refreshing}
-          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
           aria-label="Tạo lại brief"
           title="Tạo lại brief"
         >
           <RefreshCw className={`w-4 h-4 text-gray-400 ${refreshing ? "animate-spin" : ""}`} />
-        </button>
+        </Button>
       </div>
 
       {/* Greeting */}

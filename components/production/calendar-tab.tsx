@@ -12,6 +12,7 @@ import {
   Package,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface SlotData {
   id: string;
@@ -288,8 +289,26 @@ export function CalendarTab(): React.ReactElement {
   // Show empty state if channels haven't loaded yet
   if (!channelsLoaded) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      <div className="space-y-4 animate-pulse">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div className="h-9 w-40 bg-gray-200 dark:bg-slate-700 rounded-xl" />
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 bg-gray-100 dark:bg-slate-800 rounded-lg" />
+              <div className="h-8 w-20 bg-gray-100 dark:bg-slate-800 rounded-lg" />
+              <div className="h-4 w-28 bg-gray-200 dark:bg-slate-700 rounded" />
+              <div className="h-8 w-8 bg-gray-100 dark:bg-slate-800 rounded-lg" />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+              <div className="h-4 w-24 bg-gray-200 dark:bg-slate-700 rounded mb-2" />
+              <div className="h-3 w-16 bg-gray-100 dark:bg-slate-800 rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -322,18 +341,18 @@ export function CalendarTab(): React.ReactElement {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={prevWeek} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+            <Button onClick={prevWeek} variant="ghost" size="icon-sm">
               <ChevronLeft className="w-4 h-4 text-gray-500" />
-            </button>
+            </Button>
             <button onClick={goToday} className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
               Hôm nay
             </button>
             <span className="text-sm font-semibold text-gray-900 dark:text-gray-50 min-w-[120px] text-center">
               {formatDisplay(week.start)} — {formatDisplay(week.end)}
             </span>
-            <button onClick={nextWeek} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+            <Button onClick={nextWeek} variant="ghost" size="icon-sm">
               <ChevronRight className="w-4 h-4 text-gray-500" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -367,8 +386,13 @@ export function CalendarTab(): React.ReactElement {
           </a>
         </div>
       ) : loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        <div className="space-y-2 animate-pulse">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+              <div className="h-4 w-24 bg-gray-200 dark:bg-slate-700 rounded mb-2" />
+              <div className="h-3 w-16 bg-gray-100 dark:bg-slate-800 rounded" />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="space-y-2">
@@ -393,12 +417,14 @@ export function CalendarTab(): React.ReactElement {
                       </span>
                     )}
                   </div>
-                  <button
+                  <Button
                     onClick={() => setAdding(adding === dateStr ? null : dateStr)}
-                    className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1 transition-colors"
+                    variant="link"
+                    size="xs"
+                    className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Thêm
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Slots for this day */}
@@ -435,12 +461,14 @@ export function CalendarTab(): React.ReactElement {
                         {slot.productIdentity?.title || slot.notes || "—"}
                       </span>
                       <span className="text-xs shrink-0">{STATUS_ICONS[slot.status] || "⏳"}</span>
-                      <button
+                      <Button
                         onClick={() => void handleDeleteSlot(slot.id)}
-                        className="text-gray-300 hover:text-rose-500 transition-colors shrink-0"
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-gray-300 hover:text-rose-500 shrink-0"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}
@@ -505,20 +533,23 @@ export function CalendarTab(): React.ReactElement {
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
                         onClick={() => void handleAddSlot(dateStr)}
                         disabled={saving}
-                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-50 flex items-center gap-1"
+                        className="bg-blue-600 hover:bg-blue-700 gap-1"
+                        size="sm"
                       >
                         {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                         Thêm
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => setAdding(null)}
-                        className="text-xs text-gray-400 hover:text-gray-700 px-3 py-2 transition-colors"
+                        variant="link"
+                        size="xs"
+                        className="text-gray-400 hover:text-gray-700"
                       >
                         Huỷ
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}

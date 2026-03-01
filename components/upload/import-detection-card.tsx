@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileText, ChevronDown, Loader2, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ImportDetectionCardProps {
   fileName: string;
@@ -129,10 +130,10 @@ export function ImportDetectionCard({
 
       {/* Actions */}
       <div className="flex items-center gap-3 pt-1">
-        <button
+        <Button
           onClick={() => onConfirm(selectedType)}
           disabled={isImporting}
-          className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-600 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:cursor-not-allowed"
+          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-slate-600"
         >
           {isImporting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -140,15 +141,15 @@ export function ImportDetectionCard({
             <Check className="w-4 h-4" />
           )}
           {isImporting ? "Đang import..." : "Import"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
           onClick={onCancel}
           disabled={isImporting}
-          className="inline-flex items-center gap-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 font-medium transition-colors disabled:opacity-50"
         >
           <X className="w-4 h-4" />
           Huy
-        </button>
+        </Button>
       </div>
     </div>
   );

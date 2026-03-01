@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   children: ReactNode;
@@ -40,13 +41,13 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-sm">
             {this.state.error?.message || "Vui lòng thử lại."}
           </p>
-          <button
+          <Button
+            variant="secondary"
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
             Thử lại
-          </button>
+          </Button>
         </div>
       );
     }

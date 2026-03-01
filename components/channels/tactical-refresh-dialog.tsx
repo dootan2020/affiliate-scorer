@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, RefreshCw, Check, X, AlertCircle } from "lucide-react";
+import { Loader2, RefreshCw, Check, X, AlertCircle, ChevronDown, Clock, History } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import type { TacticalSuggestion } from "@/lib/content/tactical-refresh-types";
+import type { TacticalSuggestion, TacticalRefreshLogEntry } from "@/lib/content/tactical-refresh-types";
 
 interface ChannelData {
   hookBank?: string[] | null;
@@ -60,6 +60,23 @@ function formatValue(val: unknown): string {
   return String(val);
 }
 
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "vừa xong";
+  if (mins < 60) return `${mins} phút trước`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} giờ trước`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} ngày trước`;
+  return new Date(dateStr).toLocaleDateString("vi-VN");
+}
+
+function truncate(str: string, max: number): string {
+  if (str.length <= max) return str;
+  return str.slice(0, max) + "…";
+}
+
 export function TacticalRefreshDialog({
   open,
   onOpenChange,
@@ -75,19 +92,25 @@ export function TacticalRefreshDialog({
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [analysisNotes, setAnalysisNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<TacticalRefreshLogEntry[]>([]);
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
-  // Fetch tracked count on dialog open
-  const fetchTrackedCount = useCallback(async (): Promise<void> => {
+  // Fetch tracked count + history on dialog open
+  const fetchInitialData = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch(`/api/channels/${channelId}/refresh-tactics`);
       if (res.ok) {
-        const json = (await res.json()) as { count: number };
+        const json = (await res.json()) as { count: number; history: TacticalRefreshLogEntry[] };
         setTrackedCount(json.count);
+        setHistory(json.history ?? []);
       } else {
         setTrackedCount(0);
+        setHistory([]);
       }
     } catch {
       setTrackedCount(0);
+      setHistory([]);
     }
   }, [channelId]);
 
@@ -100,9 +123,11 @@ export function TacticalRefreshDialog({
       setSelected(new Set());
       setAnalysisNotes("");
       setError(null);
-      void fetchTrackedCount();
+      setExpandedLogId(null);
+      setHistoryOpen(false);
+      void fetchInitialData();
     }
-  }, [open, fetchTrackedCount]);
+  }, [open, fetchInitialData]);
 
   const trackingDisabled = trackedCount !== null && trackedCount < 10;
   const canGenerate = trendingContext.trim().length >= 10 || useTracking;
@@ -144,17 +169,28 @@ export function TacticalRefreshDialog({
     setError(null);
 
     try {
-      // Build partial update from selected suggestions
-      const update: Record<string, unknown> = {};
+      // Build applied values and field names from selected suggestions
+      const appliedValues: Record<string, unknown> = {};
+      const appliedFields: string[] = [];
       for (const idx of selected) {
         const s = suggestions[idx];
-        if (s) update[s.field] = s.suggested;
+        if (s) {
+          appliedValues[s.field] = s.suggested;
+          appliedFields.push(s.field);
+        }
       }
 
-      const res = await fetch(`/api/channels/${channelId}`, {
+      const res = await fetch(`/api/channels/${channelId}/refresh-tactics`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(update),
+        body: JSON.stringify({
+          trendingContext: trendingContext.trim(),
+          usedTracking: useTracking,
+          analysisNotes,
+          suggestions: suggestions as unknown as Record<string, unknown>[],
+          appliedFields,
+          appliedValues,
+        }),
       });
 
       if (!res.ok) {
@@ -245,6 +281,17 @@ export function TacticalRefreshDialog({
                 </p>
               </div>
             </div>
+
+            {/* HISTORY SECTION */}
+            {history.length > 0 && (
+              <HistorySection
+                history={history}
+                historyOpen={historyOpen}
+                setHistoryOpen={setHistoryOpen}
+                expandedLogId={expandedLogId}
+                setExpandedLogId={setExpandedLogId}
+              />
+            )}
           </div>
         )}
 
@@ -367,5 +414,120 @@ export function TacticalRefreshDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ─── History sub-component ─── */
+
+function HistorySection({
+  history,
+  historyOpen,
+  setHistoryOpen,
+  expandedLogId,
+  setExpandedLogId,
+}: {
+  history: TacticalRefreshLogEntry[];
+  historyOpen: boolean;
+  setHistoryOpen: (v: boolean) => void;
+  expandedLogId: string | null;
+  setExpandedLogId: (v: string | null) => void;
+}): React.ReactElement {
+  return (
+    <div className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setHistoryOpen(!historyOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <History className="w-4 h-4 text-gray-400" />
+          Lịch sử refresh
+          <span className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 rounded-full px-2 py-0.5">
+            {history.length}
+          </span>
+        </span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${historyOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {historyOpen && (
+        <div className="border-t border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
+          {history.map((entry) => {
+            const isExpanded = expandedLogId === entry.id;
+            const appliedCount = Array.isArray(entry.appliedFields) ? entry.appliedFields.length : 0;
+            const entrySuggestions = (Array.isArray(entry.suggestions) ? entry.suggestions : []) as TacticalSuggestion[];
+
+            return (
+              <div key={entry.id} className="px-4">
+                <button
+                  type="button"
+                  onClick={() => setExpandedLogId(isExpanded ? null : entry.id)}
+                  className="w-full flex items-center gap-3 py-3 text-left"
+                >
+                  <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {relativeTime(entry.createdAt)}
+                      </span>
+                      <span className="text-[10px] bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded-full px-2 py-0.5 font-medium">
+                        {appliedCount} áp dụng
+                      </span>
+                      {entry.usedTracking && (
+                        <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-full px-2 py-0.5">
+                          tracking
+                        </span>
+                      )}
+                    </div>
+                    {entry.trendingContext && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+                        {truncate(entry.trendingContext, 80)}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronDown className={`w-3.5 h-3.5 text-gray-300 transition-transform shrink-0 ${isExpanded ? "rotate-180" : ""}`} />
+                </button>
+
+                {isExpanded && (
+                  <div className="pb-3 space-y-2">
+                    {entry.analysisNotes && (
+                      <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                        <p className="text-xs text-blue-800 dark:text-blue-300">{entry.analysisNotes}</p>
+                      </div>
+                    )}
+                    {entrySuggestions.length > 0 && (
+                      <div className="space-y-1.5">
+                        {entrySuggestions.map((s, i) => {
+                          const wasApplied = Array.isArray(entry.appliedFields) && entry.appliedFields.includes(s.field);
+                          const actionStyle = ACTION_LABELS[s.action] ?? ACTION_LABELS.adjust;
+                          return (
+                            <div
+                              key={i}
+                              className={`rounded-lg px-3 py-2 text-xs ${
+                                wasApplied
+                                  ? "bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800"
+                                  : "bg-gray-50 dark:bg-slate-800/50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                {wasApplied && <Check className="w-3 h-3 text-emerald-600" />}
+                                <span className="font-medium text-gray-700 dark:text-gray-300">{s.label}</span>
+                                <span className={`text-[9px] px-1 py-0.5 rounded-full ${actionStyle.color}`}>
+                                  {actionStyle.label}
+                                </span>
+                              </div>
+                              <p className="text-gray-500 dark:text-gray-400 mt-0.5">{s.reason}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

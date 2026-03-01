@@ -909,6 +909,7 @@ model TikTokChannel {
 
   contentSlots  ContentSlot[]
   contentAssets ContentAsset[]
+  refreshLogs   TacticalRefreshLog[]
 }
 
 model ContentSlot {
@@ -968,6 +969,25 @@ model VideoTracking {
   createdAt DateTime @default(now())
 
   @@index([isWinner])
+}
+
+// ─── TACTICAL REFRESH LOG ───
+
+model TacticalRefreshLog {
+  id        String @id @default(cuid())
+  channelId String
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  trendingContext String?
+  usedTracking    Boolean @default(false)
+  analysisNotes   String?
+
+  suggestions   Json @default("[]")
+  appliedFields Json @default("[]")
+
+  createdAt DateTime @default(now())
+
+  @@index([channelId, createdAt(sort: Desc)])
 }
 
 // ─── PRODUCT GALLERY IMAGES ───

@@ -17,6 +17,17 @@ export interface TacticalRefreshResult {
   analysisNotes: string;
 }
 
+export interface TacticalRefreshLogEntry {
+  id: string;
+  channelId: string;
+  trendingContext: string | null;
+  usedTracking: boolean;
+  analysisNotes: string | null;
+  suggestions: TacticalSuggestion[];
+  appliedFields: string[];
+  createdAt: string; // ISO date from API
+}
+
 export interface ChannelPerformanceData {
   totalVideos: number;
   trackingData: Array<{

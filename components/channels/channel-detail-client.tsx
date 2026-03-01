@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Loader2, Pencil, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
+import { TacticalRefreshDialog } from "./tactical-refresh-dialog";
 
 interface ChannelData {
   id: string;
@@ -86,6 +87,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshOpen, setRefreshOpen] = useState(false);
 
   const fetchChannel = useCallback(async (): Promise<void> => {
     try {
@@ -288,6 +290,13 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
               title="Tải kênh (.json)"
             >
               <Download className="w-3.5 h-3.5" /> Tải
+            </button>
+            <button
+              onClick={() => setRefreshOpen(true)}
+              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+              title="Refresh tactics dựa trên trending"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh
             </button>
             <button
               onClick={() => setEditing(true)}
@@ -541,6 +550,14 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           </div>
         )}
       </div>
+
+      <TacticalRefreshDialog
+        open={refreshOpen}
+        onOpenChange={setRefreshOpen}
+        channel={channel}
+        channelId={channelId}
+        onRefreshed={() => void fetchChannel()}
+      />
     </div>
   );
 }

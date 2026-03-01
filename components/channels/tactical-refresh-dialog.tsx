@@ -1,0 +1,371 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { Loader2, RefreshCw, Check, X, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import type { TacticalSuggestion } from "@/lib/content/tactical-refresh-types";
+
+interface ChannelData {
+  hookBank?: string[] | null;
+  contentMix?: Record<string, number> | null;
+  contentPillars?: string[] | null;
+  contentPillarDetails?: unknown[] | null;
+  postingSchedule?: Record<string, unknown> | null;
+  postsPerDay?: number | null;
+  seriesSchedule?: unknown[] | null;
+  videoFormats?: unknown[] | null;
+  ctaTemplates?: Record<string, string> | null;
+  competitorChannels?: unknown[] | null;
+  editingStyle?: string | null;
+}
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  channel: ChannelData;
+  channelId: string;
+  onRefreshed: () => void;
+}
+
+type Phase = "inputting" | "generating" | "reviewing" | "applying";
+
+const ACTION_LABELS: Record<string, { label: string; color: string }> = {
+  add: { label: "Thêm", color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" },
+  remove: { label: "Xoá", color: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" },
+  replace: { label: "Thay", color: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400" },
+  adjust: { label: "Chỉnh", color: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" },
+};
+
+function formatValue(val: unknown): string {
+  if (val === null || val === undefined) return "(trống)";
+  if (typeof val === "string") return val;
+  if (typeof val === "number") return String(val);
+  if (Array.isArray(val)) {
+    if (val.length === 0) return "(trống)";
+    if (typeof val[0] === "string") return val.slice(0, 3).join(", ") + (val.length > 3 ? ` (+${val.length - 3})` : "");
+    return `${val.length} mục`;
+  }
+  if (typeof val === "object") {
+    const keys = Object.keys(val as Record<string, unknown>);
+    return `{${keys.slice(0, 3).join(", ")}${keys.length > 3 ? "..." : ""}}`;
+  }
+  return String(val);
+}
+
+export function TacticalRefreshDialog({
+  open,
+  onOpenChange,
+  channel,
+  channelId,
+  onRefreshed,
+}: Props): React.ReactElement {
+  const [phase, setPhase] = useState<Phase>("inputting");
+  const [trendingContext, setTrendingContext] = useState("");
+  const [useTracking, setUseTracking] = useState(false);
+  const [trackedCount, setTrackedCount] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<TacticalSuggestion[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [analysisNotes, setAnalysisNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch tracked count on dialog open
+  const fetchTrackedCount = useCallback(async (): Promise<void> => {
+    try {
+      const res = await fetch(`/api/channels/${channelId}/refresh-tactics`);
+      if (res.ok) {
+        const json = (await res.json()) as { count: number };
+        setTrackedCount(json.count);
+      } else {
+        setTrackedCount(0);
+      }
+    } catch {
+      setTrackedCount(0);
+    }
+  }, [channelId]);
+
+  useEffect(() => {
+    if (open) {
+      setPhase("inputting");
+      setTrendingContext("");
+      setUseTracking(false);
+      setSuggestions([]);
+      setSelected(new Set());
+      setAnalysisNotes("");
+      setError(null);
+      void fetchTrackedCount();
+    }
+  }, [open, fetchTrackedCount]);
+
+  const trackingDisabled = trackedCount !== null && trackedCount < 10;
+  const canGenerate = trendingContext.trim().length >= 10 || useTracking;
+
+  async function handleGenerate(): Promise<void> {
+    setPhase("generating");
+    setError(null);
+    try {
+      const res = await fetch(`/api/channels/${channelId}/refresh-tactics`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trendingContext: trendingContext.trim(), useTracking }),
+      });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        throw new Error(json.error ?? "Lỗi server");
+      }
+      const json = (await res.json()) as {
+        data: { suggestions: TacticalSuggestion[]; analysisNotes: string };
+      };
+      setSuggestions(json.data.suggestions);
+      setAnalysisNotes(json.data.analysisNotes);
+      // Select all by default
+      setSelected(new Set(json.data.suggestions.map((_, i) => i)));
+      setPhase("reviewing");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lỗi không xác định");
+      setPhase("inputting");
+    }
+  }
+
+  async function handleApply(): Promise<void> {
+    if (selected.size === 0) {
+      toast.info("Chưa chọn thay đổi nào");
+      return;
+    }
+
+    setPhase("applying");
+    setError(null);
+
+    try {
+      // Build partial update from selected suggestions
+      const update: Record<string, unknown> = {};
+      for (const idx of selected) {
+        const s = suggestions[idx];
+        if (s) update[s.field] = s.suggested;
+      }
+
+      const res = await fetch(`/api/channels/${channelId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(update),
+      });
+
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        throw new Error(json.error ?? "Không thể cập nhật");
+      }
+
+      toast.success(`Đã áp dụng ${selected.size} thay đổi`);
+      onOpenChange(false);
+      onRefreshed();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lỗi khi áp dụng");
+      setPhase("reviewing");
+    }
+  }
+
+  function toggleSelection(idx: number): void {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <RefreshCw className="w-5 h-5 text-blue-600" />
+            Refresh Tactics
+          </DialogTitle>
+          <DialogDescription>
+            Cập nhật chiến lược kênh dựa trên trending và dữ liệu performance
+          </DialogDescription>
+        </DialogHeader>
+
+        {error && (
+          <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span className="text-sm text-rose-700 dark:text-rose-300">{error}</span>
+          </div>
+        )}
+
+        {/* INPUT PHASE */}
+        {(phase === "inputting" || phase === "generating") && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Trending tuần này
+              </label>
+              <textarea
+                value={trendingContext}
+                onChange={(e) => setTrendingContext(e.target.value)}
+                placeholder="VD: Hook &quot;POV&quot; đang viral, format Before/After makeup đang trend, sound &quot;nhạc chill lo-fi&quot; được dùng nhiều, format slideshow nhanh đang lên..."
+                className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
+                rows={4}
+                disabled={phase === "generating"}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Mô tả trending bạn đang thấy trên TikTok (tối thiểu 10 ký tự)
+              </p>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="use-tracking"
+                checked={useTracking}
+                onChange={(e) => setUseTracking(e.target.checked)}
+                disabled={trackingDisabled || phase === "generating"}
+                className="mt-0.5 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500/20 disabled:opacity-50"
+              />
+              <div>
+                <label
+                  htmlFor="use-tracking"
+                  className={`text-sm font-medium ${trackingDisabled ? "text-gray-400" : "text-gray-700 dark:text-gray-300"}`}
+                >
+                  Phân tích tracking data
+                </label>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {trackedCount === null
+                    ? "Đang kiểm tra..."
+                    : trackingDisabled
+                      ? `Chỉ có ${trackedCount} video tracked — cần ≥10 để phân tích có ý nghĩa`
+                      : `${trackedCount} video tracked — AI sẽ dùng data performance để đề xuất`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* REVIEW PHASE */}
+        {phase === "reviewing" && (
+          <div className="space-y-4">
+            {analysisNotes && (
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4">
+                <p className="text-sm text-blue-800 dark:text-blue-300">{analysisNotes}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {suggestions.map((s, i) => {
+                const actionStyle = ACTION_LABELS[s.action] ?? ACTION_LABELS.adjust;
+                return (
+                  <div
+                    key={i}
+                    className={`border rounded-xl p-3 transition-colors cursor-pointer ${
+                      selected.has(i)
+                        ? "border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/20"
+                        : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    }`}
+                    onClick={() => toggleSelection(i)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                        selected.has(i)
+                          ? "bg-blue-600 border-blue-600"
+                          : "border-gray-300 dark:border-slate-600"
+                      }`}>
+                        {selected.has(i) && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {s.label}
+                          </span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${actionStyle.color}`}>
+                            {actionStyle.label}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                          {s.reason}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-gray-400 line-through truncate max-w-[40%]">
+                            {formatValue(s.current)}
+                          </span>
+                          <span className="text-gray-300">→</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 truncate max-w-[40%]">
+                            {formatValue(s.suggested)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {suggestions.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-500">AI không có đề xuất thay đổi nào.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          {(phase === "inputting" || phase === "generating") && (
+            <button
+              onClick={() => void handleGenerate()}
+              disabled={!canGenerate || phase === "generating"}
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {phase === "generating" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang phân tích...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  Phân tích & đề xuất
+                </>
+              )}
+            </button>
+          )}
+
+          {phase === "reviewing" && suggestions.length > 0 && (
+            <>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl px-5 py-2.5 font-medium transition-colors"
+              >
+                <X className="w-4 h-4 inline mr-1" />
+                Bỏ qua
+              </button>
+              <button
+                onClick={() => void handleApply()}
+                disabled={selected.size === 0}
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-2.5 font-medium shadow-sm hover:shadow transition-all disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                Áp dụng {selected.size}/{suggestions.length} đã chọn
+              </button>
+            </>
+          )}
+
+          {phase === "applying" && (
+            <button
+              disabled
+              className="bg-blue-600 text-white rounded-xl px-5 py-2.5 font-medium opacity-50 inline-flex items-center gap-2"
+            >
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Đang áp dụng...
+            </button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

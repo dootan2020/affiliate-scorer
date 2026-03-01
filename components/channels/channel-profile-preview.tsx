@@ -5,7 +5,7 @@ import { Plus, Trash2, AlertTriangle } from "lucide-react";
 import type { ChannelProfileResult } from "@/lib/content/channel-profile-types";
 
 const inputCls =
-  "w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none";
+  "w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none";
 const labelCls = "block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1";
 const sectionCls = "space-y-3";
 const sectionTitle = "text-sm font-semibold text-gray-900 dark:text-gray-50 flex items-center gap-2";

@@ -21,7 +21,7 @@ const LIMIT = 20;
 function TableSkeleton(): React.ReactElement {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
-      <div className="divide-y divide-gray-50 dark:divide-slate-800/60">
+      <div className="divide-y divide-gray-50 dark:divide-slate-800">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 px-4 py-3 animate-pulse">
             <div className="w-6 h-3 bg-gray-200 dark:bg-slate-800 rounded" />

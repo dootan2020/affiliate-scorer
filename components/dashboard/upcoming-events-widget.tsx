@@ -36,6 +36,7 @@ function formatDateRange(start: string, end: string): string {
 
 export function UpcomingEventsWidget(): React.ReactElement {
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchWithRetry("/api/calendar/upcoming")
@@ -43,9 +44,11 @@ export function UpcomingEventsWidget(): React.ReactElement {
       .then((d) => {
         if (Array.isArray(d.data)) setEvents(d.data);
       })
-      .catch((e) => { console.error("[upcoming-events-widget]", e); });
+      .catch((e) => { console.error("[upcoming-events-widget]", e); })
+      .finally(() => { setLoading(false); });
   }, []);
 
+  if (loading) return <></>;
   if (events.length === 0) return <></>;
 
   return (

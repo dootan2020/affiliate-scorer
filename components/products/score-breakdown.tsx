@@ -50,7 +50,8 @@ function parseBreakdown(breakdown: ScoreBreakdownData | string | null): ScoreBre
   if (typeof breakdown === "string") {
     try {
       return JSON.parse(breakdown) as ScoreBreakdownData;
-    } catch {
+    } catch (e) {
+      console.warn("[score-breakdown] JSON.parse failed:", e);
       return {};
     }
   }

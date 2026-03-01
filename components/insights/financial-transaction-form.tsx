@@ -102,7 +102,7 @@ export function FinancialTransactionForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
             Loại *
           </label>
           <select
@@ -118,7 +118,7 @@ export function FinancialTransactionForm({
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
             Nguồn *
           </label>
           <select
@@ -137,7 +137,7 @@ export function FinancialTransactionForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
             Số tiền (VND) *
           </label>
           <input
@@ -150,7 +150,7 @@ export function FinancialTransactionForm({
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
             Ngày *
           </label>
           <input
@@ -163,7 +163,7 @@ export function FinancialTransactionForm({
       </div>
 
       <div>
-        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           Ghi chú
         </label>
         <input

@@ -58,7 +58,7 @@ const FORMAT_LABELS: Record<string, string> = {
 };
 
 const inputCls =
-  "rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none";
+  "rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none";
 
 function formatNum(n: number | null): string {
   if (n === null || n === undefined) return "—";
@@ -248,7 +248,7 @@ export function TrackingTab(): React.ReactElement {
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-50">Nhập kết quả video</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div className="sm:col-span-2 lg:col-span-3">
-              <label className="block text-xs text-gray-500 mb-1">Video (asset)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Video (asset)</label>
               <select className={inputCls + " w-full"} value={formAssetId} onChange={(e) => setFormAssetId(e.target.value)}>
                 <option value="">Chọn video...</option>
                 {assets.map((a) => (
@@ -259,35 +259,35 @@ export function TrackingTab(): React.ReactElement {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">URL TikTok</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">URL TikTok</label>
               <input className={inputCls + " w-full"} value={formUrl} onChange={(e) => setFormUrl(e.target.value)} placeholder="https://..." />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Views 24h</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Views 24h</label>
               <input className={inputCls + " w-full"} type="number" value={formViews} onChange={(e) => setFormViews(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Likes</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Likes</label>
               <input className={inputCls + " w-full"} type="number" value={formLikes} onChange={(e) => setFormLikes(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Comments</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Comments</label>
               <input className={inputCls + " w-full"} type="number" value={formComments} onChange={(e) => setFormComments(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Shares</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Shares</label>
               <input className={inputCls + " w-full"} type="number" value={formShares} onChange={(e) => setFormShares(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Đơn hàng</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Đơn hàng</label>
               <input className={inputCls + " w-full"} type="number" value={formOrders} onChange={(e) => setFormOrders(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Doanh thu (VND)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Doanh thu (VND)</label>
               <input className={inputCls + " w-full"} type="number" value={formRevenue} onChange={(e) => setFormRevenue(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Hoa hồng (VND)</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Hoa hồng (VND)</label>
               <input className={inputCls + " w-full"} type="number" value={formCommission} onChange={(e) => setFormCommission(e.target.value)} />
             </div>
           </div>
@@ -337,7 +337,7 @@ export function TrackingTab(): React.ReactElement {
                   <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-3 pt-4">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
+              <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                 {entries.map((entry) => {
                   const asset = entry.contentAsset;
                   const fmtLabel = asset.videoFormat ? (FORMAT_LABELS[asset.videoFormat] ?? asset.videoFormat) : (asset.format ?? "—");

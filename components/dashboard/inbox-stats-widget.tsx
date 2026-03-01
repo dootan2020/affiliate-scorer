@@ -15,6 +15,7 @@ interface InboxStats {
 
 export function InboxStatsWidget(): React.ReactElement {
   const [stats, setStats] = useState<InboxStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchWithRetry("/api/inbox?limit=1")
@@ -22,9 +23,11 @@ export function InboxStatsWidget(): React.ReactElement {
       .then((d) => {
         if (d.stats) setStats(d.stats);
       })
-      .catch((e) => { console.error("[inbox-stats-widget]", e); });
+      .catch((e) => { console.error("[inbox-stats-widget]", e); })
+      .finally(() => { setLoading(false); });
   }, []);
 
+  if (loading) return <></>;
   if (!stats) return <></>;
 
   const total = Object.values(stats).reduce((a, b) => a + b, 0);

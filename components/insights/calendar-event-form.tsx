@@ -126,7 +126,7 @@ export function CalendarEventForm({
       </div>
 
       <div>
-        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           Tên sự kiện *
         </label>
         <input
@@ -138,9 +138,9 @@ export function CalendarEventForm({
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
             Loại *
           </label>
           <select
@@ -156,7 +156,7 @@ export function CalendarEventForm({
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
             Bắt đầu *
           </label>
           <input
@@ -167,7 +167,7 @@ export function CalendarEventForm({
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
             Kết thúc *
           </label>
           <input
@@ -180,7 +180,7 @@ export function CalendarEventForm({
       </div>
 
       <div>
-        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           Nền tảng
         </label>
         <div className="flex flex-wrap gap-1.5">
@@ -202,7 +202,7 @@ export function CalendarEventForm({
       </div>
 
       <div>
-        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
           Ghi chú
         </label>
         <input

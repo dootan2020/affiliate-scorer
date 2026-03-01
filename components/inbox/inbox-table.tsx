@@ -91,7 +91,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
               <th className="pb-3 pt-4 px-4 w-8" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-slate-800/60">
+          <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
             {items.map((item, idx) => {
               const aiScore = item.product?.aiScore ?? null;
               const imageUrl = item.imageUrl ?? item.product?.imageUrl ?? null;

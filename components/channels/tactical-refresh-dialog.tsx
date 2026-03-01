@@ -109,6 +109,7 @@ export function TacticalRefreshDialog({
         setHistory([]);
       }
     } catch {
+      toast.error("Lỗi tải dữ liệu chiến thuật");
       setTrackedCount(0);
       setHistory([]);
     }
@@ -247,7 +248,7 @@ export function TacticalRefreshDialog({
                 value={trendingContext}
                 onChange={(e) => setTrendingContext(e.target.value)}
                 placeholder="VD: Hook &quot;POV&quot; đang viral, format Before/After makeup đang trend, sound &quot;nhạc chill lo-fi&quot; được dùng nhiều, format slideshow nhanh đang lên..."
-                className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
+                className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none resize-none"
                 rows={4}
                 disabled={phase === "generating"}
               />
@@ -263,7 +264,7 @@ export function TacticalRefreshDialog({
                 checked={useTracking}
                 onChange={(e) => setUseTracking(e.target.checked)}
                 disabled={trackingDisabled || phase === "generating"}
-                className="mt-0.5 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500/20 disabled:opacity-50"
+                className="mt-0.5 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-orange-500/20 disabled:opacity-50"
               />
               <div>
                 <label

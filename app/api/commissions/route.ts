@@ -18,7 +18,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         productIdentityId: body.productIdentityId || null,
         contentAssetId: body.contentAssetId || null,
         notes: body.notes || null,
-        status: "confirmed",
+        // Respect schema default: "pending" → user confirms later
+        status: body.autoConfirm ? "confirmed" : "pending",
       },
     });
 

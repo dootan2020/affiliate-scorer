@@ -35,6 +35,7 @@ export const createCommissionSchema = z.object({
   productIdentityId: z.string().optional(),
   contentAssetId: z.string().optional(),
   notes: z.string().optional(),
+  autoConfirm: z.boolean().optional(),
 });
 
 export const createGoalP5Schema = z.object({

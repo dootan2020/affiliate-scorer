@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateBrief } from "@/lib/content/generate-brief";
+import type { BriefOptions, ChannelContext } from "@/lib/content/generate-brief";
 
 export async function POST(
   _request: Request,
@@ -11,10 +12,10 @@ export async function POST(
   try {
     const { id } = await params;
 
-    // 1. Fetch existing brief
+    // 1. Fetch existing brief (include channelId for inheritance)
     const oldBrief = await prisma.contentBrief.findUnique({
       where: { id },
-      select: { id: true, productIdentityId: true, status: true },
+      select: { id: true, productIdentityId: true, status: true, channelId: true },
     });
 
     if (!oldBrief) {
@@ -58,7 +59,27 @@ export async function POST(
       return NextResponse.json({ error: "Không tìm thấy sản phẩm" }, { status: 404 });
     }
 
-    // 5. Generate new brief
+    // 5. Resolve channel context from old brief (backwards compatible for legacy null channelId)
+    let briefOptions: BriefOptions | undefined;
+    if (oldBrief.channelId) {
+      const channel = await prisma.tikTokChannel.findUnique({
+        where: { id: oldBrief.channelId },
+      });
+      if (channel?.isActive) {
+        const channelCtx: ChannelContext = {
+          channelId: channel.id,
+          personaName: channel.personaName,
+          personaDesc: channel.personaDesc,
+          voiceStyle: channel.voiceStyle,
+          targetAudience: channel.targetAudience,
+          editingStyle: channel.editingStyle,
+          niche: channel.niche,
+        };
+        briefOptions = { channel: channelCtx };
+      }
+    }
+
+    // 6. Generate new brief with inherited channel context
     const newBriefId = await generateBrief({
       id: identity.id,
       title: identity.title,
@@ -73,9 +94,9 @@ export async function POST(
       combinedScore: identity.combinedScore ? Number(identity.combinedScore) : null,
       lifecycleStage: identity.lifecycleStage,
       deltaType: identity.deltaType,
-    });
+    }, briefOptions);
 
-    // 6. Return new brief with full data
+    // 7. Return new brief with full data
     const newBrief = await prisma.contentBrief.findUnique({
       where: { id: newBriefId },
       include: {

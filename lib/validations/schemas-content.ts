@@ -47,6 +47,7 @@ export const batchLogSchema = z.object({
 
 export const generateBriefSchema = z.object({
   productIdentityId: z.string().min(1),
+  channelId: z.string().min(1),
 });
 
 export const batchBriefSchema = z.object({

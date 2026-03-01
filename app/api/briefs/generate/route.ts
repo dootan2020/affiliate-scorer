@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateBrief } from "@/lib/content/generate-brief";
+import type { BriefOptions, ChannelContext } from "@/lib/content/generate-brief";
 import { validateBody } from "@/lib/validations/validate-body";
 import { generateBriefSchema } from "@/lib/validations/schemas-content";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
@@ -18,7 +19,32 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     const validation = await validateBody(request, generateBriefSchema);
     if (validation.error) return validation.error;
-    const { productIdentityId } = validation.data;
+    const { productIdentityId, channelId } = validation.data;
+
+    // Resolve channel context (required — mirrors batch route pattern)
+    const channel = await prisma.tikTokChannel.findUnique({ where: { id: channelId } });
+    if (!channel) {
+      return NextResponse.json(
+        { error: "Không tìm thấy kênh. Vui lòng chọn kênh hợp lệ." },
+        { status: 404 },
+      );
+    }
+    if (!channel.isActive) {
+      return NextResponse.json(
+        { error: "Kênh đã tạm dừng. Chọn kênh khác hoặc kích hoạt lại kênh." },
+        { status: 400 },
+      );
+    }
+    const channelCtx: ChannelContext = {
+      channelId: channel.id,
+      personaName: channel.personaName,
+      personaDesc: channel.personaDesc,
+      voiceStyle: channel.voiceStyle,
+      targetAudience: channel.targetAudience,
+      editingStyle: channel.editingStyle,
+      niche: channel.niche,
+    };
+    const briefOptions: BriefOptions = { channel: channelCtx };
 
     // Lấy product identity + product data cho enriched prompt
     const identity = await prisma.productIdentity.findUnique({
@@ -37,7 +63,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    // Generate brief
+    // Generate brief with channel context
     const briefId = await generateBrief({
       id: identity.id,
       title: identity.title,
@@ -52,7 +78,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       combinedScore: identity.combinedScore ? Number(identity.combinedScore) : null,
       lifecycleStage: identity.lifecycleStage,
       deltaType: identity.deltaType,
-    });
+    }, briefOptions);
 
     // Lấy brief vừa tạo
     const brief = await prisma.contentBrief.findUnique({

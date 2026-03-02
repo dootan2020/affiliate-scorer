@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, ChevronUp, ChevronDown } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { formatVND, formatNumber } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
@@ -67,27 +67,81 @@ function DeltaBadge({ type }: { type: string | null }): React.ReactElement {
   );
 }
 
+export interface SortState {
+  field: string;
+  order: "asc" | "desc";
+}
+
 interface InboxTableProps {
   items: InboxIdentity[];
   startIndex: number;
   onEnrich: (id: string) => void;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleAll: () => void;
+  allSelected: boolean;
+  sort: SortState;
+  onSort: (field: string) => void;
 }
 
-export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): React.ReactElement {
+function SortIcon({ field, sort }: { field: string; sort: SortState }): React.ReactElement | null {
+  if (sort.field !== field) return null;
+  return sort.order === "asc"
+    ? <ChevronUp className="w-3 h-3 inline ml-0.5" />
+    : <ChevronDown className="w-3 h-3 inline ml-0.5" />;
+}
+
+interface ColHeaderProps {
+  field: string;
+  label: string;
+  sort: SortState;
+  onSort: (field: string) => void;
+  className?: string;
+}
+
+function ColHeader({ field, label, sort, onSort, className }: ColHeaderProps): React.ReactElement {
+  return (
+    <th
+      className={cn(
+        "text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none transition-colors",
+        className,
+      )}
+      onClick={() => onSort(field)}
+    >
+      {label}
+      <SortIcon field={field} sort={sort} />
+    </th>
+  );
+}
+
+export function InboxTable({
+  items, startIndex, onEnrich,
+  selectedIds, onToggleSelect, onToggleAll, allSelected,
+  sort, onSort,
+}: InboxTableProps): React.ReactElement {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-800">
+              {/* Checkbox */}
+              <th className="pb-3 pt-4 px-4 w-10">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={onToggleAll}
+                  className="rounded border-gray-300 dark:border-slate-600 text-orange-600 focus:ring-orange-500/20"
+                />
+              </th>
               <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 w-10">#</th>
-              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 w-14">Điểm</th>
-              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4">Sản phẩm</th>
-              <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden md:table-cell">Delta</th>
-              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden sm:table-cell">Content</th>
-              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4">Giá</th>
-              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden lg:table-cell">Bán 7d</th>
-              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden lg:table-cell">KOL</th>
+              <ColHeader field="score" label="Điểm" sort={sort} onSort={onSort} className="text-left w-14" />
+              <ColHeader field="newest" label="Sản phẩm" sort={sort} onSort={onSort} className="text-left" />
+              <ColHeader field="delta" label="Delta" sort={sort} onSort={onSort} className="text-left hidden md:table-cell" />
+              <ColHeader field="content" label="Content" sort={sort} onSort={onSort} className="text-right hidden sm:table-cell" />
+              <ColHeader field="price" label="Giá" sort={sort} onSort={onSort} className="text-right" />
+              <ColHeader field="sales7d" label="Bán 7d" sort={sort} onSort={onSort} className="text-right hidden lg:table-cell" />
+              <ColHeader field="kol" label="KOL" sort={sort} onSort={onSort} className="text-right hidden lg:table-cell" />
               <th className="pb-3 pt-4 px-4 w-8" />
             </tr>
           </thead>
@@ -99,9 +153,25 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                 ?? (item.productIdExternal ? `SP #${item.productIdExternal.slice(-8)}` : null)
                 ?? "(Chưa bổ sung)";
               const contentScore = item.contentPotentialScore ? parseFloat(item.contentPotentialScore) : null;
+              const isSelected = selectedIds.has(item.id);
 
               return (
-                <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors group">
+                <tr
+                  key={item.id}
+                  className={cn(
+                    "hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors group",
+                    isSelected && "bg-orange-50/50 dark:bg-orange-950/10",
+                  )}
+                >
+                  {/* Checkbox */}
+                  <td className="py-3.5 px-4">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onToggleSelect(item.id)}
+                      className="rounded border-gray-300 dark:border-slate-600 text-orange-600 focus:ring-orange-500/20"
+                    />
+                  </td>
                   {/* # */}
                   <td className="py-3.5 px-4 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
                     {startIndex + idx}
@@ -110,8 +180,8 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                   <td className="py-3.5 px-4">
                     <ScoreBadge score={aiScore} />
                   </td>
-                  {/* Product info */}
-                  <td className="py-3.5 px-4 max-w-[240px]">
+                  {/* Product info — wrap text, allow 2 lines */}
+                  <td className="py-3.5 px-4">
                     <Link href={`/inbox/${item.id}`} className="flex items-center gap-2.5 group/link">
                       <ProductImage
                         src={imageUrl}
@@ -119,7 +189,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                         className="rounded-lg"
                       />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate group-hover/link:text-orange-600 dark:group-hover/link:text-orange-400 transition-colors">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-50 line-clamp-2 group-hover/link:text-orange-600 dark:group-hover/link:text-orange-400 transition-colors">
                           {name}
                         </p>
                         {item.category ? (
@@ -156,7 +226,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                   </td>
                   {/* Sales 7d */}
                   <td className="py-3.5 px-4 text-right hidden lg:table-cell">
-                    {item.product?.sales7d !== null && item.product?.sales7d !== undefined ? (
+                    {item.product?.sales7d != null ? (
                       <span className="text-sm text-gray-700 dark:text-gray-300 tabular-nums">
                         {formatNumber(item.product.sales7d)}
                       </span>
@@ -166,7 +236,7 @@ export function InboxTable({ items, startIndex, onEnrich }: InboxTableProps): Re
                   </td>
                   {/* KOL */}
                   <td className="py-3.5 px-4 text-right hidden lg:table-cell">
-                    {item.product?.totalKOL !== null && item.product?.totalKOL !== undefined ? (
+                    {item.product?.totalKOL != null ? (
                       <span className="text-sm text-gray-700 dark:text-gray-300 tabular-nums">
                         {formatNumber(item.product.totalKOL)}
                       </span>

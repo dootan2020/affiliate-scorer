@@ -1,30 +1,97 @@
 // Phase 2: GET /api/inbox — lấy danh sách product identities (inbox)
-// Query params: state, page, limit, sort
+// Query params: state, page, limit/pageSize, sort, order, search, category, delta, priceMin, priceMax, scoreMin, scoreMax
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@/app/generated/prisma/client";
+
+type PIWhere = Prisma.ProductIdentityWhereInput;
+
+/** Build Prisma where clause from query params (excluding state filter) */
+function buildFilters(params: URLSearchParams): PIWhere {
+  const conditions: PIWhere[] = [];
+
+  // Search — title or shopName
+  const search = params.get("search")?.trim();
+  if (search) {
+    conditions.push({
+      OR: [
+        { title: { contains: search, mode: "insensitive" } },
+        { shopName: { contains: search, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  // Category — comma-separated multi-select
+  const category = params.get("category");
+  if (category) {
+    const cats = category.split(",").map((c) => c.trim()).filter(Boolean);
+    if (cats.length > 0) conditions.push({ category: { in: cats } });
+  }
+
+  // Delta type — comma-separated multi-select
+  const delta = params.get("delta");
+  if (delta) {
+    const deltas = delta.split(",").map((d) => d.trim()).filter(Boolean);
+    if (deltas.length > 0) conditions.push({ deltaType: { in: deltas } });
+  }
+
+  // Price range
+  const priceMin = params.get("priceMin");
+  const priceMax = params.get("priceMax");
+  if (priceMin) conditions.push({ price: { gte: parseInt(priceMin, 10) } });
+  if (priceMax) conditions.push({ price: { lte: parseInt(priceMax, 10) } });
+
+  // Score range
+  const scoreMin = params.get("scoreMin");
+  const scoreMax = params.get("scoreMax");
+  if (scoreMin) conditions.push({ combinedScore: { gte: parseInt(scoreMin, 10) } });
+  if (scoreMax) conditions.push({ combinedScore: { lte: parseInt(scoreMax, 10) } });
+
+  return conditions.length > 0 ? { AND: conditions } : {};
+}
+
+/** Build orderBy from sort + order params */
+function buildOrderBy(params: URLSearchParams): Prisma.ProductIdentityOrderByWithRelationInput {
+  const sort = params.get("sort") || "newest";
+  const order = params.get("order") === "asc" ? "asc" : "desc";
+
+  const sortMap: Record<string, Prisma.ProductIdentityOrderByWithRelationInput> = {
+    newest: { createdAt: "desc" },
+    score: { combinedScore: order },
+    price: { price: order },
+    delta: { updatedAt: "desc" },
+    content: { contentPotentialScore: order },
+    sales7d: { product: { sales7d: order } },
+    kol: { product: { totalKOL: order } },
+  };
+
+  return sortMap[sort] ?? { createdAt: "desc" };
+}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = request.nextUrl;
-    const state = searchParams.get("state"); // "new" | "enriched" | "scored" | "briefed" | "published" | "archived" | null (tất cả)
+    const state = searchParams.get("state");
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
-    const sort = searchParams.get("sort") || "newest"; // "newest" | "score" | "delta"
+    const pageSize = Math.min(100, Math.max(1, parseInt(
+      searchParams.get("pageSize") || searchParams.get("limit") || "20", 10
+    )));
 
-    const where = state ? { inboxState: state } : { inboxState: { not: "archived" } };
+    // Build where: state filter + search/filter conditions
+    const filters = buildFilters(searchParams);
+    const stateFilter: PIWhere = state
+      ? { inboxState: state }
+      : { inboxState: { not: "archived" } };
+    const where: PIWhere = { AND: [stateFilter, filters] };
 
-    const orderBy = sort === "score"
-      ? { combinedScore: "desc" as const }
-      : sort === "delta"
-        ? { updatedAt: "desc" as const }
-        : { createdAt: "desc" as const };
+    const orderBy = buildOrderBy(searchParams);
 
     const [items, total] = await Promise.all([
       prisma.productIdentity.findMany({
         where,
         orderBy,
-        skip: (page - 1) * limit,
-        take: limit,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
         include: {
           product: {
             select: {
@@ -45,9 +112,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       prisma.productIdentity.count({ where }),
     ]);
 
-    // Thống kê theo state
+    // Stats: count per state WITH filters applied (excluding state filter)
+    const statsWhere: PIWhere = Object.keys(filters).length > 0
+      ? { AND: [{ inboxState: { not: "archived" } }, filters] }
+      : { inboxState: { not: "archived" } };
+
     const stats = await prisma.productIdentity.groupBy({
       by: ["inboxState"],
+      where: statsWhere,
       _count: { id: true },
     });
 
@@ -60,9 +132,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       data: items,
       pagination: {
         page,
-        limit,
+        pageSize,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / pageSize),
       },
       stats: statMap,
     });

@@ -34,9 +34,9 @@ export function ChannelTaskBoard(): React.ReactElement {
           <Tv className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Kênh hôm nay</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
+        <div className="flex gap-4 overflow-x-auto pb-2 animate-pulse">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="border border-gray-100 dark:border-slate-800 rounded-xl p-4">
+            <div key={i} className="min-w-[260px] flex-shrink-0 border border-gray-100 dark:border-slate-800 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-slate-700" />
                 <div className="space-y-1 flex-1">
@@ -45,11 +45,6 @@ export function ChannelTaskBoard(): React.ReactElement {
                 </div>
               </div>
               <div className="h-1.5 w-full bg-gray-100 dark:bg-slate-800 rounded-full mb-3" />
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-12 bg-gray-100 dark:bg-slate-800 rounded-lg" />
-                ))}
-              </div>
               <div className="flex gap-2">
                 <div className="flex-1 h-8 bg-gray-100 dark:bg-slate-800 rounded-lg" />
                 <div className="flex-1 h-8 bg-gray-100 dark:bg-slate-800 rounded-lg" />
@@ -93,9 +88,11 @@ export function ChannelTaskBoard(): React.ReactElement {
           {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric" })}
         </span>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
         {tasks.map((task) => (
-          <ChannelCard key={task.channelId} task={task} />
+          <div key={task.channelId} className="min-w-[260px] max-w-[320px] flex-shrink-0">
+            <ChannelCard task={task} />
+          </div>
         ))}
       </div>
     </div>
@@ -117,7 +114,7 @@ function ChannelCard({ task }: { task: ChannelTask }): React.ReactElement {
         <div className="min-w-0 flex-1">
           <Link
             href={`/channels/${task.channelId}`}
-            className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate block hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            className="text-sm font-medium text-gray-900 dark:text-gray-50 block hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
             {task.channelName}
           </Link>

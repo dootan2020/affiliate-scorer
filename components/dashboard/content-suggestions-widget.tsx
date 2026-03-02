@@ -53,7 +53,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
         const filtered = (d.data as ProductIdentityItem[])
           .filter((p) => !EXCLUDED_STATES.includes(p.inboxState))
           .sort((a, b) => rankProduct(b) - rankProduct(a))
-          .slice(0, 8);
+          .slice(0, 5);
         setItems(filtered);
       })
       .catch((e) => { console.error("[content-suggestions-widget]", e); })
@@ -61,7 +61,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 h-full">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
       <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-orange-500" />
@@ -80,11 +80,11 @@ export function ContentSuggestionsWidget(): React.ReactElement {
       {loading ? (
         <div className="space-y-2 animate-pulse">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-3 rounded-xl px-3 py-2.5">
-              <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-slate-700 shrink-0" />
+            <div key={i} className="flex items-center gap-3 py-2.5">
+              <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-slate-700 shrink-0 hidden sm:block" />
               <div className="flex-1 space-y-1.5">
                 <div className="h-3.5 w-3/4 bg-gray-200 dark:bg-slate-700 rounded" />
-                <div className="h-2.5 w-1/2 bg-gray-100 dark:bg-slate-800 rounded" />
+                <div className="h-2.5 w-1/3 bg-gray-100 dark:bg-slate-800 rounded" />
               </div>
               <div className="w-10 h-5 bg-gray-100 dark:bg-slate-800 rounded-full shrink-0" />
             </div>
@@ -98,57 +98,71 @@ export function ContentSuggestionsWidget(): React.ReactElement {
           </p>
         </div>
       ) : (
-        <div className="space-y-1">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
-            >
-              {/* Thumbnail */}
-              <ProductImage
-                src={item.imageUrl}
-                alt={item.title ?? "Sản phẩm"}
-              />
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-100 dark:border-slate-800">
+              <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 hidden sm:table-cell w-12" />
+              <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2">Sản phẩm</th>
+              <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 hidden md:table-cell">Danh mục</th>
+              <th className="text-center text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 w-16">Score</th>
+              <th className="text-right text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 w-16" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
+            {items.map((item) => (
+              <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                {/* Thumbnail — hidden on mobile */}
+                <td className="py-2.5 pr-2 hidden sm:table-cell">
+                  <ProductImage
+                    src={item.imageUrl}
+                    alt={item.title ?? "SP"}
+                  />
+                </td>
 
-              {/* Info — clickable product name */}
-              <div className="flex-1 min-w-0">
-                <Link
-                  href={`/inbox/${item.id}`}
-                  className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate block hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-                >
-                  {item.title ?? "Sản phẩm chưa đặt tên"}
-                </Link>
-                <div className="flex items-center gap-1.5">
-                  {item.category && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
-                      {item.category}
-                    </p>
-                  )}
+                {/* Product name — full, not truncated */}
+                <td className="py-2.5 pr-2">
+                  <Link
+                    href={`/inbox/${item.id}`}
+                    className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-orange-600 dark:hover:text-orange-400 transition-colors line-clamp-2"
+                  >
+                    {item.title ?? "Sản phẩm chưa đặt tên"}
+                  </Link>
                   {item.deltaType && ["breakout", "surge"].includes(item.deltaType) && (
-                    <span className="text-[10px] font-medium text-rose-600 dark:text-rose-400">
+                    <span className="text-[10px] font-medium text-rose-600 dark:text-rose-400 ml-1">
                       {item.deltaType === "breakout" ? "🔥" : "📈"}
                     </span>
                   )}
-                </div>
-              </div>
+                </td>
 
-              {/* Score */}
-              {item.combinedScore != null && (
-                <span className="shrink-0 inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
-                  {Number(item.combinedScore).toFixed(1)}
-                </span>
-              )}
+                {/* Category — hidden on mobile */}
+                <td className="py-2.5 pr-2 hidden md:table-cell">
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {item.category ?? "—"}
+                  </span>
+                </td>
 
-              {/* CTA */}
-              <Link
-                href={`/production?productId=${item.id}`}
-                className="shrink-0 text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 whitespace-nowrap transition-colors"
-              >
-                Brief →
-              </Link>
-            </div>
-          ))}
-        </div>
+                {/* Score badge */}
+                <td className="py-2.5 pr-2 text-center">
+                  {item.combinedScore != null && (
+                    <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
+                      {Number(item.combinedScore).toFixed(1)}
+                    </span>
+                  )}
+                </td>
+
+                {/* CTA */}
+                <td className="py-2.5 text-right">
+                  <Link
+                    href={`/production?productId=${item.id}`}
+                    className="text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 whitespace-nowrap transition-colors"
+                  >
+                    Brief →
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );

@@ -141,15 +141,52 @@ Tất cả thay đổi quan trọng của AffiliateScorer được ghi nhận t�
 
 ---
 
-## [Unreleased] — Phase 5+: Business Intelligence & Expansion
+## [1.4.0] — 2026-03-01 — Character-Driven Content System
+
+### Added
+
+- **Character Bible (7 layers)** — Niềm tin, nhân vật phụ, luật thế giới, câu chuyện gốc, bối cảnh, story arc, ngôn ngữ & ritual
+- **Visual Locks & Voice DNA** — Props, texture, bảng màu, tone giọng, nhịp nói
+- **Format Bank (10 formats)** — Review, Myth-bust, A vs B, Checklist, Story, Test, React, Mini Drama, Series Challenge, Deal Breakdown
+- **Idea Matrix** — Crosses bible layers × format templates → idea suggestions
+- **Character-aware brief generation** — Injects character personality + format structure into AI prompts
+- **Consistency QC** — 5 rule-based checks (catchphrase, hook length, proof section, CTA pattern, red lines)
+- **AI Character Bible generation** — Generate full 7-layer bible from channel info
+- **AI Idea Matrix generation** — Cross-reference bible × formats for content ideas
+- **Version locking** — Lock CharacterBible and VideoBible to specific versions
+- **QC badges** — Visual pass/warn indicators on generated briefs
+
+---
+
+## [1.5.0] — 2026-03-02 — Video Production System
+
+### Added
+
+- **Video Bible (12 locks)** — 5 visual (framing, lighting, composition, palette, edit rhythm), 4 audio (voice style, SFX pack, BGM moods, room tone), 3 narrative (opening ritual, proof token rule, closing ritual)
+- **AI Video Bible generation** — Tạo Video Bible từ Character Bible + channel info
+- **Shot Library** — 10 default shot codes (A1-Hook, A2-Close-up, B1-Test Setup, B2-Test Action, B3-Result, B4-Comparison, C1-Verdict, C2-CTA, D1-Product BRoll, D2-Environment)
+- **Scene Templates** — 5 default templates (PASS/FAIL Lab, Myth-bust, A vs B Compare, Mini Drama, Story)
+- **Series Planner** — 4 series types (evergreen, signature, arc, community) with status management
+- **Episode System** — AI episode generation (5 per batch), episode goals (awareness/lead/sale)
+- **Enhanced Export Pack** — ZIP download with 6 files (script.md, shotlist.json, caption.txt, broll-list.md, checklist.md, style-guide.md)
+- **Version Locking API** — Lock/unlock for CharacterBible + VideoBible, version bumps on lock
+- **Video Bible editor UI** — Accordion groups for 12 locks, shot codes view, scene templates view
+- **Series Planner UI** — Create/manage series, episode list, AI generation, status transitions
+- **Brief enrichment** — Video Bible context injected into brief generation for production consistency
+
+### Changed
+
+- Channel detail page — Added "Video Bible" and "Series" tabs (6 tabs total)
+- Production export — Added "Export Pack.zip" button alongside existing individual exports
+- bible-layer-form — Added `disabled` prop support for version locking
+
+---
+
+## [Unreleased] — Future
 
 ### Planned
 
-- Commission tracking deep integration
-- Weekly business reports + goal tracking
-- AI recommendations nâng cao (predictive scoring)
-- Market trend analysis tự động
-- Competitor monitoring
-- Smart alerts (thông báo sản phẩm tiềm năng)
-- Mở rộng data parsers (thêm nguồn dữ liệu mới)
-- Advanced export (PDF, Excel reports)
+- Chrome Extension (MV3) for one-click product capture
+- Multi-channel expansion beyond TikTok
+- Advanced analytics dashboards
+- Mobile PWA optimization

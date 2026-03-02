@@ -90,13 +90,30 @@
 - **Tactical refresh:** AI suggests strategy adjustments based on performance data
 - **Channel-scoped learning:** Weights and patterns tracked per channel
 
-### 3.7 Results Logging & Metrics
+### 3.7 Character-Driven Content
+- **Character Bible (7 layers):** Core beliefs, relationships, world rules, origin story, living spaces, story arcs, language & rituals
+- **Visual Locks & Voice DNA:** Props, texture, color palette, tone, pace, signature
+- **Format Bank (10 formats):** Review, Myth-bust, A vs B, Checklist, Story, Test, React, Mini Drama, Series Challenge, Deal Breakdown
+- **Idea Matrix:** Cross bible layers × format templates → content idea suggestions with hook suggestions
+- **Character-aware briefs:** AI injects character personality + format structure into brief prompts
+- **Consistency QC:** 5 rule-based checks (catchphrase, hook length, proof section, CTA pattern, red lines)
+
+### 3.8 Video Production System
+- **Video Bible (12 locks):** 5 visual (framing, lighting, composition, palette, edit rhythm), 4 audio (voice style, SFX, BGM, room tone), 3 narrative (opening ritual, proof rule, closing ritual)
+- **Shot Library:** 10 standardized shot codes (A1-Hook through D2-Environment) with duration hints and camera types
+- **Scene Templates:** 5 default templates (PASS/FAIL Lab, Myth-bust, A vs B Compare, Mini Drama, Story) with block structure
+- **Series Planner:** 4 types (evergreen, signature, arc, community) with episode goals (awareness/lead/sale)
+- **AI Episode Generation:** Batch create 5 episodes from series premise + format templates
+- **Enhanced Export Pack:** ZIP download with script.md, shotlist.json, caption.txt, broll-list.md, checklist.md, style-guide.md
+- **Version Locking:** Lock CharacterBible and VideoBible versions; locked state prevents edits, version bumps on lock
+
+### 3.9 Results Logging & Metrics
 - **Quick log:** Paste published TikTok video URL → auto-match to asset
 - **Batch log:** Log multiple video results at once
 - **Metrics capture:** Views, likes, shares, saves, comments, orders
 - **Reward scoring:** Maps raw metrics to a normalized reward signal for learning
 
-### 3.8 Learning Engine (Reinforcement Learning)
+### 3.10 Learning Engine (Reinforcement Learning)
 - **Weekly learning cycle:** Analyzes all feedback with time-decay weighting
 - **Weight adjustment:** Per-scope (hook_type, format, angle) and per-channel weights
 - **Explore/exploit:** 70% proven patterns + 30% experimental content
@@ -104,7 +121,7 @@
 - **Win/loss analysis:** Identifies what combinations drive orders vs failures
 - **Playbook:** Accumulated knowledge base of winning strategies
 
-### 3.9 AI Intelligence Layer
+### 3.11 AI Intelligence Layer
 - **Morning Brief:** Daily AI-generated summary — what to produce today, based on scores + calendar + patterns
 - **Weekly Report:** Performance summary, trends, recommendations
 - **Win Probability Calculator:** Predicts success likelihood for product-channel-timing combinations
@@ -112,13 +129,13 @@
 - **Lifecycle Analysis:** Tracks product lifecycle stage (new → rising → hot → peak → declining → dead)
 - **Confidence Widget:** Shows AI confidence level with explanation for each prediction
 
-### 3.10 Business Layer
+### 3.12 Business Layer
 - **Commission tracking:** Record commission payments per product/asset
 - **Financial records:** P&L tracking (commission received, ad spend, other costs)
 - **Goal tracking:** Weekly/monthly targets for videos, commission, views with progress visualization
 - **Calendar events:** Mega sales, flash sales, seasonal events that affect strategy
 
-### 3.11 Settings & Configuration
+### 3.13 Settings & Configuration
 - **API key management:** Encrypted storage (AES-256-GCM) for Anthropic, OpenAI, Google keys
 - **Per-task AI model selection:** Choose which model handles scoring, briefs, morning brief, weekly report
 - **Graceful degradation:** Missing API keys show setup banner, never crash
@@ -232,7 +249,7 @@ Business (commission tracking, P&L, goal progress)
 
 ## 6. Data Models
 
-### Entity Summary (35 models)
+### Entity Summary (40+ models)
 
 | Category | Model | Purpose | Key Fields |
 |----------|-------|---------|------------|
@@ -249,6 +266,14 @@ Business (commission tracking, P&L, goal progress)
 | | `ContentSlot` | Calendar scheduling | channelId, date, time, contentType |
 | **Channel** | `TikTokChannel` | Channel persona | persona, voiceStyle, colorPalette, contentMix, schedule |
 | | `TacticalRefreshLog` | AI tactical suggestions | channelId, suggestions JSON |
+| | `CharacterBible` | 7-layer character framework | coreValues, relationships, storyArcs, catchphrases, version, locked |
+| | `VideoBible` | 12 production locks | framing, lighting, voiceStyleLock, openingRitual, version, locked |
+| | `FormatTemplate` | Content format bank | hookTemplate, bodyTemplate, proofTemplate, ctaTemplate |
+| | `IdeaMatrixItem` | Bible×Format ideas | bibleLayer, formatSlug, hookSuggestions, status |
+| **Production** | `ShotCode` | Standardized shot codes | code, name, durationHint, camera |
+| | `SceneTemplate` | Scene block templates | slug, blocks, defaultShotSequence, rules |
+| | `Series` | Content series planner | type (evergreen/signature/arc/community), status, premise |
+| | `Episode` | Series episodes | episodeNumber, title, goal (awareness/lead/sale), formatSlug |
 | **Tracking** | `AssetMetric` | Video performance | views, likes, shares, saves, comments, orders |
 | | `VideoTracking` | TikTok post tracking | tiktokUrl, isWinner |
 | | `ContentPost` | Post linked to campaign | platform, metrics |
@@ -278,6 +303,10 @@ Business (commission tracking, P&L, goal progress)
 - `ProductIdentity` 1:N `ContentBrief` → 1:N `ContentAsset`
 - `ContentAsset` 1:N `AssetMetric`
 - `TikTokChannel` 1:N `ContentSlot`, `LearningWeightP4`, `TacticalRefreshLog`
+- `TikTokChannel` 1:1 `CharacterBible`, `VideoBible`
+- `TikTokChannel` 1:N `FormatTemplate`, `IdeaMatrixItem`, `Series`
+- `VideoBible` 1:N `ShotCode`, `SceneTemplate`
+- `Series` 1:N `Episode`
 - `ProductionBatch` 1:N `ContentAsset`
 - `ImportBatch` 1:N `ProductSnapshot`, `DataImport`
 
@@ -285,16 +314,21 @@ Business (commission tracking, P&L, goal progress)
 
 ## 7. API Endpoints
 
-### Summary: 70+ route handlers across 20 domains
+### Summary: 90+ route handlers across 25 domains
 
 | Domain | Routes | Methods | Description |
 |--------|--------|---------|-------------|
 | `/api/inbox` | 6 | GET, POST, PATCH, DELETE | Paste links, list items, score, retry |
 | `/api/products` | 7 | GET, POST, PATCH, DELETE | CRUD, gallery, notes, seasonal tags |
 | `/api/briefs` | 5 | GET, POST | Generate, regenerate, batch generate |
-| `/api/production` | 3 | GET, POST, PATCH | Create batches, export packs |
+| `/api/production` | 4 | GET, POST, PATCH | Create batches, export packs, enhanced export-pack (ZIP) |
 | `/api/assets` | 2 | GET, PATCH, DELETE | Asset CRUD |
 | `/api/channels` | 5 | GET, POST, PATCH, DELETE | Channel CRUD, generate profile, refresh tactics, export |
+| `/api/channels/[id]/character-bible` | 4 | GET, PUT, DELETE, POST | Character Bible CRUD, generate, lock |
+| `/api/channels/[id]/video-bible` | 6 | GET, PUT, DELETE, POST | Video Bible CRUD, generate, lock, seed, shot-codes, scene-templates |
+| `/api/channels/[id]/format-templates` | 4 | GET, POST, PUT, DELETE | Format Bank CRUD, seed defaults |
+| `/api/channels/[id]/idea-matrix` | 4 | GET, POST, PUT | Idea Matrix CRUD, generate, pick/dismiss |
+| `/api/channels/[id]/series` | 8 | GET, POST, PUT, DELETE | Series CRUD, episodes CRUD, AI episode generation |
 | `/api/calendar` | 5 | GET, POST, PATCH, DELETE | Events, slots, upcoming |
 | `/api/log` | 3 | POST | Quick log, batch log, match video to asset |
 | `/api/metrics/capture` | 1 | POST | Capture asset performance |
@@ -346,10 +380,10 @@ Business (commission tracking, P&L, goal progress)
 | Dashboard | `/` | Morning brief widget, channel task board, quick paste, inbox stats, upcoming events, winning patterns, content suggestions, orphan alerts |
 | Inbox | `/inbox` | Paste link box, inbox table with status filters, scoring |
 | Inbox Detail | `/inbox/[id]` | Product identity detail, score breakdown, brief status |
-| Production | `/production` | Create tab (product selector → batch generation), in-progress tab, completed tab, calendar tab, tracking tab |
+| Production | `/production` | Create tab (product selector → batch generation → export packs + ZIP), in-progress tab, completed tab, calendar tab, tracking tab |
 | Library | `/library` | All assets with filters, performance data |
 | Channels | `/channels` | Channel list with personas, content mix |
-| Channel Detail | `/channels/[id]` | Channel profile, tactics, calendar, content strategy |
+| Channel Detail | `/channels/[id]` | Channel profile, Character Bible, Format Bank, Idea Matrix, Video Bible, Series Planner |
 | Insights | `/insights` | Overview tab, financial tab, calendar events tab, AI intelligence section (patterns, anomalies, weekly report) |
 | Log | `/log` | Quick mode (paste URL + metrics), batch mode |
 | Playbook | `/playbook` | Winning patterns, strategies, accumulated knowledge |
@@ -497,6 +531,28 @@ Paste links → Inbox auto-populates → Score products
 - Goal tracking (weekly/monthly targets)
 - Morning brief (factory-optimized version)
 - Calendar events (mega sale, flash sale, seasonal)
+
+### Phase 6 — Channel-Centric Refactor (COMPLETE)
+- Channel Profile with AI-generated setup
+- Brief diversity (content type, video format, channel context)
+- Tactical Refresh with history
+- Channel export (JSON)
+
+### Phase 7 — Character-Driven Content (COMPLETE)
+- Character Bible (7 layers) with AI generation
+- Format Bank (10 default formats) with template structure
+- Idea Matrix (bible × format cross-reference)
+- Character-aware brief generation
+- Consistency QC (5 rule-based checks)
+- Version locking for CharacterBible
+
+### Phase 8 — Video Production System (COMPLETE)
+- Video Bible (12 locks: visual/audio/narrative) with AI generation
+- Shot Library (10 default codes) + Scene Templates (5 defaults)
+- Series Planner (4 types) + Episode System with AI generation
+- Enhanced Export Pack (ZIP with 6 files)
+- Version locking for VideoBible
+- UI: Video Bible editor, Series Planner, channel detail tabs
 
 ### Future / Backlog
 - Chrome Extension (MV3) for one-click product capture from TikTok

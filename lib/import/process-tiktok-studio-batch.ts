@@ -76,25 +76,32 @@ export async function processTikTokStudioBatch(
         });
       }
 
-      // Update progress after each file
-      await updateBatchProgress(batchId, {
-        rowsProcessed: i + 1,
-        rowsCreated: totalImported,
-        rowsError: filesWithErrors,
-      });
+      // Update progress — ATOMIC on last file: progress + status together
+      // Prevents the race where progress=100% but status still "processing"
+      const isLastFile = i === preparedFiles.length - 1;
+
+      if (isLastFile) {
+        const status = filesWithErrors > 0 && totalImported > 0 ? "partial"
+          : filesWithErrors > 0 ? "failed"
+          : "completed";
+
+        await updateBatchProgress(batchId, {
+          rowsProcessed: i + 1,
+          rowsCreated: totalImported,
+          rowsError: filesWithErrors,
+          status,
+          scoringStatus: "completed",
+          errorLog: { fileResults } as unknown as InputJsonValue,
+          completedAt: new Date(),
+        });
+      } else {
+        await updateBatchProgress(batchId, {
+          rowsProcessed: i + 1,
+          rowsCreated: totalImported,
+          rowsError: filesWithErrors,
+        });
+      }
     }
-
-    // Mark complete
-    const status = filesWithErrors > 0 && totalImported > 0 ? "partial"
-      : filesWithErrors > 0 ? "failed"
-      : "completed";
-
-    await updateBatchProgress(batchId, {
-      status,
-      scoringStatus: "completed", // No AI scoring for TikTok Studio
-      errorLog: { fileResults } as unknown as InputJsonValue,
-      completedAt: new Date(),
-    });
   } catch (err) {
     console.error("processTikTokStudioBatch fatal:", err);
     try {

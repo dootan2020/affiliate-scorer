@@ -92,13 +92,15 @@ function LiveProgress({
 
   const label = hasFailed
     ? "Import thất bại"
-    : isImporting
+    : isImporting && status.progress < 100
       ? `Đang import... ${status.rowsProcessed}/${status.recordCount}`
-      : isScoring
-        ? "Đang chấm điểm AI..."
-        : isDone
-          ? "Hoàn thành!"
-          : "Đang xử lý...";
+      : isImporting && status.progress >= 100
+        ? "Đang đồng bộ dữ liệu..."
+        : isScoring
+          ? "Đang chấm điểm AI..."
+          : isDone
+            ? "Hoàn thành!"
+            : "Đang xử lý...";
 
   const progressValue = isScoring && !isDone
     ? undefined // indeterminate for scoring

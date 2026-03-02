@@ -32,8 +32,33 @@ export async function GET(
       return NextResponse.json({ error: "Batch not found" }, { status: 404 });
     }
 
-    const isTerminal = ["completed", "failed", "partial"].includes(batch.status)
+    let isTerminal = ["completed", "failed", "partial"].includes(batch.status)
       && ["completed", "failed"].includes(batch.scoringStatus);
+
+    // Stuck detection: if processing for over 5 minutes, auto-fail
+    const STUCK_TIMEOUT_MS = 5 * 60 * 1000;
+    if (!isTerminal) {
+      const age = Date.now() - new Date(batch.importDate).getTime();
+      if (age > STUCK_TIMEOUT_MS) {
+        const needsStatusFix = batch.status === "processing" || batch.status === "pending";
+        const needsScoringFix = batch.scoringStatus === "processing" || batch.scoringStatus === "pending";
+        if (needsStatusFix || needsScoringFix) {
+          await prisma.importBatch.update({
+            where: { id },
+            data: {
+              ...(needsStatusFix && { status: "failed" }),
+              ...(needsScoringFix && { scoringStatus: "failed" }),
+              completedAt: new Date(),
+              errorLog: { timeout: "Background processing timed out" },
+            },
+          });
+          batch.status = needsStatusFix ? "failed" : batch.status;
+          batch.scoringStatus = needsScoringFix ? "failed" : batch.scoringStatus;
+          batch.completedAt = new Date();
+          isTerminal = true;
+        }
+      }
+    }
 
     return NextResponse.json({
       data: {

@@ -34,23 +34,21 @@ export async function processProductBatch(
     const totalCreated = toCreate.length;
     const totalUpdated = toUpdate.length;
 
-    await updateBatchProgress(batchId, {
-      rowsProcessed: deduplicated.length,
-      rowsCreated: totalCreated,
-      rowsUpdated: totalUpdated,
-      rowsError: errors,
-    });
-
     // Stage 2: Batch identity sync
     const allProductIds = [...created.map((p) => p.id), ...toUpdate.map((u) => u.existingId)];
     await batchSyncIdentities(allProductIds, deduplicated, created, toUpdate);
 
-    // Mark import phase done
+    // Mark import phase done — ATOMIC update: progress + status together
+    // Prevents the race where progress=100% but status still "processing"
     const importStatus = errors > 0 && (totalCreated + totalUpdated) > 0
       ? "partial"
       : errors > 0 ? "failed" : "completed";
 
     await updateBatchProgress(batchId, {
+      rowsProcessed: deduplicated.length,
+      rowsCreated: totalCreated,
+      rowsUpdated: totalUpdated,
+      rowsError: errors,
       status: importStatus,
       scoringStatus: "processing",
       errorLog: errors > 0 ? { totalErrors: errors } : undefined,

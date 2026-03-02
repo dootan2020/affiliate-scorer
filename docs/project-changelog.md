@@ -182,6 +182,53 @@ Tất cả thay đổi quan trọng của AffiliateScorer được ghi nhận t�
 
 ---
 
+## [1.6.0] — 2026-02-28 to 2026-03-02 — Comprehensive UI/UX Overhaul
+
+### Added
+
+- **Shared component library (8 components)** — PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible
+- **Design tokens** — Semantic colors (success/emerald, warning/amber, info/blue), spacing scale, typography hierarchy
+- **Command Palette (⌘K)** — Quick navigation via cmdk, keyboard-driven interface
+- **Animated Tab Transitions** — Framer-motion slide/fade effects on Production & Insights tabs
+- **Sparkline SVG Component** — Lightweight inline charts for trend visualization
+- **Dashboard Bento Layout** — Flexible grid with empty states, scroll indicator dots
+- **Inbox Modularization** — Split 524-line monolith into 5 focused components (PasteBox, Table, Filters, Pagination, DetailPanel)
+- **Sidebar Restructure** — Collapsible nav groups, dynamic badge counts, improved visual hierarchy
+- **Production Stepper** — Multi-step flow with status indicators
+- **Insights Tab Consolidation** — Reduced from 6 to 4 focused tabs (Overview, Financial, Calendar, Patterns)
+- **Accessibility Improvements** — ARIA roles on tabs/breadcrumb, keyboard navigation support, ESC handler
+- **Design System Documentation** — Color tokens, component patterns, responsive guidelines
+
+### Changed
+
+- **New dependencies** — Added framer-motion (4.x), cmdk (0.x)
+- **Component Architecture** — Moved from monolithic pages to composable, single-responsibility components
+- **Page Headers** — All 13 pages now use consistent PageHeader component with breadcrumb
+- **Navigation** — Unified pill-style tabs across product, sidebar, production flows
+- **Color Palette** — Enhanced with warm accent colors, semantic status colors
+- **Typography** — Standardized text sizes, improved hierarchy across all pages
+- **Spacing & Layout** — Consistent whitespace, rounded corners (xl/2xl), shadow depth layering
+- **Dark Mode** — Refined dark theme colors for better contrast and visual consistency
+
+### Fixed
+
+- **Code Quality** — Removed ~2000 lines of dead/duplicate code
+- **ESC Handler** — Proper escape key handling in modals/popovers
+- **ARIA Attributes** — Screen reader support for tabs, breadcrumbs, dropdowns
+- **Sparkline Safety** — Defensive checks for empty/invalid data arrays
+- **Tab Focus Management** — Keyboard navigation between tab panels
+- **Responsive Design** — Fixed mobile breakpoint issues on dashboard/inbox/production
+
+### Technical Debt Resolved
+
+- Consolidated 3 similar badge components into 1
+- Reduced component bundle size via dead code removal
+- Improved tree-shaking with named exports
+- Unified form styling across all pages
+- Standardized error/loading/empty states
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned

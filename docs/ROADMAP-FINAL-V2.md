@@ -256,3 +256,151 @@ Tháng 1: 10+ video/ngày nhờ AI scripts, tiết kiệm 3 giờ/ngày
 Tháng 2: AI biết hook/format nào win → scripts chính xác hơn
 Tháng 3: Playbook hoàn chỉnh, commission tăng 2-3x
 ```
+
+---
+
+## PHASE STATUS — ACTUAL DEVELOPMENT (2026-02-24 to 2026-03-02)
+
+> Production phases completed, reflecting actual implementation beyond original 5-phase roadmap.
+
+### Phase 1 ✅ COMPLETE
+- FastMoss XLSX parser + AI scoring (6-criteria formula)
+- Dashboard (Top 10 products, stat cards, dark mode)
+- Product detail page (radar score, profit estimator, similar products)
+- Upload page (drag-drop, format detection, column mapping)
+- Insights page + learning engine
+- **Commits:** Foundation, scoring, dashboard, insights
+
+### Phase 2 ✅ COMPLETE
+- Personal layer (notes, ratings, tags)
+- Shop management (favorites, edit info)
+- Financial tracking (ad cost, ROI)
+- Calendar system (18 sale events)
+- Campaign tracker
+- Morning Brief
+- **Commits:** Personal layer, typography fixes, Vietnamese localization
+
+### Phase 3 ✅ COMPLETE
+- Content Brief generation (5 angles, 10 hooks, 3 scripts)
+- Material Pack system (badges, copy, sound)
+- Content Calendar (week view, slots)
+- Video Tracking (results table, CSV import, winner detection)
+- Winning Patterns dashboard
+- Product Image Gallery (upload, download, zip packs)
+- TikTok Studio parsers
+- Unified Inbox (merge products + inbox)
+- Multi-provider API (Claude, Google, OpenAI)
+- Settings page (AI model config)
+- Guide page (12 workflow diagrams)
+- **Commits:** Content factory, UI polish, comprehensive review fixes
+
+### Phase 4 ✅ COMPLETE
+- E2E audit fixes (50+ issues across security, validation, performance)
+- Brief prompt enrichment + AI model selection
+- Production page export + broken image fixes
+- Product selector improvements
+- Product images 48px sizing + hover preview
+- Cache optimization, timezone fixes
+- Hardcoded model fallback enforcement
+- **Commits:** Codebase review, E2E workflow fixes
+
+### Phase 5 ✅ COMPLETE
+- Channel Profile (M1: Schema, API, pages)
+- Brief Diversification (M2: content type, video format, channel context)
+- Tactical Refresh (TikTok channel strategy generation)
+- Tactical Refresh History (log persistence, UI)
+- Channel Export (JSON with Unicode support)
+- AI Profile Generation (auto-generate from channel info)
+- **Commits:** Channel-centric refactor (18 file audit fixes)
+
+### Phase 6 ✅ COMPLETE
+- Character Bible (7 layers: beliefs, characters, world rules, origin story, setting, story arc, language & rituals)
+- Visual Locks (props, texture, colors)
+- Voice DNA (tone, speech rhythm)
+- Format Bank (10 templates: review, myth-bust, A vs B, checklist, story, test, react, mini drama, series, deal)
+- Idea Matrix (7 layers × 10 formats = content suggestions)
+- Character-aware brief generation
+- Consistency QC (5 rule checks)
+- AI Character Bible + Idea Matrix generation
+- Version locking
+- QC badges
+- **Commits:** Character-driven content system
+
+### Phase 7 ✅ COMPLETE
+- Video Bible (12 locks: framing, lighting, composition, palette, edit rhythm, voice style, SFX, BGM, room tone, opening/proof/closing rituals)
+- Shot Library (10 codes: A1-Hook, A2-Close, B1-Setup, B2-Action, B3-Result, B4-Compare, C1-Verdict, C2-CTA, D1-BRoll, D2-Env)
+- Scene Templates (5: PASS/FAIL Lab, myth-bust, A vs B, mini drama, story)
+- Series Planner (4 types: evergreen, signature, arc, community)
+- Episode System (AI generation, 5/batch, goal-based)
+- Enhanced Export Pack ZIP (6 files: script, shotlist, caption, broll, checklist, style guide)
+- Version Locking API
+- Video Bible UI editor (accordion, shot codes, scene templates)
+- Series Planner UI (create/manage, AI generation, status)
+- Brief enrichment with Video Bible context
+- **Commits:** Video production system (12 locks, series, export pack)
+
+### Phase 8 ✅ COMPLETE — Comprehensive UI/UX Overhaul (2026-02-28 to 2026-03-02)
+
+**Components (8 shared, created in Batch 1):**
+- PageHeader — consistent page titles with breadcrumb navigation
+- PillTabs — segmented tabs (dashboard, production, insights)
+- EmptyState — unified empty view (icon + text + CTA)
+- Breadcrumb — navigation path + active state
+- SearchInput — reusable search field
+- StatCard — metric display (number + label + delta)
+- SkeletonCard — loading skeleton (matches card layout)
+- SidebarCollapsible — collapsible nav groups with badges
+
+**Design Tokens:**
+- Semantic colors: success/emerald, warning/amber, info/blue, error/rose
+- Spacing scale: consistent gap/padding values
+- Typography: hierarchy (h1/h2/body/caption)
+- Shadows: layered depth (sm/md/lg)
+
+**Major Updates (Batch 2-5):**
+- Dashboard bento layout (flexible grid, empty state, scroll indicator dots)
+- Inbox modularization (524 lines → 5 components: PasteBox, Table, Filters, Pagination, DetailPanel)
+- Sidebar restructure (collapsible groups, dynamic badges, improved hierarchy)
+- Production stepper (multi-step flow with status)
+- Insights consolidation (6 tabs → 4: Overview, Financial, Calendar, Patterns)
+
+**Advanced Features (Batch 6):**
+- Command Palette (⌘K via cmdk for quick navigation)
+- Framer-motion tab transitions (slide/fade on Production, Insights)
+- Sparkline SVG component (lightweight inline charts)
+
+**Accessibility & Polish (Code Review Fixes):**
+- ESC key handler (modals/popovers)
+- ARIA roles (tabs, breadcrumb, dropdowns)
+- Keyboard navigation (tab focus management)
+- Sparkline safety (defensive empty/invalid data checks)
+- Responsive fixes (mobile breakpoints)
+
+**Code Quality:**
+- Removed ~2000 lines dead code
+- Consolidated 3 similar badge components into 1
+- Reduced bundle size via tree-shaking
+- Unified form styling
+- Standardized error/loading/empty states
+
+**New Packages:**
+- framer-motion (4.x) — tab transitions
+- cmdk (0.x) — command palette
+
+**All 13 Pages Updated:**
+- Dashboard, Inbox, Production, Channels, Library, Insights, Log, Playbook, Sync, Settings, Guide, Drafts, Team
+
+**Commits:**
+- `395d2f1` — Batch 1: shared components, design tokens, 6 quick wins
+- `1c97f65` — Batches 2-5: dashboard, inbox, sidebar, stepper, insights
+- `5257b91` — Batch 6: command palette, transitions, sparkline
+- `23dc091` — Code review: ESC, ARIA, sparkline safety
+
+---
+
+## NEXT PHASE — Future Work (Post-Phase 8)
+
+- Chrome Extension (MV3) for one-click capture
+- Mobile PWA optimization
+- Advanced analytics dashboards
+- Multi-channel expansion (YouTube, Instagram)

@@ -16,15 +16,19 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 | UI | Tailwind CSS 4 + Radix UI + lucide-react | — |
 | Theme | next-themes (dark mode) | — |
 | Charts | Recharts | 3.7 |
+| Animation | Framer Motion | 4.x |
+| Command Palette | cmdk | 0.x |
 | Validation | Zod | 4.3 |
 | Package Manager | pnpm | — |
 
 ## Thống Kê Dự Án
 
 - **Database Models:** 40+
-- **Pages:** 15
+- **Pages:** 13
 - **API Endpoints:** 90+
-- **Components:** 80+
+- **Components:** 95+ (including 8 shared design system components)
+- **Shared Components:** PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible
+- **Design Tokens:** 25+ (colors, spacing, typography, shadows)
 
 ## Trạng Thái Phát Triển
 
@@ -63,13 +67,15 @@ affiliate-scorer/
 │   │   └── ...                 # tracking, settings, calendar, etc.
 │   └── layout.tsx              # Root layout + metadata + ThemeProvider
 │
-├── components/                 # 80+ React components
-│   ├── layout/                 # Header, nav, sidebar
+├── components/                 # 95+ React components
+│   ├── layout/                 # Header, nav, sidebar, PageHeader
 │   ├── channels/               # Channel detail, bible editors, format bank, idea matrix, video bible, series planner
-│   ├── production/             # Product selector, brief preview, export
-│   ├── inbox/                  # Inbox table, paste box, filters
-│   ├── insights/               # Charts, calendar, financial
-│   ├── shared/                 # QC badge, reusable components
+│   ├── production/             # Product selector, brief preview, export, production stepper
+│   ├── inbox/                  # Paste box, inbox table, filters, pagination, detail panel (modularized)
+│   ├── insights/               # Charts, calendar, financial, overview tab (consolidated)
+│   ├── dashboard/              # Bento layout cards, widgets, stat cards
+│   ├── shared/                 # Design system: PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible, Sparkline, QC badge
+│   ├── ai/                     # Intelligence components
 │   └── ui/                     # Radix primitives, shadcn components
 │
 ├── lib/                        # Business logic + utilities
@@ -116,3 +122,7 @@ Key model groups:
 - **Version Locking:** Lock bible versions for production stability
 - **Learning Engine:** RL-style weight updates from performance feedback
 - **Playbook:** Accumulated winning patterns and strategies
+- **Design System:** Shared components, design tokens, consistent styling across all 13 pages
+- **Command Palette:** Quick navigation with ⌘K keyboard shortcut
+- **Responsive Layouts:** Mobile-first design with bento layouts, collapsible navigation
+- **Accessibility:** ARIA attributes, keyboard navigation, screen reader support

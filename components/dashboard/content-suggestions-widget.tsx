@@ -12,10 +12,34 @@ interface ProductIdentityItem {
   category: string | null;
   imageUrl: string | null;
   combinedScore: number | null;
+  contentPotentialScore: number | null;
+  deltaType: string | null;
   inboxState: string;
+  createdAt: string;
 }
 
 const EXCLUDED_STATES = ["briefed", "published"];
+
+/** Composite ranking: combinedScore + bonus for breakout/surge + contentPotential + recency */
+function rankProduct(p: ProductIdentityItem): number {
+  let score = Number(p.combinedScore ?? 0);
+
+  // Bonus for trending deltaType
+  if (p.deltaType === "breakout") score += 15;
+  else if (p.deltaType === "surge") score += 10;
+  else if (p.deltaType === "rising") score += 5;
+
+  // Blend contentPotentialScore
+  if (p.contentPotentialScore != null) {
+    score += Number(p.contentPotentialScore) * 0.3;
+  }
+
+  // Recency bonus: scored within last 3 days gets small boost
+  const daysSinceCreated = (Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceCreated <= 3) score += 5;
+
+  return score;
+}
 
 export function ContentSuggestionsWidget(): React.ReactElement {
   const [items, setItems] = useState<ProductIdentityItem[]>([]);
@@ -28,6 +52,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
         if (!d.data) return;
         const filtered = (d.data as ProductIdentityItem[])
           .filter((p) => !EXCLUDED_STATES.includes(p.inboxState))
+          .sort((a, b) => rankProduct(b) - rankProduct(a))
           .slice(0, 8);
         setItems(filtered);
       })
@@ -36,7 +61,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5 h-full">
       <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-orange-500" />
@@ -45,7 +70,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
           </h3>
         </div>
         <Link
-          href="/inbox"
+          href="/inbox?state=scored"
           className="text-xs text-orange-600 dark:text-orange-400 hover:underline"
         >
           Xem tất cả →
@@ -73,11 +98,11 @@ export function ContentSuggestionsWidget(): React.ReactElement {
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
+              className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
             >
               {/* Thumbnail */}
               <ProductImage
@@ -85,16 +110,26 @@ export function ContentSuggestionsWidget(): React.ReactElement {
                 alt={item.title ?? "Sản phẩm"}
               />
 
-              {/* Info */}
+              {/* Info — clickable product name */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                <Link
+                  href={`/inbox/${item.id}`}
+                  className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate block hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                >
                   {item.title ?? "Sản phẩm chưa đặt tên"}
-                </p>
-                {item.category && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
-                    {item.category}
-                  </p>
-                )}
+                </Link>
+                <div className="flex items-center gap-1.5">
+                  {item.category && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                      {item.category}
+                    </p>
+                  )}
+                  {item.deltaType && ["breakout", "surge"].includes(item.deltaType) && (
+                    <span className="text-[10px] font-medium text-rose-600 dark:text-rose-400">
+                      {item.deltaType === "breakout" ? "🔥" : "📈"}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Score */}
@@ -109,7 +144,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
                 href={`/production?productId=${item.id}`}
                 className="shrink-0 text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 whitespace-nowrap transition-colors"
               >
-                Tạo Brief →
+                Brief →
               </Link>
             </div>
           ))}

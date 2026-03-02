@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 interface PatternData {
   hasEnoughData: boolean;
   totalTracked: number;
-  // Format performance
   formatStats: Array<{
     format: string;
     count: number;
@@ -12,32 +11,42 @@ interface PatternData {
     avgOrders: number;
     winRate: number;
   }>;
-  // Content type performance
   contentTypeStats: Array<{
     type: string;
     count: number;
     avgViews: number;
     avgEngagement: number;
   }>;
-  // Top products
   topProducts: Array<{
     title: string;
+    productIdentityId: string | null;
     totalOrders: number;
     totalRevenue: number;
     totalCommission: number;
   }>;
-  // Best posting time
   bestHook: { text: string; views: number } | null;
-  // Winners count
   winnersCount: number;
   totalRevenue: number;
   totalCommission: number;
 }
 
 /** GET — analyze tracking data for winning patterns */
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
+    const { searchParams } = request.nextUrl;
+    const days = Math.min(365, Math.max(7, parseInt(searchParams.get("days") || "30", 10)));
+    const limit = Math.min(1000, Math.max(10, parseInt(searchParams.get("limit") || "500", 10)));
+
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - days);
+    sinceDate.setHours(0, 0, 0, 0);
+
     const allTracking = await prisma.videoTracking.findMany({
+      where: {
+        createdAt: { gte: sinceDate },
+      },
+      take: limit,
+      orderBy: { createdAt: "desc" },
       include: {
         contentAsset: {
           select: {
@@ -45,6 +54,7 @@ export async function GET(): Promise<NextResponse> {
             contentType: true,
             videoFormat: true,
             hookText: true,
+            productIdentityId: true,
             productIdentity: {
               select: { title: true },
             },
@@ -94,18 +104,24 @@ export async function GET(): Promise<NextResponse> {
       }))
       .sort((a, b) => b.avgViews - a.avgViews);
 
-    // Top products by revenue
-    const productMap = new Map<string, { orders: number; revenue: number; commission: number }>();
+    // Top products by revenue — include productIdentityId
+    const productMap = new Map<string, { identityId: string | null; orders: number; revenue: number; commission: number }>();
     for (const t of allTracking) {
       const title = t.contentAsset.productIdentity?.title || "Unknown";
-      const entry = productMap.get(title) || { orders: 0, revenue: 0, commission: 0 };
+      const entry = productMap.get(title) || { identityId: t.contentAsset.productIdentityId, orders: 0, revenue: 0, commission: 0 };
       entry.orders += t.orders ?? 0;
       entry.revenue += t.revenue ?? 0;
       entry.commission += t.commission ?? 0;
       productMap.set(title, entry);
     }
     const topProducts = [...productMap.entries()]
-      .map(([title, data]) => ({ title, totalOrders: data.orders, totalRevenue: data.revenue, totalCommission: data.commission }))
+      .map(([title, data]) => ({
+        title,
+        productIdentityId: data.identityId,
+        totalOrders: data.orders,
+        totalRevenue: data.revenue,
+        totalCommission: data.commission,
+      }))
       .sort((a, b) => b.totalRevenue - a.totalRevenue)
       .slice(0, 3);
 

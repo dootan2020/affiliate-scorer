@@ -5,10 +5,9 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 
 interface OrphanStats {
-  scoredWithoutBriefs: number;
   briefsWithoutAssets: number;
   publishedWithoutTracking: number;
-  slotsWithoutAsset: number;
+  overdueSlots: number;
   total: number;
 }
 
@@ -25,10 +24,9 @@ export function OrphanAlertWidget(): React.ReactElement | null {
   if (!stats || stats.total === 0) return null;
 
   const items = [
-    { label: "SP chưa brief", count: stats.scoredWithoutBriefs, href: "/inbox" },
-    { label: "Brief chưa asset", count: stats.briefsWithoutAssets, href: "/production" },
+    { label: "Brief chưa sản xuất", count: stats.briefsWithoutAssets, href: "/production" },
     { label: "Video chưa tracking", count: stats.publishedWithoutTracking, href: "/production" },
-    { label: "Slot trống", count: stats.slotsWithoutAsset, href: "/channels" },
+    { label: "Slot quá hạn", count: stats.overdueSlots, href: "/channels" },
   ].filter((item) => item.count > 0);
 
   return (
@@ -36,10 +34,10 @@ export function OrphanAlertWidget(): React.ReactElement | null {
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
         <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
-          {stats.total} dữ liệu mồ côi
+          {stats.total} mục cần xử lý
         </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {items.map((item) => (
           <Link
             key={item.label}

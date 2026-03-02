@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { ChannelTaskBoard } from "@/components/dashboard/channel-task-board";
 import { MorningBriefWidget } from "@/components/dashboard/morning-brief-widget";
-import { QuickPasteWidget } from "@/components/dashboard/quick-paste-widget";
 import { ContentSuggestionsWidget } from "@/components/dashboard/content-suggestions-widget";
 import { WinningPatternsWidget } from "@/components/dashboard/winning-patterns-widget";
 import { OrphanAlertWidget } from "@/components/dashboard/orphan-alert-widget";
@@ -17,26 +16,23 @@ export default function DashboardPage(): React.ReactElement {
         Tổng quan
       </h1>
 
-      {/* Orphan data alert — only shows if orphans exist */}
+      {/* Row 0: Alert bar — only shows if real orphans exist */}
       <OrphanAlertWidget />
 
-      {/* Row 1: Channel Task Board (full width) — THE main widget */}
-      <ChannelTaskBoard />
+      {/* Row 1: Morning Brief — full width, most important */}
+      <MorningBriefWidget />
 
-      {/* Row 2: Morning Brief (2/3) + Quick Paste (1/3) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <MorningBriefWidget />
+      {/* Row 2: Channel Task Board (left) + Content Suggestions (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3">
+          <ChannelTaskBoard />
         </div>
-        <div className="lg:col-span-1">
-          <QuickPasteWidget />
+        <div className="lg:col-span-2">
+          <ContentSuggestionsWidget />
         </div>
       </div>
 
-      {/* Row 3: Content Suggestions */}
-      <ContentSuggestionsWidget />
-
-      {/* Row 4: Winning Patterns */}
+      {/* Row 3: Winning Patterns — compact, only if ≥10 videos tracked */}
       <WinningPatternsWidget />
     </div>
   );

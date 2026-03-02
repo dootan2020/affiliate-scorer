@@ -4,16 +4,18 @@ import { callAI } from "@/lib/ai/call-ai";
 
 interface BriefContent {
   greeting: string;
-  channel_tasks?: Array<{ channel: string; action: string; priority: number }>;
-  produce_today: Array<{ product: string; reason: string; videos: number; priority: number }>;
-  new_products_alert: Array<{ product: string; why: string }>;
+  channel_tasks?: Array<{ channel: string; channelId?: string; action: string; priority: number }>;
+  produce_today: Array<{ product: string; productId?: string; reason: string; videos: number; priority: number }>;
+  new_products_alert: Array<{ product: string; productId?: string; why: string }>;
+  upcoming_events?: Array<{ title: string; date: string }>;
   yesterday_recap: string;
   tip: string;
   weekly_progress: string;
 }
 
 const SYSTEM_PROMPT = `Bạn là AI thư ký cho affiliate marketer TikTok Việt Nam.
-Tạo Morning Brief ngắn gọn, actionable. Output luôn là JSON hợp lệ, không có markdown code fences.`;
+Tạo Morning Brief ngắn gọn, actionable. Output luôn là JSON hợp lệ, không có markdown code fences.
+QUAN TRỌNG: Với mỗi sản phẩm, PHẢI trả về đúng productId đã cung cấp. Với mỗi kênh, PHẢI trả về đúng channelId đã cung cấp.`;
 
 export async function generateMorningBrief(): Promise<string> {
   const today = new Date();
@@ -24,8 +26,12 @@ export async function generateMorningBrief(): Promise<string> {
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
+  // 7 days from now for upcoming events
+  const sevenDaysLater = new Date(todayStart);
+  sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+
   // Gather data
-  const [newProducts, briefedProducts, yesterdayMetrics, topWeights, currentGoal, activeChannels] = await Promise.all([
+  const [newProducts, briefedProducts, yesterdayMetrics, topWeights, currentGoal, activeChannels, upcomingEvents] = await Promise.all([
     // SP mới chưa tạo content
     prisma.productIdentity.findMany({
       where: { inboxState: { in: ["scored", "enriched"] } },
@@ -54,10 +60,11 @@ export async function generateMorningBrief(): Promise<string> {
         periodEnd: { gte: today },
       },
     }),
-    // Active channels with today's slot counts + draft counts + tracking aggregates
+    // Active channels with today's slot counts + draft counts
     prisma.tikTokChannel.findMany({
       where: { isActive: true },
       select: {
+        id: true,
         name: true,
         personaName: true,
         contentSlots: {
@@ -73,6 +80,15 @@ export async function generateMorningBrief(): Promise<string> {
         },
       },
     }),
+    // Upcoming calendar events (next 7 days)
+    prisma.calendarEvent.findMany({
+      where: {
+        startDate: { gte: todayStart, lte: sevenDaysLater },
+      },
+      orderBy: { startDate: "asc" },
+      take: 5,
+      select: { name: true, startDate: true, eventType: true },
+    }),
   ]);
 
   // Top hook/format
@@ -83,7 +99,7 @@ export async function generateMorningBrief(): Promise<string> {
     .slice(0, 3)
     .map((w) => w.key);
 
-  // Build channel summary with classification
+  // Build channel summary with IDs
   const channelLines = activeChannels.map((ch) => {
     const totalSlots = ch.contentSlots.length;
     const planned = ch.contentSlots.filter((s) => s.status === "planned").length;
@@ -100,7 +116,22 @@ export async function generateMorningBrief(): Promise<string> {
       classification = `${totalAssets} assets tổng`;
     }
 
-    return `- ${ch.name} (${ch.personaName}): ${classification} | ${totalSlots} slots today (${planned} planned, ${briefed} briefed)`;
+    return `- ${ch.name} (channelId: ${ch.id}, persona: ${ch.personaName}): ${classification} | ${totalSlots} slots today (${planned} planned, ${briefed} briefed)`;
+  });
+
+  // Build product lines with IDs
+  const productLines = newProducts.map((p) =>
+    `- ${p.title || "Chưa có tên"} (productId: ${p.id}) | ${p.deltaType || "?"} | Score: ${p.combinedScore || "?"}`
+  );
+
+  const briefedLines = briefedProducts.map((p) =>
+    `- ${p.title || "Chưa có tên"} (productId: ${p.id}) | ${p._count.briefs} briefs`
+  );
+
+  // Build event lines
+  const eventLines = upcomingEvents.map((e) => {
+    const dateStr = new Date(e.startDate).toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" });
+    return `- ${e.name} (${e.eventType}) — ngày ${dateStr}`;
   });
 
   const prompt = `
@@ -110,14 +141,13 @@ KÊNH HOẠT ĐỘNG:
 ${channelLines.length > 0 ? channelLines.join("\n") : "CHƯA CÓ KÊNH — đề xuất tạo kênh đầu tiên"}
 
 SẢN PHẨM MỚI (chưa tạo content):
-${newProducts.length > 0
-    ? newProducts.map((p) => `- ${p.title || "Chưa có tên"} | ${p.deltaType || "?"} | Score: ${p.combinedScore || "?"}`).join("\n")
-    : "Không có SP mới"}
+${productLines.length > 0 ? productLines.join("\n") : "Không có SP mới"}
 
 SẢN PHẨM ĐÃ CÓ BRIEF (chưa sản xuất):
-${briefedProducts.length > 0
-    ? briefedProducts.map((p) => `- ${p.title || "Chưa có tên"} | ${p._count.briefs} briefs`).join("\n")
-    : "Không có"}
+${briefedLines.length > 0 ? briefedLines.join("\n") : "Không có"}
+
+SỰ KIỆN SẮP TỚI (7 ngày):
+${eventLines.length > 0 ? eventLines.join("\n") : "Không có sự kiện"}
 
 KẾT QUẢ HÔM QUA:
 - Videos đăng: ${yesterdayMetrics.published}
@@ -134,12 +164,13 @@ ${currentGoal
     ? `- Target: ${currentGoal.targetVideos || "?"} videos\n- Đã làm: ${currentGoal.actualVideos} videos\n- Còn lại: ${(currentGoal.targetVideos || 0) - currentGoal.actualVideos}`
     : "Chưa đặt mục tiêu"}
 
-Output JSON:
+Output JSON (trả về ĐÚNG channelId và productId đã cung cấp ở trên, KHÔNG bịa ra):
 {
   "greeting": "Chào buổi sáng ngắn gọn",
-  "channel_tasks": [{ "channel": "Tên kênh", "action": "Việc cần làm hôm nay cho kênh này", "priority": 1 }],
-  "produce_today": [{ "product": "Tên SP", "reason": "Tại sao", "videos": 3, "priority": 1 }],
-  "new_products_alert": [{ "product": "Tên SP", "why": "Tại sao đáng chú ý" }],
+  "channel_tasks": [{ "channel": "Tên kênh", "channelId": "id_kênh", "action": "Việc cần làm", "priority": 1 }],
+  "produce_today": [{ "product": "Tên SP", "productId": "id_sp", "reason": "Tại sao", "videos": 3, "priority": 1 }],
+  "new_products_alert": [{ "product": "Tên SP", "productId": "id_sp", "why": "Tại sao đáng chú ý" }],
+  "upcoming_events": [{ "title": "Tên sự kiện", "date": "dd/mm" }],
   "yesterday_recap": "1-2 câu tóm tắt",
   "tip": "1 gợi ý content dựa trên learning",
   "weekly_progress": "X/Y videos, còn Z ngày"
@@ -165,6 +196,7 @@ Chỉ output JSON, không text khác.`.trim();
       channel_tasks: [],
       produce_today: [],
       new_products_alert: [],
+      upcoming_events: [],
       yesterday_recap: "Không thể phân tích dữ liệu hôm qua",
       tip: "Thử lại sau",
       weekly_progress: "",

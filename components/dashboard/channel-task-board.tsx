@@ -115,7 +115,12 @@ function ChannelCard({ task }: { task: ChannelTask }): React.ReactElement {
           {task.channelName.charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{task.channelName}</p>
+          <Link
+            href={`/channels/${task.channelId}`}
+            className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate block hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          >
+            {task.channelName}
+          </Link>
           <p className="text-xs text-gray-400 truncate">{task.personaName}</p>
         </div>
       </div>
@@ -138,7 +143,7 @@ function ChannelCard({ task }: { task: ChannelTask }): React.ReactElement {
 
       {/* Metrics row */}
       <div className="grid grid-cols-3 gap-2 mb-3">
-        <MetricBadge label="Cần brief" value={task.needsBrief} color="amber" />
+        <MetricBadge label="Chưa nội dung" value={task.needsBrief} color="amber" />
         <MetricBadge label="Nháp" value={task.drafts} color="blue" />
         <MetricBadge label="Sẵn đăng" value={task.readyToPublish} color="emerald" />
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Trophy, TrendingUp, BarChart3 } from "lucide-react";
 
 interface FormatStat {
@@ -12,6 +13,7 @@ interface FormatStat {
 
 interface TopProduct {
   title: string;
+  productIdentityId: string | null;
   totalOrders: number;
   totalRevenue: number;
   totalCommission: number;
@@ -38,13 +40,6 @@ const FORMAT_LABELS: Record<string, string> = {
   trending_hook: "Trending Hook",
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  entertainment: "Giải trí",
-  education: "Giáo dục",
-  review: "Review",
-  selling: "Bán hàng",
-};
-
 function formatNum(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -62,30 +57,24 @@ export function WinningPatternsWidget(): React.ReactElement {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/tracking/patterns")
+    fetch("/api/tracking/patterns?days=30&limit=500")
       .then((r) => r.json())
       .then((json: { data?: PatternData }) => setData(json.data ?? null))
       .catch((e) => { console.error("[winning-patterns-widget]", e); })
       .finally(() => setLoading(false));
   }, []);
 
+  // Hide completely when loading or no data
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4 animate-pulse">
-        <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-slate-800">
-          <div className="w-5 h-5 rounded bg-gray-200 dark:bg-slate-700" />
-          <div className="h-5 w-40 bg-gray-200 dark:bg-slate-700 rounded-lg" />
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 animate-pulse">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-4 h-4 rounded bg-gray-200 dark:bg-slate-700" />
+          <div className="h-4 w-32 bg-gray-200 dark:bg-slate-700 rounded" />
         </div>
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-start gap-2">
-              <div className="w-3.5 h-3.5 rounded bg-gray-200 dark:bg-slate-700 mt-0.5 shrink-0" />
-              <div className="flex-1 space-y-1">
-                <div className="h-2.5 w-20 bg-gray-100 dark:bg-slate-800 rounded" />
-                <div className="h-3.5 w-3/4 bg-gray-200 dark:bg-slate-700 rounded" />
-                <div className="h-2.5 w-1/2 bg-gray-100 dark:bg-slate-800 rounded" />
-              </div>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-12 bg-gray-100 dark:bg-slate-800 rounded-xl" />
           ))}
         </div>
       </div>
@@ -94,12 +83,12 @@ export function WinningPatternsWidget(): React.ReactElement {
 
   if (!data || data.totalTracked === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-5 h-5 text-amber-500" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Winning Patterns</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <TrendingUp className="w-4 h-4 text-amber-500" />
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-50">Hiệu suất</h3>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Chưa có data tracking. Đăng video và nhập kết quả để xem phân tích.
         </p>
       </div>
@@ -108,101 +97,90 @@ export function WinningPatternsWidget(): React.ReactElement {
 
   if (!data.hasEnoughData) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-5 h-5 text-amber-500" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Winning Patterns</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-amber-500" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-50">Hiệu suất</h3>
+          </div>
+          <span className="text-[10px] text-gray-400">{data.totalTracked}/10 video</span>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Đã track <strong>{data.totalTracked}</strong> video. Cần ít nhất 10 video để có insights đáng tin cậy.
-        </p>
-        <div className="mt-2 w-full bg-gray-100 dark:bg-slate-800 rounded-full h-2">
+        <div className="w-full bg-gray-100 dark:bg-slate-800 rounded-full h-1.5">
           <div
-            className="bg-amber-400 h-2 rounded-full transition-all"
+            className="bg-amber-400 h-1.5 rounded-full transition-all"
             style={{ width: `${Math.min(100, (data.totalTracked / 10) * 100)}%` }}
           />
         </div>
-        <p className="text-[10px] text-gray-400 mt-1">{data.totalTracked}/10 video</p>
       </div>
     );
   }
 
   const topFormat = data.formatStats[0];
-  const topType = data.contentTypeStats[0];
   const topProduct = data.topProducts[0];
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-4">
-      <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-slate-800">
-        <TrendingUp className="w-5 h-5 text-amber-500" />
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Winning Patterns</h3>
-        <span className="text-xs text-gray-400 ml-auto">{data.totalTracked} video tracked</span>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-amber-500" />
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-50">Hiệu suất 30 ngày</h3>
+        </div>
+        <Link
+          href="/insights"
+          className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          {data.totalTracked} video →
+        </Link>
       </div>
 
-      {/* Key insights */}
-      <div className="space-y-2.5">
+      {/* Compact row of stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Winners */}
+        <div className="rounded-xl bg-amber-50/50 dark:bg-amber-950/20 px-3 py-2 text-center">
+          <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">{data.winnersCount}</p>
+          <p className="text-[10px] text-gray-500 dark:text-gray-400">Winners</p>
+        </div>
+
+        {/* Revenue */}
+        <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 px-3 py-2 text-center">
+          <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">{formatVND(data.totalCommission)}</p>
+          <p className="text-[10px] text-gray-500 dark:text-gray-400">Commission</p>
+        </div>
+
+        {/* Top Format */}
         {topFormat && (
-          <InsightRow
-            icon={<BarChart3 className="w-3.5 h-3.5 text-blue-500" />}
-            label="Format thắng"
-            value={FORMAT_LABELS[topFormat.format] ?? topFormat.format}
-            detail={`avg ${formatNum(topFormat.avgViews)} views, ${topFormat.winRate}% win rate`}
-          />
+          <div className="rounded-xl bg-blue-50/50 dark:bg-blue-950/20 px-3 py-2 text-center">
+            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 truncate">
+              {FORMAT_LABELS[topFormat.format] ?? topFormat.format}
+            </p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400">
+              <BarChart3 className="w-3 h-3 inline mr-0.5" />
+              {formatNum(topFormat.avgViews)} avg views
+            </p>
+          </div>
         )}
-        {topType && (
-          <InsightRow
-            icon={<BarChart3 className="w-3.5 h-3.5 text-violet-500" />}
-            label="Content type tốt nhất"
-            value={TYPE_LABELS[topType.type] ?? topType.type}
-            detail={`avg ${formatNum(topType.avgViews)} views`}
-          />
-        )}
+
+        {/* Top Product */}
         {topProduct && topProduct.totalOrders > 0 && (
-          <InsightRow
-            icon={<Trophy className="w-3.5 h-3.5 text-amber-500" />}
-            label="SP win"
-            value={topProduct.title.length > 30 ? topProduct.title.slice(0, 30) + "..." : topProduct.title}
-            detail={`${topProduct.totalOrders} đơn, ${formatVND(topProduct.totalCommission)} commission`}
-          />
+          <div className="rounded-xl bg-violet-50/50 dark:bg-violet-950/20 px-3 py-2 text-center">
+            {topProduct.productIdentityId ? (
+              <Link
+                href={`/inbox/${topProduct.productIdentityId}`}
+                className="text-sm font-semibold text-violet-700 dark:text-violet-300 truncate block hover:text-violet-900 dark:hover:text-violet-200 transition-colors"
+                title={topProduct.title}
+              >
+                <Trophy className="w-3 h-3 inline mr-0.5" />
+                {topProduct.title.length > 15 ? topProduct.title.slice(0, 15) + "…" : topProduct.title}
+              </Link>
+            ) : (
+              <p className="text-sm font-semibold text-violet-700 dark:text-violet-300 truncate" title={topProduct.title}>
+                <Trophy className="w-3 h-3 inline mr-0.5" />
+                {topProduct.title.length > 15 ? topProduct.title.slice(0, 15) + "…" : topProduct.title}
+              </p>
+            )}
+            <p className="text-[10px] text-gray-500 dark:text-gray-400">{topProduct.totalOrders} đơn</p>
+          </div>
         )}
-        {data.bestHook && (
-          <InsightRow
-            icon={<Trophy className="w-3.5 h-3.5 text-emerald-500" />}
-            label="Hook tốt nhất"
-            value={data.bestHook.text.length > 40 ? data.bestHook.text.slice(0, 40) + "..." : data.bestHook.text}
-            detail={`${formatNum(data.bestHook.views)} views`}
-          />
-        )}
-      </div>
-
-      {/* Summary */}
-      <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-        <span>Winners: <strong className="text-amber-600">{data.winnersCount}</strong></span>
-        <span>Revenue: <strong className="text-gray-900 dark:text-gray-50">{formatVND(data.totalRevenue)}</strong></span>
-        <span>Commission: <strong className="text-emerald-600">{formatVND(data.totalCommission)}</strong></span>
-      </div>
-    </div>
-  );
-}
-
-function InsightRow({
-  icon,
-  label,
-  value,
-  detail,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  detail: string;
-}): React.ReactElement {
-  return (
-    <div className="flex items-start gap-2">
-      <div className="mt-0.5 shrink-0">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <span className="text-[10px] text-gray-400 uppercase tracking-wider">{label}</span>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{value}</p>
-        <p className="text-[10px] text-gray-500 dark:text-gray-400">{detail}</p>
       </div>
     </div>
   );

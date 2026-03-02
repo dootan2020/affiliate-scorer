@@ -2,53 +2,48 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 interface OrphanStats {
-  scoredWithoutBriefs: number;
   briefsWithoutAssets: number;
   publishedWithoutTracking: number;
-  slotsWithoutAsset: number;
+  overdueSlots: number;
   total: number;
 }
 
-/** GET — count orphaned records across the pipeline */
+/** GET — count genuinely orphaned records across the pipeline */
 export async function GET(): Promise<NextResponse> {
   try {
-    const [scoredWithoutBriefs, briefsWithoutAssets, publishedWithoutTracking, slotsWithoutAsset] =
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [briefsWithoutAssets, publishedWithoutTracking, overdueSlots] =
       await Promise.all([
-        // 1. Scored/briefed products with 0 briefs
-        prisma.productIdentity.count({
-          where: {
-            inboxState: { in: ["scored", "briefed"] },
-            briefs: { none: {} },
-          },
-        }),
-        // 2. Briefs with 0 assets
+        // 1. Briefs with 0 assets — created but never produced
         prisma.contentBrief.count({
           where: {
             assets: { none: {} },
           },
         }),
-        // 3. Published assets with 0 tracking (1:1 relation)
+        // 2. Published assets with 0 tracking — missing performance data
         prisma.contentAsset.count({
           where: {
             status: "published",
             tracking: { is: null },
           },
         }),
-        // 4. Slots with no asset linked
+        // 3. Overdue planned slots — scheduled date < today and still no content
         prisma.contentSlot.count({
           where: {
             contentAssetId: null,
             status: "planned",
+            scheduledDate: { lt: today },
           },
         }),
       ]);
 
     const stats: OrphanStats = {
-      scoredWithoutBriefs,
       briefsWithoutAssets,
       publishedWithoutTracking,
-      slotsWithoutAsset,
-      total: scoredWithoutBriefs + briefsWithoutAssets + publishedWithoutTracking + slotsWithoutAsset,
+      overdueSlots,
+      total: briefsWithoutAssets + publishedWithoutTracking + overdueSlots,
     };
 
     return NextResponse.json({ data: stats });

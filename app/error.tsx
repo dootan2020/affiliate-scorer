@@ -17,7 +17,7 @@ export default function ErrorPage({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
       <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950 flex items-center justify-center mb-4">
         <AlertCircle className="w-8 h-8 text-rose-400" />
       </div>
@@ -27,7 +27,7 @@ export default function ErrorPage({
       </p>
       <Button
         onClick={reset}
-        className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 w-full sm:w-auto"
+        className="w-full sm:w-auto"
       >
         Thử lại
       </Button>

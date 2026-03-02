@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { RefreshCw } from "lucide-react";
 import { LogPageClient } from "@/components/log/log-page-client";
+import { PageHeader } from "@/components/shared/page-header";
 
 export const metadata: Metadata = {
   title: "Nhật ký",
@@ -11,14 +12,7 @@ export const metadata: Metadata = {
 export default function LogPage(): React.ReactElement {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
-          Log kết quả
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Paste link TikTok → nhập views/likes/orders → AI học pattern thắng/thua
-        </p>
-      </div>
+      <PageHeader title="Log kết quả" description="Paste link TikTok → nhập views/likes/orders → AI học pattern thắng/thua" />
 
       {/* Sync hint */}
       <div className="flex items-center gap-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-xl px-4 py-3">

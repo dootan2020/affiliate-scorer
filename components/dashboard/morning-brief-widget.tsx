@@ -81,7 +81,7 @@ export function MorningBriefWidget(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
 
   async function fetchBrief(refresh = false): Promise<void> {

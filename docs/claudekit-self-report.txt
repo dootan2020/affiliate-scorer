@@ -1,0 +1,33 @@
+Hãy tạo một báo cáo toàn diện về chính framework ClaudeKit này. Output ra file `claudekit-self-report.md` ở thư mục root.
+
+Báo cáo cần bao gồm:
+
+## 1. Rules System
+- Đọc và tóm tắt NỘI DUNG CHÍNH của TỪNG file trong `.claude/rules/` (không chỉ list tên, mà tóm tắt logic/quy trình trong mỗi file)
+
+## 2. Agents
+- List toàn bộ agents trong `.claude/agents/`, mỗi agent ghi rõ: tên, mục đích, cách trigger, input/output
+
+## 3. Skills  
+- List toàn bộ skills trong `.claude/skills/`, mỗi skill ghi rõ: tên, chức năng, dependencies, cách sử dụng
+
+## 4. Commands
+- List toàn bộ custom commands (slash commands) có sẵn, mỗi command ghi rõ: tên, chức năng, khi nào dùng
+
+## 5. Hooks
+- List toàn bộ hooks trong `.claude/hooks/`, mỗi hook ghi rõ: trigger event, chức năng
+
+## 6. Plan Templates
+- Đọc và tóm tắt các template trong `plans/templates/`
+
+## 7. Workflow tổng thể
+- Mô tả flow từ khi nhận yêu cầu đến khi hoàn thành: agent nào chạy trước, agent nào chạy sau, file nào được tạo ở đâu, cách agents giao tiếp với nhau
+
+## 8. File Structure
+- Output cây thư mục đầy đủ của `.claude/` (depth 3)
+
+YÊU CẦU:
+- Tóm tắt nội dung thực sự, KHÔNG chỉ copy tên file
+- Giữ nguyên code examples nếu có
+- Nếu file nào reference tới file khác thì ghi rõ dependency
+- Viết bằng tiếng Anh, ngắn gọn, đủ ý

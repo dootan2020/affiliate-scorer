@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GuidePageClient } from "@/components/guide/guide-page-client";
+import { PageHeader } from "@/components/shared/page-header";
 
 export const metadata: Metadata = {
   title: "Hướng dẫn sử dụng",
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default function GuidePage(): React.ReactElement {
-  return <GuidePageClient />;
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Hướng dẫn sử dụng" description="Hướng dẫn từ A-Z cách sử dụng PASTR hiệu quả" />
+      <GuidePageClient />
+    </div>
+  );
 }

@@ -45,13 +45,14 @@ export async function POST(request: Request): Promise<NextResponse> {
       niche: channel.niche,
     };
 
-    // Fetch character bible + optional format template
+    // Fetch character bible + optional format template + video bible
     const { formatSlug } = validation.data;
-    const [characterBible, formatTemplate] = await Promise.all([
+    const [characterBible, formatTemplate, videoBible] = await Promise.all([
       prisma.characterBible.findUnique({ where: { channelId } }),
       formatSlug
         ? prisma.formatTemplate.findUnique({ where: { channelId_slug: { channelId, slug: formatSlug } } })
         : null,
+      prisma.videoBible.findUnique({ where: { channelId } }),
     ]);
 
     const briefOptions: BriefOptions = {
@@ -61,6 +62,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       targetDuration,
       characterBible: characterBible as unknown as import("@/lib/content/character-bible-types").CharacterBibleData | null,
       formatTemplate: formatTemplate as unknown as import("@/lib/content/format-template-types").FormatTemplateData | null,
+      videoBible: videoBible as unknown as Record<string, unknown> | null,
+      bibleVersion: characterBible?.version ?? null,
+      videoBibleVersion: videoBible?.version ?? null,
     };
 
     // Lấy tất cả identities + product data cho enriched prompt

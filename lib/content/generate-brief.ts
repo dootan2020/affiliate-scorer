@@ -7,6 +7,7 @@ import { checkCompliance } from "./compliance";
 import type { CharacterBibleData } from "./character-bible-types";
 import type { FormatTemplateData } from "./format-template-types";
 import { buildCharacterBlock, buildFormatBlock } from "./build-character-prompt-block";
+import { buildVideoBibleBlock } from "./build-video-bible-prompt-block";
 import { runConsistencyQc } from "./consistency-qc";
 
 export interface ChannelContext {
@@ -26,6 +27,9 @@ export interface BriefOptions {
   targetDuration?: number | null; // seconds (15-60)
   characterBible?: CharacterBibleData | null;
   formatTemplate?: FormatTemplateData | null;
+  videoBible?: Record<string, unknown> | null;
+  bibleVersion?: number | null;
+  videoBibleVersion?: number | null;
 }
 
 export interface ProductInput {
@@ -199,7 +203,11 @@ THỜI LƯỢNG MỤC TIÊU: ${options.targetDuration} giây
     ? `\n${buildFormatBlock(options.formatTemplate)}\n`
     : "";
 
-  return `${channelBlock}${characterBlock}${formatBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
+  const videoBibleBlock = options?.videoBible
+    ? `\n${buildVideoBibleBlock(options.videoBible)}\n`
+    : "";
+
+  return `${channelBlock}${characterBlock}${formatBlock}${videoBibleBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
 SẢN PHẨM:
 - Tên: ${product.title || "Chưa có tên"}
 - Giá: ${product.price ? formatVND(product.price) : "chưa rõ"}
@@ -389,6 +397,8 @@ export async function generateBrief(product: ProductInput, options?: BriefOption
         formatSlug: options?.formatTemplate?.slug ?? null,
         qcStatus: briefQcOverall,
         qcDetails: briefQcDetails,
+        bibleVersion: options?.bibleVersion ?? null,
+        videoBibleVersion: options?.videoBibleVersion ?? null,
       },
     });
 

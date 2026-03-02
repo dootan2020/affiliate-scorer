@@ -561,9 +561,11 @@ model ContentBrief {
   status String @default("generated") // "generated" | "reviewed" | "exported"
 
   // Character-driven content
-  formatSlug String? // FormatTemplate slug used for this brief
-  qcStatus   String? // "pass" | "warn"
-  qcDetails  Json?   // [{check, status, message}]
+  formatSlug        String? // FormatTemplate slug used for this brief
+  qcStatus          String? // "pass" | "warn"
+  qcDetails         Json?   // [{check, status, message}]
+  bibleVersion      Int?    // CharacterBible version used
+  videoBibleVersion Int?    // VideoBible version used
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -938,6 +940,8 @@ model TikTokChannel {
   characterBible  CharacterBible?
   formatTemplates FormatTemplate[]
   ideaMatrixItems IdeaMatrixItem[]
+  videoBible      VideoBible?
+  series          Series[]
 }
 
 model ContentSlot {
@@ -1074,6 +1078,10 @@ model CharacterBible {
   visualLocks Json? // {props: string[], texture: string, colorPalette: string}
   voiceDna    Json? // {tone: string, pace: string, signature: string}
 
+  // Versioning
+  version Int     @default(1)
+  locked  Boolean @default(false)
+
   // Meta
   generatedByAi   Boolean   @default(false)
   aiGeneratedAt   DateTime?
@@ -1135,4 +1143,134 @@ model IdeaMatrixItem {
 
   @@index([channelId, status])
   @@index([channelId, bibleLayer])
+}
+
+// ─── VIDEO PRODUCTION SYSTEM ───
+
+model VideoBible {
+  id        String        @id @default(cuid())
+  channelId String        @unique
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  // Visual Locks (5)
+  framing     String?
+  lighting    String?
+  composition String?
+  palette     String?
+  editRhythm  String?
+
+  // Audio Locks (4)
+  voiceStyleLock String? // distinct from channel voiceStyle — this is the locked production voice
+  sfxPack        Json?   // string[]
+  bgmMoods       Json?   // string[]
+  roomTone       String?
+
+  // Narrative Locks (3)
+  openingRitual  String?
+  proofTokenRule String?
+  closingRitual  String?
+
+  // Mode
+  aiMode String @default("hybrid") // "ai_only" | "hybrid"
+
+  // Versioning
+  version Int     @default(1)
+  locked  Boolean @default(false)
+
+  // Meta
+  generatedByAi Boolean   @default(false)
+  aiGeneratedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  shotCodes      ShotCode[]
+  sceneTemplates SceneTemplate[]
+}
+
+model ShotCode {
+  id           String     @id @default(cuid())
+  videoBibleId String
+  videoBible   VideoBible @relation(fields: [videoBibleId], references: [id], onDelete: Cascade)
+
+  code         String  // "A1", "A2", "B1", "C1"...
+  name         String  // "Hook Talking Head"
+  description  String?
+  durationHint String? // "1-3s"
+  camera       String? // "close-up" | "medium" | "wide" | "pov"
+  notes        String?
+  sortOrder    Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([videoBibleId, code])
+  @@index([videoBibleId])
+}
+
+model SceneTemplate {
+  id           String     @id @default(cuid())
+  videoBibleId String
+  videoBible   VideoBible @relation(fields: [videoBibleId], references: [id], onDelete: Cascade)
+
+  name                String
+  slug                String
+  description         String?
+  blocks              Json    // [{blockType, label, description}]
+  defaultShotSequence Json?   // ["A1", "B1", "B2", "C1"]
+  rules               Json?   // {maxWords, maxCuts, subtitleStyle}
+
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([videoBibleId, slug])
+  @@index([videoBibleId])
+}
+
+model Series {
+  id        String        @id @default(cuid())
+  channelId String
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  name          String
+  type          String   // "evergreen" | "signature" | "arc" | "community"
+  premise       String?
+  openingRitual String?
+  closingRitual String?
+  proofRule     String?
+
+  status String @default("draft") // "draft" | "active" | "paused" | "completed"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  episodes Episode[]
+
+  @@index([channelId])
+  @@index([channelId, status])
+}
+
+model Episode {
+  id       String @id @default(cuid())
+  seriesId String
+  series   Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  episodeNumber Int
+  title         String
+  goal          String?  // "awareness" | "lead" | "sale"
+  formatSlug    String?
+  pillar        String?  // bible layer key
+
+  contentAssetId String?
+  plannedDate    DateTime? @db.Date
+  status         String    @default("draft") // "draft" | "ready" | "produced" | "published"
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([seriesId])
+  @@index([seriesId, episodeNumber])
 }

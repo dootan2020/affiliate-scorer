@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   AlertCircle,
+  PackageCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -352,10 +353,11 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId, initial
               Xuất Packs sản xuất
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <ExportButton icon={FileText} label="Scripts.md" sub="Scripts đầy đủ" color="orange" onClick={() => handleExport("scripts")} />
             <ExportButton icon={FileJson} label="Prompts.json" sub="Prompts Kling/Veo3" color="purple" onClick={() => handleExport("prompts")} />
             <ExportButton icon={FileSpreadsheet} label="Checklist.csv" sub="Checklist sản xuất" color="emerald" onClick={() => handleExport("checklist")} />
+            <ExportButton icon={PackageCheck} label="Export Pack.zip" sub="Trọn bộ sản xuất" color="blue" onClick={() => window.open(`/api/production/${batchId}/export-pack`, "_blank")} />
           </div>
         </div>
       )}
@@ -380,6 +382,7 @@ function ExportButton({
     orange: "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400",
     purple: "bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400",
     emerald: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400",
+    blue: "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
   };
 
   return (

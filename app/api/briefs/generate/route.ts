@@ -45,20 +45,24 @@ export async function POST(request: Request): Promise<NextResponse> {
       niche: channel.niche,
     };
 
-    // Fetch character bible + format template (optional — backward compatible)
-    const [characterBible, formatTemplates] = await Promise.all([
+    // Fetch character bible + format template + video bible (optional — backward compatible)
+    const [characterBible, formatTemplates, videoBible] = await Promise.all([
       prisma.characterBible.findUnique({ where: { channelId } }),
       prisma.formatTemplate.findMany({
         where: { channelId, isActive: true },
         orderBy: { sortOrder: "asc" },
         take: 1,
       }),
+      prisma.videoBible.findUnique({ where: { channelId } }),
     ]);
 
     const briefOptions: BriefOptions = {
       channel: channelCtx,
       characterBible: characterBible as unknown as import("@/lib/content/character-bible-types").CharacterBibleData | null,
       formatTemplate: formatTemplates[0] as unknown as import("@/lib/content/format-template-types").FormatTemplateData | null,
+      videoBible: videoBible as unknown as Record<string, unknown> | null,
+      bibleVersion: characterBible?.version ?? null,
+      videoBibleVersion: videoBible?.version ?? null,
     };
 
     // Lấy product identity + product data cho enriched prompt

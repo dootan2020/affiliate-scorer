@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock, BookOpen, Layers, Lightbulb } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock, BookOpen, Layers, Lightbulb, Video, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ChannelForm } from "./channel-form";
@@ -10,6 +10,8 @@ import { TacticalRefreshDialog } from "./tactical-refresh-dialog";
 import { CharacterBibleEditor } from "./character-bible-editor";
 import { FormatBankList } from "./format-bank-list";
 import { IdeaMatrixGrid } from "./idea-matrix-grid";
+import { VideoBibleEditor } from "./video-bible-editor";
+import { SeriesPlanner } from "./series-planner";
 import { Button } from "@/components/ui/button";
 
 interface ChannelData {
@@ -267,7 +269,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
     );
   }
 
-  const [activeTab, setActiveTab] = useState<"overview" | "bible" | "formats" | "matrix">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "bible" | "formats" | "matrix" | "videoBible" | "series">("overview");
 
   const pillars = channel.contentPillars ?? [];
   const pillarDetails = channel.contentPillarDetails ?? [];
@@ -284,6 +286,8 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
     { key: "bible" as const, label: "Character Bible", icon: BookOpen },
     { key: "formats" as const, label: "Format Bank", icon: Layers },
     { key: "matrix" as const, label: "Idea Matrix", icon: Lightbulb },
+    { key: "videoBible" as const, label: "Video Bible", icon: Video },
+    { key: "series" as const, label: "Series", icon: Calendar },
   ];
 
   return (
@@ -426,6 +430,8 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {activeTab === "bible" && <CharacterBibleEditor channelId={channelId} />}
         {activeTab === "formats" && <FormatBankList channelId={channelId} />}
         {activeTab === "matrix" && <IdeaMatrixGrid channelId={channelId} />}
+        {activeTab === "videoBible" && <VideoBibleEditor channelId={channelId} />}
+        {activeTab === "series" && <SeriesPlanner channelId={channelId} />}
 
         {/* Overview tab — existing content */}
         {activeTab === "overview" && <>

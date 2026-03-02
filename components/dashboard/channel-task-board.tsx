@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Tv, Calendar, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -18,6 +18,9 @@ interface ChannelTask {
 export function ChannelTaskBoard(): React.ReactElement {
   const [tasks, setTasks] = useState<ChannelTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleMap, setVisibleMap] = useState<Record<string, boolean>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     fetch("/api/dashboard/channel-tasks")
@@ -26,6 +29,37 @@ export function ChannelTaskBoard(): React.ReactElement {
       .catch((e) => { console.error("[channel-task-board]", e); })
       .finally(() => setLoading(false));
   }, []);
+
+  // Track which cards are visible using IntersectionObserver
+  const observeCard = useCallback((id: string, el: HTMLDivElement | null) => {
+    if (el) {
+      cardRefs.current.set(id, el);
+    } else {
+      cardRefs.current.delete(id);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tasks.length === 0 || !scrollRef.current) return;
+
+    const root = scrollRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setVisibleMap((prev) => {
+          const next = { ...prev };
+          entries.forEach((entry) => {
+            const id = (entry.target as HTMLElement).dataset.cardId;
+            if (id) next[id] = entry.isIntersecting;
+          });
+          return next;
+        });
+      },
+      { root, threshold: 0.5 }
+    );
+
+    cardRefs.current.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [tasks]);
 
   if (loading) {
     return (
@@ -79,6 +113,9 @@ export function ChannelTaskBoard(): React.ReactElement {
     );
   }
 
+  // Only show dots when there are multiple cards and some overflow is possible
+  const showDots = tasks.length > 1;
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -88,13 +125,42 @@ export function ChannelTaskBoard(): React.ReactElement {
           {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric" })}
         </span>
       </div>
-      <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin"
+      >
         {tasks.map((task) => (
-          <div key={task.channelId} className="min-w-[260px] max-w-[320px] flex-shrink-0">
+          <div
+            key={task.channelId}
+            ref={(el) => observeCard(task.channelId, el)}
+            data-card-id={task.channelId}
+            className="min-w-[260px] max-w-[320px] flex-shrink-0"
+          >
             <ChannelCard task={task} />
           </div>
         ))}
       </div>
+
+      {/* Scroll indicator dots */}
+      {showDots && (
+        <div className="flex items-center justify-center gap-1.5 mt-3">
+          {tasks.map((task) => (
+            <button
+              key={`dot-${task.channelId}`}
+              onClick={() => {
+                const el = cardRefs.current.get(task.channelId);
+                el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+              }}
+              aria-label={`Chuyển đến kênh ${task.channelName}`}
+              className={`rounded-full transition-all duration-200 ${
+                visibleMap[task.channelId]
+                  ? "w-4 h-1.5 bg-blue-500"
+                  : "w-1.5 h-1.5 bg-gray-200 dark:bg-slate-700"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

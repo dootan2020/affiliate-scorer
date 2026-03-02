@@ -48,7 +48,7 @@ export function YesterdayStatsWidget(): React.ReactElement {
       {CARDS.map(({ key, label, icon: Icon, color, bg, format }) => (
         <div
           key={key}
-          className={`${bg} rounded-2xl px-4 py-3 ${loading ? "animate-pulse" : ""}`}
+          className={`${bg} rounded-2xl px-4 py-4 ${loading ? "animate-pulse" : ""}`}
         >
           <div className="flex items-center gap-2 mb-1">
             <Icon className={`w-4 h-4 ${color}`} />
@@ -57,6 +57,7 @@ export function YesterdayStatsWidget(): React.ReactElement {
           <p className={`text-2xl font-semibold ${color}`}>
             {loading ? "—" : format(stats[key])}
           </p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">vs hôm kia</p>
         </div>
       ))}
     </div>

@@ -41,16 +41,21 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/", label: "Tổng quan", icon: LayoutDashboard },
       { href: "/inbox", label: "Hộp sản phẩm", icon: Inbox },
-      { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
       { href: "/production", label: "Sản xuất", icon: Clapperboard },
       { href: "/channels", label: "Kênh TikTok", icon: Tv },
-      { href: "/log", label: "Nhật ký", icon: FileText },
     ],
   },
   {
-    title: "Phân tích & Học",
+    title: "Dữ liệu",
     items: [
+      { href: "/log", label: "Nhật ký", icon: FileText },
+      { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
       { href: "/library", label: "Thư viện", icon: BookOpen },
+    ],
+  },
+  {
+    title: "Phân tích",
+    items: [
       { href: "/insights", label: "Phân tích", icon: TrendingUp },
     ],
   },
@@ -63,17 +68,17 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
-
+// Bottom tabs: Tổng quan, Hộp SP, Sản xuất, Kênh (channels replaces nhật ký)
 const BOTTOM_TABS: NavItem[] = [
   { href: "/", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/inbox", label: "Hộp SP", icon: Inbox },
   { href: "/production", label: "Sản xuất", icon: Clapperboard },
-  { href: "/log", label: "Nhật ký", icon: FileText },
+  { href: "/channels", label: "Kênh", icon: Tv },
 ];
 
+// Everything not in bottom tabs goes into overflow menu
 const OVERFLOW_ITEMS: NavItem[] = [
-  { href: "/channels", label: "Kênh TikTok", icon: Tv },
+  { href: "/log", label: "Nhật ký", icon: FileText },
   { href: "/sync", label: "Đồng bộ", icon: RefreshCw },
   { href: "/library", label: "Thư viện", icon: BookOpen },
   { href: "/insights", label: "Phân tích", icon: TrendingUp },

@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { InsightsTabs } from "./insights-tabs";
+import { PillTabs } from "@/components/shared/pill-tabs";
 import { OverviewTab } from "./overview-tab";
 import { FinancialTab } from "./financial-tab";
 import { CalendarTab } from "./calendar-tab";
@@ -11,7 +11,7 @@ import { AccuracyChart } from "./accuracy-chart";
 import { PatternList } from "./pattern-list";
 import { WeeklyReport } from "./weekly-report";
 import { PlaybookPageClient } from "@/components/playbook/playbook-page-client";
-import { MessageSquare, Upload } from "lucide-react";
+import { CalendarDays, MessageSquare, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { WeightMap } from "@/lib/ai/prompts";
 
@@ -70,12 +70,25 @@ export interface InsightsPageClientProps {
   channelId?: string;
 }
 
+const TABS = [
+  { value: "overview", label: "Tổng quan" },
+  { value: "financial", label: "Tài chính" },
+  { value: "learning", label: "Học & Patterns" },
+  { value: "playbook", label: "Playbook" },
+];
+
+// Map legacy tab keys to new consolidated tab
+function normalizeTab(tab: string): string {
+  if (tab === "calendar" || tab === "feedback") return "learning";
+  return TABS.some((t) => t.value === tab) ? tab : "overview";
+}
+
 function InsightsPageClientInner(
   props: InsightsPageClientProps,
 ): React.ReactElement {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialTab = searchParams.get("tab") || "overview";
+  const initialTab = normalizeTab(searchParams.get("tab") ?? "overview");
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const handleTabChange = (tab: string): void => {
@@ -85,8 +98,13 @@ function InsightsPageClientInner(
 
   return (
     <div className="space-y-6">
-      <InsightsTabs activeTab={activeTab} onTabChange={handleTabChange} />
+      <PillTabs
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
+      {/* Tổng quan */}
       {activeTab === "overview" && (
         <OverviewTab
           totalProducts={props.totalProducts}
@@ -100,90 +118,32 @@ function InsightsPageClientInner(
         />
       )}
 
+      {/* Tài chính */}
       {activeTab === "financial" && <FinancialTab />}
 
-      {activeTab === "calendar" && <CalendarTab />}
-
-      {activeTab === "feedback" && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
-            Lịch sử Feedback ({props.feedbackTable.length} bản ghi)
-          </h2>
-          {props.feedbackTable.length > 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
-              <div className="overflow-x-auto">
-                <div className="min-w-[600px]">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-100 dark:border-slate-800">
-                        {["Sản phẩm", "Nền tảng", "ROAS", "Doanh thu", "Kết quả", "Ngày"].map((h) => (
-                          <th key={h} className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
-                      {props.feedbackTable.map((fb) => (
-                        <tr key={fb.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                          <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50 max-w-[180px] truncate">{fb.productName}</td>
-                          <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">{fb.adPlatform ?? fb.salesPlatform ?? "—"}</td>
-                          <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50">{fb.adROAS != null ? `${fb.adROAS.toFixed(2)}x` : "—"}</td>
-                          <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50">{fb.revenue != null ? `${fb.revenue.toLocaleString()}đ` : "—"}</td>
-                          <td className="py-3 px-4">
-                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              fb.overallSuccess === "success" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                              : fb.overallSuccess === "moderate" ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-                              : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
-                            }`}>
-                              {fb.overallSuccess === "success" ? "Tốt" : fb.overallSuccess === "moderate" ? "Vừa" : "Kém"}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-400">{new Date(fb.feedbackDate).toLocaleDateString("vi-VN")}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                <MessageSquare className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-                Chưa có dữ liệu
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-                Upload kết quả chiến dịch tại trang Upload để AI bắt đầu học.
-              </p>
-              <Button asChild>
-                <Link href="/sync">
-                  <Upload className="w-4 h-4" />
-                  Đi tới Upload
-                </Link>
-              </Button>
-            </div>
-          )}
-        </section>
-      )}
-
-      {activeTab === "playbook" && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
-            Playbook — Patterns tích luỹ từ dữ liệu
-          </h2>
-          <PlaybookPageClient channelId={props.channelId} />
-        </section>
-      )}
-
+      {/* Học & Patterns — merge of Calendar + Accuracy + Patterns */}
       {activeTab === "learning" && (
-        <>
-          {props.latestLog ? (
-            <>
-              <section className="space-y-4">
-                <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
-                  Kết quả Learning — Tuần {props.latestLog.weekNumber}
-                </h2>
+        <div className="space-y-8">
+          {/* Section: Lịch sự kiện */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-orange-500" />
+              <h2 className="text-base font-medium text-gray-900 dark:text-gray-50">
+                Lịch sự kiện
+              </h2>
+            </div>
+            <CalendarTab />
+          </section>
+
+          <div className="border-t border-gray-100 dark:border-slate-800" />
+
+          {/* Section: Học từ kết quả */}
+          <section className="space-y-4">
+            <h2 className="text-base font-medium text-gray-900 dark:text-gray-50">
+              Học từ kết quả
+            </h2>
+            {props.latestLog ? (
+              <>
                 <WeeklyReport
                   currentAccuracy={props.latestLog.currentAccuracy}
                   previousAccuracy={props.latestLog.previousAccuracy}
@@ -192,38 +152,115 @@ function InsightsPageClientInner(
                   weightsAfter={props.latestLog.weightsAfter}
                   weekNumber={props.latestLog.weekNumber}
                 />
-              </section>
 
-              <section className="space-y-4">
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Xu hướng độ chính xác
                   </p>
                   <AccuracyChart data={props.accuracyTrend} />
                 </div>
-              </section>
-
-              <section className="space-y-4">
-                <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
-                  Patterns phát hiện ({props.latestLog.patternsFound.length})
-                </h2>
-                <PatternList patterns={props.latestLog.patternsFound} />
-              </section>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                <MessageSquare className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                </div>
+                <h3 className="text-base font-medium text-gray-900 dark:text-gray-50 mb-1">
+                  Chưa có dữ liệu learning
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+                  Cần có feedback để AI bắt đầu học và cải thiện scoring.
+                </p>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-                Chưa có dữ liệu learning
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
-                Cần có feedback để AI bắt đầu học và cải thiện scoring.
-              </p>
-            </div>
+            )}
+          </section>
+
+          <div className="border-t border-gray-100 dark:border-slate-800" />
+
+          {/* Section: Patterns */}
+          {props.latestLog && (
+            <section className="space-y-4">
+              <h2 className="text-base font-medium text-gray-900 dark:text-gray-50">
+                Patterns phát hiện ({props.latestLog.patternsFound.length})
+              </h2>
+              <PatternList patterns={props.latestLog.patternsFound} />
+            </section>
           )}
-        </>
+
+          <div className="border-t border-gray-100 dark:border-slate-800" />
+
+          {/* Section: Feedback history */}
+          <section className="space-y-4">
+            <h2 className="text-base font-medium text-gray-900 dark:text-gray-50">
+              Lịch sử Feedback ({props.feedbackTable.length} bản ghi)
+            </h2>
+            {props.feedbackTable.length > 0 ? (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <div className="min-w-[600px]">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-100 dark:border-slate-800">
+                          {["Sản phẩm", "Nền tảng", "ROAS", "Doanh thu", "Kết quả", "Ngày"].map((h) => (
+                            <th key={h} className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3 px-4">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                        {props.feedbackTable.map((fb) => (
+                          <tr key={fb.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50 max-w-[180px] truncate">{fb.productName}</td>
+                            <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">{fb.adPlatform ?? fb.salesPlatform ?? "—"}</td>
+                            <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50">{fb.adROAS != null ? `${fb.adROAS.toFixed(2)}x` : "—"}</td>
+                            <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-50">{fb.revenue != null ? `${fb.revenue.toLocaleString()}đ` : "—"}</td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                fb.overallSuccess === "success" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                                : fb.overallSuccess === "moderate" ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                                : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
+                              }`}>
+                                {fb.overallSuccess === "success" ? "Tốt" : fb.overallSuccess === "moderate" ? "Vừa" : "Kém"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-400">{new Date(fb.feedbackDate).toLocaleDateString("vi-VN")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                </div>
+                <h3 className="text-base font-medium text-gray-900 dark:text-gray-50 mb-1">
+                  Chưa có dữ liệu
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-sm">
+                  Upload kết quả chiến dịch tại trang Upload để AI bắt đầu học.
+                </p>
+                <Button asChild>
+                  <Link href="/sync">
+                    <Upload className="w-4 h-4" />
+                    Đi tới Upload
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {/* Playbook */}
+      {activeTab === "playbook" && (
+        <section className="space-y-4">
+          <h2 className="text-xl font-medium text-gray-900 dark:text-gray-50">
+            Playbook — Patterns tích luỹ từ dữ liệu
+          </h2>
+          <PlaybookPageClient channelId={props.channelId} />
+        </section>
       )}
     </div>
   );

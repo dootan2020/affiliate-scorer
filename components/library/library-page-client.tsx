@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Search, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { AssetCard, type AssetCardData } from "./asset-card";
 
 const STATUS_OPTIONS = [
@@ -38,6 +39,28 @@ interface LibraryResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+function LibrarySkeleton(): React.ReactElement {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 animate-pulse">
+          {/* Thumbnail placeholder */}
+          <div className="h-32 bg-gray-100 dark:bg-slate-800 rounded-xl mb-3" />
+          {/* Title placeholder */}
+          <div className="h-4 bg-gray-100 dark:bg-slate-800 rounded-lg mb-2 w-3/4" />
+          {/* Subtitle placeholder */}
+          <div className="h-3 bg-gray-100 dark:bg-slate-800 rounded-lg w-1/2 mb-3" />
+          {/* Badge row */}
+          <div className="flex gap-2">
+            <div className="h-5 w-14 bg-gray-100 dark:bg-slate-800 rounded-full" />
+            <div className="h-5 w-12 bg-gray-100 dark:bg-slate-800 rounded-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function LibraryPageClient(): React.ReactElement {
@@ -185,23 +208,15 @@ export function LibraryPageClient(): React.ReactElement {
           <Button variant="link" onClick={() => void load()}>Thử lại</Button>
         </div>
       ) : loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-48 bg-gray-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
-          ))}
-        </div>
+        <LibrarySkeleton />
       ) : assets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-            <BookOpen className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">
-            Chưa có assets
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
-            Tạo brief và sản xuất content để bắt đầu xây dựng thư viện.
-          </p>
-        </div>
+        <EmptyState
+          icon={<BookOpen className="w-8 h-8 text-gray-400 dark:text-gray-500" />}
+          title="Chưa có assets"
+          description="Tạo brief và sản xuất content để bắt đầu xây dựng thư viện."
+          actionLabel="Đi tới Sản xuất"
+          actionHref="/production"
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {assets.map((asset) => (

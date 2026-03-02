@@ -18,17 +18,24 @@ interface PillTabsProps {
 
 export function PillTabs({ tabs, activeTab, onTabChange, className }: PillTabsProps): React.ReactElement {
   return (
-    <div className={cn(
-      "flex items-center gap-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-xl p-1 overflow-x-auto scrollbar-none",
-      className,
-    )}>
-      {tabs.map((tab) => (
+    <div
+      role="tablist"
+      className={cn(
+        "flex items-center gap-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-xl p-1 overflow-x-auto scrollbar-none",
+        className,
+      )}
+    >
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.value;
+        return (
         <button
           key={tab.value}
+          role="tab"
+          aria-selected={isActive}
           onClick={() => onTabChange(tab.value)}
           className={cn(
             "px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5",
-            activeTab === tab.value
+            isActive
               ? "bg-white dark:bg-slate-700 shadow-sm text-gray-900 dark:text-gray-50"
               : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50",
           )}
@@ -41,7 +48,8 @@ export function PillTabs({ tabs, activeTab, onTabChange, className }: PillTabsPr
             </span>
           )}
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

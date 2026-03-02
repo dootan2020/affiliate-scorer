@@ -39,6 +39,9 @@ export function CommandPalette(): React.ReactElement {
       e.preventDefault();
       setOpen((prev) => !prev);
     }
+    if (e.key === "Escape") {
+      setOpen(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -97,11 +100,11 @@ export function CommandPalette(): React.ReactElement {
                     key={item.href}
                     value={`${item.label} ${item.keywords?.join(" ") ?? ""}`}
                     onSelect={() => handleSelect(item.href)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 cursor-pointer data-[selected=true]:bg-orange-50 data-[selected=true]:text-orange-700 dark:data-[selected=true]:bg-orange-950/30 dark:data-[selected=true]:text-orange-400 transition-colors"
+                    className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 cursor-pointer data-[selected=true]:bg-orange-50 data-[selected=true]:text-orange-700 dark:data-[selected=true]:bg-orange-950/30 dark:data-[selected=true]:text-orange-400 transition-colors"
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span className="flex-1">{item.label}</span>
-                    <ArrowRight className="w-3 h-3 opacity-0 data-[selected=true]:opacity-100 transition-opacity" />
+                    <ArrowRight className="w-3 h-3 opacity-0 group-data-[selected=true]:opacity-100 transition-opacity" />
                   </Command.Item>
                 );
               })}

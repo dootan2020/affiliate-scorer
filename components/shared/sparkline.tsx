@@ -17,8 +17,8 @@ export function Sparkline({
 }: SparklineProps): React.ReactElement | null {
   if (data.length < 2) return null;
 
-  const min = Math.min(...data);
-  const max = Math.max(...data);
+  const min = data.reduce((a, b) => Math.min(a, b), Infinity);
+  const max = data.reduce((a, b) => Math.max(a, b), -Infinity);
   const range = max - min || 1;
 
   const points = data.map((value, i) => {

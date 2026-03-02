@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { PipelineStepper } from "@/components/shared/pipeline-stepper";
+import { AnimatedTabContent } from "@/components/shared/animated-tab-content";
 import { ProductionCreateTab } from "./production-create-tab";
 import { ProductionInProgressTab } from "./production-in-progress-tab";
 import { ProductionCompletedTab } from "./production-completed-tab";
@@ -39,21 +40,23 @@ export function ProductionPageClient(): React.ReactElement {
 
       {/* Tab content */}
       <ErrorBoundary fallbackTitle="Lỗi hiển thị tab">
-        {activeTab === "in-progress" && (
-          <ProductionInProgressTab
-            onSwitchToCreate={() => setActiveTab("create")}
-          />
-        )}
-        {activeTab === "create" && (
-          <ProductionCreateTab
-            onBriefsCreated={() => setActiveTab("in-progress")}
-            initialProductId={initialProductId}
-            initialChannelId={initialChannelId}
-          />
-        )}
-        {activeTab === "completed" && <ProductionCompletedTab />}
-        {activeTab === "calendar" && <CalendarTab />}
-        {activeTab === "tracking" && <TrackingTab />}
+        <AnimatedTabContent tabKey={activeTab}>
+          {activeTab === "in-progress" && (
+            <ProductionInProgressTab
+              onSwitchToCreate={() => setActiveTab("create")}
+            />
+          )}
+          {activeTab === "create" && (
+            <ProductionCreateTab
+              onBriefsCreated={() => setActiveTab("in-progress")}
+              initialProductId={initialProductId}
+              initialChannelId={initialChannelId}
+            />
+          )}
+          {activeTab === "completed" && <ProductionCompletedTab />}
+          {activeTab === "calendar" && <CalendarTab />}
+          {activeTab === "tracking" && <TrackingTab />}
+        </AnimatedTabContent>
       </ErrorBoundary>
     </div>
   );

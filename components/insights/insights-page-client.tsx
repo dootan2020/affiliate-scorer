@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { PillTabs } from "@/components/shared/pill-tabs";
+import { AnimatedTabContent } from "@/components/shared/animated-tab-content";
 import { OverviewTab } from "./overview-tab";
 import { FinancialTab } from "./financial-tab";
 import { CalendarTab } from "./calendar-tab";
@@ -104,6 +105,7 @@ function InsightsPageClientInner(
         onTabChange={handleTabChange}
       />
 
+      <AnimatedTabContent tabKey={activeTab}>
       {/* Tổng quan */}
       {activeTab === "overview" && (
         <OverviewTab
@@ -262,6 +264,7 @@ function InsightsPageClientInner(
           <PlaybookPageClient channelId={props.channelId} />
         </section>
       )}
+      </AnimatedTabContent>
     </div>
   );
 }

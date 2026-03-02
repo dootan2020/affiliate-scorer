@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { SidebarAwareMain } from "@/components/layout/sidebar-aware-main";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SetupBanner } from "@/components/shared/setup-banner";
+import { CommandPalette } from "@/components/shared/command-palette";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -56,6 +57,7 @@ export default function RootLayout({
               {children}
             </SidebarAwareMain>
           </div>
+          <CommandPalette />
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>

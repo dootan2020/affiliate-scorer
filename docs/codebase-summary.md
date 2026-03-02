@@ -20,6 +20,7 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 | Command Palette | cmdk | 0.x |
 | Validation | Zod | 4.3 |
 | Package Manager | pnpm | — |
+| Deployment | Netlify + @netlify/plugin-nextjs | — |
 
 ## Thống Kê Dự Án
 
@@ -40,6 +41,7 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 - **Phase 6:** DONE — Channel-centric refactor, channel profiles
 - **Phase 7:** DONE — Character-driven content (Character Bible, Format Bank, Idea Matrix, QC)
 - **Phase 8:** DONE — Video Production System (Video Bible, Shot Library, Series Planner, Export Pack)
+- **Phase 9:** DONE — Production Deployment to Netlify (CI/CD, env config, auto-deploy)
 
 ## Cấu Trúc Thư Mục
 
@@ -126,3 +128,14 @@ Key model groups:
 - **Command Palette:** Quick navigation with ⌘K keyboard shortcut
 - **Responsive Layouts:** Mobile-first design with bento layouts, collapsible navigation
 - **Accessibility:** ARIA attributes, keyboard navigation, screen reader support
+
+## Deployment
+
+- **Platform:** Netlify with @netlify/plugin-nextjs
+- **Live URL:** https://pastr-app.netlify.app
+- **Build Command:** `pnpm build` with Next.js optimization
+- **Publish Directory:** `.next`
+- **CI/CD:** GitHub webhook — auto-deploy on push to master
+- **Environment Variables:** DATABASE_URL, DIRECT_URL, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, ANTHROPIC_API_KEY
+- **Build Metrics:** 74 routes, 0 TypeScript errors, 67 second deploy time
+- **Fallback:** Vercel configuration retained for multi-platform flexibility

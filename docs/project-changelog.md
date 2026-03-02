@@ -229,6 +229,30 @@ Tất cả thay đổi quan trọng của AffiliateScorer được ghi nhận t�
 
 ---
 
+## [1.7.0] — 2026-03-02 — Netlify Production Deployment
+
+### Added
+
+- **Netlify deployment configuration** — netlify.toml with @netlify/plugin-nextjs
+- **CI/CD automation** — GitHub webhook for auto-deploy on push to master
+- **Environment variable management** — Configured DATABASE_URL, DIRECT_URL, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, ANTHROPIC_API_KEY in Netlify dashboard
+- **Deployment documentation** — Complete deployment guide with Netlify + Vercel setup instructions
+
+### Changed
+
+- **Build configuration** — Added @netlify/plugin-nextjs to devDependencies for optimal Next.js build on Netlify
+- **Git ignore** — Added .netlify to ignoring local Netlify folder artifacts
+
+### Infrastructure
+
+- **Live site:** https://pastr-app.netlify.app
+- **Build status:** 74 routes generated, 0 TypeScript errors
+- **Deployment time:** 67 seconds
+- **Deployment method:** GitHub webhook with automatic deploy on master branch push
+- **Fallback:** Vercel configuration retained for multi-platform flexibility
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned

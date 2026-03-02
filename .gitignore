@@ -56,3 +56,6 @@ screenshot-*.png
 .claude/settings.local.json
 .opencode/
 supabase/.temp/
+
+# Local Netlify folder
+.netlify

@@ -17,7 +17,7 @@ const SNAPSHOT_SELECT = {
   productStatus: true, importBatchId: true,
 } as const;
 
-const UPDATE_CHUNK = 50;
+const UPDATE_CHUNK = 10;
 
 /** Process all products in background using batch operations. */
 export async function processProductBatch(

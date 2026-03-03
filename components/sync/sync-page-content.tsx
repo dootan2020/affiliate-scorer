@@ -51,6 +51,26 @@ export function SyncPageContent(): React.ReactElement {
   // Poll import progress after upload
   const { status: liveStatus, isPolling } = useImportPolling(pollingBatchId);
 
+  // Auto-resume polling if there's an active batch (e.g., navigated away and back)
+  useEffect(() => {
+    if (pollingBatchId) return; // Already polling
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/upload/import/active");
+        if (!res.ok || cancelled) return;
+        const { data } = await res.json();
+        if (data?.id && !cancelled) {
+          setPollingBatchId(data.id);
+          setFileName(data.fileName);
+        }
+      } catch {
+        // Non-critical
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchImportHistory = useCallback(async () => {
     try {
       const res = await fetch("/api/upload/import/history");

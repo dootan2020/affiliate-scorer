@@ -32,31 +32,40 @@ export async function GET(
       return NextResponse.json({ error: "Batch not found" }, { status: 404 });
     }
 
-    let isTerminal = ["completed", "failed", "partial"].includes(batch.status)
-      && ["completed", "failed"].includes(batch.scoringStatus);
+    // Import is terminal when its own status is done — don't wait for scoring
+    const importDone = ["completed", "failed", "partial"].includes(batch.status);
+    const scoringDone = ["completed", "failed"].includes(batch.scoringStatus);
+    let isTerminal = importDone && scoringDone;
 
-    // Stuck detection: if processing for over 5 minutes, auto-fail
-    const STUCK_TIMEOUT_MS = 5 * 60 * 1000;
+    // Stuck detection: auto-fail stuck phases
+    // Import: 5 min timeout. Scoring: 2 min (runs via after(), killed at ~60s)
+    const age = Date.now() - new Date(batch.importDate).getTime();
     if (!isTerminal) {
-      const age = Date.now() - new Date(batch.importDate).getTime();
-      if (age > STUCK_TIMEOUT_MS) {
-        const needsStatusFix = batch.status === "processing" || batch.status === "pending";
-        const needsScoringFix = batch.scoringStatus === "processing" || batch.scoringStatus === "pending";
-        if (needsStatusFix || needsScoringFix) {
-          await prisma.importBatch.update({
-            where: { id },
-            data: {
-              ...(needsStatusFix && { status: "failed" }),
-              ...(needsScoringFix && { scoringStatus: "failed" }),
-              completedAt: new Date(),
-              errorLog: { timeout: "Background processing timed out" },
-            },
-          });
-          batch.status = needsStatusFix ? "failed" : batch.status;
-          batch.scoringStatus = needsScoringFix ? "failed" : batch.scoringStatus;
-          batch.completedAt = new Date();
-          isTerminal = true;
-        }
+      const IMPORT_TIMEOUT_MS = 5 * 60 * 1000;
+      const SCORING_TIMEOUT_MS = 2 * 60 * 1000;
+      const needsStatusFix = !importDone && age > IMPORT_TIMEOUT_MS;
+      const needsScoringFix = importDone && !scoringDone && age > SCORING_TIMEOUT_MS;
+
+      if (needsStatusFix || needsScoringFix) {
+        await prisma.importBatch.update({
+          where: { id },
+          data: {
+            ...(needsStatusFix && { status: "failed" }),
+            ...(needsScoringFix && { scoringStatus: "failed" }),
+            completedAt: new Date(),
+            ...(needsStatusFix && { errorLog: { timeout: "Import processing timed out" } }),
+          },
+        });
+        if (needsStatusFix) batch.status = "failed";
+        if (needsScoringFix) batch.scoringStatus = "failed";
+        batch.completedAt = new Date();
+        isTerminal = true;
+      }
+
+      // If import is done but scoring still running, mark terminal anyway
+      // so the UI shows completion. Scoring result is secondary.
+      if (importDone && !scoringDone) {
+        isTerminal = true;
       }
     }
 

@@ -71,11 +71,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
     });
 
-    // Schedule background processing — runs AFTER response is sent
-    // Uses Next.js after() API which extends Vercel function lifetime
+    // Process in background via after() — response returns immediately
+    // Uses parallel queries (no $transaction) for PgBouncer compatibility
     after(() => processProductBatch(batch.id, deduplicated));
 
-    // Return immediately — client will poll for progress
     return NextResponse.json({
       data: {
         batchId: batch.id,

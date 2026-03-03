@@ -1,6 +1,8 @@
-// Background processor for product imports.
-// Runs inside next/server after() — independent of browser connection.
-// Optimized: batch DB operations (~15 queries instead of ~900 for 300 products)
+// Product import processor for Vercel serverless.
+// Import runs via after() with parallel queries (no $transaction).
+// Scoring runs via separate after() — non-critical, fails gracefully.
+// Key optimization: parallel standalone updates instead of sequential $transaction
+// chunks. PgBouncer handles concurrent queries much faster than transactions.
 import { prisma } from "@/lib/db";
 import { syncIdentityBatch } from "@/lib/inbox/sync-identity-batch";
 import { scoreProducts } from "@/lib/ai/scoring";
@@ -17,9 +19,29 @@ const SNAPSHOT_SELECT = {
   productStatus: true, importBatchId: true,
 } as const;
 
-const UPDATE_CHUNK = 10;
+/** Concurrency for parallel queries — matches typical PgBouncer pool size */
+const PARALLEL = 20;
 
-/** Process all products in background using batch operations. */
+/** Run array of async fns with concurrency limit */
+async function parallelMap<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  concurrency: number,
+): Promise<{ successes: R[]; errorCount: number }> {
+  const successes: R[] = [];
+  let errorCount = 0;
+  for (let i = 0; i < items.length; i += concurrency) {
+    const chunk = items.slice(i, i + concurrency);
+    const results = await Promise.allSettled(chunk.map(fn));
+    for (const r of results) {
+      if (r.status === "fulfilled") successes.push(r.value);
+      else errorCount++;
+    }
+  }
+  return { successes, errorCount };
+}
+
+/** Process all products in background via after(). */
 export async function processProductBatch(
   batchId: string,
   deduplicated: NormalizedProduct[],
@@ -27,19 +49,16 @@ export async function processProductBatch(
   try {
     await updateBatchProgress(batchId, { status: "processing" });
 
-    // Stage 1: Classify into toCreate / toUpdate
-    const { toCreate, toUpdate, created, updated, errors } =
+    // Stage 1: Classify + import (parallel updates, no $transaction)
+    const { toCreate, toUpdate, created, errors } =
       await classifyAndImport(batchId, deduplicated);
 
+    // Stage 2: Batch identity sync
+    await batchSyncIdentities(deduplicated, created, toUpdate);
+
+    // Mark import done
     const totalCreated = toCreate.length;
     const totalUpdated = toUpdate.length;
-
-    // Stage 2: Batch identity sync
-    const allProductIds = [...created.map((p) => p.id), ...toUpdate.map((u) => u.existingId)];
-    await batchSyncIdentities(allProductIds, deduplicated, created, toUpdate);
-
-    // Mark import phase done — ATOMIC update: progress + status together
-    // Prevents the race where progress=100% but status still "processing"
     const importStatus = errors > 0 && (totalCreated + totalUpdated) > 0
       ? "partial"
       : errors > 0 ? "failed" : "completed";
@@ -54,7 +73,7 @@ export async function processProductBatch(
       errorLog: errors > 0 ? { totalErrors: errors } : undefined,
     });
 
-    // Scoring phase
+    // Stage 3: Scoring (non-critical)
     await runScoring(batchId);
   } catch (err) {
     console.error("processProductBatch fatal:", err);
@@ -75,7 +94,6 @@ interface ClassifyResult {
   toCreate: NormalizedProduct[];
   toUpdate: Array<{ existingId: string; product: NormalizedProduct; existing: ExistingProduct }>;
   created: Array<{ id: string; tiktokUrl: string | null; name: string }>;
-  updated: number;
   errors: number;
 }
 
@@ -119,7 +137,6 @@ async function classifyAndImport(
     const existing = (p.tiktokUrl && urlMap.get(p.tiktokUrl))
       || nameShopMap.get(`${p.name.toLowerCase()}|${(p.shopName || "").toLowerCase()}`)
       || null;
-
     if (existing) {
       toUpdate.push({ existingId: existing.id, product: p, existing });
     } else {
@@ -127,7 +144,7 @@ async function classifyAndImport(
     }
   }
 
-  // Batch create new products (1 query)
+  // Batch create (1 query)
   let errors = 0;
   let created: Array<{ id: string; tiktokUrl: string | null; name: string }> = [];
 
@@ -137,7 +154,6 @@ async function classifyAndImport(
         data: toCreate.map((p) => buildCreateData(p, batchId)),
         skipDuplicates: true,
       });
-      // Fetch created product IDs
       created = await prisma.product.findMany({
         where: { importBatchId: batchId },
         select: { id: true, tiktokUrl: true, name: true },
@@ -148,21 +164,19 @@ async function classifyAndImport(
     }
   }
 
-  // Batch update existing products + batch snapshots
+  // Parallel update (no $transaction — PgBouncer-friendly)
   if (toUpdate.length > 0) {
-    errors += await batchUpdateProducts(batchId, toUpdate);
+    errors += await parallelUpdateProducts(batchId, toUpdate);
   }
 
-  return { toCreate, toUpdate, created, updated: toUpdate.length, errors };
+  return { toCreate, toUpdate, created, errors };
 }
 
-async function batchUpdateProducts(
+async function parallelUpdateProducts(
   batchId: string,
   toUpdate: ClassifyResult["toUpdate"],
 ): Promise<number> {
-  let errors = 0;
-
-  // Batch snapshots: check which products need snapshots
+  // Snapshots for changed products
   const changedProducts = toUpdate.filter(({ existing, product }) =>
     hasDataChanged(existing, product),
   );
@@ -174,15 +188,13 @@ async function batchUpdateProducts(
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const changedIds = changedProducts.map(({ existingId }) => existingId);
-
-    // 1 query to check all today's snapshots
     const existingSnaps = await prisma.productSnapshot.findMany({
       where: { productId: { in: changedIds }, snapshotDate: { gte: today, lt: tomorrow } },
       select: { id: true, productId: true },
     });
     const snapMap = new Map(existingSnaps.map((s) => [s.productId, s.id]));
 
-    // Separate into create vs update
+    // Split snapshots: create vs update
     const snapsToCreate: Array<{
       productId: string; importBatchId: string; price: number;
       commissionRate: number; sales7d: number | null; salesTotal: number | null;
@@ -190,29 +202,18 @@ async function batchUpdateProducts(
       totalKOL: number | null; totalVideos: number | null;
       kolOrderRate: number | null; productStatus: string | null;
     }> = [];
-    const snapsToUpdate: Array<{ id: string; data: {
-      importBatchId: string; price: number; commissionRate: number;
-      sales7d: number | null; salesTotal: number | null;
-      revenue7d: number | null; revenueTotal: number | null;
-      totalKOL: number | null; totalVideos: number | null;
-      kolOrderRate: number | null; productStatus: string | null;
-    } }> = [];
+    const snapsToUpdate: Array<{ id: string; data: Record<string, unknown> }> = [];
 
     for (const { existingId, existing } of changedProducts) {
       const snapData = {
         importBatchId: existing.importBatchId ?? batchId,
         price: existing.price ?? 0,
         commissionRate: existing.commissionRate ?? 0,
-        sales7d: existing.sales7d,
-        salesTotal: existing.salesTotal,
-        revenue7d: existing.revenue7d,
-        revenueTotal: existing.revenueTotal,
-        totalKOL: existing.totalKOL,
-        totalVideos: existing.totalVideos,
-        kolOrderRate: existing.kolOrderRate,
-        productStatus: existing.productStatus,
+        sales7d: existing.sales7d, salesTotal: existing.salesTotal,
+        revenue7d: existing.revenue7d, revenueTotal: existing.revenueTotal,
+        totalKOL: existing.totalKOL, totalVideos: existing.totalVideos,
+        kolOrderRate: existing.kolOrderRate, productStatus: existing.productStatus,
       };
-
       const existingSnapId = snapMap.get(existingId);
       if (existingSnapId) {
         snapsToUpdate.push({ id: existingSnapId, data: snapData });
@@ -221,76 +222,46 @@ async function batchUpdateProducts(
       }
     }
 
-    // Batch create new snapshots
+    // Batch create new snapshots (1 query)
     if (snapsToCreate.length > 0) {
-      try {
-        await prisma.productSnapshot.createMany({ data: snapsToCreate });
-      } catch (err) {
-        console.error("Batch snapshot create failed:", err);
-      }
+      try { await prisma.productSnapshot.createMany({ data: snapsToCreate }); }
+      catch (err) { console.error("Batch snapshot create failed:", err); }
     }
 
-    // Batch update existing snapshots
+    // Parallel update existing snapshots (no $transaction)
     if (snapsToUpdate.length > 0) {
-      for (let i = 0; i < snapsToUpdate.length; i += UPDATE_CHUNK) {
-        const chunk = snapsToUpdate.slice(i, i + UPDATE_CHUNK);
-        try {
-          await prisma.$transaction(
-            chunk.map(({ id, data }) =>
-              prisma.productSnapshot.update({ where: { id }, data }),
-            ),
-          );
-        } catch (err) {
-          console.error("Batch snapshot update failed:", err);
-        }
-      }
-    }
-  }
-
-  // Batch update products in $transaction chunks
-  for (let i = 0; i < toUpdate.length; i += UPDATE_CHUNK) {
-    const chunk = toUpdate.slice(i, i + UPDATE_CHUNK);
-    try {
-      await prisma.$transaction(
-        chunk.map(({ existingId, product }) =>
-          prisma.product.update({
-            where: { id: existingId },
-            data: buildUpdateData(product, batchId),
-          }),
-        ),
+      await parallelMap(snapsToUpdate, (s) =>
+        prisma.productSnapshot.update({ where: { id: s.id }, data: s.data }),
+        PARALLEL,
       );
-    } catch (err) {
-      console.error(`Batch update chunk ${i} failed:`, err);
-      errors += chunk.length;
     }
   }
 
-  return errors;
+  // Parallel update products (no $transaction — the key optimization)
+  const { errorCount } = await parallelMap(toUpdate, ({ existingId, product }) =>
+    prisma.product.update({
+      where: { id: existingId },
+      data: buildUpdateData(product, batchId),
+    }),
+    PARALLEL,
+  );
+
+  return errorCount;
 }
 
 async function batchSyncIdentities(
-  allProductIds: string[],
   deduplicated: NormalizedProduct[],
   created: Array<{ id: string; tiktokUrl: string | null; name: string }>,
   toUpdate: ClassifyResult["toUpdate"],
 ): Promise<void> {
   try {
-    // Build product-to-normalized map
     const productInputs: Array<{
-      productId: string;
-      name: string;
-      shopName: string | null;
-      category: string;
-      price: number;
-      commissionRate: number;
-      imageUrl: string | null;
-      tiktokUrl: string | null;
-      fastmossUrl: string | null;
-      aiScore: number | null;
-      sales7d: number | null;
+      productId: string; name: string; shopName: string | null;
+      category: string; price: number; commissionRate: number;
+      imageUrl: string | null; tiktokUrl: string | null;
+      fastmossUrl: string | null; aiScore: number | null; sales7d: number | null;
     }> = [];
 
-    // Map created products to their normalized data via tiktokUrl or name
     const normalizedByUrl = new Map(
       deduplicated.filter((p) => p.tiktokUrl).map((p) => [p.tiktokUrl!, p]),
     );
@@ -346,41 +317,26 @@ async function runScoring(batchId: string): Promise<void> {
       await syncIdentityScores(identityIds);
     }
 
-    // Batch lifecycle recalc — fetch all snapshots in 1 query instead of N
+    // Lifecycle recalc — parallel
     const productsWithIdentity = linkedIdentities.filter((p) => p.identityId);
     if (productsWithIdentity.length > 0) {
-      const lifecycleUpdates: Array<{ identityId: string; stage: string }> = [];
+      const { successes: lifecycleUpdates } = await parallelMap(
+        productsWithIdentity,
+        async (lp) => {
+          const lifecycle = await getProductLifecycle(lp.id);
+          return { identityId: lp.identityId!, stage: lifecycle.stage };
+        },
+        PARALLEL,
+      );
 
-      // Process in chunks to avoid overwhelming the DB
-      for (let i = 0; i < productsWithIdentity.length; i += UPDATE_CHUNK) {
-        const chunk = productsWithIdentity.slice(i, i + UPDATE_CHUNK);
-        const results = await Promise.allSettled(
-          chunk.map(async (lp) => {
-            const lifecycle = await getProductLifecycle(lp.id);
-            return { identityId: lp.identityId!, stage: lifecycle.stage };
-          }),
-        );
-
-        for (const result of results) {
-          if (result.status === "fulfilled") {
-            lifecycleUpdates.push(result.value);
-          }
-        }
-      }
-
-      // Batch update lifecycle stages
       if (lifecycleUpdates.length > 0) {
-        for (let i = 0; i < lifecycleUpdates.length; i += UPDATE_CHUNK) {
-          const chunk = lifecycleUpdates.slice(i, i + UPDATE_CHUNK);
-          await prisma.$transaction(
-            chunk.map(({ identityId, stage }) =>
-              prisma.productIdentity.update({
-                where: { id: identityId },
-                data: { lifecycleStage: stage },
-              }),
-            ),
-          ).catch((err) => console.error("Lifecycle batch update failed:", err));
-        }
+        await parallelMap(lifecycleUpdates, ({ identityId, stage }) =>
+          prisma.productIdentity.update({
+            where: { id: identityId },
+            data: { lifecycleStage: stage },
+          }),
+          PARALLEL,
+        );
       }
     }
 

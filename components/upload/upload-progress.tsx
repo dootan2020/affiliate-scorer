@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
+import { ProcessLog } from "@/components/upload/process-log";
 import type { ImportStatus } from "@/lib/hooks/use-import-polling";
 
 export interface UploadResult {
@@ -42,7 +43,13 @@ export function UploadProgress({
 }: UploadProgressProps): React.ReactElement | null {
   // Show live polling progress if available
   if (liveStatus) {
-    return <LiveProgress status={liveStatus} isPolling={isPolling ?? false} />;
+    return (
+      <LiveProgress
+        status={liveStatus}
+        isPolling={isPolling ?? false}
+        result={result}
+      />
+    );
   }
 
   if (!fileName && !result && !error) return null;
@@ -81,9 +88,11 @@ export function UploadProgress({
 function LiveProgress({
   status,
   isPolling,
+  result,
 }: {
   status: ImportStatus;
   isPolling: boolean;
+  result: UploadResult | null;
 }): React.ReactElement {
   const isImporting = status.status === "processing" || status.status === "pending";
   const isScoring = status.scoringStatus === "processing";
@@ -152,6 +161,8 @@ function LiveProgress({
           Xem Inbox →
         </Link>
       )}
+
+      <ProcessLog result={result} status={status} isPolling={isPolling} />
     </div>
   );
 }

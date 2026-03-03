@@ -1,0 +1,516 @@
+# System Architecture — PASTR
+
+Complete system design documentation for the PASTR affiliate video production platform.
+
+---
+
+## 1. Architecture Overview
+
+```mermaid
+graph TB
+    subgraph Client["Browser (React 19)"]
+        Pages["Pages (SSR + CSR)"]
+        Components["UI Components"]
+    end
+
+    subgraph Server["Next.js Server (App Router)"]
+        API["API Route Handlers (90+ endpoints)"]
+        MW["Middleware (auth + origin check)"]
+        ServerComponents["Server Components"]
+    end
+
+    subgraph Compute["Serverless Compute Layer"]
+        InitialReq["Initial Upload Route"]
+        ChunkRelay["Chunk Relay Endpoints"]
+        ScoringRelay["Scoring Relay Endpoint"]
+        CronJob["Cron Retry Service"]
+    end
+
+    subgraph Data["Data Layer"]
+        Prisma["Prisma ORM v7"]
+        PgPool["PostgreSQL (Supabase)"]
+    end
+
+    subgraph AI["AI Providers"]
+        Claude["Claude (Anthropic)"]
+        GPT["GPT/O3 (OpenAI)"]
+        Gemini["Gemini (Google)"]
+    end
+
+    subgraph External["External Data Sources"]
+        FastMoss["FastMoss XLSX"]
+        KaloData["KaloData CSV"]
+        TikTokStudio["TikTok Studio Export"]
+        AdsPlatforms["FB/TikTok/Shopee Ads"]
+    end
+
+    Pages --> API
+    API --> MW
+    MW --> API
+    API --> InitialReq
+    InitialReq --> ChunkRelay
+    ChunkRelay --> ScoringRelay
+    ScoringRelay --> CronJob
+    API --> Prisma --> PgPool
+    API --> AI
+    External --> API
+    CronJob --> Prisma
+    ServerComponents --> Prisma
+```
+
+---
+
+## 2. Chunked Import & Relay Architecture
+
+### Overview
+
+The system handles file imports up to 3000+ products by chunking across multiple serverless invocations:
+
+1. **Upload Route** — Receives file, parses, deduplicates (first 300 products)
+2. **Import-Chunk Relay** — Processes remaining 300-product chunks
+3. **Scoring Relay** — Triggers batch scoring after last import chunk
+4. **Cron Retry** — Safety net; retries failed/stuck batches every 5 minutes
+
+### 2.1 Import Phase
+
+**Endpoint:** `POST /api/upload`
+
+```typescript
+// Phase 1: Parse file, normalize data, deduplicate URLs
+const { totalRows, deduplicatedProducts } = parseAndNormalize(file);
+
+// Fire processProductBatch immediately (async, background)
+await processProductBatch(batchId, deduplicatedProducts);
+// Returns 202 Accepted to client
+```
+
+**Config:**
+- `IMPORT_CHUNK = 300` — Products per invocation (in `lib/import/process-product-batch.ts`)
+- Respects Vercel `maxDuration = 60s` per invocation
+- Parallel queries: `PARALLEL = 20` concurrent database operations
+
+### 2.2 Process Product Batch (Initial Chunk)
+
+**Code:** `lib/import/process-product-batch.ts`
+
+```typescript
+export async function processProductBatch(
+  batchId: string,
+  deduplicated: NormalizedProduct[],
+): Promise<void> {
+  // Split into chunks
+  const chunk = deduplicated.slice(0, IMPORT_CHUNK);      // [0:300]
+  const remaining = deduplicated.slice(IMPORT_CHUNK);     // [300:N]
+
+  // Process first chunk (classify, upsert, sync identities, update progress)
+  await processChunk(batchId, chunk);
+
+  if (remaining.length > 0) {
+    // Fire relay to handle remaining
+    fireRelay(
+      "/api/internal/import-chunk",
+      { batchId, products: remaining },
+      "import-chunk",
+    );
+  } else {
+    // All chunks done, trigger scoring
+    await finalizeImportAndFireScoring(batchId);
+  }
+}
+```
+
+### 2.3 Import-Chunk Relay Endpoint
+
+**Endpoint:** `POST /api/internal/import-chunk`
+
+```typescript
+export async function POST(req: NextRequest) {
+  const { batchId, products } = await req.json();
+
+  // Process current chunk (same logic as initial)
+  const chunk = products.slice(0, IMPORT_CHUNK);
+  const remaining = products.slice(IMPORT_CHUNK);
+
+  await processChunk(batchId, chunk);
+
+  if (remaining.length > 0) {
+    // Relay next chunk
+    fireRelay(
+      "/api/internal/import-chunk",
+      { batchId, products: remaining },
+      "import-chunk",
+    );
+  } else {
+    // Final chunk, trigger scoring
+    await finalizeImportAndFireScoring(batchId);
+  }
+}
+```
+
+**Key Characteristics:**
+- Each invocation handles **exactly 300 products** (or fewer for final chunk)
+- Processes in ~10-15s, leaving 45-50s buffer within 60s limit
+- Parallel updates (no `$transaction`) to avoid PgBouncer timeout
+
+### 2.4 Fire-and-Forget Relay Utility
+
+**Code:** `lib/import/fire-relay.ts`
+
+```typescript
+export function fireRelay(
+  path: string,
+  body: Record<string, unknown>,
+  label?: string,
+): void {
+  // Non-blocking relay with internal retries
+  void attemptRelay(`${base}${path}`, body, 0, label);
+}
+
+async function attemptRelay(
+  url: string,
+  body: Record<string, unknown>,
+  attempt: number,
+  label: string,
+): Promise<void> {
+  try {
+    const res = await fetch(url, { method: "POST", body });
+    if (res.ok) return;
+    if (res.status < 500) {
+      console.warn(`${label} relay got ${res.status} — not retrying`);
+      return;
+    }
+    throw new Error(`HTTP ${res.status}`);
+  } catch (err) {
+    if (attempt < MAX_RETRIES - 1) {
+      await sleep(BACKOFF_MS[attempt]); // 1s, 2s, 4s
+      return attemptRelay(url, body, attempt + 1, label);
+    }
+    console.error(`${label} relay failed after ${MAX_RETRIES} attempts:`, err);
+  }
+}
+```
+
+**Features:**
+- **Exponential backoff:** 1s → 2s → 4s between retries
+- **Max 3 retries** before giving up
+- **Non-blocking:** Returns immediately; retries run in background
+- **Auth header:** Includes `x-auth-secret` for server-to-server validation
+- **No await:** Caller does not wait; safety net is cron job
+
+### 2.5 Scoring Relay Endpoint
+
+**Endpoint:** `POST /api/internal/score-batch`
+
+```typescript
+export async function POST(req: NextRequest) {
+  const { batchId } = await req.json();
+
+  // Fetch batch + all imported products
+  const batch = await prisma.importBatch.findUnique({ where: { id: batchId } });
+  const products = await prisma.productIdentity.findMany({
+    where: { importBatchId: batchId },
+  });
+
+  // Trigger scoring
+  await scoreProductsInBatch(batchId, products);
+  // Max 30 concurrent scores (3 chunks of 10)
+}
+```
+
+**Key Points:**
+- Called after **final import chunk** completes
+- Batches 30 concurrent AI scoring requests
+- Chunks: 10 → 10 → 10 products per parallel batch
+- If scoring fails or gets stuck, cron job retries
+
+### 2.6 Retry-Scoring Cron Service
+
+**Endpoint:** `GET /api/cron/retry-scoring`
+
+**Schedule:** Every 5 minutes (Vercel cron config in `vercel.json`)
+
+```typescript
+export async function GET(): Promise<NextResponse> {
+  const now = new Date();
+
+  // Two-pass approach:
+  // Pass 1: Find candidates with generous cutoff
+  const potentials = await prisma.importBatch.findMany({
+    where: {
+      status: { in: ["completed", "partial"] },
+      OR: [
+        { scoringStatus: "failed" },
+        {
+          scoringStatus: "processing",
+          importDate: { lt: maxCutoff },  // 3 min base
+        },
+      ],
+    },
+    take: 10,
+  });
+
+  // Pass 2: Filter stuck batches using scaled threshold
+  // Scale: +1 min per 150-product scoring chunk
+  const candidates = potentials.filter((batch) => {
+    if (batch.scoringStatus === "failed") return true;
+    const chunks = Math.ceil(batch.recordCount / 150);
+    const threshold = BASE_STUCK_MS + chunks * PER_CHUNK_STUCK_MS;
+    const age = now.getTime() - batch.importDate.getTime();
+    return age > threshold;
+  }).slice(0, 5);
+
+  // Retry up to 3 times per batch
+  for (const batch of candidates) {
+    const retryCount = batch.errorLog.scoringRetryCount ?? 0;
+    if (retryCount >= 3) continue;
+
+    // Reset status and increment counter
+    await prisma.importBatch.update({
+      where: { id: batch.id },
+      data: {
+        scoringStatus: "processing",
+        completedAt: null,
+        errorLog: { ...log, scoringRetryCount: retryCount + 1 },
+      },
+    });
+
+    // Fire scoring relay
+    fireRelay("/api/internal/score-batch", { batchId: batch.id });
+  }
+}
+```
+
+**Features:**
+- **Scaled stuck detection:** Threshold increases by 1 min per 150 products
+- **Max 3 retries** per batch (tracked in `errorLog.scoringRetryCount`)
+- **Retroactive:** Handles both initial failures and stuck processing
+- **Rate-limited:** Max 5 candidates per cron run to avoid cascade failures
+- **Runs every 5 min:** Provides safety net for missed relay chains
+
+---
+
+## 3. Import Progress Tracking
+
+**Code:** `lib/import/update-batch-progress.ts`
+
+```typescript
+// Atomic progress updates (no $transaction)
+await prisma.importBatch.update({
+  where: { id: batchId },
+  data: {
+    processedRows: { increment: chunk.length },
+    // OR
+    processedRows: processed,  // atomic set
+  },
+});
+```
+
+**UI Component:** `components/upload/upload-progress.tsx`
+
+```typescript
+// Shows: "Đang import 600/3000..." during processing
+// Polling: client refreshes status every 500ms
+const { processed, total } = await fetchImportStatus(batchId);
+return <Progress value={(processed / total) * 100} />;
+```
+
+---
+
+## 4. Product Data Flow
+
+### Step 1: Classification
+
+Files (FastMoss XLSX, KaloData CSV, etc.) → Normalized products with fields:
+- `name`, `price`, `category`
+- `sales7d`, `salesTotal`, `revenue7d`, `revenueTotal`
+- `commissionRate`, `totalKOL`, `kolOrderRate`
+
+### Step 2: Deduplication
+
+Normalize URLs (strip params, trailing slash) → detect duplicates within batch
+
+### Step 3: Identity Sync
+
+Match against existing `ProductIdentity` → Create new or link `ProductUrl` variants
+
+### Step 4: Snapshot Creation
+
+Create historical `ProductSnapshot` (for delta classification: NEW/SURGE/COOL/STABLE)
+
+### Step 5: Scoring
+
+Parallel batch scoring (max 30 concurrent):
+- **Market Score** — 60% weight (revenue, growth, competition, commission, trend, seasonality)
+- **Content Score** — 40% weight (visuals, angles, assets, AI feasibility, risk flags)
+
+### Step 6: Learning Update
+
+If >= 30 feedbacks exist → Apply personalized weight adjustments
+
+---
+
+## 5. Database Schema
+
+**Key Tables for Import:**
+
+| Table | Columns | Purpose |
+|-------|---------|---------|
+| `ImportBatch` | id, batchId, fileName, format, status, totalRows, processedRows, recordCount, scoringStatus, completedAt, errorLog | Track import session |
+| `ProductIdentity` | id, combinedScore, lifecycleStage, deltaType, inboxState | Canonical product entity |
+| `ProductUrl` | id, productId, url, urlType (tiktok_shop/fastmoss/kalodata/video/shop) | URL variants |
+| `ProductSnapshot` | id, productId, importBatchId, price, salesTotal, ..., createdAt | Historical snapshots for delta |
+| `DataImport` | id, batchId, source, rawData (JSON), createdAt | Generic import record |
+
+**Key Relationships:**
+- `ImportBatch` 1:N `ProductSnapshot`, `DataImport`
+- `ProductIdentity` 1:N `ProductUrl`, `ProductSnapshot`
+- `ImportBatch.id` → linked products via `ProductSnapshot.importBatchId`
+
+---
+
+## 6. Error Handling & Resilience
+
+### Relay Chain Failures
+
+**Scenario 1: Import-chunk relay fails after 3 retries**
+- Error logged in `ImportBatch.errorLog`
+- Status remains `processing` or becomes `partial`
+- Cron job detects stuck batch after BASE_STUCK_MS + (chunks × PER_CHUNK_STUCK_MS)
+- Cron retries scoring (up to 3 times)
+
+**Scenario 2: Scoring relay fails**
+- `scoringStatus` = `failed`
+- Cron immediately detects and retries
+- Max 3 scoring retries per batch
+
+**Scenario 3: UI detects import stuck (polling)**
+- Client shows "Retry" button
+- User clicks → calls `POST /api/internal/score-batch`
+- Manually triggers scoring (alternative to waiting for cron)
+
+### Data Integrity
+
+- **Partial imports allowed** — If import chunk fails, previously imported chunks remain
+- **Atomic progress updates** — No transaction locking; each update is independent
+- **Snapshot isolation** — Each `ProductSnapshot` linked to `ImportBatch` for auditing
+- **Idempotent upserts** — Re-running import chunk safe (duplicate products deduplicated)
+
+---
+
+## 7. Performance Tuning
+
+### Database Optimization
+
+| Optimization | Detail |
+|--------------|--------|
+| **Parallel queries** | 20 concurrent operations per chunk |
+| **No transactions** | Avoid PgBouncer conflicts on Supabase |
+| **Pooled connection** | pgBouncer on port 6543 for app traffic |
+| **Direct connection** | Port 5432 for Prisma migrations only |
+| **Index on URL** | Fast deduplication lookups |
+| **Index on importBatchId** | Fast batch filtering |
+
+### Serverless Constraints
+
+| Constraint | Handling |
+|-----------|----------|
+| **60s maxDuration** | Process 300 products/chunk; ~10-15s per chunk |
+| **Memory limit** | Avoid loading entire file into memory; stream parse |
+| **CPU throttle** | Parallel queries (not sequential) to maximize throughput |
+
+### Timeouts & Backoff
+
+| Metric | Value | Rationale |
+|--------|-------|-----------|
+| Relay backoff | 1s, 2s, 4s | Exponential; avoids thundering herd |
+| Stuck threshold base | 3 min | Allows for normal processing + clock skew |
+| Stuck threshold per chunk | +1 min per 150 products | Scales with batch size |
+| Cron interval | 5 min | Frequent enough for timely retry |
+| Cron candidates | Max 5 per run | Prevents cascade failures |
+
+---
+
+## 8. Monitoring & Logging
+
+### Key Metrics
+
+- **Import batch status:** `processing` → `completed` / `partial` / `failed`
+- **Scoring status:** `pending` → `processing` → `succeeded` / `failed`
+- **Relay attempts:** Logged with attempt number and backoff duration
+- **Error logs:** JSON object in `ImportBatch.errorLog` (fatal, parsing errors, retry counts)
+
+### Client-Side Polling
+
+**Upload Progress Page:**
+```typescript
+// Poll every 500ms during import
+const { status, processedRows, totalRows } = await fetchImportStatus(batchId);
+if (status === "completed") showSuccess();
+if (status === "failed") showRetryButton();
+```
+
+### Server-Side Logging
+
+- `console.error()` on fatal relay failures (checked by monitoring)
+- `console.warn()` on non-500 HTTP responses (indicates client error)
+- `ImportBatch.errorLog` persists structured error details
+
+---
+
+## 9. API Endpoints (Import & Scoring)
+
+| Endpoint | Method | Responsibility |
+|----------|--------|-----------------|
+| `/api/upload` | POST | Parse file, normalize, deduplicate, fire initial batch |
+| `/api/internal/import-chunk` | POST | Process 300-product chunk, fire next relay |
+| `/api/internal/score-batch` | POST | Score all products in batch |
+| `/api/cron/retry-scoring` | GET | Detect & retry failed/stuck batches every 5 min |
+| `/api/imports/[id]/status` | GET | Poll import progress |
+
+---
+
+## 10. Deployment Configuration
+
+**Vercel Config** (`vercel.json`):
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/retry-scoring",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
+```
+
+**Environment Variables:**
+- `NEXT_PUBLIC_APP_URL` — For relay base URL construction
+- `VERCEL_URL` — Fallback for base URL
+- `AUTH_SECRET` — For server-to-server `x-auth-secret` header
+
+**Build Command:** `pnpm build`
+**Dev Command:** `pnpm dev`
+
+---
+
+## 11. Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **Chunked import** | Supports unlimited file sizes (3000+ products) without timeout |
+| **Fire-and-forget relay** | Non-blocking; instant response to user; cron safety net |
+| **No $transaction** | Avoid PgBouncer deadlocks; parallel atomic updates instead |
+| **Parallel queries** | Maximize throughput within 60s serverless limit |
+| **Cron fallback** | Handles missed relays, network transients, DB connection drops |
+| **Scaled stuck detection** | Account for batch size; larger batches naturally take longer |
+| **Progress polling** | Client-driven; avoids server-sent events complexity |
+
+---
+
+## 12. Future Improvements
+
+- **Webhook callbacks** instead of polling (requires client-side event listener)
+- **Server-sent events (SSE)** for real-time progress updates
+- **Batch prioritization** (user can pause/resume imports)
+- **Resumable uploads** (restart from failed chunk)
+- **Metrics dashboard** (import success rate, scoring latency, etc.)

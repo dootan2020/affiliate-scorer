@@ -253,10 +253,71 @@ Tất cả thay đổi quan trọng của AffiliateScorer được ghi nhận t�
 
 ---
 
+## [1.8.0] — 2026-03-03 — Chunked Import & Auto-Retry System
+
+### Added
+
+- **Chunked Import Architecture** — Process up to 3000+ products across multiple serverless invocations
+  - `IMPORT_CHUNK = 300` products per invocation (fits within 60s Vercel limit)
+  - Relay chain: `POST /api/upload` → `/api/internal/import-chunk` (repeats) → `/api/internal/score-batch`
+  - Non-blocking fire-and-forget relay with exponential backoff (1s/2s/4s)
+- **Fire-and-Forget Relay Utility** (`lib/import/fire-relay.ts`)
+  - Shared HTTP relay with 3 automatic retries
+  - Auth header support (`x-auth-secret`) for server-to-server validation
+  - Background execution; caller returns immediately
+- **Auto-Retry Scoring Cron** — Vercel cron every 5 minutes
+  - Detects failed/stuck import batches with scaled timeout threshold
+  - Base threshold: 3 min + (1 min per 150-product scoring chunk)
+  - Max 3 scoring retries per batch (tracked in `errorLog.scoringRetryCount`)
+  - Handles up to 5 candidates per cron run (rate-limited)
+- **UI Enhancements**
+  - Chunk progress display: "Đang import 600/3000..." during processing
+  - Per-chunk log entries in process log
+  - Retry button for failed/stuck imports
+
+### Changed
+
+- **Import Processing** — Refactored `process-product-batch.ts`
+  - Parallel database queries (20 concurrent) instead of `$transaction` (avoids PgBouncer timeout)
+  - Atomic progress increments via `incrementBatchProgress()`
+  - Chunking logic automatically splits 3000+ products
+- **Scoring Flow** — Decoupled from import chain
+  - `score-batch` endpoint handles all scoring logic
+  - Accepts both initial scoring and cron-triggered retries
+  - Timeout scaling: per-batch thresholds in import status endpoint
+
+### Infrastructure
+
+- **Vercel Configuration** — New `vercel.json` with cron schedule
+  - Path: `/api/cron/retry-scoring`
+  - Schedule: `*/5 * * * *` (every 5 minutes)
+- **API Endpoints** — 4 new internal endpoints
+  - `/api/internal/import-chunk` — Relay for remaining chunks
+  - `/api/internal/score-batch` — Trigger batch scoring
+  - `/api/imports/[id]/status` — Poll progress with scaled timeouts
+
+### Technical Debt
+
+- Removed dead offset parameter from import scoring flow
+- Consolidated error logging patterns
+- Improved relay retry diagnostics
+
+### Known Limitations
+
+- Import must complete within 6 sequential 60s invocations (18 min max for 3600 products)
+- If both import-chunk relay and cron fail, batch stays stuck (user can retry manually)
+- Client-side polling still used (no webhook/SSE yet)
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned
 
+- Webhook callbacks for import completion notifications
+- Server-sent events (SSE) for real-time progress updates
+- Batch prioritization (pause/resume imports)
+- Resumable uploads (restart from failed chunk)
 - Chrome Extension (MV3) for one-click product capture
 - Multi-channel expansion beyond TikTok
 - Advanced analytics dashboards

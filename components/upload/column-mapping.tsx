@@ -104,6 +104,9 @@ export function ColumnMapping({
                   <td className="py-3 px-3">
                     <span className="text-gray-900 dark:text-gray-100">
                       {field.label}
+                      {field.key === "name" && (
+                        <span className="text-rose-500 ml-0.5">*</span>
+                      )}
                     </span>
                   </td>
                   <td className="py-3 px-3">

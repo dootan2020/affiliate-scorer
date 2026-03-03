@@ -82,6 +82,7 @@ export function FileDropzone({
         </div>
         <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{label}</p>
         <p className="text-xs text-gray-400 dark:text-gray-500">{sublabel}</p>
+        <p className="text-[11px] text-gray-300 dark:text-gray-600">Tối đa 10MB</p>
       </div>
     </div>
   );

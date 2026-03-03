@@ -175,11 +175,11 @@ export function ProcessLog({
       {isExpanded && (
         <div
           ref={scrollRef}
-          className="mt-2 max-h-48 overflow-y-auto rounded-xl bg-gray-900 dark:bg-slate-950 p-3 font-mono text-xs leading-relaxed space-y-1"
+          className="mt-2 max-h-48 overflow-y-auto rounded-xl bg-gray-100 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 p-3 font-mono text-xs leading-relaxed space-y-1"
         >
           {entries.map((entry, i) => (
-            <div key={i} className="flex items-start gap-2 text-gray-300">
-              <span className="text-gray-500 shrink-0">{entry.time}</span>
+            <div key={i} className="flex items-start gap-2 text-gray-600 dark:text-gray-300">
+              <span className="text-gray-400 dark:text-gray-500 shrink-0">{entry.time}</span>
               <span className="shrink-0">{entry.icon}</span>
               <span>{entry.message}</span>
             </div>

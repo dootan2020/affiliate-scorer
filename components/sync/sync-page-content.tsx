@@ -47,6 +47,7 @@ export function SyncPageContent(): React.ReactElement {
   const [isImporting, setIsImporting] = useState(false);
   const [pollingBatchId, setPollingBatchId] = useState<string | null>(null);
   const [importHistory, setImportHistory] = useState<ImportRecord[]>([]);
+  const [isResumed, setIsResumed] = useState(false);
 
   // Poll import progress after upload
   const { status: liveStatus, isPolling } = useImportPolling(pollingBatchId);
@@ -63,6 +64,7 @@ export function SyncPageContent(): React.ReactElement {
         if (data?.id && !cancelled) {
           setPollingBatchId(data.id);
           setFileName(data.fileName);
+          setIsResumed(true);
         }
       } catch {
         // Non-critical
@@ -188,6 +190,16 @@ export function SyncPageContent(): React.ReactElement {
     setFileName(null);
   }
 
+  function handleReset(): void {
+    setPollingBatchId(null);
+    setResult(null);
+    setError(null);
+    setFileName(null);
+    setFile(null);
+    setPreview(null);
+    setIsResumed(false);
+  }
+
   return (
     <div className="space-y-8">
       {/* Section 1: Nghiên cứu sản phẩm */}
@@ -238,6 +250,15 @@ export function SyncPageContent(): React.ReactElement {
           />
         )}
 
+        {isResumed && liveStatus && !liveStatus.isTerminal && (
+          <div className="flex items-center gap-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 px-3 py-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0" />
+            <p className="text-xs text-blue-600 dark:text-blue-400">
+              Tiếp tục theo dõi import trước đó
+            </p>
+          </div>
+        )}
+
         <UploadProgress
           fileName={fileName}
           isUploading={false}
@@ -246,6 +267,7 @@ export function SyncPageContent(): React.ReactElement {
           liveStatus={liveStatus}
           isPolling={isPolling}
           onRetryScoring={handleRetryScoring}
+          onReset={handleReset}
         />
       </div>
 

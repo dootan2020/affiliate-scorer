@@ -267,7 +267,7 @@ export function TikTokStudioDropzone(): React.ReactElement {
         <div className="space-y-1.5 rounded-xl bg-gray-50 dark:bg-slate-800/50 p-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Đang xử lý {liveStatus.rowsProcessed}/{liveStatus.recordCount} file...
+              Đang xử lý {liveStatus.rowsProcessed}/{liveStatus.recordCount} dòng...
             </p>
             {liveStatus.progress > 0 && (
               <span className="text-xs text-gray-400">{liveStatus.progress}%</span>

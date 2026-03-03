@@ -32,6 +32,8 @@ interface UploadProgressProps {
   isPolling?: boolean;
   /** Callback to retry scoring when it fails */
   onRetryScoring?: (batchId: string) => void;
+  /** Callback to reset/dismiss results and start fresh */
+  onReset?: () => void;
 }
 
 export function UploadProgress({
@@ -42,6 +44,7 @@ export function UploadProgress({
   liveStatus,
   isPolling,
   onRetryScoring,
+  onReset,
 }: UploadProgressProps): React.ReactElement | null {
   // Show live polling progress if available
   if (liveStatus) {
@@ -51,6 +54,7 @@ export function UploadProgress({
         isPolling={isPolling ?? false}
         result={result}
         onRetryScoring={onRetryScoring}
+        onReset={onReset}
       />
     );
   }
@@ -90,39 +94,44 @@ function LiveProgress({
   isPolling,
   result,
   onRetryScoring,
+  onReset,
 }: {
   status: ImportStatus;
   isPolling: boolean;
   result: UploadResult | null;
   onRetryScoring?: (batchId: string) => void;
+  onReset?: () => void;
 }): React.ReactElement {
   const isImporting = status.status === "processing" || status.status === "pending";
   const isScoring = status.scoringStatus === "processing";
   const isDone = status.isTerminal;
   const hasFailed = status.status === "failed";
   const scoringFailed = status.scoringStatus === "failed";
+  const timedOut = status.timedOut === true;
 
   // Show chunk progress during import (e.g., "Đang import 600/3000...")
   const importLabel = isImporting && status.rowsProcessed > 0 && status.recordCount > 0
     ? `Đang import ${status.rowsProcessed}/${status.recordCount}...`
     : "Đang import...";
 
-  const label = hasFailed
-    ? "Import thất bại"
-    : isImporting
-      ? importLabel
-      : isScoring
-        ? "Đang chấm điểm AI..."
-        : isDone && !scoringFailed
-          ? "Hoàn thành!"
-          : isDone && scoringFailed
-            ? "Import hoàn tất"
-            : "Đang xử lý...";
+  const label = timedOut
+    ? "Mất kết nối theo dõi — kiểm tra lại sau"
+    : hasFailed
+      ? "Import thất bại"
+      : isImporting
+        ? importLabel
+        : isScoring
+          ? "Đang chấm điểm AI..."
+          : isDone && !scoringFailed
+            ? "Hoàn thành!"
+            : isDone && scoringFailed
+              ? "Import hoàn tất"
+              : "Đang xử lý...";
 
   return (
     <div className="space-y-3 rounded-2xl bg-gray-50 dark:bg-slate-800 p-4">
       <div className="flex items-center gap-2">
-        {isPolling && !isDone && (
+        {isPolling && !isDone && !timedOut && (
           <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shrink-0" />
         )}
         {isDone && !hasFailed && !scoringFailed && (
@@ -131,7 +140,7 @@ function LiveProgress({
         {isDone && !hasFailed && scoringFailed && (
           <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
         )}
-        {hasFailed && (
+        {(hasFailed || timedOut) && (
           <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
         )}
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -139,7 +148,7 @@ function LiveProgress({
         </span>
       </div>
 
-      <p className={`text-sm ${hasFailed ? "text-rose-600 dark:text-rose-400" : isDone && !scoringFailed ? "text-emerald-600 dark:text-emerald-400" : isDone && scoringFailed ? "text-amber-600 dark:text-amber-400" : "text-gray-500 dark:text-gray-400"}`}>
+      <p className={`text-sm ${timedOut ? "text-rose-600 dark:text-rose-400" : hasFailed ? "text-rose-600 dark:text-rose-400" : isDone && !scoringFailed ? "text-emerald-600 dark:text-emerald-400" : isDone && scoringFailed ? "text-amber-600 dark:text-amber-400" : "text-gray-500 dark:text-gray-400"}`}>
         {label}
       </p>
 
@@ -163,13 +172,27 @@ function LiveProgress({
         </button>
       )}
 
-      {isDone && !hasFailed && (
-        <Link
-          href="/inbox"
-          className="inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
-        >
-          Xem Inbox →
-        </Link>
+      {/* Actions after completion */}
+      {(isDone || timedOut) && (
+        <div className="flex items-center gap-3 flex-wrap pt-1">
+          {!hasFailed && !timedOut && (
+            <Link
+              href="/inbox"
+              className="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-5 py-2 text-sm font-medium shadow-sm hover:shadow transition-all"
+            >
+              Xem Inbox →
+            </Link>
+          )}
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            >
+              Upload file mới
+            </button>
+          )}
+        </div>
       )}
 
       <ProcessLog result={result} status={status} isPolling={isPolling} />

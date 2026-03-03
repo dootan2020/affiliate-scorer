@@ -17,6 +17,8 @@ export interface ImportStatus {
   completedAt: string | null;
   isTerminal: boolean;
   progress: number;
+  /** True when polling stopped due to MAX_POLLS safety limit */
+  timedOut?: boolean;
 }
 
 const POLL_INTERVAL = 3000;
@@ -31,6 +33,11 @@ export function useImportPolling(batchId: string | null): {
   const [isPolling, setIsPolling] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
+
+  // Reset status when batchId clears — prevents stale results
+  useEffect(() => {
+    if (!batchId) setStatus(null);
+  }, [batchId]);
 
   // Effect to manage polling lifecycle
   useEffect(() => {
@@ -59,6 +66,8 @@ export function useImportPolling(batchId: string | null): {
     const pollFn = async (): Promise<void> => {
       pollCountRef.current++;
       if (pollCountRef.current > MAX_POLLS) {
+        // Mark timeout so UI can show feedback
+        setStatus((prev) => prev ? { ...prev, timedOut: true } : prev);
         stopPolling();
         return;
       }

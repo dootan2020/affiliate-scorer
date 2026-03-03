@@ -32,17 +32,17 @@ export async function GET(
       return NextResponse.json({ error: "Batch not found" }, { status: 404 });
     }
 
-    // Import is terminal when its own status is done — don't wait for scoring
+    // Terminal only when BOTH import AND scoring are done (or timed out)
     const importDone = ["completed", "failed", "partial"].includes(batch.status);
     const scoringDone = ["completed", "failed"].includes(batch.scoringStatus);
     let isTerminal = importDone && scoringDone;
 
     // Stuck detection: auto-fail stuck phases
-    // Import: 5 min timeout. Scoring: 2 min (runs via after(), killed at ~60s)
+    // Import: 5 min timeout. Scoring: 3 min (runs via after())
     const age = Date.now() - new Date(batch.importDate).getTime();
     if (!isTerminal) {
       const IMPORT_TIMEOUT_MS = 5 * 60 * 1000;
-      const SCORING_TIMEOUT_MS = 2 * 60 * 1000;
+      const SCORING_TIMEOUT_MS = 3 * 60 * 1000;
       const needsStatusFix = !importDone && age > IMPORT_TIMEOUT_MS;
       const needsScoringFix = importDone && !scoringDone && age > SCORING_TIMEOUT_MS;
 
@@ -59,12 +59,6 @@ export async function GET(
         if (needsStatusFix) batch.status = "failed";
         if (needsScoringFix) batch.scoringStatus = "failed";
         batch.completedAt = new Date();
-        isTerminal = true;
-      }
-
-      // If import is done but scoring still running, mark terminal anyway
-      // so the UI shows completion. Scoring result is secondary.
-      if (importDone && !scoringDone) {
         isTerminal = true;
       }
     }

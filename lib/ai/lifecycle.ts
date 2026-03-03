@@ -30,14 +30,14 @@ const MESSAGES: Record<LifecycleStage, string> = {
   unknown: "Chưa đủ dữ liệu lịch sử để phân tích vòng đời.",
 };
 
-function pctChange(current: number | null, previous: number | null): number {
+export function pctChange(current: number | null, previous: number | null): number {
   const cur = current ?? 0;
   const prev = previous ?? 0;
   if (prev === 0) return cur > 0 ? 100 : 0;
   return ((cur - prev) / prev) * 100;
 }
 
-function determineStage(
+export function determineStage(
   salesTotal: number | null,
   salesChange: number,
   kolChange: number,

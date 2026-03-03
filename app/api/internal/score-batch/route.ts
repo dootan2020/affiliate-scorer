@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { scoreProducts } from "@/lib/ai/scoring";
 import { syncIdentityScores } from "@/lib/services/score-identity";
-import { getProductLifecycle } from "@/lib/ai/lifecycle";
+import { pctChange, determineStage } from "@/lib/ai/lifecycle";
 import { updateBatchProgress } from "@/lib/import/update-batch-progress";
 import { fireRelay } from "@/lib/import/fire-relay";
 
@@ -35,11 +35,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     if (unscored.length === 0) {
-      await runLifecycle(batchId);
+      // Mark completed FIRST — lifecycle is non-critical and may timeout
       await updateBatchProgress(batchId, {
         scoringStatus: "completed",
         completedAt: new Date(),
       });
+      await runLifecycle(batchId);
       return NextResponse.json({ done: true, scored: 0 });
     }
 
@@ -77,12 +78,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       });
     }
 
-    // All scored — lifecycle + finalize
-    await runLifecycle(batchId);
+    // Mark completed FIRST — lifecycle is non-critical and may timeout
     await updateBatchProgress(batchId, {
       scoringStatus: "completed",
       completedAt: new Date(),
     });
+    await runLifecycle(batchId);
 
     return NextResponse.json({ done: true, scored: productIds.length });
   } catch (error) {
@@ -115,35 +116,55 @@ async function runLifecycle(batchId: string): Promise<void> {
   try {
     const products = await prisma.product.findMany({
       where: { importBatchId: batchId, identityId: { not: null } },
-      select: { id: true, identityId: true },
+      select: { id: true, identityId: true, salesTotal: true },
     });
 
     if (products.length === 0) return;
 
-    for (let i = 0; i < products.length; i += PARALLEL) {
-      const chunk = products.slice(i, i + PARALLEL);
-      const results = await Promise.allSettled(
-        chunk.map(async (p) => {
-          const lifecycle = await getProductLifecycle(p.id);
-          return { identityId: p.identityId!, stage: lifecycle.stage as string };
-        }),
+    // Batch-query: 1 query for ALL snapshots instead of N+1
+    const productIds = products.map((p) => p.id);
+    const allSnapshots = await prisma.productSnapshot.findMany({
+      where: { productId: { in: productIds } },
+      orderBy: { snapshotDate: "desc" },
+      select: { productId: true, sales7d: true, salesTotal: true, totalKOL: true },
+    });
+
+    // Group by productId, keep top 2 per product
+    const snapsByProduct = new Map<string, typeof allSnapshots>();
+    for (const snap of allSnapshots) {
+      const list = snapsByProduct.get(snap.productId) ?? [];
+      if (list.length < 2) {
+        list.push(snap);
+        snapsByProduct.set(snap.productId, list);
+      }
+    }
+
+    // Compute lifecycle stage per product
+    const updates: Array<{ identityId: string; stage: string }> = [];
+    for (const p of products) {
+      const snaps = snapsByProduct.get(p.id);
+      if (!snaps || snaps.length < 2) {
+        updates.push({ identityId: p.identityId!, stage: "unknown" });
+        continue;
+      }
+      const [latest, previous] = snaps;
+      const salesChange = pctChange(latest.sales7d, previous.sales7d);
+      const kolChange = pctChange(latest.totalKOL, previous.totalKOL);
+      const stage = determineStage(latest.salesTotal, salesChange, kolChange);
+      updates.push({ identityId: p.identityId!, stage });
+    }
+
+    // Batch write in parallel chunks
+    for (let i = 0; i < updates.length; i += PARALLEL) {
+      const chunk = updates.slice(i, i + PARALLEL);
+      await Promise.allSettled(
+        chunk.map(({ identityId, stage }) =>
+          prisma.productIdentity.update({
+            where: { id: identityId },
+            data: { lifecycleStage: stage },
+          }),
+        ),
       );
-
-      const updates: Array<{ identityId: string; stage: string }> = [];
-      for (const r of results) {
-        if (r.status === "fulfilled") updates.push(r.value);
-      }
-
-      if (updates.length > 0) {
-        await Promise.allSettled(
-          updates.map(({ identityId, stage }) =>
-            prisma.productIdentity.update({
-              where: { id: identityId },
-              data: { lifecycleStage: stage },
-            }),
-          ),
-        );
-      }
     }
   } catch (err) {
     console.error("Lifecycle recalc failed (non-critical):", err);

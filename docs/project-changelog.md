@@ -310,6 +310,16 @@ Tất cả thay đổi quan trọng của AffiliateScorer được ghi nhận t�
 
 ---
 
+## [1.8.1] — 2026-03-03 — Bug Fixes & Refinements
+
+### Fixed
+
+- **Scoring relay middleware blocked (401)** — Added `/api/internal/` and `/api/cron/` to PUBLIC_API_PATHS whitelist; root cause was server-side fetch from fireRelay lacked Origin/Referer headers
+- **Duplicate "Đồng bộ dữ liệu" header on /sync page** — Removed h1 from client component, kept PageHeader in page.tsx
+- **Upload progress bar UX** — Removed premature jump (0→100%), replaced with process log output instead
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned

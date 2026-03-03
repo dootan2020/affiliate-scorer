@@ -5,9 +5,11 @@ import { prisma } from "@/lib/db";
 
 export async function GET(): Promise<NextResponse> {
   try {
-    // Non-terminal: import or scoring still in progress
+    // Non-terminal: import or scoring still in progress, created within last 30 min
+    const cutoff = new Date(Date.now() - 30 * 60_000);
     const batch = await prisma.importBatch.findFirst({
       where: {
+        importDate: { gte: cutoff },
         OR: [
           { status: { in: ["pending", "processing"] } },
           {

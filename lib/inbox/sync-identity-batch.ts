@@ -229,37 +229,34 @@ export async function syncIdentityBatch(inputs: BatchSyncInput[]): Promise<numbe
   for (const item of alreadyLinked) {
     const identityId = productIdentityMap.get(item.productId);
     if (!identityId) continue;
-    identityUpdates.push({
-      identityId,
-      data: {
-        title: item.name,
-        shopName: item.shopName,
-        category: item.category,
-        price: Math.round(item.price),
-        commissionRate: item.commissionRate,
-        imageUrl: item.imageUrl,
-        marketScore: item.aiScore,
-        deltaType: deltaMap.get(item.productId) ?? "STABLE",
-        lastSeenAt: new Date(),
-      },
-    });
+    const data: Record<string, unknown> = {
+      title: item.name,
+      shopName: item.shopName,
+      category: item.category,
+      price: Math.round(item.price),
+      commissionRate: item.commissionRate,
+      imageUrl: item.imageUrl,
+      deltaType: deltaMap.get(item.productId) ?? "STABLE",
+      lastSeenAt: new Date(),
+    };
+    // Only overwrite marketScore when we have a real value — preserve previous scoring
+    if (item.aiScore != null) data.marketScore = item.aiScore;
+    identityUpdates.push({ identityId, data });
   }
 
   for (const item of matchFound) {
-    identityUpdates.push({
-      identityId: item.identityId,
-      data: {
-        title: item.name,
-        shopName: item.shopName,
-        category: item.category,
-        price: Math.round(item.price),
-        commissionRate: item.commissionRate,
-        imageUrl: item.imageUrl,
-        marketScore: item.aiScore,
-        deltaType: deltaMap.get(item.productId) ?? "NEW",
-        lastSeenAt: new Date(),
-      },
-    });
+    const data: Record<string, unknown> = {
+      title: item.name,
+      shopName: item.shopName,
+      category: item.category,
+      price: Math.round(item.price),
+      commissionRate: item.commissionRate,
+      imageUrl: item.imageUrl,
+      deltaType: deltaMap.get(item.productId) ?? "NEW",
+      lastSeenAt: new Date(),
+    };
+    if (item.aiScore != null) data.marketScore = item.aiScore;
+    identityUpdates.push({ identityId: item.identityId, data });
   }
 
   // Deduplicate by identityId (keep last)

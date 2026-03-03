@@ -35,7 +35,7 @@ interface ScoreOptions {
 
 const CLAUDE_BATCH_SIZE = 30;
 const CLAUDE_CONCURRENCY = 3;
-const DB_WRITE_CHUNK = 50;
+const PARALLEL_WRITES = 20;
 
 async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
   let products: ProductModel[];
@@ -222,10 +222,11 @@ export async function scoreProducts(
     }),
   );
 
-  // Write scores to DB in $transaction chunks (instead of N individual updates)
-  for (let i = 0; i < updates.length; i += DB_WRITE_CHUNK) {
-    const chunk = updates.slice(i, i + DB_WRITE_CHUNK);
-    await prisma.$transaction(
+  // Write scores to DB — parallel standalone updates (no $transaction to avoid P2028)
+  let writeErrors = 0;
+  for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
+    const chunk = updates.slice(i, i + PARALLEL_WRITES);
+    const results = await Promise.allSettled(
       chunk.map(({ product, scores }) =>
         prisma.product.update({
           where: { id: product.id },
@@ -239,6 +240,10 @@ export async function scoreProducts(
         }),
       ),
     );
+    writeErrors += results.filter((r) => r.status === "rejected").length;
+  }
+  if (writeErrors > 0) {
+    console.warn(`Scoring: ${writeErrors}/${updates.length} write failures`);
   }
 
   await updateRankings();

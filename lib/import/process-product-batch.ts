@@ -349,6 +349,7 @@ async function runScoring(batchId: string): Promise<void> {
     await updateBatchProgress(batchId, {
       scoringStatus: "failed",
       completedAt: new Date(),
+      errorLog: { scoringError: err instanceof Error ? err.message : String(err) },
     });
   }
 }

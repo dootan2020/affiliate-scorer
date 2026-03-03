@@ -36,7 +36,7 @@ const IDENTITY_INCLUDE = {
   },
 } as const;
 
-const UPDATE_CHUNK = 50;
+const PARALLEL_WRITES = 20;
 
 function computeScores(identity: IdentityWithProduct): {
   contentPotentialScore: number;
@@ -77,7 +77,7 @@ function computeScores(identity: IdentityWithProduct): {
   return { contentPotentialScore: contentScore, marketScore, combinedScore, inboxState };
 }
 
-/** Score specific identities by ID using batch $transaction. Returns count scored. */
+/** Score specific identities by ID. Returns count scored. */
 export async function syncIdentityScores(identityIds: string[]): Promise<number> {
   if (identityIds.length === 0) return 0;
 
@@ -91,10 +91,10 @@ export async function syncIdentityScores(identityIds: string[]): Promise<number>
     scores: computeScores(identity),
   }));
 
-  // Batch update in $transaction chunks
-  for (let i = 0; i < updates.length; i += UPDATE_CHUNK) {
-    const chunk = updates.slice(i, i + UPDATE_CHUNK);
-    await prisma.$transaction(
+  // Parallel standalone updates (no $transaction to avoid P2028 timeout)
+  for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
+    const chunk = updates.slice(i, i + PARALLEL_WRITES);
+    await Promise.allSettled(
       chunk.map(({ id, scores }) =>
         prisma.productIdentity.update({
           where: { id },
@@ -112,7 +112,7 @@ export async function syncIdentityScores(identityIds: string[]): Promise<number>
   return updates.length;
 }
 
-/** Score ALL non-archived identities using batch $transaction. Returns count scored. */
+/** Score ALL non-archived identities. Returns count scored. */
 export async function syncAllIdentityScores(): Promise<number> {
   const identities = await prisma.productIdentity.findMany({
     where: { inboxState: { not: "archived" } },
@@ -124,9 +124,9 @@ export async function syncAllIdentityScores(): Promise<number> {
     scores: computeScores(identity),
   }));
 
-  for (let i = 0; i < updates.length; i += UPDATE_CHUNK) {
-    const chunk = updates.slice(i, i + UPDATE_CHUNK);
-    await prisma.$transaction(
+  for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
+    const chunk = updates.slice(i, i + PARALLEL_WRITES);
+    await Promise.allSettled(
       chunk.map(({ id, scores }) =>
         prisma.productIdentity.update({
           where: { id },

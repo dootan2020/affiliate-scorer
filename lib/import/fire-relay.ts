@@ -13,20 +13,22 @@ function getBaseUrl(): string | null {
 
 /**
  * Fire-and-forget relay with internal retries.
- * Caller does NOT await — retries run in background.
+ * Returns a Promise but callers can choose to await or not.
+ * IMPORTANT: When called from after(), MUST be awaited — Vercel freezes the
+ * function once after() returns, killing dangling promises.
  * If all retries fail, logs error. Cron job (retry-scoring) provides safety net.
  */
 export function fireRelay(
   path: string,
   body: Record<string, unknown>,
   label?: string,
-): void {
+): Promise<void> {
   const base = getBaseUrl();
   if (!base) {
     console.warn(`No base URL — ${label ?? path} relay skipped`);
-    return;
+    return Promise.resolve();
   }
-  void attemptRelay(`${base}${path}`, body, 0, label ?? path);
+  return attemptRelay(`${base}${path}`, body, 0, label ?? path);
 }
 
 async function attemptRelay(

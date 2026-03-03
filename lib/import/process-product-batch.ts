@@ -66,7 +66,8 @@ export async function processProductBatch(
     await processChunk(batchId, chunk);
 
     if (remaining.length > 0) {
-      fireRelay(
+      // MUST await — runs inside after() which freezes on return
+      await fireRelay(
         "/api/internal/import-chunk",
         { batchId, products: remaining },
         "import-chunk",
@@ -137,7 +138,10 @@ export async function finalizeImportAndFireScoring(
     errorLog: totalErrors > 0 ? { totalErrors } : undefined,
   });
 
-  fireRelay("/api/internal/score-batch", { batchId }, "scoring");
+  // Await relay so it completes before after()/route handler returns.
+  // Vercel freezes serverless functions after the handler finishes,
+  // killing any dangling fire-and-forget promises.
+  await fireRelay("/api/internal/score-batch", { batchId }, "scoring");
 }
 
 // ─── Internal helpers (unchanged from before) ───

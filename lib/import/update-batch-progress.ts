@@ -20,3 +20,22 @@ export async function updateBatchProgress(
     data,
   });
 }
+
+/** Increment progress counters atomically — used by chunked import. */
+export async function incrementBatchProgress(
+  batchId: string,
+  increments: {
+    rowsProcessed?: number;
+    rowsCreated?: number;
+    rowsUpdated?: number;
+    rowsError?: number;
+  },
+): Promise<void> {
+  const data: Record<string, { increment: number }> = {};
+  if (increments.rowsProcessed != null) data.rowsProcessed = { increment: increments.rowsProcessed };
+  if (increments.rowsCreated != null) data.rowsCreated = { increment: increments.rowsCreated };
+  if (increments.rowsUpdated != null) data.rowsUpdated = { increment: increments.rowsUpdated };
+  if (increments.rowsError != null) data.rowsError = { increment: increments.rowsError };
+
+  await prisma.importBatch.update({ where: { id: batchId }, data });
+}

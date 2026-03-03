@@ -37,12 +37,13 @@ export async function GET(
     const scoringDone = ["completed", "failed"].includes(batch.scoringStatus);
     let isTerminal = importDone && scoringDone;
 
-    // Stuck detection: auto-fail stuck phases
-    // Import: 5 min timeout. Scoring: 3 min (runs via after())
+    // Stuck detection: auto-fail stuck phases.
+    // Timeouts scale with recordCount to support chunked import (300 SP/chunk).
     const age = Date.now() - new Date(batch.importDate).getTime();
     if (!isTerminal) {
-      const IMPORT_TIMEOUT_MS = 5 * 60 * 1000;
-      const SCORING_TIMEOUT_MS = 3 * 60 * 1000;
+      const chunks = Math.max(1, Math.ceil(batch.recordCount / 300));
+      const IMPORT_TIMEOUT_MS = 5 * 60_000 + chunks * 30_000;  // 5 min + 30s/chunk
+      const SCORING_TIMEOUT_MS = 3 * 60_000 + chunks * 30_000; // 3 min + 30s/chunk
       const needsStatusFix = !importDone && age > IMPORT_TIMEOUT_MS;
       const needsScoringFix = importDone && !scoringDone && age > SCORING_TIMEOUT_MS;
 

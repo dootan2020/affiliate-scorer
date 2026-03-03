@@ -100,13 +100,13 @@ export function ProcessLog({
       addIfNew("server-processing", "\u2699\uFE0F", "Server đang xử lý...");
     }
 
-    // Rows being processed (log once when progress starts)
+    // Rows being processed — log each chunk progress update
     if (
       status.rowsProcessed > 0 &&
       (status.status === "processing" || status.status === "pending")
     ) {
       addIfNew(
-        "rows-progress",
+        `rows-${status.rowsProcessed}`,
         "\u{1F4CA}",
         `Đang import: ${status.rowsProcessed}/${status.recordCount}`,
       );

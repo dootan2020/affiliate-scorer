@@ -9,6 +9,7 @@ import { scoreProducts } from "@/lib/ai/scoring";
 import { syncIdentityScores } from "@/lib/services/score-identity";
 import { getProductLifecycle } from "@/lib/ai/lifecycle";
 import { updateBatchProgress } from "@/lib/import/update-batch-progress";
+import { fireRelay } from "@/lib/import/fire-relay";
 
 const SCORE_CHUNK = 150;
 const PARALLEL = 20;
@@ -16,12 +17,15 @@ const PARALLEL = 20;
 export async function POST(request: Request): Promise<NextResponse> {
   let batchId: string | undefined;
   try {
-    const body = (await request.json()) as { batchId: string; offset?: number };
+    const body = (await request.json()) as { batchId: string };
     batchId = body.batchId;
 
     if (!batchId) {
       return NextResponse.json({ error: "batchId required" }, { status: 400 });
     }
+
+    // Reset scoringStatus to "processing" (supports retry from failed/cron)
+    await updateBatchProgress(batchId, { scoringStatus: "processing" });
 
     // Fetch unscored products for this batch
     const unscored = await prisma.product.findMany({
@@ -61,7 +65,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     if (remaining > 0) {
-      chainToNext(batchId, (body.offset ?? 0) + SCORE_CHUNK);
+      fireRelay(
+        "/api/internal/score-batch",
+        { batchId },
+        "score-chain",
+      );
       return NextResponse.json({
         done: false,
         scored: productIds.length,
@@ -81,10 +89,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     console.error("Score batch relay error:", error);
     if (batchId) {
       try {
+        // Merge errorLog to preserve import-phase errors
+        const batch = await prisma.importBatch.findUnique({
+          where: { id: batchId },
+          select: { errorLog: true },
+        });
+        const existingLog = (batch?.errorLog as Record<string, unknown>) ?? {};
         await updateBatchProgress(batchId, {
           scoringStatus: "failed",
           completedAt: new Date(),
-          errorLog: { scoringError: error instanceof Error ? error.message : String(error) },
+          errorLog: { ...existingLog, scoringError: error instanceof Error ? error.message : String(error) },
         });
       } catch (updateErr) {
         console.error("Failed to update batch after scoring error:", updateErr);
@@ -95,17 +109,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       { status: 500 },
     );
   }
-}
-
-function chainToNext(batchId: string, offset: number): void {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
-  if (!baseUrl) return;
-  const url = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
-  fetch(`${url}/api/internal/score-batch`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ batchId, offset }),
-  }).catch((err) => console.error("Score relay chain failed:", err));
 }
 
 async function runLifecycle(batchId: string): Promise<void> {

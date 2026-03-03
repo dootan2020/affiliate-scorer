@@ -31,6 +31,8 @@ interface UploadProgressProps {
   /** Live polling status from useImportPolling */
   liveStatus?: ImportStatus | null;
   isPolling?: boolean;
+  /** Callback to retry scoring when it fails */
+  onRetryScoring?: (batchId: string) => void;
 }
 
 export function UploadProgress({
@@ -40,6 +42,7 @@ export function UploadProgress({
   error,
   liveStatus,
   isPolling,
+  onRetryScoring,
 }: UploadProgressProps): React.ReactElement | null {
   // Show live polling progress if available
   if (liveStatus) {
@@ -48,6 +51,7 @@ export function UploadProgress({
         status={liveStatus}
         isPolling={isPolling ?? false}
         result={result}
+        onRetryScoring={onRetryScoring}
       />
     );
   }
@@ -89,10 +93,12 @@ function LiveProgress({
   status,
   isPolling,
   result,
+  onRetryScoring,
 }: {
   status: ImportStatus;
   isPolling: boolean;
   result: UploadResult | null;
+  onRetryScoring?: (batchId: string) => void;
 }): React.ReactElement {
   const isImporting = status.status === "processing" || status.status === "pending";
   const isScoring = status.scoringStatus === "processing";
@@ -100,10 +106,15 @@ function LiveProgress({
   const hasFailed = status.status === "failed";
   const scoringFailed = status.scoringStatus === "failed";
 
+  // Show chunk progress during import (e.g., "Đang import 600/3000...")
+  const importLabel = isImporting && status.rowsProcessed > 0 && status.recordCount > 0
+    ? `Đang import ${status.rowsProcessed}/${status.recordCount}...`
+    : "Đang import...";
+
   const label = hasFailed
     ? "Import thất bại"
     : isImporting
-      ? "Đang import..."
+      ? importLabel
       : isScoring
         ? "Đang chấm điểm AI..."
         : isDone && !scoringFailed
@@ -149,6 +160,17 @@ function LiveProgress({
           {status.rowsUpdated > 0 && <span>{status.rowsCreated > 0 ? " · " : ""}{status.rowsUpdated} cập nhật</span>}
           {status.rowsError > 0 && <span className="text-rose-500"> · {status.rowsError} lỗi</span>}
         </div>
+      )}
+
+      {/* Retry scoring button when scoring failed */}
+      {isDone && scoringFailed && !hasFailed && onRetryScoring && (
+        <button
+          type="button"
+          onClick={() => onRetryScoring(status.id)}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 bg-amber-50 dark:bg-amber-950 hover:bg-amber-100 dark:hover:bg-amber-900 rounded-xl px-4 py-2 transition-colors"
+        >
+          Thử lại chấm điểm
+        </button>
       )}
 
       {isDone && !hasFailed && (

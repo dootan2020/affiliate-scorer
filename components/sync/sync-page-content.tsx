@@ -145,6 +145,23 @@ export function SyncPageContent(): React.ReactElement {
     }
   }
 
+  async function handleRetryScoring(batchId: string): Promise<void> {
+    try {
+      const res = await fetch("/api/internal/score-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchId }),
+      });
+      if (!res.ok) throw new Error("Retry failed");
+      toast.success("Đã gửi yêu cầu chấm điểm lại");
+      // Restart polling by resetting then setting the batchId
+      setPollingBatchId(null);
+      setTimeout(() => setPollingBatchId(batchId), 100);
+    } catch {
+      toast.error("Không thể thử lại chấm điểm");
+    }
+  }
+
   function handleCancelPreview(): void {
     setPreview(null);
     setFile(null);
@@ -217,6 +234,7 @@ export function SyncPageContent(): React.ReactElement {
           error={error}
           liveStatus={liveStatus}
           isPolling={isPolling}
+          onRetryScoring={handleRetryScoring}
         />
       </div>
 

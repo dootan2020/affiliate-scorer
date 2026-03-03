@@ -170,15 +170,6 @@ export function SyncPageContent(): React.ReactElement {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
-          Đồng bộ dữ liệu
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Import dữ liệu sản phẩm và analytics TikTok Studio
-        </p>
-      </div>
-
       {/* Section 1: Nghiên cứu sản phẩm */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6 space-y-4">
         <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-slate-800">

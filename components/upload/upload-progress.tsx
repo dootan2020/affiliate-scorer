@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Progress } from "@/components/ui/progress";
 import { ProcessLog } from "@/components/upload/process-log";
 import type { ImportStatus } from "@/lib/hooks/use-import-polling";
 
@@ -74,10 +73,7 @@ export function UploadProgress({
       )}
 
       {isUploading && (
-        <div className="space-y-1.5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Đang xử lý...</p>
-          <Progress value={undefined} className="h-2" />
-        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Đang xử lý...</p>
       )}
 
       {result && !liveStatus && (
@@ -123,9 +119,6 @@ function LiveProgress({
             ? "Import hoàn tất"
             : "Đang xử lý...";
 
-  // Indeterminate during processing, 100% when done, 0% on failure
-  const progressValue = isDone ? (hasFailed ? 0 : 100) : undefined;
-
   return (
     <div className="space-y-3 rounded-2xl bg-gray-50 dark:bg-slate-800 p-4">
       <div className="flex items-center gap-2">
@@ -146,12 +139,9 @@ function LiveProgress({
         </span>
       </div>
 
-      <div className="space-y-1.5">
-        <p className={`text-sm ${hasFailed ? "text-rose-600 dark:text-rose-400" : isDone && !scoringFailed ? "text-emerald-600 dark:text-emerald-400" : isDone && scoringFailed ? "text-amber-600 dark:text-amber-400" : "text-gray-500 dark:text-gray-400"}`}>
-          {label}
-        </p>
-        <Progress value={progressValue} className="h-2" />
-      </div>
+      <p className={`text-sm ${hasFailed ? "text-rose-600 dark:text-rose-400" : isDone && !scoringFailed ? "text-emerald-600 dark:text-emerald-400" : isDone && scoringFailed ? "text-amber-600 dark:text-amber-400" : "text-gray-500 dark:text-gray-400"}`}>
+        {label}
+      </p>
 
       {/* Stats when import phase is done */}
       {!isImporting && status.rowsProcessed > 0 && (

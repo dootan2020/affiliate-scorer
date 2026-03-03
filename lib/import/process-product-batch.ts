@@ -141,13 +141,7 @@ export async function finalizeImportAndFireScoring(
   // Await relay so it completes before after()/route handler returns.
   // Vercel freezes serverless functions after the handler finishes,
   // killing any dangling fire-and-forget promises.
-  try {
-    console.log(`[finalize] Firing scoring relay for batch ${batchId}`);
-    await fireRelay("/api/internal/score-batch", { batchId }, "scoring");
-    console.log(`[finalize] Scoring relay completed for batch ${batchId}`);
-  } catch (relayErr) {
-    console.error(`[finalize] Scoring relay failed for batch ${batchId}:`, relayErr);
-  }
+  await fireRelay("/api/internal/score-batch", { batchId }, "scoring");
 }
 
 // ─── Internal helpers (unchanged from before) ───

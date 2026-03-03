@@ -25,10 +25,9 @@ export function fireRelay(
 ): Promise<void> {
   const base = getBaseUrl();
   if (!base) {
-    console.error(`[fireRelay] No base URL — ${label ?? path} relay skipped. NEXT_PUBLIC_APP_URL=${process.env.NEXT_PUBLIC_APP_URL ?? "unset"}, VERCEL_URL=${process.env.VERCEL_URL ?? "unset"}`);
+    console.warn(`No base URL — ${label ?? path} relay skipped`);
     return Promise.resolve();
   }
-  console.log(`[fireRelay] ${label ?? path} → ${base}${path}`);
   return attemptRelay(`${base}${path}`, body, 0, label ?? path);
 }
 

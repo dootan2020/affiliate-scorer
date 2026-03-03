@@ -1,13 +1,10 @@
 // Product import processor for Vercel serverless.
 // Import runs via after() with parallel queries (no $transaction).
-// Scoring runs via separate after() — non-critical, fails gracefully.
+// Scoring runs via HTTP relay (/api/internal/score-batch) — separate invocation.
 // Key optimization: parallel standalone updates instead of sequential $transaction
 // chunks. PgBouncer handles concurrent queries much faster than transactions.
 import { prisma } from "@/lib/db";
 import { syncIdentityBatch } from "@/lib/inbox/sync-identity-batch";
-import { scoreProducts } from "@/lib/ai/scoring";
-import { syncIdentityScores } from "@/lib/services/score-identity";
-import { getProductLifecycle } from "@/lib/ai/lifecycle";
 import { updateBatchProgress } from "@/lib/import/update-batch-progress";
 import { buildCreateData, buildUpdateData, hasDataChanged } from "@/lib/import/product-data-builders";
 import type { NormalizedProduct } from "@/lib/utils/normalize";
@@ -73,8 +70,8 @@ export async function processProductBatch(
       errorLog: errors > 0 ? { totalErrors: errors } : undefined,
     });
 
-    // Stage 3: Scoring (non-critical)
-    await runScoring(batchId);
+    // Stage 3: Scoring — fire relay endpoint (separate function invocation)
+    fireScoringRelay(batchId);
   } catch (err) {
     console.error("processProductBatch fatal:", err);
     try {
@@ -301,55 +298,17 @@ async function batchSyncIdentities(
   }
 }
 
-async function runScoring(batchId: string): Promise<void> {
-  try {
-    await scoreProducts({ batchId });
-
-    const linkedIdentities = await prisma.product.findMany({
-      where: { importBatchId: batchId, identityId: { not: null } },
-      select: { identityId: true, id: true },
-    });
-    const identityIds = linkedIdentities
-      .map((p) => p.identityId)
-      .filter((id): id is string => id != null);
-
-    if (identityIds.length > 0) {
-      await syncIdentityScores(identityIds);
-    }
-
-    // Lifecycle recalc — parallel
-    const productsWithIdentity = linkedIdentities.filter((p) => p.identityId);
-    if (productsWithIdentity.length > 0) {
-      const { successes: lifecycleUpdates } = await parallelMap(
-        productsWithIdentity,
-        async (lp) => {
-          const lifecycle = await getProductLifecycle(lp.id);
-          return { identityId: lp.identityId!, stage: lifecycle.stage };
-        },
-        PARALLEL,
-      );
-
-      if (lifecycleUpdates.length > 0) {
-        await parallelMap(lifecycleUpdates, ({ identityId, stage }) =>
-          prisma.productIdentity.update({
-            where: { id: identityId },
-            data: { lifecycleStage: stage },
-          }),
-          PARALLEL,
-        );
-      }
-    }
-
-    await updateBatchProgress(batchId, {
-      scoringStatus: "completed",
-      completedAt: new Date(),
-    });
-  } catch (err) {
-    console.error("Scoring failed:", err);
-    await updateBatchProgress(batchId, {
-      scoringStatus: "failed",
-      completedAt: new Date(),
-      errorLog: { scoringError: err instanceof Error ? err.message : String(err) },
-    });
+/** Fire scoring relay — runs in separate function invocation with its own timeout. */
+function fireScoringRelay(batchId: string): void {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
+  if (!baseUrl) {
+    console.warn("No base URL configured — scoring relay skipped");
+    return;
   }
+  const url = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+  fetch(`${url}/api/internal/score-batch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ batchId }),
+  }).catch((err) => console.error("Score relay fire failed:", err));
 }

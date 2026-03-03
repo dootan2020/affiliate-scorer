@@ -98,22 +98,22 @@ function LiveProgress({
   const isScoring = status.scoringStatus === "processing";
   const isDone = status.isTerminal;
   const hasFailed = status.status === "failed";
+  const scoringFailed = status.scoringStatus === "failed";
 
   const label = hasFailed
     ? "Import thất bại"
-    : isImporting && status.progress < 100
-      ? `Đang import... ${status.rowsProcessed}/${status.recordCount}`
-      : isImporting && status.progress >= 100
-        ? "Đang đồng bộ dữ liệu..."
-        : isScoring
-          ? "Đang chấm điểm AI..."
-          : isDone
-            ? "Hoàn thành!"
+    : isImporting
+      ? "Đang import..."
+      : isScoring
+        ? "Đang chấm điểm AI..."
+        : isDone && !scoringFailed
+          ? "Hoàn thành!"
+          : isDone && scoringFailed
+            ? "Import hoàn tất"
             : "Đang xử lý...";
 
-  const progressValue = isScoring && !isDone
-    ? undefined // indeterminate for scoring
-    : status.progress;
+  // Indeterminate during processing, 100% when done, 0% on failure
+  const progressValue = isDone ? (hasFailed ? 0 : 100) : undefined;
 
   return (
     <div className="space-y-3 rounded-2xl bg-gray-50 dark:bg-slate-800 p-4">
@@ -121,8 +121,11 @@ function LiveProgress({
         {isPolling && !isDone && (
           <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shrink-0" />
         )}
-        {isDone && !hasFailed && (
+        {isDone && !hasFailed && !scoringFailed && (
           <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+        )}
+        {isDone && !hasFailed && scoringFailed && (
+          <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
         )}
         {hasFailed && (
           <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
@@ -133,14 +136,9 @@ function LiveProgress({
       </div>
 
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <p className={`text-sm ${hasFailed ? "text-rose-600 dark:text-rose-400" : isDone ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500 dark:text-gray-400"}`}>
-            {label}
-          </p>
-          {progressValue !== undefined && (
-            <span className="text-xs text-gray-400">{progressValue}%</span>
-          )}
-        </div>
+        <p className={`text-sm ${hasFailed ? "text-rose-600 dark:text-rose-400" : isDone && !scoringFailed ? "text-emerald-600 dark:text-emerald-400" : isDone && scoringFailed ? "text-amber-600 dark:text-amber-400" : "text-gray-500 dark:text-gray-400"}`}>
+          {label}
+        </p>
         <Progress value={progressValue} className="h-2" />
       </div>
 

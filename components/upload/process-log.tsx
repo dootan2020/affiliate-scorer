@@ -145,9 +145,13 @@ export function ProcessLog({
       );
     }
 
-    // Terminal (success only)
-    if (status.isTerminal && status.status !== "failed") {
+    // Terminal (full success only)
+    if (status.isTerminal && status.status !== "failed" && status.scoringStatus !== "failed") {
       addIfNew("terminal", "\u{1F389}", "Hoàn thành!");
+    }
+    // Terminal but scoring failed — partial success
+    if (status.isTerminal && status.status !== "failed" && status.scoringStatus === "failed") {
+      addIfNew("terminal-partial", "\u{1F4CB}", "Import hoàn tất. Chấm điểm có thể thử lại sau.");
     }
   }, [result, status, isPolling, addIfNew]);
 

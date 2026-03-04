@@ -5,6 +5,7 @@ import { generateBrief } from "@/lib/content/generate-brief";
 import type { BriefOptions, ChannelContext } from "@/lib/content/generate-brief";
 import { validateBody } from "@/lib/validations/validate-body";
 import { batchBriefSchema } from "@/lib/validations/schemas-content";
+import { createTask, updateTaskProgress, completeTask, failTask } from "@/lib/services/background-task";
 
 interface BatchResult {
   productIdentityId: string;
@@ -16,6 +17,8 @@ interface BatchResult {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
+  let taskId: string | null = null;
+
   try {
     const validation = await validateBody(request, batchBriefSchema);
     if (validation.error) return validation.error;
@@ -84,10 +87,18 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
+    // Create background task for tracking
+    const total = identities.length;
+    taskId = await createTask({
+      type: "brief_batch",
+      label: `Đang tạo ${total} briefs...`,
+    });
+
     // Generate briefs tuần tự (tránh rate limit Claude API)
     const results: BatchResult[] = [];
 
-    for (const identity of identities) {
+    for (let i = 0; i < identities.length; i++) {
+      const identity = identities[i];
       try {
         const briefId = await generateBrief({
           id: identity.id,
@@ -127,10 +138,24 @@ export async function POST(request: Request): Promise<NextResponse> {
           error: errMsg,
         });
       }
+
+      // Update task progress after each brief
+      const done = i + 1;
+      const pct = Math.round((done / total) * 100);
+      await updateTaskProgress(taskId, pct, `${done}/${total} briefs`).catch(() => {});
     }
 
     const success = results.filter((r) => r.status === "success").length;
     const totalAssets = results.reduce((sum, r) => sum + r.assetsCreated, 0);
+
+    // Finalize task
+    if (success === total) {
+      await completeTask(taskId, `${success} briefs, ${totalAssets} assets`).catch(() => {});
+    } else if (success > 0) {
+      await completeTask(taskId, `${success}/${total} thành công`).catch(() => {});
+    } else {
+      await failTask(taskId, "Tất cả briefs thất bại").catch(() => {});
+    }
 
     return NextResponse.json({
       data: results,
@@ -139,6 +164,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("[briefs/batch]", message);
+    if (taskId) await failTask(taskId, message).catch(() => {});
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

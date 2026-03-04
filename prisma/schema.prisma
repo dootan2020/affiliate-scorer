@@ -863,6 +863,24 @@ model AccountInsight {
   @@index([date])
 }
 
+// ─── UNIFIED TASK TRACKER ───
+
+model BackgroundTask {
+  id        String   @id @default(cuid())
+  type      String   // "brief_batch" | "score_all" | "idea_matrix" | "bible_gen" | ...
+  status    String   @default("pending") // "pending" | "processing" | "completed" | "failed"
+  label     String   // Display label: "Tạo 8 briefs"
+  progress  Int      @default(0) // 0-100
+  detail    String?  // "3/8 briefs"
+  error     String?
+  channelId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
 // ─── SETTINGS ───
 
 model AiModelConfig {

@@ -112,8 +112,10 @@ export async function syncIdentityScores(identityIds: string[]): Promise<number>
   return updates.length;
 }
 
-/** Score ALL non-archived identities. Returns count scored. */
-export async function syncAllIdentityScores(): Promise<number> {
+/** Score ALL non-archived identities. Returns count scored. Optional onProgress callback receives (done, total). */
+export async function syncAllIdentityScores(
+  onProgress?: (done: number, total: number) => void,
+): Promise<number> {
   const identities = await prisma.productIdentity.findMany({
     where: { inboxState: { not: "archived" } },
     include: IDENTITY_INCLUDE,
@@ -123,6 +125,9 @@ export async function syncAllIdentityScores(): Promise<number> {
     id: identity.id,
     scores: computeScores(identity),
   }));
+
+  const total = updates.length;
+  let done = 0;
 
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
     const chunk = updates.slice(i, i + PARALLEL_WRITES);
@@ -139,6 +144,8 @@ export async function syncAllIdentityScores(): Promise<number> {
         }),
       ),
     );
+    done = Math.min(i + PARALLEL_WRITES, total);
+    if (onProgress) onProgress(done, total);
   }
 
   return updates.length;

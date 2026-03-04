@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { generateIdeaMatrix } from "@/lib/content/generate-idea-matrix";
 import type { CharacterBibleData } from "@/lib/content/character-bible-types";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
+import { createTask, completeTask, failTask } from "@/lib/services/background-task";
 
 interface Ctx {
   params: Promise<{ id: string }>;
@@ -19,6 +20,8 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
       { status: 429 },
     );
   }
+
+  let taskId: string | null = null;
 
   try {
     // Fetch channel + bible + formats
@@ -48,6 +51,13 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
       );
     }
 
+    // Create background task for tracking
+    taskId = await createTask({
+      type: "idea_matrix",
+      label: "Đang tạo Idea Matrix...",
+      channelId: id,
+    });
+
     // Generate ideas via AI
     const ideas = await generateIdeaMatrix(
       bible as unknown as CharacterBibleData,
@@ -75,6 +85,8 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
       })),
     });
 
+    await completeTask(taskId, `${ideas.length} ý tưởng`).catch(() => {});
+
     return NextResponse.json({
       data: { created: ideas.length },
       message: `Đã tạo ${ideas.length} ý tưởng mới`,
@@ -82,6 +94,7 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("[idea-matrix/generate]", msg);
+    if (taskId) await failTask(taskId, msg).catch(() => {});
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

@@ -6,7 +6,7 @@ import { SidebarAwareMain } from "@/components/layout/sidebar-aware-main";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SetupBanner } from "@/components/shared/setup-banner";
 import { CommandPalette } from "@/components/shared/command-palette";
-import { ImportProgressWidget } from "@/components/shared/import-progress-widget";
+import { TaskProgressWidget } from "@/components/shared/task-progress-widget";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -59,7 +59,7 @@ export default function RootLayout({
             </SidebarAwareMain>
           </div>
           <CommandPalette />
-          <ImportProgressWidget />
+          <TaskProgressWidget />
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>

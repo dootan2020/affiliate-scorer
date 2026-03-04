@@ -212,12 +212,14 @@ export async function computeSmartSuggestions(
       return { ...sp, smartScore: adjustedScore, contentMixMatch: mixBonus > 20 };
     });
 
-    const filtered = niche
+    const nicheFiltered = niche
       ? channelScored.filter((sp) => {
           const cat = sp.category?.toLowerCase() ?? "";
           return cat.includes(niche) || niche.includes(cat) || !cat;
         })
       : channelScored;
+    // Fallback: if niche filter eliminates all products, show all for this channel
+    const filtered = nicheFiltered.length > 0 ? nicheFiltered : channelScored;
 
     const sorted = filtered.sort((a, b) => b.smartScore - a.smartScore);
     const proven = sorted.filter((sp) => sp.tag === "proven" && (usedCounts.get(sp.id) ?? 0) < 2);

@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod";
 import { generateChannelProfile } from "@/lib/content/generate-channel-profile";
+import { createTask, completeTask, failTask } from "@/lib/services/background-task";
 
 const generateSchema = z.object({
   niche: z.string().min(1, "Niche không được để trống"),
@@ -12,8 +13,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const body = await req.json();
     const input = generateSchema.parse(body);
-    const profile = await generateChannelProfile(input);
-    return NextResponse.json({ data: profile });
+
+    const taskId = await createTask({
+      type: "channel_generate",
+      label: "Đang tạo profile kênh...",
+    });
+
+    after(async () => {
+      try {
+        const profile = await generateChannelProfile(input);
+        await completeTask(taskId, "Hoàn thành", profile);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Lỗi tạo profile";
+        await failTask(taskId, msg).catch(() => {});
+      }
+    });
+
+    return NextResponse.json({ taskId });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(

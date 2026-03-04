@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Sparkles, PenLine, RefreshCw } from "lucide-react";
+import { useBackgroundGenerate } from "@/lib/hooks/use-background-generate";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { ChannelProfileResult } from "@/lib/content/channel-profile-types";
@@ -120,6 +121,26 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
   );
   const [wasAiGenerated, setWasAiGenerated] = useState(initial?.generatedByAi ?? false);
 
+  const gen = useBackgroundGenerate(() => {
+    // result available from gen.result
+  });
+
+  // When AI generation completes, extract result
+  useEffect(() => {
+    if (gen.status === "completed" && gen.result) {
+      setProfile(gen.result as ChannelProfileResult);
+      setWasAiGenerated(true);
+      setGenerating(false);
+      toast.success("AI đã tạo profile kênh. Kiểm tra và chỉnh sửa nếu cần.");
+      gen.reset();
+    } else if (gen.status === "failed") {
+      setError(gen.error ?? "Lỗi tạo profile");
+      toast.error(gen.error ?? "Lỗi tạo profile");
+      setGenerating(false);
+      gen.reset();
+    }
+  }, [gen.status, gen.result, gen.error]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleGenerate(): Promise<void> {
     if (!aiNiche || !aiAudience) {
       toast.error("Vui lòng nhập Niche và Đối tượng mục tiêu");
@@ -127,25 +148,13 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
     }
     setGenerating(true);
     setError(null);
-    try {
-      const res = await fetch("/api/channels/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ niche: aiNiche, targetAudience: aiAudience, tone: aiTone }),
-      });
-      const json = await res.json() as { data?: ChannelProfileResult; error?: string };
-      if (!res.ok || !json.data) {
-        throw new Error(json.error ?? `Lỗi ${res.status}`);
-      }
-      setProfile(json.data);
-      setWasAiGenerated(true);
-      toast.success("AI đã tạo profile kênh. Kiểm tra và chỉnh sửa nếu cần.");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Lỗi không xác định";
-      setError(msg);
-      toast.error(msg);
-    } finally {
+    const taskId = await gen.start("/api/channels/generate", {
+      body: { niche: aiNiche, targetAudience: aiAudience, tone: aiTone },
+    });
+    if (!taskId) {
       setGenerating(false);
+      setError(gen.error ?? "Lỗi kết nối");
+      toast.error(gen.error ?? "Lỗi kết nối");
     }
   }
 

@@ -873,6 +873,7 @@ model BackgroundTask {
   progress  Int      @default(0) // 0-100
   detail    String?  // "3/8 briefs"
   error     String?
+  result    Json?    // AI generation result (for endpoints that return data)
   channelId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

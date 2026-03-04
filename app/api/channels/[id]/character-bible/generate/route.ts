@@ -1,8 +1,9 @@
-// POST /api/channels/[id]/character-bible/generate — AI generate character bible
-import { NextResponse } from "next/server";
+// POST /api/channels/[id]/character-bible/generate — AI generate (non-blocking)
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateCharacterBible } from "@/lib/content/generate-character-bible";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
+import { createTask, completeTask, failTask } from "@/lib/services/background-task";
 
 interface Ctx {
   params: Promise<{ id: string }>;
@@ -25,39 +26,41 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
       return NextResponse.json({ error: "Không tìm thấy kênh" }, { status: 404 });
     }
 
-    const bibleData = await generateCharacterBible({
-      niche: channel.niche,
-      personaName: channel.personaName,
-      personaDesc: channel.personaDesc,
-      voiceStyle: channel.voiceStyle,
-      targetAudience: channel.targetAudience,
-      subNiche: channel.subNiche,
-      usp: channel.usp,
+    const taskId = await createTask({
+      type: "character_bible",
+      label: "Đang tạo Character Bible...",
+      channelId: id,
     });
 
-    // Serialize to plain JSON (Prisma Json fields need InputJsonValue, not typed arrays)
-    const jsonData = JSON.parse(JSON.stringify(bibleData)) as Record<string, unknown>;
+    after(async () => {
+      try {
+        const bibleData = await generateCharacterBible({
+          niche: channel.niche,
+          personaName: channel.personaName,
+          personaDesc: channel.personaDesc,
+          voiceStyle: channel.voiceStyle,
+          targetAudience: channel.targetAudience,
+          subNiche: channel.subNiche,
+          usp: channel.usp,
+        });
 
-    // Upsert — overwrites existing bible
-    const bible = await prisma.characterBible.upsert({
-      where: { channelId: id },
-      create: {
-        channelId: id,
-        ...jsonData,
-        generatedByAi: true,
-        aiGeneratedAt: new Date(),
-      },
-      update: {
-        ...jsonData,
-        generatedByAi: true,
-        aiGeneratedAt: new Date(),
-      },
+        const jsonData = JSON.parse(JSON.stringify(bibleData)) as Record<string, unknown>;
+
+        await prisma.characterBible.upsert({
+          where: { channelId: id },
+          create: { channelId: id, ...jsonData, generatedByAi: true, aiGeneratedAt: new Date() },
+          update: { ...jsonData, generatedByAi: true, aiGeneratedAt: new Date() },
+        });
+
+        await completeTask(taskId, "Character Bible");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Lỗi tạo Character Bible";
+        console.error("[character-bible/generate]", msg);
+        await failTask(taskId, msg).catch(() => {});
+      }
     });
 
-    return NextResponse.json({
-      data: bible,
-      message: "Đã tạo Character Bible bằng AI",
-    });
+    return NextResponse.json({ taskId });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("[character-bible/generate]", msg);

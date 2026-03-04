@@ -1,5 +1,6 @@
 // Server-side helpers for BackgroundTask CRUD — no HTTP overhead
 import { prisma } from "@/lib/db";
+import type { InputJsonValue } from "@/app/generated/prisma/internal/prismaNamespace";
 
 export interface CreateTaskInput {
   type: string;
@@ -32,11 +33,20 @@ export async function updateTaskProgress(
   });
 }
 
-/** Mark task as completed. */
-export async function completeTask(taskId: string, detail?: string): Promise<void> {
+/** Mark task as completed. Optionally store a result payload. */
+export async function completeTask(
+  taskId: string,
+  detail?: string,
+  result?: unknown,
+): Promise<void> {
   await prisma.backgroundTask.update({
     where: { id: taskId },
-    data: { status: "completed", progress: 100, detail },
+    data: {
+      status: "completed",
+      progress: 100,
+      detail,
+      ...(result !== undefined ? { result: result as InputJsonValue } : {}),
+    },
   });
 }
 

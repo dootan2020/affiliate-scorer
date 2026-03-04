@@ -1,4 +1,4 @@
-// PATCH /api/tasks/[id] — update background task progress/status
+// GET + PATCH /api/tasks/[id] — read and update background tasks
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
@@ -12,6 +12,21 @@ const updateSchema = z.object({
 
 interface Ctx {
   params: Promise<{ id: string }>;
+}
+
+export async function GET(_request: Request, ctx: Ctx): Promise<NextResponse> {
+  const { id } = await ctx.params;
+
+  try {
+    const task = await prisma.backgroundTask.findUnique({ where: { id } });
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+    return NextResponse.json({ data: task });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Lỗi";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
 
 export async function PATCH(request: Request, ctx: Ctx): Promise<NextResponse> {

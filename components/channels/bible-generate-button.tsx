@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useBackgroundGenerate } from "@/lib/hooks/use-background-generate";
 
 interface Props {
   channelId: string;
@@ -12,27 +12,20 @@ interface Props {
 }
 
 export function BibleGenerateButton({ channelId, hasExisting, onGenerated }: Props): React.ReactElement {
-  const [loading, setLoading] = useState(false);
+  const gen = useBackgroundGenerate(() => {
+    toast.success("Đã tạo Character Bible bằng AI");
+    onGenerated();
+  });
 
   async function handleGenerate(): Promise<void> {
     if (hasExisting && !confirm("Tạo mới sẽ ghi đè Character Bible hiện tại. Tiếp tục?")) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/channels/${channelId}/character-bible/generate`, {
-        method: "POST",
-      });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error || "Lỗi tạo Character Bible");
-
-      toast.success("Đã tạo Character Bible bằng AI");
-      onGenerated();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi không xác định");
-    } finally {
-      setLoading(false);
+    const taskId = await gen.start(`/api/channels/${channelId}/character-bible/generate`);
+    if (!taskId) {
+      toast.error(gen.error ?? "Lỗi tạo Character Bible");
     }
   }
+
+  const loading = gen.status === "processing";
 
   return (
     <Button

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, RefreshCw, Check, X, AlertCircle, ChevronDown, Clock, History } from "lucide-react";
 import { toast } from "sonner";
+import { useBackgroundGenerate } from "@/lib/hooks/use-background-generate";
 import {
   Dialog,
   DialogContent,
@@ -134,29 +135,31 @@ export function TacticalRefreshDialog({
   const trackingDisabled = trackedCount !== null && trackedCount < 10;
   const canGenerate = trendingContext.trim().length >= 10 || useTracking;
 
+  const refreshGen = useBackgroundGenerate();
+
+  useEffect(() => {
+    if (refreshGen.status === "completed" && refreshGen.result) {
+      const res = refreshGen.result as { suggestions: TacticalSuggestion[]; analysisNotes: string };
+      setSuggestions(res.suggestions);
+      setAnalysisNotes(res.analysisNotes);
+      setSelected(new Set(res.suggestions.map((_, i) => i)));
+      setPhase("reviewing");
+      refreshGen.reset();
+    } else if (refreshGen.status === "failed") {
+      setError(refreshGen.error ?? "Lỗi không xác định");
+      setPhase("inputting");
+      refreshGen.reset();
+    }
+  }, [refreshGen.status, refreshGen.result, refreshGen.error]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleGenerate(): Promise<void> {
     setPhase("generating");
     setError(null);
-    try {
-      const res = await fetch(`/api/channels/${channelId}/refresh-tactics`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trendingContext: trendingContext.trim(), useTracking }),
-      });
-      if (!res.ok) {
-        const json = (await res.json()) as { error?: string };
-        throw new Error(json.error ?? "Lỗi server");
-      }
-      const json = (await res.json()) as {
-        data: { suggestions: TacticalSuggestion[]; analysisNotes: string };
-      };
-      setSuggestions(json.data.suggestions);
-      setAnalysisNotes(json.data.analysisNotes);
-      // Select all by default
-      setSelected(new Set(json.data.suggestions.map((_, i) => i)));
-      setPhase("reviewing");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Lỗi không xác định");
+    const taskId = await refreshGen.start(`/api/channels/${channelId}/refresh-tactics`, {
+      body: { trendingContext: trendingContext.trim(), useTracking },
+    });
+    if (!taskId) {
+      setError(refreshGen.error ?? "Lỗi kết nối");
       setPhase("inputting");
     }
   }

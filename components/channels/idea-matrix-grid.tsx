@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { IdeaMatrixCard } from "./idea-matrix-card";
 import { BIBLE_LAYER_LABELS } from "@/lib/content/character-bible-types";
 import type { BibleLayerKey } from "@/lib/content/character-bible-types";
+import { useBackgroundGenerate } from "@/lib/hooks/use-background-generate";
 
 interface IdeaItem {
   id: string;
@@ -48,18 +49,26 @@ export function IdeaMatrixGrid({ channelId }: Props): React.ReactElement {
 
   useEffect(() => { void fetchIdeas(); }, [fetchIdeas]);
 
+  const ideaGen = useBackgroundGenerate(() => {
+    setGenerating(false);
+    toast.success("Đã tạo ý tưởng mới");
+    void fetchIdeas();
+  });
+
+  useEffect(() => {
+    if (ideaGen.status === "failed") {
+      setGenerating(false);
+      toast.error(ideaGen.error ?? "Lỗi tạo Idea Matrix");
+      ideaGen.reset();
+    }
+  }, [ideaGen.status, ideaGen.error]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleGenerate(): Promise<void> {
     setGenerating(true);
-    try {
-      const res = await fetch(`/api/channels/${channelId}/idea-matrix/generate`, { method: "POST" });
-      const json = (await res.json()) as { data?: { created: number }; message?: string; error?: string };
-      if (!res.ok) throw new Error(json.error || "Lỗi");
-      toast.success(json.message || "Đã tạo ý tưởng mới");
-      void fetchIdeas();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi tạo Idea Matrix");
-    } finally {
+    const taskId = await ideaGen.start(`/api/channels/${channelId}/idea-matrix/generate`);
+    if (!taskId) {
       setGenerating(false);
+      toast.error(ideaGen.error ?? "Lỗi tạo Idea Matrix");
     }
   }
 

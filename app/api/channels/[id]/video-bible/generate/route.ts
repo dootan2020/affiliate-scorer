@@ -1,9 +1,10 @@
-// POST /api/channels/[id]/video-bible/generate — AI generate video bible
-import { NextResponse } from "next/server";
+// POST /api/channels/[id]/video-bible/generate — AI generate (non-blocking)
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateVideoBible } from "@/lib/content/generate-video-bible";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
 import type { CharacterBibleData } from "@/lib/content/character-bible-types";
+import { createTask, completeTask, failTask } from "@/lib/services/background-task";
 
 interface Ctx {
   params: Promise<{ id: string }>;
@@ -24,33 +25,47 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
     const channel = await prisma.tikTokChannel.findUnique({ where: { id } });
     if (!channel) return NextResponse.json({ error: "Không tìm thấy kênh" }, { status: 404 });
 
-    // Check lock
     const existing = await prisma.videoBible.findUnique({ where: { channelId: id } });
     if (existing?.locked) {
-      return NextResponse.json({ error: "Video Bible đã bị khóa. Tạo version mới trước." }, { status: 403 });
+      return NextResponse.json({ error: "Video Bible đã bị khóa." }, { status: 403 });
     }
 
-    // Fetch character bible for context
-    const bible = await prisma.characterBible.findUnique({ where: { channelId: id } });
-
-    const vbData = await generateVideoBible({
-      personaName: channel.personaName,
-      voiceStyle: channel.voiceStyle,
-      niche: channel.niche,
-      editingStyle: channel.editingStyle,
-      productionStyle: channel.productionStyle,
-      characterBible: bible as unknown as CharacterBibleData | null,
+    const taskId = await createTask({
+      type: "video_bible",
+      label: "Đang tạo Video Bible...",
+      channelId: id,
     });
 
-    const jsonData = JSON.parse(JSON.stringify(vbData)) as Record<string, unknown>;
+    after(async () => {
+      try {
+        const bible = await prisma.characterBible.findUnique({ where: { channelId: id } });
 
-    const vb = await prisma.videoBible.upsert({
-      where: { channelId: id },
-      create: { channelId: id, ...jsonData, generatedByAi: true, aiGeneratedAt: new Date() },
-      update: { ...jsonData, generatedByAi: true, aiGeneratedAt: new Date() },
+        const vbData = await generateVideoBible({
+          personaName: channel.personaName,
+          voiceStyle: channel.voiceStyle,
+          niche: channel.niche,
+          editingStyle: channel.editingStyle,
+          productionStyle: channel.productionStyle,
+          characterBible: bible as unknown as CharacterBibleData | null,
+        });
+
+        const jsonData = JSON.parse(JSON.stringify(vbData)) as Record<string, unknown>;
+
+        await prisma.videoBible.upsert({
+          where: { channelId: id },
+          create: { channelId: id, ...jsonData, generatedByAi: true, aiGeneratedAt: new Date() },
+          update: { ...jsonData, generatedByAi: true, aiGeneratedAt: new Date() },
+        });
+
+        await completeTask(taskId, "Video Bible");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Lỗi tạo Video Bible";
+        console.error("[video-bible/generate]", msg);
+        await failTask(taskId, msg).catch(() => {});
+      }
     });
 
-    return NextResponse.json({ data: vb, message: "Đã tạo Video Bible bằng AI" });
+    return NextResponse.json({ taskId });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("[video-bible/generate]", msg);

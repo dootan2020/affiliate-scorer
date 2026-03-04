@@ -8,6 +8,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TextField, StringListEditor } from "./bible-layer-form";
+import { useBackgroundGenerate } from "@/lib/hooks/use-background-generate";
 
 interface VideoBibleData {
   id?: string;
@@ -129,21 +130,27 @@ export function VideoBibleEditor({ channelId }: Props): React.ReactElement {
     }
   }
 
+  const vbGen = useBackgroundGenerate(() => {
+    setGenerating(false);
+    toast.success("Đã tạo Video Bible bằng AI");
+    void fetchData();
+  });
+
+  useEffect(() => {
+    if (vbGen.status === "failed") {
+      setGenerating(false);
+      toast.error(vbGen.error ?? "Lỗi tạo Video Bible");
+      vbGen.reset();
+    }
+  }, [vbGen.status, vbGen.error]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleGenerate(): Promise<void> {
     if (data.id && !confirm("Tạo mới sẽ ghi đè dữ liệu hiện tại. Tiếp tục?")) return;
     setGenerating(true);
-    try {
-      const res = await fetch(`/api/channels/${channelId}/video-bible/generate`, { method: "POST" });
-      if (!res.ok) {
-        const json = (await res.json()) as { error?: string };
-        throw new Error(json.error || "Lỗi tạo");
-      }
-      toast.success("Đã tạo Video Bible bằng AI");
-      void fetchData();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi tạo");
-    } finally {
+    const taskId = await vbGen.start(`/api/channels/${channelId}/video-bible/generate`);
+    if (!taskId) {
       setGenerating(false);
+      toast.error(vbGen.error ?? "Lỗi tạo");
     }
   }
 

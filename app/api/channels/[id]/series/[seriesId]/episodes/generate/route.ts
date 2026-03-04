@@ -1,10 +1,11 @@
-// POST /api/channels/[id]/series/[seriesId]/episodes/generate — AI generate episodes
-import { NextResponse } from "next/server";
+// POST /api/channels/[id]/series/[seriesId]/episodes/generate — AI generate (non-blocking)
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateEpisodes } from "@/lib/content/generate-episodes";
 import { validateBody } from "@/lib/validations/validate-body";
 import { generateEpisodesSchema } from "@/lib/validations/schemas-series";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
+import { createTask, completeTask, failTask } from "@/lib/services/background-task";
 
 interface Ctx {
   params: Promise<{ id: string; seriesId: string }>;
@@ -30,44 +31,53 @@ export async function POST(req: Request, ctx: Ctx): Promise<NextResponse> {
     if (validation.error) return validation.error;
     const { count, goalDistribution } = validation.data;
 
-    // Get available format slugs
-    const formats = await prisma.formatTemplate.findMany({
-      where: { channelId: id, isActive: true },
-      select: { slug: true },
+    const taskId = await createTask({
+      type: "episodes_generate",
+      label: `Đang tạo ${count} episodes...`,
+      channelId: id,
     });
 
-    const episodes = await generateEpisodes({
-      seriesName: series.name,
-      seriesType: series.type,
-      premise: series.premise,
-      personaName: channel.personaName,
-      niche: channel.niche,
-      formatSlugs: formats.map((f) => f.slug),
-      count,
-      goalDistribution,
+    after(async () => {
+      try {
+        const formats = await prisma.formatTemplate.findMany({
+          where: { channelId: id, isActive: true },
+          select: { slug: true },
+        });
+
+        const episodes = await generateEpisodes({
+          seriesName: series.name,
+          seriesType: series.type,
+          premise: series.premise,
+          personaName: channel.personaName,
+          niche: channel.niche,
+          formatSlugs: formats.map((f) => f.slug),
+          count,
+          goalDistribution,
+        });
+
+        for (const ep of episodes) {
+          await prisma.episode.create({
+            data: {
+              seriesId,
+              episodeNumber: ep.episodeNumber,
+              title: ep.title,
+              goal: ep.goal ?? null,
+              formatSlug: ep.formatSlug ?? null,
+              pillar: ep.pillar ?? null,
+              notes: ep.notes ?? null,
+            },
+          });
+        }
+
+        await completeTask(taskId, `${episodes.length} episodes`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Lỗi tạo episodes";
+        console.error("[episodes/generate]", msg);
+        await failTask(taskId, msg).catch(() => {});
+      }
     });
 
-    // Save episodes to DB
-    const created = [];
-    for (const ep of episodes) {
-      const record = await prisma.episode.create({
-        data: {
-          seriesId,
-          episodeNumber: ep.episodeNumber,
-          title: ep.title,
-          goal: ep.goal ?? null,
-          formatSlug: ep.formatSlug ?? null,
-          pillar: ep.pillar ?? null,
-          notes: ep.notes ?? null,
-        },
-      });
-      created.push(record);
-    }
-
-    return NextResponse.json({
-      data: created,
-      message: `Đã tạo ${created.length} episodes bằng AI`,
-    });
+    return NextResponse.json({ taskId });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("[episodes/generate]", msg);

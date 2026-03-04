@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useBackgroundGenerate } from "@/lib/hooks/use-background-generate";
 import {
   SERIES_TYPE_LABELS, SERIES_STATUS_LABELS,
   EPISODE_GOAL_LABELS, EPISODE_STATUS_LABELS,
@@ -227,26 +228,30 @@ function SeriesDetail({ channelId, series, onUpdated }: {
 
   useEffect(() => { void fetchEpisodes(); }, [fetchEpisodes]);
 
+  const epGen = useBackgroundGenerate(() => {
+    setGenerating(false);
+    toast.success("Đã tạo episodes bằng AI");
+    void fetchEpisodes();
+    onUpdated();
+  });
+
+  useEffect(() => {
+    if (epGen.status === "failed") {
+      setGenerating(false);
+      toast.error(epGen.error ?? "Lỗi tạo episodes");
+      epGen.reset();
+    }
+  }, [epGen.status, epGen.error]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleGenerateEpisodes(): Promise<void> {
     setGenerating(true);
-    try {
-      const res = await fetch(`/api/channels/${channelId}/series/${series.id}/episodes/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: 5, goalDistribution: { awareness: 40, lead: 30, sale: 30 } }),
-      });
-      if (!res.ok) {
-        const json = (await res.json()) as { error?: string };
-        throw new Error(json.error || "Lỗi tạo");
-      }
-      const json = (await res.json()) as { message?: string };
-      toast.success(json.message || "Đã tạo episodes");
-      void fetchEpisodes();
-      onUpdated();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi tạo");
-    } finally {
+    const taskId = await epGen.start(
+      `/api/channels/${channelId}/series/${series.id}/episodes/generate`,
+      { body: { count: 5, goalDistribution: { awareness: 40, lead: 30, sale: 30 } } },
+    );
+    if (!taskId) {
       setGenerating(false);
+      toast.error(epGen.error ?? "Lỗi tạo");
     }
   }
 

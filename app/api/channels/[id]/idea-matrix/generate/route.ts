@@ -1,5 +1,5 @@
-// POST /api/channels/[id]/idea-matrix/generate — Generate/refresh idea matrix
-import { NextResponse } from "next/server";
+// POST /api/channels/[id]/idea-matrix/generate — AI generate (non-blocking)
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateIdeaMatrix } from "@/lib/content/generate-idea-matrix";
 import type { CharacterBibleData } from "@/lib/content/character-bible-types";
@@ -21,10 +21,7 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
     );
   }
 
-  let taskId: string | null = null;
-
   try {
-    // Fetch channel + bible + formats
     const channel = await prisma.tikTokChannel.findUnique({ where: { id } });
     if (!channel) {
       return NextResponse.json({ error: "Không tìm thấy kênh" }, { status: 404 });
@@ -51,50 +48,50 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
       );
     }
 
-    // Create background task for tracking
-    taskId = await createTask({
+    const taskId = await createTask({
       type: "idea_matrix",
       label: "Đang tạo Idea Matrix...",
       channelId: id,
     });
 
-    // Generate ideas via AI
-    const ideas = await generateIdeaMatrix(
-      bible as unknown as CharacterBibleData,
-      formats,
-      channel.personaName,
-    );
+    after(async () => {
+      try {
+        const ideas = await generateIdeaMatrix(
+          bible as unknown as CharacterBibleData,
+          formats,
+          channel.personaName,
+        );
 
-    // Delete old "fresh" ideas (keep picked/briefed)
-    await prisma.ideaMatrixItem.deleteMany({
-      where: { channelId: id, status: "fresh" },
+        await prisma.ideaMatrixItem.deleteMany({
+          where: { channelId: id, status: "fresh" },
+        });
+
+        await prisma.ideaMatrixItem.createMany({
+          data: ideas.map((idea) => ({
+            channelId: id,
+            bibleLayer: idea.bibleLayer,
+            layerDetail: idea.layerDetail,
+            formatSlug: idea.formatSlug,
+            ideaTitle: idea.ideaTitle,
+            hookSuggestions: idea.hookSuggestions,
+            angle: idea.angle,
+            notes: idea.notes,
+            status: "fresh",
+          })),
+        });
+
+        await completeTask(taskId, `${ideas.length} ý tưởng`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Lỗi tạo Idea Matrix";
+        console.error("[idea-matrix/generate]", msg);
+        await failTask(taskId, msg).catch(() => {});
+      }
     });
 
-    // Save new ideas
-    await prisma.ideaMatrixItem.createMany({
-      data: ideas.map((idea) => ({
-        channelId: id,
-        bibleLayer: idea.bibleLayer,
-        layerDetail: idea.layerDetail,
-        formatSlug: idea.formatSlug,
-        ideaTitle: idea.ideaTitle,
-        hookSuggestions: idea.hookSuggestions,
-        angle: idea.angle,
-        notes: idea.notes,
-        status: "fresh",
-      })),
-    });
-
-    await completeTask(taskId, `${ideas.length} ý tưởng`).catch(() => {});
-
-    return NextResponse.json({
-      data: { created: ideas.length },
-      message: `Đã tạo ${ideas.length} ý tưởng mới`,
-    });
+    return NextResponse.json({ taskId });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Lỗi không xác định";
     console.error("[idea-matrix/generate]", msg);
-    if (taskId) await failTask(taskId, msg).catch(() => {});
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import { Loader2, Sparkles, PenLine, RefreshCw } from "lucide-react";
 import { useBackgroundGenerate } from "@/lib/hooks/use-background-generate";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
 import type { ChannelProfileResult } from "@/lib/content/channel-profile-types";
 import { ChannelProfilePreview } from "./channel-profile-preview";
 import { ChannelManualForm, emptyProfile } from "./channel-manual-form";
@@ -215,6 +216,7 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
       });
       if (res.ok) {
         toast.success(isEdit ? "Đã cập nhật kênh" : "Đã tạo kênh mới");
+        dispatchSuggestionEvent("channel-updated");
         const body = await res.json().catch(() => null) as { data?: { id?: string } } | null;
         onSaved(body?.data?.id);
       } else {

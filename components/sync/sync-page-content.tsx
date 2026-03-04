@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
 import { FileDropzone } from "@/components/upload/file-dropzone";
 import {
   UploadProgress,
@@ -158,6 +159,7 @@ export function SyncPageContent(): React.ReactElement {
       setPreview(null);
       setPollingBatchId(data.data.batchId);
       toast.success(data.message);
+      dispatchSuggestionEvent("import-completed");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Lỗi không xác định";
       setError(message);

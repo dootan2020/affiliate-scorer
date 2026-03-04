@@ -13,6 +13,7 @@ import {
   PackageCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
 import { Button } from "@/components/ui/button";
 import { ProductSelector } from "./product-selector";
 import { BriefPreviewCard } from "./brief-preview-card";
@@ -153,6 +154,7 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId, initial
         toast.error(msg);
       } else if (loadedBriefs.length > 0) {
         toast.success(`Đã tạo ${loadedBriefs.length} briefs (${allAssetIds.length} video)`);
+        dispatchSuggestionEvent("brief-created");
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Lỗi không xác định";

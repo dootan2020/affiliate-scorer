@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Sparkles, CheckCircle, AlertTriangle } from "lucide-react";
 import { useActiveImportBatch, type ActiveBatch } from "@/lib/hooks/use-active-import-batch";
+import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
 
 /** Global floating widget showing import/scoring status on ALL pages. */
 export function ImportProgressWidget(): React.ReactElement | null {
@@ -20,6 +21,15 @@ export function ImportProgressWidget(): React.ReactElement | null {
   const isDone = isCompleted && batch?.scoringStatus === "completed";
   const hasFailed = batch?.status === "failed";
   const scoringFailed = !hasFailed && isCompleted && batch?.scoringStatus === "failed";
+
+  // Dispatch suggestion refresh when import+scoring completes
+  const didDispatchRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isDone && batch && didDispatchRef.current !== batch.id) {
+      didDispatchRef.current = batch.id;
+      dispatchSuggestionEvent("import-completed");
+    }
+  }, [isDone, batch?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-hide completed/failed state after 10s
   useEffect(() => {

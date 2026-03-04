@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -98,6 +99,7 @@ export function CalendarEventForm({
       toast.success(
         editingEvent ? "Đã cập nhật sự kiện" : "Đã thêm sự kiện"
       );
+      dispatchSuggestionEvent("calendar-updated");
       onSaved();
     } catch (err) {
       toast.error(

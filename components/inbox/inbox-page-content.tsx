@@ -7,6 +7,7 @@ import {
   Search, X, SlidersHorizontal, Sparkles, RefreshCw, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
 import { Button } from "@/components/ui/button";
 import { QuickEnrichModal } from "@/components/inbox/quick-enrich-modal";
 import { InboxTable, type InboxIdentity, type SortState } from "@/components/inbox/inbox-table";
@@ -251,6 +252,7 @@ export function InboxPageContent(): React.ReactElement {
       const json = await res.json();
       if (res.ok) {
         toast.success(json.message || "Đã chấm điểm lại");
+        dispatchSuggestionEvent("score-completed");
         setSelectedIds(new Set());
         fetchItems();
       } else {

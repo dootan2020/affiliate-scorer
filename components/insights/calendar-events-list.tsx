@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
 import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 import type { CalendarEventData } from "./calendar-event-form";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,7 @@ export function CalendarEventsList({
         throw new Error(data.error);
       }
       toast.success("Đã xóa sự kiện");
+      dispatchSuggestionEvent("calendar-updated");
       onDeleted(id);
     } catch (err) {
       toast.error(

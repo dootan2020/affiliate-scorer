@@ -65,11 +65,11 @@ const EMPTY: VideoBibleData = {
 };
 
 const GROUPS = [
-  { key: "visual", label: "Visual Locks", icon: Eye, color: "text-purple-500" },
-  { key: "audio", label: "Audio Locks", icon: Music, color: "text-blue-500" },
-  { key: "narrative", label: "Narrative Locks", icon: BookOpen, color: "text-emerald-500" },
-  { key: "shots", label: "Shot Codes", icon: Camera, color: "text-orange-500" },
-  { key: "scenes", label: "Scene Templates", icon: Clapperboard, color: "text-amber-500" },
+  { key: "visual", label: "Khóa hình ảnh", icon: Eye, color: "text-purple-500" },
+  { key: "audio", label: "Khóa âm thanh", icon: Music, color: "text-blue-500" },
+  { key: "narrative", label: "Khóa kịch bản", icon: BookOpen, color: "text-emerald-500" },
+  { key: "shots", label: "Mã cảnh quay", icon: Camera, color: "text-orange-500" },
+  { key: "scenes", label: "Mẫu phân cảnh", icon: Clapperboard, color: "text-amber-500" },
 ] as const;
 
 interface Props {
@@ -290,11 +290,11 @@ interface GroupProps { data: VideoBibleData; onChange: (d: VideoBibleData) => vo
 function VisualGroup({ data, onChange, disabled }: GroupProps): React.ReactElement {
   return (
     <>
-      <TextField label="Framing" value={data.framing} onChange={(v) => onChange({ ...data, framing: v })} placeholder="VD: Close-up sản phẩm + medium shot mặt" disabled={disabled} />
-      <TextField label="Lighting" value={data.lighting} onChange={(v) => onChange({ ...data, lighting: v })} placeholder="VD: Ring light + window light" disabled={disabled} />
-      <TextField label="Composition" value={data.composition} onChange={(v) => onChange({ ...data, composition: v })} placeholder="VD: Rule of thirds, sản phẩm center" disabled={disabled} />
-      <TextField label="Palette" value={data.palette} onChange={(v) => onChange({ ...data, palette: v })} placeholder="VD: Warm tone, trắng kem + cam" disabled={disabled} />
-      <TextField label="Edit Rhythm" value={data.editRhythm} onChange={(v) => onChange({ ...data, editRhythm: v })} placeholder="VD: Cut mỗi 2-3s, jump cut nhẹ" disabled={disabled} />
+      <TextField label="Khung hình" value={data.framing} onChange={(v) => onChange({ ...data, framing: v })} placeholder="VD: Close-up sản phẩm + medium shot mặt" disabled={disabled} />
+      <TextField label="Ánh sáng" value={data.lighting} onChange={(v) => onChange({ ...data, lighting: v })} placeholder="VD: Ring light + window light" disabled={disabled} />
+      <TextField label="Bố cục" value={data.composition} onChange={(v) => onChange({ ...data, composition: v })} placeholder="VD: Rule of thirds, sản phẩm center" disabled={disabled} />
+      <TextField label="Bảng màu" value={data.palette} onChange={(v) => onChange({ ...data, palette: v })} placeholder="VD: Warm tone, trắng kem + cam" disabled={disabled} />
+      <TextField label="Nhịp dựng" value={data.editRhythm} onChange={(v) => onChange({ ...data, editRhythm: v })} placeholder="VD: Cut mỗi 2-3s, jump cut nhẹ" disabled={disabled} />
     </>
   );
 }
@@ -302,10 +302,10 @@ function VisualGroup({ data, onChange, disabled }: GroupProps): React.ReactEleme
 function AudioGroup({ data, onChange, disabled }: GroupProps): React.ReactElement {
   return (
     <>
-      <TextField label="Voice Style" value={data.voiceStyleLock} onChange={(v) => onChange({ ...data, voiceStyleLock: v })} placeholder="VD: Tự nhiên, nói chuyện thân mật" disabled={disabled} />
-      <StringListEditor label="SFX Pack" values={data.sfxPack} onChange={(v) => onChange({ ...data, sfxPack: v })} placeholder="VD: *ding*, *swoosh*" disabled={disabled} />
-      <StringListEditor label="BGM Moods" values={data.bgmMoods} onChange={(v) => onChange({ ...data, bgmMoods: v })} placeholder="VD: Lo-fi chill, upbeat pop" disabled={disabled} />
-      <TextField label="Room Tone" value={data.roomTone} onChange={(v) => onChange({ ...data, roomTone: v })} placeholder="VD: Yên tĩnh, studio" disabled={disabled} />
+      <TextField label="Phong cách giọng" value={data.voiceStyleLock} onChange={(v) => onChange({ ...data, voiceStyleLock: v })} placeholder="VD: Tự nhiên, nói chuyện thân mật" disabled={disabled} />
+      <StringListEditor label="Hiệu ứng âm thanh" values={data.sfxPack} onChange={(v) => onChange({ ...data, sfxPack: v })} placeholder="VD: *ding*, *swoosh*" disabled={disabled} />
+      <StringListEditor label="Nhạc nền" values={data.bgmMoods} onChange={(v) => onChange({ ...data, bgmMoods: v })} placeholder="VD: Lo-fi chill, upbeat pop" disabled={disabled} />
+      <TextField label="Âm nền phòng" value={data.roomTone} onChange={(v) => onChange({ ...data, roomTone: v })} placeholder="VD: Yên tĩnh, studio" disabled={disabled} />
     </>
   );
 }
@@ -313,11 +313,11 @@ function AudioGroup({ data, onChange, disabled }: GroupProps): React.ReactElemen
 function NarrativeGroup({ data, onChange, disabled }: GroupProps): React.ReactElement {
   return (
     <>
-      <TextField label="Opening Ritual" value={data.openingRitual} onChange={(v) => onChange({ ...data, openingRitual: v })} placeholder="VD: 'Xin chào, hôm nay chúng ta sẽ test...'" disabled={disabled} />
-      <TextField label="Proof Token Rule" value={data.proofTokenRule} onChange={(v) => onChange({ ...data, proofTokenRule: v })} placeholder="VD: Luôn show bằng chứng dùng thật 7 ngày" disabled={disabled} />
-      <TextField label="Closing Ritual" value={data.closingRitual} onChange={(v) => onChange({ ...data, closingRitual: v })} placeholder="VD: 'Follow để xem thêm review thật!'" disabled={disabled} />
+      <TextField label="Nghi thức mở đầu" value={data.openingRitual} onChange={(v) => onChange({ ...data, openingRitual: v })} placeholder="VD: 'Xin chào, hôm nay chúng ta sẽ test...'" disabled={disabled} />
+      <TextField label="Quy tắc bằng chứng" value={data.proofTokenRule} onChange={(v) => onChange({ ...data, proofTokenRule: v })} placeholder="VD: Luôn show bằng chứng dùng thật 7 ngày" disabled={disabled} />
+      <TextField label="Nghi thức kết thúc" value={data.closingRitual} onChange={(v) => onChange({ ...data, closingRitual: v })} placeholder="VD: 'Follow để xem thêm review thật!'" disabled={disabled} />
       <div>
-        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">AI Mode</label>
+        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Chế độ AI</label>
         <select
           value={data.aiMode}
           onChange={(e) => onChange({ ...data, aiMode: e.target.value })}

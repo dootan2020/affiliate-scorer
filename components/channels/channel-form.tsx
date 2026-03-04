@@ -52,7 +52,7 @@ const TONE_OPTIONS = [
   { value: "Vui vẻ Gen Z", label: "Vui vẻ Gen Z" },
   { value: "Chuyên gia uy tín", label: "Chuyên gia uy tín" },
   { value: "Chị gái tâm sự", label: "Chị gái tâm sự" },
-  { value: "Honest review thẳng thắn", label: "Honest review thẳng thắn" },
+  { value: "Honest review thẳng thắn", label: "Review thẳng thắn" },
 ];
 
 function initialToProfile(initial: Partial<ChannelInitial>): ChannelProfileResult {

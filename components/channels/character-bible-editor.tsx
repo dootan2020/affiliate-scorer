@@ -40,14 +40,14 @@ const EMPTY_BIBLE: BibleData = {
 };
 
 const LAYERS = [
-  { key: "core", label: "Niềm tin & Red Lines", icon: Shield, color: "text-rose-500" },
+  { key: "core", label: "Niềm tin & Giới hạn", icon: Shield, color: "text-rose-500" },
   { key: "relationships", label: "Nhân vật phụ", icon: Users, color: "text-blue-500" },
   { key: "world", label: "Luật thế giới", icon: Globe, color: "text-emerald-500" },
   { key: "origin", label: "Câu chuyện gốc", icon: BookOpen, color: "text-purple-500" },
   { key: "spaces", label: "Bối cảnh", icon: Home, color: "text-amber-500" },
-  { key: "arcs", label: "Story Arc", icon: Film, color: "text-orange-500" },
-  { key: "language", label: "Ngôn ngữ & Ritual", icon: MessageCircle, color: "text-cyan-500" },
-  { key: "locks", label: "Visual Locks & Voice DNA", icon: Lock, color: "text-gray-500" },
+  { key: "arcs", label: "Cốt truyện", icon: Film, color: "text-orange-500" },
+  { key: "language", label: "Ngôn ngữ & Nghi thức", icon: MessageCircle, color: "text-cyan-500" },
+  { key: "locks", label: "Hình ảnh & Giọng nói", icon: Lock, color: "text-gray-500" },
 ] as const;
 
 interface Props {
@@ -332,10 +332,10 @@ function ArcsLayer({ bible, onChange }: LayerProps): React.ReactElement {
 function LanguageLayer({ bible, onChange }: LayerProps): React.ReactElement {
   return (
     <>
-      <StringListEditor label="Catchphrases (câu cửa miệng)" values={bible.catchphrases} onChange={(v) => onChange({ ...bible, catchphrases: v })} placeholder="VD: Đáng tiền không?" />
-      <StringListEditor label="Inside Jokes" values={bible.insideJokes} onChange={(v) => onChange({ ...bible, insideJokes: v })} placeholder="VD: Hộp đồ fail" />
-      <StringListEditor label="Rituals (thói quen lặp)" values={bible.rituals} onChange={(v) => onChange({ ...bible, rituals: v })} placeholder="VD: Mở hộp bằng tay trái" />
-      <StringListEditor label="Vocabulary Rules" values={bible.vocabularyRules} onChange={(v) => onChange({ ...bible, vocabularyRules: v })} placeholder="VD: Luôn nói 'test thực tế'" />
+      <StringListEditor label="Câu cửa miệng" values={bible.catchphrases} onChange={(v) => onChange({ ...bible, catchphrases: v })} placeholder="VD: Đáng tiền không?" />
+      <StringListEditor label="Trò đùa riêng" values={bible.insideJokes} onChange={(v) => onChange({ ...bible, insideJokes: v })} placeholder="VD: Hộp đồ fail" />
+      <StringListEditor label="Thói quen lặp lại" values={bible.rituals} onChange={(v) => onChange({ ...bible, rituals: v })} placeholder="VD: Mở hộp bằng tay trái" />
+      <StringListEditor label="Quy tắc từ vựng" values={bible.vocabularyRules} onChange={(v) => onChange({ ...bible, vocabularyRules: v })} placeholder="VD: Luôn nói 'test thực tế'" />
     </>
   );
 }

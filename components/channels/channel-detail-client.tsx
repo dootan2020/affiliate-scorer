@@ -64,7 +64,7 @@ const VOICE_LABELS: Record<string, string> = {
 const EDIT_LABELS: Record<string, string> = {
   fast_cut: "Cắt nhanh",
   smooth: "Mượt",
-  cinematic: "Cinematic",
+  cinematic: "Điện ảnh",
   minimal: "Tối giản",
 };
 
@@ -76,10 +76,10 @@ const FONT_LABELS: Record<string, string> = {
 };
 
 const PRODUCTION_LABELS: Record<string, string> = {
-  voiceover_broll: "Voiceover + B-roll",
-  talking_head: "Talking Head",
-  product_showcase: "Product Showcase",
-  hybrid: "Hybrid",
+  voiceover_broll: "Thuyết minh + B-roll",
+  talking_head: "Quay trực tiếp",
+  product_showcase: "Trưng bày sản phẩm",
+  hybrid: "Kết hợp",
 };
 
 const MIX_LABELS: Record<string, string> = {
@@ -282,11 +282,11 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
 
   const TABS = [
     { key: "overview" as const, label: "Tổng quan", icon: LayoutGrid },
-    { key: "bible" as const, label: "Character Bible", icon: BookOpen },
-    { key: "formats" as const, label: "Format Bank", icon: Layers },
-    { key: "matrix" as const, label: "Idea Matrix", icon: Lightbulb },
-    { key: "videoBible" as const, label: "Video Bible", icon: Video },
-    { key: "series" as const, label: "Series", icon: Calendar },
+    { key: "bible" as const, label: "Nhân vật", icon: BookOpen },
+    { key: "formats" as const, label: "Định dạng", icon: Layers },
+    { key: "matrix" as const, label: "Ý tưởng", icon: Lightbulb },
+    { key: "videoBible" as const, label: "Cẩm nang video", icon: Video },
+    { key: "series" as const, label: "Chuỗi nội dung", icon: Calendar },
   ];
 
   return (
@@ -363,9 +363,9 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
               variant="secondary"
               size="sm"
               onClick={() => setRefreshOpen(true)}
-              title="Refresh tactics dựa trên trending"
+              title="Làm mới chiến thuật theo xu hướng"
             >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              <RefreshCw className="w-3.5 h-3.5" /> Làm mới
             </Button>
             <Button
               variant="secondary"
@@ -390,9 +390,9 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* Aggregate stats row */}
         {channel.stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 pt-2">
-            <StatCard icon={<Film className="w-4 h-4 text-orange-500" />} label="Tổng Assets" value={channel.stats.totalAssets} sub={`${channel.stats.publishedAssets} đã đăng`} />
-            <StatCard icon={<LayoutGrid className="w-4 h-4 text-emerald-500" />} label="Slots" value={channel.stats.totalSlots} />
-            <StatCard icon={<FileText className="w-4 h-4 text-orange-500" />} label="Briefs" value={channel.stats.totalBriefs} />
+            <StatCard icon={<Film className="w-4 h-4 text-orange-500" />} label="Tổng nội dung" value={channel.stats.totalAssets} sub={`${channel.stats.publishedAssets} đã đăng`} />
+            <StatCard icon={<LayoutGrid className="w-4 h-4 text-emerald-500" />} label="Lịch đăng" value={channel.stats.totalSlots} />
+            <StatCard icon={<FileText className="w-4 h-4 text-orange-500" />} label="Bản tóm tắt" value={channel.stats.totalBriefs} />
             <div className="rounded-xl bg-gray-50 dark:bg-slate-800/50 p-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <Clock className="w-4 h-4 text-gray-400" />
@@ -401,7 +401,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {channel.stats.lastRefresh
                   ? new Date(channel.stats.lastRefresh).toLocaleDateString("vi-VN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
-                  : "Chưa refresh"}
+                  : "Chưa cập nhật"}
               </p>
             </div>
           </div>
@@ -439,14 +439,14 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
             <InfoRow label="Tên nhân vật" value={channel.personaName} />
             <InfoRow label="Mô tả" value={channel.personaDesc} />
             <InfoRow label="Đối tượng" value={channel.targetAudience ?? "—"} />
-            {channel.subNiche && <InfoRow label="Sub-niche" value={channel.subNiche} />}
-            {channel.usp && <InfoRow label="USP" value={channel.usp} />}
+            {channel.subNiche && <InfoRow label="Ngách phụ" value={channel.subNiche} />}
+            {channel.usp && <InfoRow label="Điểm khác biệt" value={channel.usp} />}
           </InfoSection>
 
           <InfoSection title="Phong cách">
             <InfoRow label="Giọng nói" value={VOICE_LABELS[channel.voiceStyle] ?? channel.voiceStyle} />
-            <InfoRow label="Editing" value={EDIT_LABELS[channel.editingStyle ?? ""] ?? channel.editingStyle ?? "—"} />
-            <InfoRow label="Font" value={FONT_LABELS[channel.fontStyle ?? ""] ?? channel.fontStyle ?? "—"} />
+            <InfoRow label="Dựng phim" value={EDIT_LABELS[channel.editingStyle ?? ""] ?? channel.editingStyle ?? "—"} />
+            <InfoRow label="Phông chữ" value={FONT_LABELS[channel.fontStyle ?? ""] ?? channel.fontStyle ?? "—"} />
           </InfoSection>
 
           <InfoSection title="Màu sắc">
@@ -470,7 +470,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           </InfoSection>
 
           <InfoSection title="Thông tin">
-            <InfoRow label="Niche" value={channel.niche} />
+            <InfoRow label="Lĩnh vực" value={channel.niche} />
             <InfoRow label="Trạng thái" value={channel.isActive ? "Đang hoạt động" : "Tạm dừng"} />
           </InfoSection>
         </div>
@@ -478,7 +478,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* Production Style */}
         {channel.productionStyle && (
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
-            <InfoSection title="Production Style">
+            <InfoSection title="Phong cách sản xuất">
               <div className="flex items-center gap-3">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   channel.productionStyle === "hybrid" ? "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400"
@@ -499,7 +499,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* Content Pillars with AI Feasibility */}
         {pillars.length > 0 && (
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
-            <InfoSection title="Content Pillars">
+            <InfoSection title="Trụ cột nội dung">
               {pillarDetails.length > 0 ? (
                 <div className="space-y-2">
                   {pillarDetails.map((d, i) => (
@@ -516,7 +516,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{d.productionNotes}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">Formats: {d.recommendedFormats.join(", ")}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Định dạng: {d.recommendedFormats.join(", ")}</p>
                       </div>
                     </div>
                   ))}
@@ -537,13 +537,13 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* Video Formats */}
         {vFormats.length > 0 && (
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
-            <InfoSection title="Video Format Mapping">
+            <InfoSection title="Ánh xạ định dạng video">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {vFormats.map((vf, i) => (
                   <div key={i} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">
                     <p className="text-xs font-medium text-gray-500 uppercase mb-1">{MIX_LABELS[vf.contentType] ?? vf.contentType}</p>
                     <p className="text-sm text-gray-900 dark:text-gray-100">{vf.primaryFormat} <span className="text-gray-400">/ {vf.secondaryFormat}</span></p>
-                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Tool: {vf.aiToolSuggestion}</p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Công cụ: {vf.aiToolSuggestion}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{vf.productionNotes}</p>
                   </div>
                 ))}
@@ -555,7 +555,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* Hook Bank */}
         {hooks.length > 0 && (
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
-            <InfoSection title={`Hook Bank (${hooks.length})`}>
+            <InfoSection title={`Kho Hook (${hooks.length})`}>
               <ol className="space-y-1">
                 {hooks.map((h, i) => (
                   <li key={i} className="text-sm text-gray-700 dark:text-gray-300 flex gap-2">
@@ -571,7 +571,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* Content Mix */}
         {mix && (
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
-            <InfoSection title="Content Mix">
+            <InfoSection title="Tỷ lệ nội dung">
               <div className="space-y-2">
                 {Object.entries(mix).map(([key, val]) => (
                   <div key={key} className="flex items-center gap-3">
@@ -596,7 +596,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
             <InfoSection title="Lịch đăng">
               {channel.postsPerDay && (
                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                  <strong>{channel.postsPerDay}</strong> post/ngày
+                  <strong>{channel.postsPerDay}</strong> bài/ngày
                 </p>
               )}
               {schedule && (
@@ -619,7 +619,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* Series Schedule */}
         {series.length > 0 && (
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
-            <InfoSection title="Series Schedule">
+            <InfoSection title="Lịch chuỗi nội dung">
               <div className="space-y-2">
                 {series.map((s, i) => (
                   <div key={i} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
@@ -639,7 +639,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {/* CTA Templates */}
         {cta && Object.values(cta).some(Boolean) && (
           <div className="border-t border-gray-100 dark:border-slate-800 pt-6 mb-6">
-            <InfoSection title="CTA Templates">
+            <InfoSection title="Mẫu kêu gọi hành động">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {Object.entries(cta).map(([key, val]) => val ? (
                   <div key={key} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3">

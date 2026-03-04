@@ -11,7 +11,7 @@ const TONE_OPTIONS = [
   { value: "casual", label: "Vui vẻ Gen Z" },
   { value: "professional", label: "Chuyên gia uy tín" },
   { value: "energetic", label: "Chị gái tâm sự" },
-  { value: "calm", label: "Honest review thẳng thắn" },
+  { value: "calm", label: "Review thẳng thắn" },
 ];
 
 function emptyProfile(): ChannelProfileResult {

@@ -28,7 +28,7 @@ const FONT_OPTIONS = [
 const EDIT_OPTIONS = [
   { value: "fast_cut", label: "Cắt nhanh" },
   { value: "smooth", label: "Mượt" },
-  { value: "cinematic", label: "Cinematic" },
+  { value: "cinematic", label: "Điện ảnh" },
   { value: "minimal", label: "Tối giản" },
 ];
 

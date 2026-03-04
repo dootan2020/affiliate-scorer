@@ -147,10 +147,10 @@ export function FormatBankList({ channelId }: Props): React.ReactElement {
               {expanded.has(t.id) && (
                 <div className="px-4 pb-4 border-t border-gray-100 dark:border-slate-800 pt-3 space-y-2">
                   {t.description && <p className="text-xs text-gray-600 dark:text-gray-300">{t.description}</p>}
-                  {t.hookTemplate && <TemplateRow label="Hook" value={t.hookTemplate} />}
-                  {t.bodyTemplate && <TemplateRow label="Body" value={t.bodyTemplate} />}
-                  {t.proofTemplate && <TemplateRow label="Proof" value={t.proofTemplate} />}
-                  {t.ctaTemplate && <TemplateRow label="CTA" value={t.ctaTemplate} />}
+                  {t.hookTemplate && <TemplateRow label="Mở đầu" value={t.hookTemplate} />}
+                  {t.bodyTemplate && <TemplateRow label="Nội dung" value={t.bodyTemplate} />}
+                  {t.proofTemplate && <TemplateRow label="Bằng chứng" value={t.proofTemplate} />}
+                  {t.ctaTemplate && <TemplateRow label="Kêu gọi" value={t.ctaTemplate} />}
                   {t.exampleScript && (
                     <div className="bg-gray-50 dark:bg-slate-800/50 rounded-lg p-2.5 mt-2">
                       <span className="text-[10px] text-gray-400 uppercase">Ví dụ script</span>

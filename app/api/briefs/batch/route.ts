@@ -6,6 +6,7 @@ import type { BriefOptions, ChannelContext } from "@/lib/content/generate-brief"
 import { validateBody } from "@/lib/validations/validate-body";
 import { batchBriefSchema } from "@/lib/validations/schemas-content";
 import { createTask, updateTaskProgress, completeTask, failTask } from "@/lib/services/background-task";
+import { selectHooksForBrief, selectFormatsForBrief } from "@/lib/learning/explore-exploit";
 
 interface BatchResult {
   productIdentityId: string;
@@ -58,6 +59,23 @@ export async function POST(request: Request): Promise<NextResponse> {
       prisma.videoBible.findUnique({ where: { channelId } }),
     ]);
 
+    // Fetch calendar events (7-day window) + explore/exploit selections
+    const [calendarEvents, suggestedHooks, suggestedFormats] = await Promise.all([
+      prisma.calendarEvent.findMany({
+        where: {
+          startDate: {
+            gte: new Date(),
+            lte: new Date(Date.now() + 7 * 86_400_000),
+          },
+        },
+        orderBy: { startDate: "asc" },
+        take: 5,
+        select: { name: true, startDate: true, eventType: true },
+      }),
+      selectHooksForBrief(0.3, channelId),
+      selectFormatsForBrief(3, channelId),
+    ]);
+
     const briefOptions: BriefOptions = {
       channel: channelCtx,
       contentType,
@@ -68,6 +86,17 @@ export async function POST(request: Request): Promise<NextResponse> {
       videoBible: videoBible as unknown as Record<string, unknown> | null,
       bibleVersion: characterBible?.version ?? null,
       videoBibleVersion: videoBible?.version ?? null,
+      calendarEvents,
+      suggestedHooks: suggestedHooks.map((h) => ({
+        type: h.type,
+        template: h.template,
+        example: h.example,
+      })),
+      suggestedFormats: suggestedFormats.map((f) => ({
+        id: f.id,
+        name: f.name,
+        description: f.description,
+      })),
     };
 
     // Lấy tất cả identities + product data cho enriched prompt

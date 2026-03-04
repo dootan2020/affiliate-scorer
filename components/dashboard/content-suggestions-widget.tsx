@@ -1,82 +1,89 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Sparkles, CheckCircle } from "lucide-react";
-import { ProductImage } from "@/components/products/product-image";
+import { Sparkles, CheckCircle, RefreshCw } from "lucide-react";
 import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
-
-interface ProductIdentityItem {
-  id: string;
-  title: string | null;
-  category: string | null;
-  imageUrl: string | null;
-  combinedScore: number | null;
-  contentPotentialScore: number | null;
-  deltaType: string | null;
-  inboxState: string;
-  createdAt: string;
-}
-
-const EXCLUDED_STATES = ["briefed", "published"];
-
-/** Composite ranking: combinedScore + bonus for breakout/surge + contentPotential + recency */
-function rankProduct(p: ProductIdentityItem): number {
-  let score = Number(p.combinedScore ?? 0);
-
-  // Bonus for trending deltaType
-  if (p.deltaType === "breakout") score += 15;
-  else if (p.deltaType === "surge") score += 10;
-  else if (p.deltaType === "rising") score += 5;
-
-  // Blend contentPotentialScore
-  if (p.contentPotentialScore != null) {
-    score += Number(p.contentPotentialScore) * 0.3;
-  }
-
-  // Recency bonus: scored within last 3 days gets small boost
-  const daysSinceCreated = (Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-  if (daysSinceCreated <= 3) score += 5;
-
-  return score;
-}
+import type { SuggestionsResult, SuggestedProduct } from "@/lib/suggestions/compute-smart-suggestions";
+import { SuggestionCalendarBanner } from "./suggestion-calendar-banner";
+import { SuggestionProductRow } from "./suggestion-product-row";
 
 export function ContentSuggestionsWidget(): React.ReactElement {
-  const [items, setItems] = useState<ProductIdentityItem[]>([]);
+  const [data, setData] = useState<SuggestionsResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeChannelIdx, setActiveChannelIdx] = useState(0);
 
-  useEffect(() => {
-    fetchWithRetry("/api/inbox?sort=score&limit=20")
+  const fetchData = useCallback(() => {
+    setLoading(true);
+    fetchWithRetry("/api/dashboard/suggestions")
       .then((r) => r.json())
-      .then((d) => {
-        if (!d.data) return;
-        const filtered = (d.data as ProductIdentityItem[])
-          .filter((p) => !EXCLUDED_STATES.includes(p.inboxState))
-          .sort((a, b) => rankProduct(b) - rankProduct(a))
-          .slice(0, 5);
-        setItems(filtered);
-      })
-      .catch((e) => { console.error("[content-suggestions-widget]", e); })
+      .then((d: SuggestionsResult) => setData(d))
+      .catch((e) => console.error("[content-suggestions-widget]", e))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Determine which products to show
+  const channels = data?.channels ?? [];
+  const hasChannels = channels.length > 0;
+  const activeChannel = hasChannels ? channels[Math.min(activeChannelIdx, channels.length - 1)] : null;
+  const products: SuggestedProduct[] = activeChannel?.products ?? data?.flatList ?? [];
+  const totalProducts = hasChannels
+    ? channels.reduce((sum, ch) => sum + ch.products.length, 0)
+    : (data?.flatList?.length ?? 0);
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-5">
-      <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-slate-800">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-orange-500" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-            Nên tạo nội dung
-          </h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">Nên tạo nội dung</h3>
+          {totalProducts > 0 && (
+            <span className="text-[11px] text-gray-400 dark:text-gray-500">
+              Còn {totalProducts} SP chờ brief
+            </span>
+          )}
         </div>
-        <Link
-          href="/inbox?state=scored"
-          className="text-xs text-orange-600 dark:text-orange-400 hover:underline"
-        >
-          Xem tất cả →
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+            title="Làm mới"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${loading ? "animate-spin" : ""}`} />
+          </button>
+          <Link href="/inbox?state=scored" className="text-xs text-orange-600 dark:text-orange-400 hover:underline">
+            Xem tất cả →
+          </Link>
+        </div>
       </div>
 
+      {/* Calendar Banner */}
+      {data?.calendarEvents && <SuggestionCalendarBanner events={data.calendarEvents} />}
+
+      {/* Channel Tabs */}
+      {hasChannels && channels.length > 1 && (
+        <nav className="flex items-center gap-1 overflow-x-auto mb-3 pb-1">
+          {channels.map((ch, idx) => (
+            <button
+              key={ch.channelId}
+              onClick={() => setActiveChannelIdx(idx)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                idx === activeChannelIdx
+                  ? "bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+              }`}
+            >
+              {ch.channelName} ({ch.products.length})
+            </button>
+          ))}
+        </nav>
+      )}
+
+      {/* Content */}
       {loading ? (
         <div className="space-y-2 animate-pulse">
           {[1, 2, 3].map((i) => (
@@ -90,12 +97,13 @@ export function ContentSuggestionsWidget(): React.ReactElement {
             </div>
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : products.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <CheckCircle className="w-8 h-8 text-emerald-400 mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Tất cả sản phẩm đã được brief!
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Tất cả sản phẩm đã được brief!</p>
+          <Link href="/upload" className="text-xs text-orange-600 dark:text-orange-400 hover:underline mt-2">
+            Thêm sản phẩm mới →
+          </Link>
         </div>
       ) : (
         <table className="w-full">
@@ -103,63 +111,13 @@ export function ContentSuggestionsWidget(): React.ReactElement {
             <tr className="border-b border-gray-100 dark:border-slate-800">
               <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 hidden sm:table-cell w-12" />
               <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2">Sản phẩm</th>
-              <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 hidden md:table-cell">Danh mục</th>
               <th className="text-center text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 w-16">Score</th>
               <th className="text-right text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 w-16" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
-            {items.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                {/* Thumbnail — hidden on mobile */}
-                <td className="py-2.5 pr-2 hidden sm:table-cell">
-                  <ProductImage
-                    src={item.imageUrl}
-                    alt={item.title ?? "SP"}
-                  />
-                </td>
-
-                {/* Product name — full, not truncated */}
-                <td className="py-2.5 pr-2">
-                  <Link
-                    href={`/inbox/${item.id}`}
-                    className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-orange-600 dark:hover:text-orange-400 transition-colors line-clamp-2"
-                  >
-                    {item.title ?? "Sản phẩm chưa đặt tên"}
-                  </Link>
-                  {item.deltaType && ["breakout", "surge"].includes(item.deltaType) && (
-                    <span className="text-[10px] font-medium text-rose-600 dark:text-rose-400 ml-1">
-                      {item.deltaType === "breakout" ? "🔥" : "📈"}
-                    </span>
-                  )}
-                </td>
-
-                {/* Category — hidden on mobile */}
-                <td className="py-2.5 pr-2 hidden md:table-cell">
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {item.category ?? "—"}
-                  </span>
-                </td>
-
-                {/* Score badge */}
-                <td className="py-2.5 pr-2 text-center">
-                  {item.combinedScore != null && (
-                    <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
-                      {Number(item.combinedScore).toFixed(1)}
-                    </span>
-                  )}
-                </td>
-
-                {/* CTA */}
-                <td className="py-2.5 text-right">
-                  <Link
-                    href={`/production?productId=${item.id}`}
-                    className="text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 whitespace-nowrap transition-colors"
-                  >
-                    Brief →
-                  </Link>
-                </td>
-              </tr>
+            {products.map((p) => (
+              <SuggestionProductRow key={p.id} product={p} channelId={activeChannel?.channelId} />
             ))}
           </tbody>
         </table>

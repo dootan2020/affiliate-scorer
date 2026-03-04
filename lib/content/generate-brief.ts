@@ -20,6 +20,24 @@ export interface ChannelContext {
   niche: string | null;
 }
 
+export interface CalendarEventInput {
+  name: string;
+  startDate: Date;
+  eventType: string;
+}
+
+export interface SuggestedHookInput {
+  type: string;
+  template: string;
+  example: string;
+}
+
+export interface SuggestedFormatInput {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export interface BriefOptions {
   channel?: ChannelContext | null;
   contentType?: string | null; // entertainment | education | review | selling
@@ -30,6 +48,9 @@ export interface BriefOptions {
   videoBible?: Record<string, unknown> | null;
   bibleVersion?: number | null;
   videoBibleVersion?: number | null;
+  calendarEvents?: CalendarEventInput[] | null;
+  suggestedHooks?: SuggestedHookInput[] | null;
+  suggestedFormats?: SuggestedFormatInput[] | null;
 }
 
 export interface ProductInput {
@@ -207,7 +228,33 @@ THỜI LƯỢNG MỤC TIÊU: ${options.targetDuration} giây
     ? `\n${buildVideoBibleBlock(options.videoBible)}\n`
     : "";
 
-  return `${channelBlock}${characterBlock}${formatBlock}${videoBibleBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
+  const calendarBlock = options?.calendarEvents && options.calendarEvents.length > 0 ? `
+SỰ KIỆN SẮP TỚI (adapt content theo timing):
+${options.calendarEvents.map((e) => {
+  const dateStr = new Date(e.startDate).toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" });
+  return `- ${e.name} (${e.eventType}) — ngày ${dateStr}`;
+}).join("\n")}
+→ Nên tạo content liên quan đến sự kiện gần nhất nếu phù hợp với sản phẩm.
+` : "";
+
+  const exploreExploitBlock = (() => {
+    const parts: string[] = [];
+    if (options?.suggestedHooks && options.suggestedHooks.length > 0) {
+      const splitIdx = Math.round(options.suggestedHooks.length * 0.7);
+      const proven = options.suggestedHooks.slice(0, splitIdx);
+      const explore = options.suggestedHooks.slice(splitIdx);
+      parts.push(`HOOKS GỢI Ý (ưu tiên dùng, có thể thay đổi nếu cần):
+- Đã chứng minh: ${proven.map((h) => `"${h.type}"`).join(", ")}
+- Khám phá mới: ${explore.map((h) => `"${h.type}"`).join(", ") || "không có"}`);
+    }
+    if (options?.suggestedFormats && options.suggestedFormats.length > 0) {
+      parts.push(`FORMATS GỢI Ý:
+${options.suggestedFormats.map((f) => `- ${f.name}: ${f.description}`).join("\n")}`);
+    }
+    return parts.length > 0 ? "\n" + parts.join("\n\n") + "\n" : "";
+  })();
+
+  return `${channelBlock}${characterBlock}${formatBlock}${videoBibleBlock}${calendarBlock}${exploreExploitBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
 SẢN PHẨM:
 - Tên: ${product.title || "Chưa có tên"}
 - Giá: ${product.price ? formatVND(product.price) : "chưa rõ"}

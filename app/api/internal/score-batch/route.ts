@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { scoreProducts } from "@/lib/ai/scoring";
 import { syncIdentityScores } from "@/lib/services/score-identity";
 import { pctChange, determineStage } from "@/lib/ai/lifecycle";
-import { updateBatchProgress } from "@/lib/import/update-batch-progress";
+import { updateBatchProgress, incrementBatchProgress } from "@/lib/import/update-batch-progress";
 import { fireRelay } from "@/lib/import/fire-relay";
 
 const SCORE_CHUNK = 150;
@@ -46,6 +46,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const productIds = unscored.map((p) => p.id);
     await scoreProducts({ productIds });
+
+    // Increment scoring progress counter
+    await incrementBatchProgress(batchId, { scoredCount: productIds.length });
 
     // Sync identity scores for scored products
     const linked = await prisma.product.findMany({

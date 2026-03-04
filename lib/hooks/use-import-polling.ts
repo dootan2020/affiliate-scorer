@@ -13,6 +13,7 @@ export interface ImportStatus {
   rowsUpdated: number;
   rowsError: number;
   scoringStatus: string;
+  scoredCount: number;
   errorLog: unknown;
   completedAt: string | null;
   isTerminal: boolean;

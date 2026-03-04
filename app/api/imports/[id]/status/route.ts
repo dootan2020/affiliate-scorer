@@ -1,6 +1,7 @@
 // GET /api/imports/[id]/status — Poll import batch progress
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { calcUnifiedProgress } from "@/lib/import/calc-unified-progress";
 
 export async function GET(
   _request: NextRequest,
@@ -22,6 +23,7 @@ export async function GET(
         rowsUpdated: true,
         rowsError: true,
         scoringStatus: true,
+        scoredCount: true,
         errorLog: true,
         completedAt: true,
         importDate: true,
@@ -68,9 +70,7 @@ export async function GET(
       data: {
         ...batch,
         isTerminal,
-        progress: batch.recordCount > 0
-          ? Math.round((batch.rowsProcessed / batch.recordCount) * 100)
-          : 0,
+        progress: calcUnifiedProgress(batch),
       },
     });
   } catch (error) {

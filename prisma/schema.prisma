@@ -208,6 +208,7 @@ model ImportBatch {
   rowsUpdated     Int    @default(0)
   rowsError       Int    @default(0)
   scoringStatus   String @default("pending") // "pending" | "processing" | "completed" | "failed"
+  scoredCount     Int    @default(0)         // Scoring progress: products scored so far
   errorLog        Json?
   completedAt     DateTime?
 

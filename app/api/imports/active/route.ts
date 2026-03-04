@@ -2,6 +2,7 @@
 // Used by the global ImportProgressWidget on every page.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { calcUnifiedProgress } from "@/lib/import/calc-unified-progress";
 
 export async function GET(): Promise<NextResponse> {
   try {
@@ -35,11 +36,16 @@ export async function GET(): Promise<NextResponse> {
         rowsUpdated: true,
         rowsError: true,
         scoringStatus: true,
+        scoredCount: true,
         completedAt: true,
       },
     });
 
-    return NextResponse.json({ data: batch });
+    return NextResponse.json({
+      data: batch
+        ? { ...batch, progress: calcUnifiedProgress(batch) }
+        : null,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown";
     return NextResponse.json({ error: message }, { status: 500 });

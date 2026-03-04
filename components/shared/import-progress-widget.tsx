@@ -111,20 +111,22 @@ function getDisplay(
     };
   }
   if (state.isScoring) {
+    const scored = batch.scoredCount ?? 0;
+    const scoredText = scored > 0 ? ` ${scored}/${batch.recordCount}` : "";
     return {
       icon: <Sparkles className="w-5 h-5 text-purple-500 animate-pulse" />,
-      label: `Đang chấm điểm...`,
+      label: `Đang chấm điểm${scoredText}...`,
       color: "",
     };
   }
   // Importing
-  const progress =
+  const importText =
     batch.rowsProcessed > 0 && batch.recordCount > 0
       ? `${batch.rowsProcessed}/${batch.recordCount}`
       : "";
   return {
     icon: <Loader2 className="w-5 h-5 text-orange-500 animate-spin" />,
-    label: progress ? `Đang import ${progress}...` : "Đang import...",
+    label: importText ? `Đang import ${importText}...` : "Đang import...",
     color: "",
   };
 }
@@ -141,10 +143,7 @@ function MiniProgress({
 }): React.ReactElement | null {
   if (batch.recordCount === 0) return null;
 
-  const ratio = Math.min(batch.rowsProcessed / batch.recordCount, 1);
-  const pct = isScoring
-    ? 50 + Math.round(ratio * 50)
-    : Math.round(ratio * 50);
+  const pct = Math.min(batch.progress ?? 0, 100);
   const dashLen = (pct / 100) * CIRCUMFERENCE;
 
   return (

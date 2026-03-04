@@ -13,7 +13,9 @@ export interface ActiveBatch {
   rowsUpdated: number;
   rowsError: number;
   scoringStatus: string;
+  scoredCount: number;
   completedAt: string | null;
+  progress: number;
 }
 
 const POLL_INTERVAL = 5000; // 5s — lighter than /sync page's 3s

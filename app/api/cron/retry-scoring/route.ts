@@ -77,10 +77,21 @@ export async function GET(): Promise<NextResponse> {
       retried++;
     }
 
+    // Cleanup zombie BackgroundTasks stuck in processing > 3 min
+    const taskStuckCutoff = new Date(now.getTime() - 3 * 60_000);
+    const zombieTasks = await prisma.backgroundTask.updateMany({
+      where: {
+        status: "processing",
+        updatedAt: { lt: taskStuckCutoff },
+      },
+      data: { status: "failed", error: "Timeout — vui lòng thử lại" },
+    });
+
     return NextResponse.json({
       checked: candidates.length,
       retried,
       skipped,
+      zombieTasksCleaned: zombieTasks.count,
     });
   } catch (error) {
     console.error("Cron retry-scoring error:", error);

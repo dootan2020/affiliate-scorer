@@ -25,7 +25,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Không tạo được brief" }, { status: 500 });
     }
 
-    return NextResponse.json({ data: brief });
+    // Check if data changed after brief was generated (for freshness badge)
+    const latestProduct = await prisma.productIdentity.findFirst({
+      select: { updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+    });
+    const latestDataChange = latestProduct?.updatedAt ?? null;
+
+    return NextResponse.json({ data: brief, latestDataChange });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Lỗi không xác định";
     return NextResponse.json({ error: message }, { status: 500 });

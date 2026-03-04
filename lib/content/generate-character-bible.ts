@@ -71,7 +71,7 @@ Trả về JSON với cấu trúc:
 }
 
 QUY TẮC:
-- Tiếng Việt tự nhiên, phù hợp TikTok VN
+- Tiếng Việt tự nhiên CÓ DẤU đầy đủ, phù hợp TikTok VN. KHÔNG viết không dấu (VD: sai "Skincare la khoa hoc" → đúng "Skincare là khoa học")
 - Catchphrases phải ngắn, dễ nhớ, dùng được trong video
 - Inside jokes tạo cộng đồng, không offensive
 - Relationships tạo chemistry cho content (đối thoại, react, drama nhẹ)

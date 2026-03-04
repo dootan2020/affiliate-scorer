@@ -36,6 +36,7 @@ export function MorningBriefWidget(): React.ReactElement {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
+  const [isStale, setIsStale] = useState(false);
 
   async function fetchBrief(refresh = false): Promise<void> {
     try {
@@ -47,8 +48,14 @@ export function MorningBriefWidget(): React.ReactElement {
         const json = await res.json().catch(() => null);
         throw new Error(json?.error || "Không tạo được brief");
       }
-      const json = (await res.json()) as { data: DailyBriefRecord };
+      const json = (await res.json()) as { data: DailyBriefRecord; latestDataChange?: string | null };
       setBrief(json.data);
+      // Check freshness: if data changed after brief was generated
+      if (json.latestDataChange && json.data?.generatedAt) {
+        setIsStale(new Date(json.latestDataChange) > new Date(json.data.generatedAt));
+      } else {
+        setIsStale(false);
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi không xác định");
@@ -81,6 +88,14 @@ export function MorningBriefWidget(): React.ReactElement {
             <span className="text-[10px] text-gray-400 dark:text-gray-500 hidden sm:inline">
               Tạo lúc {formatTime(brief.generatedAt)}
             </span>
+          )}
+          {isStale && (
+            <button
+              onClick={(e) => { e.stopPropagation(); fetchBrief(true); }}
+              className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-full font-medium hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+            >
+              Data mới — Tạo lại?
+            </button>
           )}
           <Button
             variant="ghost" size="icon-sm"

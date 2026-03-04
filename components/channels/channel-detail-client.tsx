@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock, BookOpen, Layers, Lightbulb, Video, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChannelForm } from "./channel-form";
 import { TacticalRefreshDialog } from "./tactical-refresh-dialog";
 import { CharacterBibleEditor } from "./character-bible-editor";
@@ -83,10 +83,12 @@ const PRODUCTION_LABELS: Record<string, string> = {
 };
 
 const MIX_LABELS: Record<string, string> = {
-  entertainment: "Giải trí",
-  education: "Giáo dục",
   review: "Review",
+  lifestyle: "Lifestyle",
+  tutorial: "Tutorial",
   selling: "Bán hàng",
+  entertainment: "Giải trí",
+  education: "Giáo dục", // backward compat for old data
 };
 
 interface Props {
@@ -95,9 +97,10 @@ interface Props {
 
 export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [channel, setChannel] = useState<ChannelData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(searchParams.get("edit") === "true");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshOpen, setRefreshOpen] = useState(false);

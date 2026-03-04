@@ -222,47 +222,48 @@ export interface PromptData {
 }
 
 export function buildPrompt(d: PromptData): string {
-  return `
-Tạo Morning Brief cho ngày ${d.todayStr}.
+  const sections: string[] = [
+    `Tạo Morning Brief cho ngày ${d.todayStr}.`,
+  ];
 
-KÊNH HOẠT ĐỘNG:
-${d.channelLines.length > 0 ? d.channelLines.join("\n") : "CHƯA CÓ KÊNH"}
+  // Channels — always include
+  sections.push(`KÊNH HOẠT ĐỘNG:\n${d.channelLines.length > 0 ? d.channelLines.join("\n") : "CHƯA CÓ KÊNH"}`);
 
-${d.channelProductSections}
+  if (d.channelProductSections) sections.push(d.channelProductSections);
 
-SP CHƯA PHÂN KÊNH:
-${d.unmatchedLines.length > 0 ? d.unmatchedLines.join("\n") : "Không có"}
+  if (d.unmatchedLines.length > 0) {
+    sections.push(`SP CHƯA PHÂN KÊNH:\n${d.unmatchedLines.join("\n")}`);
+  }
 
-SẢN PHẨM ĐÃ CÓ BRIEF (KHÔNG đề xuất lại):
-${d.briefedLines.length > 0 ? d.briefedLines.join("\n") : "Không có"}
+  if (d.briefedLines.length > 0) {
+    sections.push(`SẢN PHẨM ĐÃ CÓ BRIEF (KHÔNG đề xuất lại):\n${d.briefedLines.join("\n")}`);
+  }
 
-SỰ KIỆN SẮP TỚI (7 ngày):
-${d.eventLines.length > 0 ? d.eventLines.join("\n") : "Không có sự kiện"}
+  if (d.eventLines.length > 0) {
+    sections.push(`SỰ KIỆN SẮP TỚI (7 ngày):\n${d.eventLines.join("\n")}`);
+  }
 
-KẾT QUẢ HÔM QUA:
-- Videos đăng: ${d.yesterdayMetrics.published}
-- Tổng views: ${d.yesterdayMetrics.totalViews}
-- Reward trung bình: ${d.yesterdayMetrics.avgReward.toFixed(1)}
+  // Yesterday — skip if no activity
+  const ym = d.yesterdayMetrics;
+  if (ym.published > 0 || ym.totalViews > 0) {
+    sections.push(`KẾT QUẢ HÔM QUA:\n- Videos đăng: ${ym.published}\n- Tổng views: ${ym.totalViews}\n- Reward trung bình: ${ym.avgReward.toFixed(1)}`);
+  }
 
-LEARNING INSIGHTS:
-- Hook tốt nhất: ${d.topHook}
-- Format tốt nhất: ${d.topFormat}
-- Category mạnh: ${d.topCategories.length > 0 ? d.topCategories.join(", ") : "chưa có"}
+  // Learning — skip if no data
+  const hasLearning = d.topHook !== "chưa có" || d.topFormat !== "chưa có" || d.topCategories.length > 0;
+  if (hasLearning) {
+    sections.push(`LEARNING INSIGHTS:\n- Hook tốt nhất: ${d.topHook}\n- Format tốt nhất: ${d.topFormat}\n- Category mạnh: ${d.topCategories.length > 0 ? d.topCategories.join(", ") : "chưa có"}`);
+  }
 
-WINNING PATTERNS:
-${d.winLines.length > 0 ? d.winLines.join("\n") : "Chưa phát hiện pattern"}
+  if (d.winLines.length > 0) sections.push(`WINNING PATTERNS:\n${d.winLines.join("\n")}`);
+  if (d.loseLines.length > 0) sections.push(`PATTERNS NÊN TRÁNH:\n${d.loseLines.join("\n")}`);
+  if (d.bibleLines.length > 0) sections.push(d.bibleLines.join("\n\n"));
 
-PATTERNS NÊN TRÁNH:
-${d.loseLines.length > 0 ? d.loseLines.join("\n") : "Chưa có"}
+  if (d.currentGoal) {
+    sections.push(`MỤC TIÊU TUẦN:\n- Target: ${d.currentGoal.targetVideos || "?"} videos\n- Đã làm: ${d.currentGoal.actualVideos} videos`);
+  }
 
-${d.bibleLines.length > 0 ? d.bibleLines.join("\n\n") : ""}
-
-MỤC TIÊU TUẦN:
-${d.currentGoal
-    ? `- Target: ${d.currentGoal.targetVideos || "?"} videos\n- Đã làm: ${d.currentGoal.actualVideos} videos`
-    : "Chưa đặt mục tiêu"}
-
-Output JSON:
+  sections.push(`Output JSON:
 {
   "greeting": "Chào buổi sáng ngắn gọn",
   "channel_tasks": [{"channel": "Tên", "channelId": "id", "action": "Việc", "priority": 1}],
@@ -277,5 +278,7 @@ Output JSON:
   "pattern_highlight": "Combo hook+format win rate XX% — hoặc null nếu chưa có"
 }
 
-Chỉ output JSON, không text khác.`.trim();
+Chỉ output JSON, không text khác.`);
+
+  return sections.join("\n\n");
 }

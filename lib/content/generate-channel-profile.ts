@@ -62,8 +62,8 @@ Hãy tạo profile kênh TikTok hoàn chỉnh, trả về JSON:
     "Hook 2",
     "... 15-20 hooks"
   ],
-  "contentMix": { "entertainment": 20, "education": 30, "review": 30, "selling": 20 },
-  "contentMixReason": "Giải thích tỷ lệ — cân nhắc: entertainment khó làm bằng AI (cần diễn xuất), education/review dễ sản xuất bằng slideshow+voiceover và product showcase",
+  "contentMix": { "review": 30, "lifestyle": 20, "tutorial": 20, "selling": 20, "entertainment": 10 },
+  "contentMixReason": "Giải thích tỷ lệ — cân nhắc: review/tutorial dễ scale bằng AI, entertainment khó (cần diễn xuất), lifestyle phù hợp niche",
   "videoFormats": [
     {
       "contentType": "entertainment | education | review | selling",
@@ -108,7 +108,7 @@ Hãy tạo profile kênh TikTok hoàn chỉnh, trả về JSON:
 }
 
 Yêu cầu:
-- Tất cả bằng tiếng Việt (trừ handle, format names, tool names)
+- Tất cả bằng tiếng Việt CÓ DẤU đầy đủ (trừ handle, format names, tool names). KHÔNG được viết không dấu như "Co nang" mà phải viết "Cô nàng"
 - Hook bank: mỗi hook phải hoạt động khi đọc thành text overlay VÀ khi nghe voiceover. Tránh hook chỉ có nghĩa khi thấy mặt người nói.
 - Content mix: cân nhắc khả năng sản xuất bằng AI. Entertainment (skits, comedy) khó làm AI → giữ ≤25%. Education + review dễ scale bằng AI → ưu tiên.
 - Posting schedule: giờ cao điểm TikTok VN là 7:00-8:00, 11:30-13:00, 19:00-21:00. Ngày thường 2 slot (trưa + tối). Cuối tuần 3 slot (sáng + trưa + tối).

@@ -82,7 +82,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[11px] mb-2">
           <Settings className="w-3 h-3 shrink-0" />
           <span>Kênh chưa cấu hình content mix —</span>
-          <Link href={`/channels/${activeChannel.channelId}`} className="underline font-medium">Cài đặt</Link>
+          <Link href={`/channels/${activeChannel.channelId}?edit=true`} className="underline font-medium">Cài đặt</Link>
         </div>
       )}
       {activeChannel?.nicheMismatch && (

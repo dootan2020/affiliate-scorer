@@ -102,34 +102,14 @@ function LiveProgress({
   onRetryScoring?: (batchId: string) => void;
   onReset?: () => void;
 }): React.ReactElement {
-  const isImporting = status.status === "processing" || status.status === "pending";
-  const isScoring = status.scoringStatus === "processing";
   const isDone = status.isTerminal;
   const hasFailed = status.status === "failed";
   const scoringFailed = status.scoringStatus === "failed";
   const timedOut = status.timedOut === true;
 
-  // Show chunk progress during import (e.g., "Đang import 600/3000...")
-  const importLabel = isImporting && status.rowsProcessed > 0 && status.recordCount > 0
-    ? `Đang import ${status.rowsProcessed}/${status.recordCount}...`
-    : "Đang import...";
-
-  const label = timedOut
-    ? "Mất kết nối theo dõi — kiểm tra lại sau"
-    : hasFailed
-      ? "Import thất bại"
-      : isImporting
-        ? importLabel
-        : isScoring
-          ? "Đang chấm điểm AI..."
-          : isDone && !scoringFailed
-            ? "Hoàn thành!"
-            : isDone && scoringFailed
-              ? "Import hoàn tất"
-              : "Đang xử lý...";
-
   return (
     <div className="space-y-3 rounded-2xl bg-gray-50 dark:bg-slate-800 p-4">
+      {/* File name + status dot */}
       <div className="flex items-center gap-2">
         {isPolling && !isDone && !timedOut && (
           <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shrink-0" />
@@ -147,19 +127,6 @@ function LiveProgress({
           {status.fileName}
         </span>
       </div>
-
-      <p className={`text-sm ${timedOut ? "text-rose-600 dark:text-rose-400" : hasFailed ? "text-rose-600 dark:text-rose-400" : isDone && !scoringFailed ? "text-emerald-600 dark:text-emerald-400" : isDone && scoringFailed ? "text-amber-600 dark:text-amber-400" : "text-gray-500 dark:text-gray-400"}`}>
-        {label}
-      </p>
-
-      {/* Stats when import phase is done */}
-      {!isImporting && status.rowsProcessed > 0 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          {status.rowsCreated > 0 && <span>{status.rowsCreated} mới</span>}
-          {status.rowsUpdated > 0 && <span>{status.rowsCreated > 0 ? " · " : ""}{status.rowsUpdated} cập nhật</span>}
-          {status.rowsError > 0 && <span className="text-rose-500"> · {status.rowsError} lỗi</span>}
-        </div>
-      )}
 
       {/* Retry scoring button when scoring failed */}
       {isDone && scoringFailed && !hasFailed && onRetryScoring && (
@@ -195,6 +162,7 @@ function LiveProgress({
         </div>
       )}
 
+      {/* Process log — the main content */}
       <ProcessLog result={result} status={status} isPolling={isPolling} />
     </div>
   );

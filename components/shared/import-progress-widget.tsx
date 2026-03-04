@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Loader2, Sparkles, CheckCircle, AlertTriangle } from "lucide-react";
 import { useActiveImportBatch, type ActiveBatch } from "@/lib/hooks/use-active-import-batch";
 
-/** Global floating widget showing import/scoring progress on all pages except /sync. */
+/** Global floating widget showing import/scoring status on ALL pages. */
 export function ImportProgressWidget(): React.ReactElement | null {
-  const pathname = usePathname();
   const router = useRouter();
   const { batch } = useActiveImportBatch();
   const [dismissed, setDismissed] = useState<string | null>(null);
@@ -22,33 +21,27 @@ export function ImportProgressWidget(): React.ReactElement | null {
   const hasFailed = batch?.status === "failed";
   const scoringFailed = !hasFailed && isCompleted && batch?.scoringStatus === "failed";
 
-  // Auto-hide completed state after 10s
+  // Auto-hide completed/failed state after 10s
   useEffect(() => {
-    if (isDone && batch) {
+    if ((isDone || hasFailed || scoringFailed) && batch) {
       autoHideRef.current = setTimeout(() => setDismissed(batch.id), 10_000);
     }
     return () => {
       if (autoHideRef.current) clearTimeout(autoHideRef.current);
     };
-  }, [isDone, batch?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isDone, hasFailed, scoringFailed, batch?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // R3: Hide on /sync page
-  if (pathname === "/sync") return null;
   if (!isActive) return null;
 
-  const { icon, label, color } = getDisplay(batch!, {
-    isImporting,
-    isScoring,
-    isDone,
-    hasFailed,
-    scoringFailed,
+  const { icon, label } = getDisplay(batch!, {
+    isImporting, isScoring, isDone, hasFailed, scoringFailed,
   });
 
   return (
     <button
       type="button"
       onClick={() => router.push("/sync")}
-      className={`
+      className="
         fixed z-50 cursor-pointer
         bottom-4 right-4 sm:bottom-6 sm:right-6
         max-sm:left-4 max-sm:right-4
@@ -57,8 +50,7 @@ export function ImportProgressWidget(): React.ReactElement | null {
         border border-gray-200/60 dark:border-slate-700/60
         rounded-xl shadow-lg hover:shadow-xl
         transition-all duration-200 hover:-translate-y-0.5
-        ${color}
-      `}
+      "
     >
       <div className="shrink-0">{icon}</div>
       <div className="flex-1 min-w-0 text-left">
@@ -69,9 +61,6 @@ export function ImportProgressWidget(): React.ReactElement | null {
           </p>
         )}
       </div>
-      {(isImporting || isScoring) && (
-        <MiniProgress batch={batch!} isScoring={isScoring} />
-      )}
     </button>
   );
 }
@@ -87,19 +76,17 @@ interface DisplayState {
 function getDisplay(
   batch: ActiveBatch,
   state: DisplayState,
-): { icon: React.ReactElement; label: string; color: string } {
+): { icon: React.ReactElement; label: string } {
   if (state.hasFailed) {
     return {
       icon: <AlertTriangle className="w-5 h-5 text-rose-500" />,
       label: "Import thất bại",
-      color: "",
     };
   }
   if (state.scoringFailed) {
     return {
       icon: <AlertTriangle className="w-5 h-5 text-amber-500" />,
       label: "Chấm điểm lỗi",
-      color: "",
     };
   }
   if (state.isDone) {
@@ -107,69 +94,16 @@ function getDisplay(
     return {
       icon: <CheckCircle className="w-5 h-5 text-emerald-500" />,
       label: `Hoàn thành ${total} SP`,
-      color: "",
     };
   }
   if (state.isScoring) {
-    const scored = batch.scoredCount ?? 0;
-    const scoredText = scored > 0 ? ` ${scored}/${batch.recordCount}` : "";
     return {
       icon: <Sparkles className="w-5 h-5 text-purple-500 animate-pulse" />,
-      label: `Đang chấm điểm${scoredText}...`,
-      color: "",
+      label: "Đang chấm điểm...",
     };
   }
-  // Importing
-  const importText =
-    batch.rowsProcessed > 0 && batch.recordCount > 0
-      ? `${batch.rowsProcessed}/${batch.recordCount}`
-      : "";
   return {
     icon: <Loader2 className="w-5 h-5 text-orange-500 animate-spin" />,
-    label: importText ? `Đang import ${importText}...` : "Đang import...",
-    color: "",
+    label: "Đang import...",
   };
-}
-
-const RADIUS = 15;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // ~94.25
-
-function MiniProgress({
-  batch,
-  isScoring,
-}: {
-  batch: ActiveBatch;
-  isScoring: boolean;
-}): React.ReactElement | null {
-  if (batch.recordCount === 0) return null;
-
-  const pct = Math.min(batch.progress ?? 0, 100);
-  const dashLen = (pct / 100) * CIRCUMFERENCE;
-
-  return (
-    <div className="w-10 h-10 shrink-0 relative">
-      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-        <circle
-          cx="18" cy="18" r={RADIUS}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          className="text-gray-100 dark:text-slate-800"
-        />
-        <circle
-          cx="18" cy="18" r={RADIUS}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeDasharray={`${dashLen} ${CIRCUMFERENCE - dashLen}`}
-          strokeLinecap="round"
-          className={isScoring ? "text-purple-500" : "text-orange-500"}
-          style={{ transition: "stroke-dasharray 1s ease-out" }}
-        />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-gray-300">
-        {pct}%
-      </span>
-    </div>
-  );
 }

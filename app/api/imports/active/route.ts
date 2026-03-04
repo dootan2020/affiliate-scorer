@@ -6,16 +6,21 @@ import { calcUnifiedProgress } from "@/lib/import/calc-unified-progress";
 
 export async function GET(): Promise<NextResponse> {
   try {
+    const staleCutoff = new Date(Date.now() - 30 * 60_000); // 30 min — ignore stuck batches
     const recentCutoff = new Date(Date.now() - 2 * 60_000); // 2 min
 
     const batch = await prisma.importBatch.findFirst({
       where: {
         OR: [
-          // Still in progress (import or scoring)
-          { status: { in: ["pending", "processing"] } },
+          // Still in progress (import or scoring) — but only if started within 30 min
+          {
+            status: { in: ["pending", "processing"] },
+            importDate: { gte: staleCutoff },
+          },
           {
             status: { in: ["completed", "partial"] },
             scoringStatus: { in: ["pending", "processing"] },
+            importDate: { gte: staleCutoff },
           },
           // Recently completed/failed (within 2 min) — so widget can show result
           {

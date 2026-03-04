@@ -930,7 +930,7 @@ model TikTokChannel {
   // Content Strategy
   contentPillars     Json?   // string[]
   hookBank           Json?   // string[]
-  contentMix         Json?   // { entertainment: 40, education: 25, review: 20, selling: 15 }
+  contentMix         Json?   // { review: 30, lifestyle: 20, tutorial: 20, selling: 20, entertainment: 10 }
   postsPerDay        Int?
   postingSchedule    Json?   // { mon: { times: ["10:00","19:00"], focus: "review" }, ... }
   seriesSchedule     Json?   // [{ name, dayOfWeek, contentPillar }]

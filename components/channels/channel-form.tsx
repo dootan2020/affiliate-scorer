@@ -72,10 +72,11 @@ function initialToProfile(initial: Partial<ChannelInitial>): ChannelProfileResul
     hookBank: (initial.hookBank as string[]) ?? base.hookBank,
     contentMix: initial.contentMix
       ? {
-          entertainment: initial.contentMix.entertainment ?? 20,
-          education: initial.contentMix.education ?? 30,
-          review: initial.contentMix.review ?? 30,
-          selling: initial.contentMix.selling ?? 20,
+          review: initial.contentMix.review ?? 0,
+          lifestyle: initial.contentMix.lifestyle ?? 0,
+          tutorial: initial.contentMix.tutorial ?? 0,
+          selling: initial.contentMix.selling ?? 0,
+          entertainment: initial.contentMix.entertainment ?? 0,
         }
       : base.contentMix,
     contentMixReason: "",
@@ -167,8 +168,8 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
     }
 
     // Validate content mix = 100%
-    const mixTotal = profile.contentMix.entertainment + profile.contentMix.education
-      + profile.contentMix.review + profile.contentMix.selling;
+    const mixTotal = profile.contentMix.review + profile.contentMix.lifestyle
+      + profile.contentMix.tutorial + profile.contentMix.selling + profile.contentMix.entertainment;
     if (mixTotal !== 100) {
       toast.error(`Content Mix phải tổng = 100% (hiện tại: ${mixTotal}%)`);
       return;

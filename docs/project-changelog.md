@@ -320,6 +320,24 @@ Tất cả thay đổi quan trọng của AffiliateScorer được ghi nhận t�
 
 ---
 
+## [1.8.2] — 2026-03-05 — ContentMix Categories Update
+
+### Changed
+
+- **ContentMix field on TikTokChannel** — Updated from 4 categories (entertainment, education, review, selling) to 5 categories (review, lifestyle, tutorial, selling, entertainment)
+  - Form UI updated: sliders with range+number input, 5 rows vertical stack
+  - Default values for manual form: all 0% initially
+  - Type definition in `lib/content/channel-profile-types.ts`
+  - Validation ensures total = 100%
+- **AI prompt template** — Template updated in `lib/content/generate-channel-profile.ts` for new category structure
+- **Database schema comment** — Updated in `prisma/schema.prisma` to reflect new categories
+
+### Fixed
+
+- DB migration: existing data migrated (education → tutorial for backward compatibility)
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned

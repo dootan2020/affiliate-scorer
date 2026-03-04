@@ -134,7 +134,7 @@
 
 | # | Proposal | Effort | Impact |
 |---|----------|--------|--------|
-| CU4 | **Content Mix editor** — Visual pie chart / slider UI for setting % breakdown (entertainment/education/review/selling) | 3h | High — content strategy |
+| CU4 | **Content Mix editor** — Visual pie chart / slider UI for setting % breakdown (review/lifestyle/tutorial/selling/entertainment) — ✅ DONE | 3h | High — content strategy |
 | CU5 | **Posting Schedule editor** — Weekly grid showing time slots per day (Mon-Sun), add/remove times | 3h | High — scheduling strategy |
 | CU6 | **Channel analytics preview** — Show recent asset performance metrics grouped by channel | 4h | Medium — insights |
 

@@ -69,9 +69,10 @@ Channels ───────────────────────�
 | isActive toggle on detail page | ✅ | Added in latest commit |
 
 **Gaps:**
-- `contentMix` (% breakdown entertainment/education/review/selling) — **no UI to set it**
 - `postingSchedule` (daily posting times) — **no UI to set it**
-- Both are JSON fields in DB, stored as `null` forever
+- JSON field in DB, stored as `null` forever
+
+**Note:** `contentMix` field now has UI support (form sliders with 5 categories: review, lifestyle, tutorial, selling, entertainment)
 
 ---
 
@@ -110,7 +111,7 @@ Channels ───────────────────────�
 |-------|----------|--------|
 | **Inactive channels shown in dropdown** | High | No `isActive` filter in channel fetch or batch API |
 | **Channel `niche` not in AI prompt** | Medium | Stored but never sent to `generateBrief()` |
-| **Channel `contentMix` ignored** | Medium | If user set 80% entertainment, briefs still generate any type |
+| **Channel `contentMix` not injected into AI prompt** | Medium | UI supports 5 categories (review, lifestyle, tutorial, selling, entertainment) but not used in brief generation yet |
 | **`productId` query param not handled** | High | User clicks "Tạo Brief AI" from inbox, arrives at production with no pre-selection |
 | **ProductSelector empty state has no link** | Medium | Says "Vào Inbox" but no clickable link |
 

@@ -11,6 +11,15 @@ const labelCls = "block text-xs font-medium text-gray-600 dark:text-gray-400 mb-
 const sectionCls = "space-y-3";
 const sectionTitle = "text-sm font-semibold text-gray-900 dark:text-gray-50 flex items-center gap-2";
 
+const MIX_KEYS = ["review", "lifestyle", "tutorial", "selling", "entertainment"] as const;
+const MIX_KEY_LABELS: Record<string, string> = {
+  review: "Review",
+  lifestyle: "Lifestyle",
+  tutorial: "Tutorial",
+  selling: "Bán hàng",
+  entertainment: "Giải trí",
+};
+
 const VOICE_OPTIONS = [
   { value: "casual", label: "Tự nhiên" },
   { value: "professional", label: "Chuyên nghiệp" },
@@ -60,7 +69,7 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
 
   function updateContentMix(field: keyof ChannelProfileResult["contentMix"], value: number): void {
     const newMix = { ...profile.contentMix, [field]: value };
-    const total = newMix.entertainment + newMix.education + newMix.review + newMix.selling;
+    const total = newMix.review + newMix.lifestyle + newMix.tutorial + newMix.selling + newMix.entertainment;
     setMixError(total !== 100 ? `Tổng hiện tại: ${total}% (cần = 100%)` : null);
     update("contentMix", newMix);
   }
@@ -241,22 +250,28 @@ export function ChannelProfilePreview({ profile, onChange }: Props): React.React
 
       {/* Content Mix */}
       <section className={sectionCls}>
-        <h4 className={sectionTitle}>📊 Content Mix</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {(["entertainment", "education", "review", "selling"] as const).map((key) => (
-            <div key={key}>
-              <label className={labelCls}>{key === "entertainment" ? "Giải trí" : key === "education" ? "Giáo dục" : key === "review" ? "Review" : "Bán hàng"}</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  className={inputCls + " w-20"}
-                  value={profile.contentMix[key]}
-                  onChange={(e) => updateContentMix(key, Number(e.target.value))}
-                />
-                <span className="text-xs text-gray-400">%</span>
-              </div>
+        <h4 className={sectionTitle}>📊 Tỷ lệ nội dung</h4>
+        <div className="space-y-3">
+          {(MIX_KEYS).map((key) => (
+            <div key={key} className="flex items-center gap-3">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 w-20 shrink-0">{MIX_KEY_LABELS[key]}</label>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                className="flex-1 h-2 accent-orange-500"
+                value={profile.contentMix[key]}
+                onChange={(e) => updateContentMix(key, Number(e.target.value))}
+              />
+              <input
+                type="number"
+                min={0}
+                max={100}
+                className={inputCls + " w-16 text-center"}
+                value={profile.contentMix[key]}
+                onChange={(e) => updateContentMix(key, Number(e.target.value))}
+              />
+              <span className="text-xs text-gray-400 w-4">%</span>
             </div>
           ))}
         </div>

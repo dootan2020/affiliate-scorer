@@ -28,10 +28,11 @@ export interface ChannelProfileResult {
   }>;
   hookBank: string[];
   contentMix: {
-    entertainment: number;
-    education: number;
     review: number;
+    lifestyle: number;
+    tutorial: number;
     selling: number;
+    entertainment: number;
   };
   contentMixReason: string;
   videoFormats: VideoFormatRecommendation[];

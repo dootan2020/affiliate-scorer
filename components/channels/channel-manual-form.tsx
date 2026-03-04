@@ -25,7 +25,7 @@ function emptyProfile(): ChannelProfileResult {
     contentPillars: [""],
     contentPillarDetails: [],
     hookBank: [""],
-    contentMix: { entertainment: 20, education: 30, review: 30, selling: 20 },
+    contentMix: { review: 0, lifestyle: 0, tutorial: 0, selling: 0, entertainment: 0 },
     contentMixReason: "",
     videoFormats: [],
     productionStyle: "hybrid",

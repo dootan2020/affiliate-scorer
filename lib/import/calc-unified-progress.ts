@@ -18,15 +18,22 @@ export function calcUnifiedProgress(batch: BatchProgress): number {
   const importRatio = Math.min(rowsProcessed / recordCount, 1);
   const importPct = importRatio * 25;
 
-  // Scoring completed → 100%
-  if (scoringStatus === "completed") return 100;
-
   // Import failed → stuck at import %
   if (status === "failed") return Math.round(importPct);
 
   // Scoring phase: 25% → 100%
-  const scoredRatio = Math.min((scoredCount ?? 0) / recordCount, 1);
+  // When scoring is "completed", scoredCount should already == recordCount
+  // (set by score-batch on completion), so the math naturally gives 100%.
+  const effectiveScored = Math.min(scoredCount ?? 0, recordCount);
+  const scoredRatio = effectiveScored / recordCount;
   const scoringPct = scoredRatio * 75;
 
-  return Math.round(importPct + scoringPct);
+  const progress = Math.round(importPct + scoringPct);
+
+  console.log("[progress]", {
+    recordCount, rowsProcessed, scoredCount, status, scoringStatus,
+    importPct: Math.round(importPct), scoringPct: Math.round(scoringPct), progress,
+  });
+
+  return progress;
 }

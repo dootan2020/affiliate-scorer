@@ -18,7 +18,7 @@ export interface ActiveBatch {
   progress: number;
 }
 
-const POLL_INTERVAL = 5000; // 5s — lighter than /sync page's 3s
+const POLL_INTERVAL = 2000; // 2s — fast enough to catch intermediate progress
 
 /** Poll /api/imports/active for the global widget. */
 export function useActiveImportBatch(): {

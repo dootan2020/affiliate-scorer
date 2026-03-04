@@ -164,6 +164,7 @@ function MiniProgress({
           strokeDasharray={`${dashLen} ${CIRCUMFERENCE - dashLen}`}
           strokeLinecap="round"
           className={isScoring ? "text-purple-500" : "text-orange-500"}
+          style={{ transition: "stroke-dasharray 1s ease-out" }}
         />
       </svg>
       <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-gray-300">

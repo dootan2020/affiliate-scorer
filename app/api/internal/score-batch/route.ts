@@ -35,11 +35,21 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     if (unscored.length === 0) {
-      // Mark completed FIRST — lifecycle is non-critical and may timeout
+      // Set scoredCount = recordCount so progress naturally reaches 100%
+      const batch = await prisma.importBatch.findUnique({
+        where: { id: batchId },
+        select: { recordCount: true },
+      });
       await updateBatchProgress(batchId, {
         scoringStatus: "completed",
         completedAt: new Date(),
       });
+      if (batch) {
+        await prisma.importBatch.update({
+          where: { id: batchId },
+          data: { scoredCount: batch.recordCount },
+        });
+      }
       await runLifecycle(batchId);
       return NextResponse.json({ done: true, scored: 0 });
     }
@@ -48,6 +58,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await scoreProducts({ productIds });
 
     // Increment scoring progress counter
+    console.log(`[score-batch] scored ${productIds.length}, incrementing scoredCount`);
     await incrementBatchProgress(batchId, { scoredCount: productIds.length });
 
     // Sync identity scores for scored products
@@ -81,11 +92,22 @@ export async function POST(request: Request): Promise<NextResponse> {
       });
     }
 
+    // Set scoredCount = recordCount so progress naturally reaches 100%
+    const batchFinal = await prisma.importBatch.findUnique({
+      where: { id: batchId },
+      select: { recordCount: true },
+    });
     // Mark completed FIRST — lifecycle is non-critical and may timeout
     await updateBatchProgress(batchId, {
       scoringStatus: "completed",
       completedAt: new Date(),
     });
+    if (batchFinal) {
+      await prisma.importBatch.update({
+        where: { id: batchId },
+        data: { scoredCount: batchFinal.recordCount },
+      });
+    }
     await runLifecycle(batchId);
 
     return NextResponse.json({ done: true, scored: productIds.length });

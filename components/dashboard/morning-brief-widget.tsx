@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Sun,
@@ -82,7 +82,6 @@ export function MorningBriefWidget(): React.ReactElement {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   async function fetchBrief(refresh = false): Promise<void> {
     try {
@@ -206,15 +205,15 @@ export function MorningBriefWidget(): React.ReactElement {
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4">
       {renderHeader()}
 
-      {/* Collapsible content */}
+      {/* Collapsible content — CSS grid-rows trick for smooth animation */}
       <div
-        ref={contentRef}
-        className="overflow-hidden transition-all duration-300 ease-in-out"
+        className="grid transition-[grid-template-rows,opacity] duration-300 ease-in-out"
         style={{
-          maxHeight: expanded ? `${contentRef.current?.scrollHeight ?? 2000}px` : "0px",
+          gridTemplateRows: expanded ? "1fr" : "0fr",
           opacity: expanded ? 1 : 0,
         }}
       >
+        <div className="overflow-hidden">
         {content && (
           <div className="pt-4 space-y-4 border-t border-gray-100 dark:border-slate-800 mt-3">
             {/* Greeting */}
@@ -369,6 +368,7 @@ export function MorningBriefWidget(): React.ReactElement {
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 // Server-side smart content suggestions — no LLM, pure formula
 import { prisma } from "@/lib/db";
 import { buildSuggestionReason } from "./build-suggestion-reason";
+import { matchesNiche } from "./niche-category-map";
 
 export interface SuggestedProduct {
   id: string;
@@ -70,7 +71,7 @@ export async function computeSmartSuggestions(
     prisma.productIdentity.findMany({
       where: {
         inboxState: { in: ["scored", "enriched"] },
-        lifecycleStage: { not: "declining" },
+        lifecycleStage: { notIn: ["declining", "dead"] },
       },
       orderBy: { combinedScore: "desc" },
       take: 100,
@@ -147,17 +148,21 @@ export async function computeSmartSuggestions(
 
     const contentPotential = Number(p.contentPotentialScore ?? 0);
 
-    // Coefficients sum to 1.0: 0.45 + 0.15 + 0.10 + 0.10 + 0.10 + 0.10
+    // Coefficients sum to 1.0: 0.55 + 0.15 + 0.05 + 0.10 + 0.10 + 0.05
     const smartScore = Math.round(
-      base * 0.45 +
+      base * 0.55 +
       categoryBonus * 0.15 +
-      deltaBonus * 0.10 +
+      deltaBonus * 0.05 +
       calendarBonus * 0.10 +
       contentPotential * 0.10 +
-      recencyBonus * 0.10,
+      recencyBonus * 0.05,
     );
 
-    const tag: "proven" | "explore" = catWeight > 1.0 ? "proven" : "explore";
+    // When no learning weights exist, use heuristic: combinedScore >= 75 = proven
+    const hasWeights = categoryWeights.size > 0;
+    const tag: "proven" | "explore" = hasWeights
+      ? (catWeight > 1.0 ? "proven" : "explore")
+      : (base >= 75 ? "proven" : "explore");
 
     const reason = buildSuggestionReason({
       combinedScore: base,
@@ -214,8 +219,9 @@ export async function computeSmartSuggestions(
 
     const nicheFiltered = niche
       ? channelScored.filter((sp) => {
-          const cat = sp.category?.toLowerCase() ?? "";
-          return cat.includes(niche) || niche.includes(cat) || !cat;
+          const cat = sp.category ?? "";
+          if (!cat) return true;
+          return matchesNiche(niche, cat);
         })
       : channelScored;
     // Fallback: if niche filter eliminates all products, show all for this channel
@@ -228,11 +234,11 @@ export async function computeSmartSuggestions(
     const selected: ChannelScoredProduct[] = [];
     if (explore.length > 0) selected.push(explore[0]);
     for (const sp of proven) {
-      if (selected.length >= 5) break;
+      if (selected.length >= 10) break;
       if (!selected.some((s) => s.id === sp.id)) selected.push(sp);
     }
     for (const sp of explore) {
-      if (selected.length >= 5) break;
+      if (selected.length >= 10) break;
       if (!selected.some((s) => s.id === sp.id)) selected.push(sp);
     }
 

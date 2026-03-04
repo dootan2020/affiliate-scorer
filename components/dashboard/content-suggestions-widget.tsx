@@ -12,6 +12,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
   const [data, setData] = useState<SuggestionsResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeChannelIdx, setActiveChannelIdx] = useState(0);
+  const [expanded, setExpanded] = useState(false);
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -70,7 +71,7 @@ export function ContentSuggestionsWidget(): React.ReactElement {
           {channels.map((ch, idx) => (
             <button
               key={ch.channelId}
-              onClick={() => setActiveChannelIdx(idx)}
+              onClick={() => { setActiveChannelIdx(idx); setExpanded(false); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                 idx === activeChannelIdx
                   ? "bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300"
@@ -106,21 +107,31 @@ export function ContentSuggestionsWidget(): React.ReactElement {
           </Link>
         </div>
       ) : (
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100 dark:border-slate-800">
-              <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 hidden sm:table-cell w-12" />
-              <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2">Sản phẩm</th>
-              <th className="text-center text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 w-16">Score</th>
-              <th className="text-right text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 w-16" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
-            {products.map((p) => (
-              <SuggestionProductRow key={p.id} product={p} channelId={activeChannel?.channelId} />
-            ))}
-          </tbody>
-        </table>
+        <>
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-100 dark:border-slate-800">
+                <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 hidden sm:table-cell w-12" />
+                <th className="text-left text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2">Sản phẩm</th>
+                <th className="text-center text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 pr-2 w-16">Score</th>
+                <th className="text-right text-[10px] font-medium text-gray-400 uppercase tracking-wider pb-2 w-16" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
+              {(expanded ? products : products.slice(0, 5)).map((p) => (
+                <SuggestionProductRow key={p.id} product={p} channelId={activeChannel?.channelId} />
+              ))}
+            </tbody>
+          </table>
+          {products.length > 5 && !expanded && (
+            <button
+              onClick={() => setExpanded(true)}
+              className="w-full mt-2 py-1.5 text-xs text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/50 rounded-lg transition-colors"
+            >
+              Xem thêm {products.length - 5} SP →
+            </button>
+          )}
+        </>
       )}
     </div>
   );

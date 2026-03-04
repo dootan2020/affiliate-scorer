@@ -61,14 +61,50 @@ export async function POST(request: Request): Promise<NextResponse> {
     console.log(`[score-batch] scored ${productIds.length}, incrementing scoredCount`);
     await incrementBatchProgress(batchId, { scoredCount: productIds.length });
 
-    // Sync identity scores for scored products
-    const linked = await prisma.product.findMany({
-      where: { id: { in: productIds }, identityId: { not: null } },
-      select: { identityId: true },
+    // Sync identity scores for scored products.
+    // Also repair any broken Product→Identity links (identityId=null) caused by
+    // $transaction failures during import — look up identity via ProductUrl instead.
+    const scoredProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, identityId: true, tiktokUrl: true },
     });
-    const identityIds = linked
+
+    // Collect already-linked identity IDs
+    const identityIds = scoredProducts
       .map((p) => p.identityId)
       .filter((id): id is string => id != null);
+
+    // For products with no identityId, attempt repair via tiktokUrl → ProductUrl → identity
+    const unlinked = scoredProducts.filter((p) => !p.identityId && p.tiktokUrl);
+    if (unlinked.length > 0) {
+      const productUrls = await prisma.productUrl.findMany({
+        where: { url: { in: unlinked.map((p) => p.tiktokUrl!) } },
+        select: { productIdentityId: true, url: true },
+      });
+      const urlToIdentity = new Map(productUrls.map((u) => [u.url, u.productIdentityId]));
+
+      // Re-link and collect repaired identity IDs
+      const repairs: Array<{ productId: string; identityId: string }> = [];
+      for (const p of unlinked) {
+        const identityId = p.tiktokUrl ? urlToIdentity.get(p.tiktokUrl) : null;
+        if (identityId) {
+          repairs.push({ productId: p.id, identityId });
+          if (!identityIds.includes(identityId)) identityIds.push(identityId);
+        }
+      }
+
+      if (repairs.length > 0) {
+        console.log(`[score-batch] repairing ${repairs.length} broken Product→Identity links`);
+        await Promise.allSettled(
+          repairs.map(({ productId, identityId }) =>
+            prisma.product.update({
+              where: { id: productId },
+              data: { identityId },
+            }),
+          ),
+        );
+      }
+    }
 
     if (identityIds.length > 0) {
       await syncIdentityScores(identityIds);

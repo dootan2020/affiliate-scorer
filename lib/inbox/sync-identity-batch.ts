@@ -142,17 +142,18 @@ export async function syncIdentityBatch(inputs: BatchSyncInput[]): Promise<numbe
   }
 
   // Step 6: Batch link products → identities
+  // Use parallel standalone updates (no $transaction) for PgBouncer compatibility — avoids P2028 timeout
   if (matchFound.length > 0) {
     for (let i = 0; i < matchFound.length; i += UPDATE_CHUNK) {
       const chunk = matchFound.slice(i, i + UPDATE_CHUNK);
-      await prisma.$transaction(
+      await Promise.allSettled(
         chunk.map(({ productId, identityId }) =>
           prisma.product.update({
             where: { id: productId },
             data: { identityId },
           }),
         ),
-      ).catch((err) => console.error("Batch link failed:", err));
+      );
     }
   }
 
@@ -265,11 +266,12 @@ export async function syncIdentityBatch(inputs: BatchSyncInput[]): Promise<numbe
 
   for (let i = 0; i < finalUpdates.length; i += UPDATE_CHUNK) {
     const chunk = finalUpdates.slice(i, i + UPDATE_CHUNK);
-    await prisma.$transaction(
+    // Parallel standalone updates — no $transaction to avoid P2028 under PgBouncer
+    await Promise.allSettled(
       chunk.map(({ identityId, data }) =>
         prisma.productIdentity.update({ where: { id: identityId }, data }),
       ),
-    ).catch((err) => console.error("Batch identity update failed:", err));
+    );
   }
 
   return enriched.length;

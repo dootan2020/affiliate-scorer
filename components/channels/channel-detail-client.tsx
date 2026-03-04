@@ -101,6 +101,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshOpen, setRefreshOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "bible" | "formats" | "matrix" | "videoBible" | "series">("overview");
 
   const fetchChannel = useCallback(async (): Promise<void> => {
     setError(null);
@@ -268,8 +269,6 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
       </div>
     );
   }
-
-  const [activeTab, setActiveTab] = useState<"overview" | "bible" | "formats" | "matrix" | "videoBible" | "series">("overview");
 
   const pillars = channel.contentPillars ?? [];
   const pillarDetails = channel.contentPillarDetails ?? [];

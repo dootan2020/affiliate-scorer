@@ -31,13 +31,13 @@ export async function generateMorningBrief(): Promise<string> {
   sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 
   // Gather data
-  const [newProducts, briefedProducts, yesterdayMetrics, topWeights, currentGoal, activeChannels, upcomingEvents] = await Promise.all([
+  const [newProducts, briefedProducts, yesterdayMetrics, topWeights, currentGoal, activeChannels, upcomingEvents, winningPatterns, losingPatterns] = await Promise.all([
     // SP mới chưa tạo content
     prisma.productIdentity.findMany({
       where: { inboxState: { in: ["scored", "enriched"] } },
       orderBy: { combinedScore: "desc" },
       take: 10,
-      select: { id: true, title: true, deltaType: true, combinedScore: true, contentPotentialScore: true },
+      select: { id: true, title: true, deltaType: true, combinedScore: true, contentPotentialScore: true, category: true },
     }),
     // SP đã có brief chưa sản xuất
     prisma.productIdentity.findMany({
@@ -89,6 +89,20 @@ export async function generateMorningBrief(): Promise<string> {
       take: 5,
       select: { name: true, startDate: true, eventType: true },
     }),
+    // Winning patterns from learning
+    prisma.userPattern.findMany({
+      where: { patternType: "winning", sampleSize: { gte: 2 } },
+      orderBy: { winRate: "desc" },
+      take: 3,
+      select: { label: true, winRate: true, avgViews: true, sampleSize: true, conditions: true },
+    }),
+    // Losing patterns to avoid
+    prisma.userPattern.findMany({
+      where: { patternType: "losing", sampleSize: { gte: 2 }, winRate: { not: null } },
+      orderBy: { winRate: "asc" },
+      take: 2,
+      select: { label: true, winRate: true, sampleSize: true },
+    }),
   ]);
 
   // Top hook/format
@@ -134,6 +148,32 @@ export async function generateMorningBrief(): Promise<string> {
     return `- ${e.name} (${e.eventType}) — ngày ${dateStr}`;
   });
 
+  // Build pattern lines with product cross-references
+  const winPatternLines = winningPatterns.map((p) => {
+    const raw = p.conditions;
+    const cond = raw !== null && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : null;
+    const category = typeof cond?.category === "string" ? cond.category : undefined;
+    const hookType = typeof cond?.hook_type === "string" ? cond.hook_type : "?";
+    const format = typeof cond?.format === "string" ? cond.format : "?";
+    const matchingProducts = category
+      ? newProducts
+          .filter((prod) => prod.category?.toLowerCase() === category.toLowerCase())
+          .slice(0, 2)
+          .map((prod) => prod.title || "?")
+      : [];
+    const productNote = matchingProducts.length > 0
+      ? ` | SP phù hợp: ${matchingProducts.join(", ")}`
+      : "";
+    const viewsStr = p.avgViews != null ? `${p.avgViews} avg views` : "chưa có data views";
+    return `- ${p.label} | Win rate: ${(Number(p.winRate ?? 0) * 100).toFixed(0)}% | ${viewsStr} | ${p.sampleSize} videos | Hook: ${hookType}, Format: ${format}${productNote}`;
+  });
+
+  const losePatternLines = losingPatterns.map((p) =>
+    `- ${p.label} | Win rate: ${(Number(p.winRate ?? 0) * 100).toFixed(0)}% | ${p.sampleSize} videos`
+  );
+
   const prompt = `
 Tạo Morning Brief cho ngày ${todayStr}.
 
@@ -159,6 +199,12 @@ LEARNING INSIGHTS:
 - Format tốt nhất: ${topFormat}
 - Category mạnh: ${topCategories.length > 0 ? topCategories.join(", ") : "chưa có"}
 
+WINNING PATTERNS (đã chứng minh hiệu quả):
+${winPatternLines.length > 0 ? winPatternLines.join("\n") : "Chưa phát hiện pattern"}
+
+PATTERNS NÊN TRÁNH:
+${losePatternLines.length > 0 ? losePatternLines.join("\n") : "Chưa có"}
+
 MỤC TIÊU TUẦN:
 ${currentGoal
     ? `- Target: ${currentGoal.targetVideos || "?"} videos\n- Đã làm: ${currentGoal.actualVideos} videos\n- Còn lại: ${(currentGoal.targetVideos || 0) - currentGoal.actualVideos}`
@@ -172,7 +218,7 @@ Output JSON (trả về ĐÚNG channelId và productId đã cung cấp ở trên
   "new_products_alert": [{ "product": "Tên SP", "productId": "id_sp", "why": "Tại sao đáng chú ý" }],
   "upcoming_events": [{ "title": "Tên sự kiện", "date": "dd/mm" }],
   "yesterday_recap": "1-2 câu tóm tắt",
-  "tip": "1 gợi ý content dựa trên learning",
+  "tip": "1 gợi ý content dựa trên learning + winning patterns (nêu cụ thể combo hook+format nào, SP nào phù hợp)",
   "weekly_progress": "X/Y videos, còn Z ngày"
 }
 

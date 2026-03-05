@@ -55,17 +55,20 @@ function buildOrderBy(params: URLSearchParams): Prisma.ProductIdentityOrderByWit
   const sort = params.get("sort") || "score";
   const order = params.get("order") === "asc" ? "asc" : "desc";
 
+  // Use { sort, nulls } to push NULL scores to the bottom
+  const nulls = order === "desc" ? "last" as const : "first" as const;
+
   const sortMap: Record<string, Prisma.ProductIdentityOrderByWithRelationInput[]> = {
     newest: [{ createdAt: "desc" }],
-    score: [{ combinedScore: order }, { createdAt: "desc" }],
-    price: [{ price: order }, { createdAt: "desc" }],
+    score: [{ combinedScore: { sort: order, nulls } }, { createdAt: "desc" }],
+    price: [{ price: { sort: order, nulls } }, { createdAt: "desc" }],
     delta: [{ updatedAt: "desc" }],
-    content: [{ contentPotentialScore: order }, { createdAt: "desc" }],
+    content: [{ contentPotentialScore: { sort: order, nulls } }, { createdAt: "desc" }],
     sales7d: [{ product: { sales7d: order } }, { createdAt: "desc" }],
     kol: [{ product: { totalKOL: order } }, { createdAt: "desc" }],
   };
 
-  return sortMap[sort] ?? [{ combinedScore: "desc" }, { createdAt: "desc" }];
+  return sortMap[sort] ?? [{ combinedScore: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }];
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {

@@ -171,7 +171,7 @@ export function Sidebar(): React.ReactElement {
       try {
         const [inboxRes, prodRes] = await Promise.all([
           fetch("/api/inbox?pageSize=1"),
-          fetch("/api/production?status=in_progress"),
+          fetch("/api/production/active-count"),
         ]);
 
         const results: Partial<BadgeCounts> = {};

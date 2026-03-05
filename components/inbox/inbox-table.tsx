@@ -147,7 +147,7 @@ export function InboxTable({
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
             {items.map((item, idx) => {
-              const aiScore = item.product?.aiScore ?? null;
+              const aiScore = item.combinedScore ? parseFloat(item.combinedScore) : null;
               const imageUrl = item.imageUrl ?? item.product?.imageUrl ?? null;
               const name = item.title
                 ?? (item.productIdExternal ? `SP #${item.productIdExternal.slice(-8)}` : null)

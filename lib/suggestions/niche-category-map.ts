@@ -3,12 +3,17 @@
 
 const NICHE_CATEGORY_MAP: Record<string, string[]> = {
   beauty_skincare: ["chăm sóc sắc đẹp", "chăm sóc cá nhân", "mỹ phẩm"],
-  home_living: ["đồ gia dụng", "đồ dùng nhà bếp", "nội thất"],
-  tech: ["điện thoại", "đồ điện tử", "công nghệ"],
-  fashion: ["phụ kiện thời trang", "quần áo", "giày dép", "túi xách"],
+  home_living: ["đồ gia dụng", "đồ dùng nhà bếp", "nội thất", "thiết bị gia dụng", "đồ dùng gia đình", "đồ nội thất"],
+  tech: ["điện thoại", "đồ điện tử", "công nghệ", "máy tính", "thiết bị văn phòng"],
+  fashion: ["phụ kiện thời trang", "quần áo", "giày dép", "túi xách", "trang phục nữ", "trang phục nam", "đồ lót", "trang phục", "giày"],
   health: ["sức khỏe", "y tế", "thực phẩm chức năng"],
   food: ["đồ ăn", "đồ uống", "thực phẩm"],
-  garden: ["sửa chữa nhà cửa", "vườn", "cây cảnh"],
+  garden: ["sửa chữa nhà cửa", "vườn", "cây cảnh", "công cụ", "phần cứng"],
+  sports: ["thể thao", "ngoài trời", "thể thao & ngoài trời", "fitness"],
+  books_media: ["sách", "tạp chí", "âm thanh", "sách, tạp chí & âm thanh"],
+  toys: ["đồ chơi", "sở thích", "đồ chơi & sở thích", "bộ sưu tập"],
+  automotive: ["ô tô", "xe máy", "ô tô & xe máy", "phụ kiện xe"],
+  mother_baby: ["mẹ & bé", "trẻ em", "đồ trẻ em", "trẻ sơ sinh", "thai sản"],
 };
 
 /**

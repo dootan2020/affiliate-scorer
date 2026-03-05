@@ -37,6 +37,28 @@ const IDENTITY_INCLUDE = {
 } as const;
 
 const PARALLEL_WRITES = 20;
+const NORMALIZE_MIN_BATCH = 10;
+
+/** Normalize raw scores to 20-100 range for better discrimination */
+function normalizeScores(
+  updates: Array<{ id: string; scores: ReturnType<typeof computeScores> }>,
+): void {
+  const raw = updates
+    .map((u) => u.scores.combinedScore)
+    .filter((s): s is number => s != null);
+  if (raw.length < NORMALIZE_MIN_BATCH) return;
+
+  const min = Math.min(...raw);
+  const max = Math.max(...raw);
+  if (max === min) return; // all same score, skip
+
+  for (const u of updates) {
+    if (u.scores.combinedScore == null) continue;
+    u.scores.combinedScore = Math.round(
+      ((u.scores.combinedScore - min) / (max - min)) * 80 + 20,
+    );
+  }
+}
 
 function computeScores(identity: IdentityWithProduct): {
   contentPotentialScore: number;
@@ -62,7 +84,8 @@ function computeScores(identity: IdentityWithProduct): {
 
   let combinedScore: number | null = null;
   if (marketScore != null && contentScore != null) {
-    combinedScore = Math.round(marketScore * 0.5 + contentScore * 0.5);
+    // 70% market (AI-scored, wider range) + 30% content (formula, tends to inflate)
+    combinedScore = Math.round(marketScore * 0.70 + contentScore * 0.30);
   } else if (contentScore != null) {
     combinedScore = contentScore;
   } else if (marketScore != null) {
@@ -90,6 +113,8 @@ export async function syncIdentityScores(identityIds: string[]): Promise<number>
     id: identity.id,
     scores: computeScores(identity),
   }));
+
+  normalizeScores(updates);
 
   // Parallel standalone updates (no $transaction to avoid P2028 timeout)
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
@@ -125,6 +150,8 @@ export async function syncAllIdentityScores(
     id: identity.id,
     scores: computeScores(identity),
   }));
+
+  normalizeScores(updates);
 
   const total = updates.length;
   let done = 0;

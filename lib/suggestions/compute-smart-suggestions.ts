@@ -104,10 +104,17 @@ export async function computeSmartSuggestions(
       where: { scope: { in: ["category", "hook_type", "format"] } },
     }),
     prisma.calendarEvent.findMany({
-      where: { startDate: { gte: new Date(), lte: new Date(Date.now() + 7 * 86_400_000) } },
+      where: {
+        OR: [
+          // Events starting in next 7 days
+          { startDate: { gte: new Date(), lte: new Date(Date.now() + 7 * 86_400_000) } },
+          // Events where we're in prep period (prepStartDate <= now <= startDate)
+          { prepStartDate: { lte: new Date() }, startDate: { gte: new Date() } },
+        ],
+      },
       orderBy: { startDate: "asc" },
       take: 5,
-      select: { name: true, startDate: true, eventType: true },
+      select: { name: true, startDate: true, eventType: true, notes: true },
     }),
     prisma.tikTokChannel.findMany({
       where: { isActive: true, ...(channelIds?.length ? { id: { in: channelIds } } : {}) },
@@ -124,14 +131,25 @@ export async function computeSmartSuggestions(
     if (w.scope === "category") categoryWeights.set(w.key.toLowerCase(), Number(w.weight));
   }
 
-  const calendarCategories = calendarEvents.map((e) => ({
-    name: e.name,
-    keywords: e.name.toLowerCase().split(/\s+/).filter((kw) => kw.length >= 4),
-  }));
+  // R8: Use notes field for keywords (better than event name), lower min length to 2
+  const calendarCategories = calendarEvents.map((e) => {
+    const source = (e.notes ?? e.name).toLowerCase();
+    const keywords = source.split(/[\s,]+/).filter((kw) => kw.length >= 2);
+    return { name: e.name, keywords };
+  });
 
   const productMap = new Map(products.map((p) => [p.id, p]));
   const now = Date.now();
   const hasWeights = categoryWeights.size > 0;
+
+  // Compute median combinedScore for explore/proven split
+  const allBaseScores = products
+    .map((p) => Number(p.combinedScore ?? 0))
+    .filter((s) => s > 0)
+    .sort((a, b) => a - b);
+  const medianScore = allBaseScores.length > 0
+    ? allBaseScores[Math.floor(allBaseScores.length / 2)]
+    : 50;
 
   // Score all products (flat — no contentMix bonus yet)
   const scored: SuggestedProduct[] = products.map((p) => {
@@ -146,16 +164,19 @@ export async function computeSmartSuggestions(
     const calendarBonus = matchedEvent ? 100 : 0;
     const ageDays = (now - new Date(p.createdAt).getTime()) / 86_400_000;
     const recencyBonus = ageDays <= 3 ? 100 : ageDays <= 7 ? 50 : 0;
-    const contentPotential = Number(p.contentPotentialScore ?? 0);
 
+    // R3: removed contentPotential (already inside combinedScore via 70/30 blend)
+    // R3: increased delta (0.05→0.10) and recency (0.05→0.10)
     const smartScore = Math.round(
-      base * 0.55 + categoryBonus * 0.15 + deltaBonus * 0.05 +
-      calendarBonus * 0.10 + contentPotential * 0.10 + recencyBonus * 0.05,
+      base * 0.55 + categoryBonus * 0.15 + deltaBonus * 0.10 +
+      calendarBonus * 0.10 + recencyBonus * 0.10,
     );
 
+    // R4: percentile-based tagging — above median = proven, below = explore
+    // When learning weights exist, use category weight instead
     const tag: "proven" | "explore" = hasWeights
       ? (catWeight > 1.0 ? "proven" : "explore")
-      : (base >= 75 ? "proven" : "explore");
+      : (base >= medianScore ? "proven" : "explore");
 
     const reason = buildSuggestionReason({
       combinedScore: base, categoryWeight: catWeight, category: p.category,
@@ -165,7 +186,7 @@ export async function computeSmartSuggestions(
 
     return {
       id: p.id, title: p.title, category: p.category, imageUrl: p.imageUrl,
-      combinedScore: base, contentPotentialScore: contentPotential,
+      combinedScore: base, contentPotentialScore: Number(p.contentPotentialScore ?? 0),
       marketScore: p.marketScore ? Number(p.marketScore) : null,
       smartScore, reason, tag, deltaType: p.deltaType,
       commissionRate: p.commissionRate ? Number(p.commissionRate) : null,
@@ -206,10 +227,18 @@ export async function computeSmartSuggestions(
     const proven = sorted.filter((sp) => sp.tag === "proven" && (usedCounts.get(sp.id) ?? 0) < 2);
     const explore = sorted.filter((sp) => sp.tag === "explore" && (usedCounts.get(sp.id) ?? 0) < 2);
 
+    // R4: ensure at least 2 explore in top 10 (20% explore target)
     const selected: ChannelScoredProduct[] = [];
-    if (explore.length > 0) selected.push(explore[0]);
-    for (const sp of proven) { if (selected.length >= 10) break; if (!selected.some((s) => s.id === sp.id)) selected.push(sp); }
-    for (const sp of explore) { if (selected.length >= 10) break; if (!selected.some((s) => s.id === sp.id)) selected.push(sp); }
+    const minExplore = 2;
+    // Add explore picks first to guarantee minimum
+    for (const sp of explore) {
+      if (selected.length >= minExplore) break;
+      if ((usedCounts.get(sp.id) ?? 0) < 2) selected.push(sp);
+    }
+    // Fill with proven
+    for (const sp of proven) { if (selected.length >= 10) break; if (!selected.some((s) => s.id === sp.id) && (usedCounts.get(sp.id) ?? 0) < 2) selected.push(sp); }
+    // Fill remaining with explore
+    for (const sp of explore) { if (selected.length >= 10) break; if (!selected.some((s) => s.id === sp.id) && (usedCounts.get(sp.id) ?? 0) < 2) selected.push(sp); }
     selected.sort((a, b) => b.smartScore - a.smartScore);
 
     const finalProducts: SuggestedProduct[] = selected.map((sp) => {

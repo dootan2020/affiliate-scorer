@@ -33,6 +33,7 @@ interface ChannelOption {
   name: string;
   personaName: string;
   voiceStyle: string;
+  niche: string | null;
 }
 
 const CONTENT_TYPES = [
@@ -210,11 +211,11 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId, initial
                     ? "bg-blue-600 text-white"
                     : "bg-gray-100 dark:bg-slate-800 text-gray-400"
                 }`}>
-                  {ch.name.charAt(0)}
+                  {ch.personaName.charAt(0)}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{ch.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{ch.personaName} · {ch.voiceStyle}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{ch.personaName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{ch.name} · {ch.voiceStyle}</p>
                 </div>
               </button>
             ))}
@@ -233,7 +234,7 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId, initial
           </h2>
           {selectedChannel && (
             <span className="text-xs text-blue-600 dark:text-blue-400 ml-auto">
-              Kênh: {selectedChannel.name}
+              Kênh: {selectedChannel.personaName}
             </span>
           )}
         </div>
@@ -242,6 +243,7 @@ export function ProductionCreateTab({ onBriefsCreated, initialProductId, initial
           onSelectionChange={setSelectedIds}
           disabled={generating || !channelId}
           initialProductId={initialProductId}
+          channelNiche={selectedChannel?.niche ?? null}
         />
       </div>
 

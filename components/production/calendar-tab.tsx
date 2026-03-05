@@ -32,6 +32,7 @@ interface SlotData {
 interface ChannelOption {
   id: string;
   name: string;
+  personaName: string;
 }
 
 interface ProductOption {
@@ -337,7 +338,7 @@ export function CalendarTab(): React.ReactElement {
                 onChange={(e) => setSelectedChannel(e.target.value)}
               >
                 {channels.map((ch) => (
-                  <option key={ch.id} value={ch.id}>{ch.name}</option>
+                  <option key={ch.id} value={ch.id}>{ch.personaName}</option>
                 ))}
               </select>
             )}

@@ -23,8 +23,6 @@ export function SuggestionProductRow({ product, channelId, isMorningBriefPick }:
     ? `/production?productId=${product.id}&channel=${channelId}`
     : `/production?productId=${product.id}`;
 
-  const ms = product.marketScore ?? product.combinedScore;
-  const cp = product.contentPotentialScore;
 
   return (
     <tr className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors">
@@ -74,16 +72,16 @@ export function SuggestionProductRow({ product, channelId, isMorningBriefPick }:
         </div>
       </td>
 
-      {/* Score */}
+      {/* Score — combinedScore primary, smartScore secondary */}
       <td className="py-2 pr-2 text-center">
-        <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
-          {product.smartScore}
-        </span>
-        {(ms != null || cp != null) && (
-          <div className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">
-            {ms != null && <>M:{Math.round(ms)}</>}{ms != null && cp != null && " "}{cp != null && <>C:{Math.round(cp)}</>}
-          </div>
+        {product.combinedScore != null && (
+          <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-950 px-2 py-0.5 text-xs font-bold text-orange-700 dark:text-orange-300">
+            {Math.round(product.combinedScore)}
+          </span>
         )}
+        <div className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">
+          Gợi ý: {product.smartScore}
+        </div>
       </td>
 
       {/* CTA */}

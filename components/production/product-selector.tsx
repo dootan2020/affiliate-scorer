@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, Check, Package, Star, Inbox } from "lucide-react";
+import { Search, Check, Package, Star, Inbox, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ProductImage } from "@/components/products/product-image";
+import { matchesNiche } from "@/lib/suggestions/niche-category-map";
 
 interface ProductIdentityItem {
   id: string;
@@ -27,9 +28,10 @@ interface Props {
   onSelectionChange: (ids: string[]) => void;
   disabled?: boolean;
   initialProductId?: string | null;
+  channelNiche?: string | null;
 }
 
-export function ProductSelector({ selected, onSelectionChange, disabled, initialProductId }: Props): React.ReactElement {
+export function ProductSelector({ selected, onSelectionChange, disabled, initialProductId, channelNiche }: Props): React.ReactElement {
   const [products, setProducts] = useState<ProductIdentityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -42,7 +44,7 @@ export function ProductSelector({ selected, onSelectionChange, disabled, initial
         const ALLOWED_STATES = ["scored", "briefed", "published"] as const;
         const responses = await Promise.all(
           ALLOWED_STATES.map((s) =>
-            fetch(`/api/inbox?state=${s}&limit=50&sort=score`).then(
+            fetch(`/api/inbox?state=${s}&pageSize=500&sort=score`).then(
               (r) => r.json() as Promise<{ data?: ProductIdentityItem[] }>
             )
           )
@@ -70,6 +72,10 @@ export function ProductSelector({ selected, onSelectionChange, disabled, initial
   }, []);
 
   const filtered = products.filter((p) => {
+    // Niche filter: if channel has niche, only show matching products
+    if (channelNiche && p.category) {
+      if (!matchesNiche(channelNiche, p.category)) return false;
+    }
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -145,6 +151,7 @@ export function ProductSelector({ selected, onSelectionChange, disabled, initial
       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
         {filtered.map((p) => {
           const isSelected = selected.includes(p.id);
+          const isBriefed = p.inboxState === "briefed" || p.inboxState === "published";
           return (
             <button
               key={p.id}
@@ -176,10 +183,18 @@ export function ProductSelector({ selected, onSelectionChange, disabled, initial
               />
 
               {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
-                  {p.title || "Chưa có tên"}
-                </p>
+              <div className={`flex-1 min-w-0 ${isBriefed ? "opacity-70" : ""}`}>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">
+                    {p.title || "Chưa có tên"}
+                  </p>
+                  {isBriefed && (
+                    <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                      <CheckCircle2 className="w-2.5 h-2.5" />
+                      {p.inboxState === "published" ? "Đã xuất" : "Đã brief"}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   <span className="text-xs text-gray-400">{p.category || "—"}</span>
                   <span className="text-xs text-gray-300 dark:text-slate-600">·</span>

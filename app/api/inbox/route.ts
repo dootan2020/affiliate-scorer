@@ -76,7 +76,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { searchParams } = request.nextUrl;
     const state = searchParams.get("state");
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const pageSize = Math.min(100, Math.max(1, parseInt(
+    const pageSize = Math.min(500, Math.max(1, parseInt(
       searchParams.get("pageSize") || searchParams.get("limit") || "20", 10
     )));
 

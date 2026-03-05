@@ -4,6 +4,7 @@ import { toJsonValue } from "@/lib/utils/typed-json";
 import type { InputJsonValue } from "@/app/generated/prisma/internal/prismaNamespace";
 import { JsonNull } from "@/app/generated/prisma/internal/prismaNamespace";
 import { z } from "zod";
+import { normalizeNicheKey } from "@/lib/suggestions/niche-category-map";
 
 const updateChannelSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -126,6 +127,9 @@ export async function PUT(
       contentPillarDetails, videoFormats,
       aiGeneratedAt, ...rest
     } = updateChannelSchema.parse(body);
+
+    // Normalize niche key for consistent matching
+    if (rest.niche) rest.niche = normalizeNicheKey(rest.niche);
 
     const channel = await prisma.tikTokChannel.update({
       where: { id },

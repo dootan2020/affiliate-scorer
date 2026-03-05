@@ -4,6 +4,7 @@ import { toJsonValue } from "@/lib/utils/typed-json";
 import type { InputJsonValue } from "@/app/generated/prisma/internal/prismaNamespace";
 import { JsonNull } from "@/app/generated/prisma/internal/prismaNamespace";
 import { z } from "zod";
+import { normalizeNicheKey } from "@/lib/suggestions/niche-category-map";
 
 /** Convert nullable JSON fields to Prisma-compatible values */
 function toNullableJson(val: unknown): InputJsonValue | typeof JsonNull | undefined {
@@ -88,6 +89,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       contentPillarDetails, videoFormats,
       aiGeneratedAt, ...rest
     } = createChannelSchema.parse(body);
+
+    // Normalize niche key for consistent matching
+    if (rest.niche) rest.niche = normalizeNicheKey(rest.niche);
 
     const channel = await prisma.tikTokChannel.create({
       data: {

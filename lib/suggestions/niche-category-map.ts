@@ -17,19 +17,32 @@ const NICHE_CATEGORY_MAP: Record<string, string[]> = {
 };
 
 /**
+ * Normalize a niche string to match map keys.
+ * "Home & Living" → "home_living", "beauty_skincare" → "beauty_skincare"
+ */
+export function normalizeNicheKey(niche: string): string {
+  return niche
+    .toLowerCase()
+    .replace(/\s*&\s*/g, "_")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
+/**
  * Check if a product category matches a channel niche.
  * Uses mapping table first, falls back to string includes.
  */
 export function matchesNiche(niche: string, category: string): boolean {
-  const nicheLower = niche.toLowerCase();
+  const normalized = normalizeNicheKey(niche);
   const catLower = category.toLowerCase();
 
-  // Try mapping table first
-  const keywords = NICHE_CATEGORY_MAP[nicheLower];
+  // Try mapping table with normalized key
+  const keywords = NICHE_CATEGORY_MAP[normalized];
   if (keywords) {
     return keywords.some((kw) => catLower.includes(kw));
   }
 
-  // Fallback: bidirectional string includes
+  // Fallback: bidirectional string includes (use original lowercase for readability)
+  const nicheLower = niche.toLowerCase();
   return catLower.includes(nicheLower) || nicheLower.includes(catLower);
 }

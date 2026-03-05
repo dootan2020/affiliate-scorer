@@ -7,6 +7,7 @@ import {
   AlertCircle, Calendar, ChevronDown,
 } from "lucide-react";
 import { fetchWithRetry } from "@/lib/utils/fetch-with-retry";
+import { onSuggestionEvent } from "@/lib/events/suggestion-events";
 import { Button } from "@/components/ui/button";
 import type { BriefContent } from "@/lib/brief/brief-types";
 import {
@@ -66,6 +67,11 @@ export function MorningBriefWidget(): React.ReactElement {
   }
 
   useEffect(() => { fetchBrief(); }, []);
+
+  // Listen for data change events → show stale badge immediately
+  useEffect(() => {
+    return onSuggestionEvent(() => setIsStale(true));
+  }, []);
 
   // --- Header ---
   function renderHeader(): React.ReactElement {

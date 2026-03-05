@@ -51,21 +51,21 @@ function buildFilters(params: URLSearchParams): PIWhere {
 }
 
 /** Build orderBy from sort + order params */
-function buildOrderBy(params: URLSearchParams): Prisma.ProductIdentityOrderByWithRelationInput {
-  const sort = params.get("sort") || "newest";
+function buildOrderBy(params: URLSearchParams): Prisma.ProductIdentityOrderByWithRelationInput[] {
+  const sort = params.get("sort") || "score";
   const order = params.get("order") === "asc" ? "asc" : "desc";
 
-  const sortMap: Record<string, Prisma.ProductIdentityOrderByWithRelationInput> = {
-    newest: { createdAt: "desc" },
-    score: { combinedScore: order },
-    price: { price: order },
-    delta: { updatedAt: "desc" },
-    content: { contentPotentialScore: order },
-    sales7d: { product: { sales7d: order } },
-    kol: { product: { totalKOL: order } },
+  const sortMap: Record<string, Prisma.ProductIdentityOrderByWithRelationInput[]> = {
+    newest: [{ createdAt: "desc" }],
+    score: [{ combinedScore: order }, { createdAt: "desc" }],
+    price: [{ price: order }, { createdAt: "desc" }],
+    delta: [{ updatedAt: "desc" }],
+    content: [{ contentPotentialScore: order }, { createdAt: "desc" }],
+    sales7d: [{ product: { sales7d: order } }, { createdAt: "desc" }],
+    kol: [{ product: { totalKOL: order } }, { createdAt: "desc" }],
   };
 
-  return sortMap[sort] ?? { createdAt: "desc" };
+  return sortMap[sort] ?? [{ combinedScore: "desc" }, { createdAt: "desc" }];
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {

@@ -433,11 +433,14 @@ export function InboxPageContent(): React.ReactElement {
               )}
             >
               {tab.label}
-              {count > 0 && (
-                <span className="text-xs bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-gray-300 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
-                  {count}
-                </span>
-              )}
+              <span className={cn(
+                "text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center",
+                count > 0
+                  ? "bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-gray-300"
+                  : "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500"
+              )}>
+                {count}
+              </span>
             </button>
           );
         })}

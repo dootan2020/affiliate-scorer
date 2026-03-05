@@ -441,7 +441,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
           <InfoSection title="Persona">
             <InfoRow label="Tên nhân vật" value={channel.personaName} />
             <InfoRow label="Mô tả" value={channel.personaDesc} />
-            <InfoRow label="Đối tượng" value={channel.targetAudience ?? "—"} />
+            {channel.targetAudience && <InfoRow label="Đối tượng" value={channel.targetAudience} />}
             {channel.subNiche && <InfoRow label="Ngách phụ" value={channel.subNiche} />}
             {channel.usp && <InfoRow label="Điểm khác biệt" value={channel.usp} />}
           </InfoSection>

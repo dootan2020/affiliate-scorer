@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#f3f4f6"/>
+  <path d="M80 70a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-30 60l30-30 20 20 20-20 30 30z" fill="#d1d5db"/>
+</svg>`;
+
+function placeholderResponse(): NextResponse {
+  return new NextResponse(PLACEHOLDER_SVG, {
+    headers: {
+      "Content-Type": "image/svg+xml",
+      "Cache-Control": "public, max-age=60",
+    },
+  });
+}
+
 /**
  * Server-side image proxy to bypass hotlink protection.
  * Usage: /api/image-proxy?url=https://s.500fd.com/...
@@ -39,7 +53,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     clearTimeout(timer);
 
     if (!response.ok) {
-      return new NextResponse("Image fetch failed", { status: response.status });
+      return placeholderResponse();
     }
 
     // Kiểm tra content-length trước khi tải
@@ -63,10 +77,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         "Cache-Control": "public, max-age=86400, s-maxage=86400",
       },
     });
-  } catch (err) {
-    if (err instanceof DOMException && err.name === "AbortError") {
-      return new NextResponse("Proxy timeout", { status: 504 });
-    }
-    return new NextResponse("Proxy error", { status: 502 });
+  } catch {
+    return placeholderResponse();
   }
 }

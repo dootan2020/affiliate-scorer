@@ -182,7 +182,7 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
       const method = isEdit ? "PUT" : "POST";
       const payload = {
         name: profile.name,
-        handle: profile.handle || undefined,
+        handle: profile.handle?.replace(/^@+/, "") || undefined,
         niche: aiNiche || profile.subNiche || "beauty_skincare",
         personaName: profile.personaName,
         personaDesc: profile.personaDesc,

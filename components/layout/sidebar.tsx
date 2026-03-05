@@ -170,15 +170,16 @@ export function Sidebar(): React.ReactElement {
     async function fetchBadges(): Promise<void> {
       try {
         const [inboxRes, prodRes] = await Promise.all([
-          fetch("/api/inbox?pageSize=1&state=new"),
+          fetch("/api/inbox?pageSize=1"),
           fetch("/api/production?status=in_progress"),
         ]);
 
         const results: Partial<BadgeCounts> = {};
 
         if (inboxRes.ok) {
-          const data = await inboxRes.json() as { stats?: { new?: number } };
-          results.inbox = data?.stats?.new ?? 0;
+          const data = await inboxRes.json() as { stats?: Record<string, number> };
+          const s = data?.stats ?? {};
+          results.inbox = (s.scored ?? 0) + (s.enriched ?? 0);
         }
 
         if (prodRes.ok) {

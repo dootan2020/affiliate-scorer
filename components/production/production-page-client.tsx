@@ -25,7 +25,7 @@ export function ProductionPageClient(): React.ReactElement {
   const searchParams = useSearchParams();
   const initialProductId = searchParams.get("productId");
   const initialChannelId = searchParams.get("channel");
-  const [activeTab, setActiveTab] = useState<Tab>("in-progress");
+  const [activeTab, setActiveTab] = useState<Tab>(initialProductId ? "create" : "in-progress");
 
   return (
     <div className="space-y-6">

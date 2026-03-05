@@ -43,6 +43,9 @@ export function YesterdayStatsWidget(): React.ReactElement {
       .finally(() => setLoading(false));
   }, []);
 
+  const allZero = !loading && stats.videos === 0 && stats.views === 0 && stats.orders === 0 && stats.commission === 0;
+  if (allZero) return <></>;
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {CARDS.map(({ key, label, icon: Icon, color, bg, format }) => (

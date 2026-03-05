@@ -27,7 +27,7 @@ export function buildSuggestionReason(input: ReasonInput): string {
     parts.push(`${input.category || "Danh mục"} đang hiệu quả`);
   }
   if ((input.combinedScore ?? 0) >= 80) {
-    parts.push(`Điểm AI ${input.combinedScore}/100`);
+    parts.push(`Điểm ${input.combinedScore}/100`);
   }
   if (input.lifecycleStage === "peak") {
     parts.push("Đang ở đỉnh — nên sớm");

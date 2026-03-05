@@ -335,7 +335,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
                 )}
               </div>
               {channel.handle && (
-                <p className="text-sm text-gray-400 dark:text-gray-500">@{channel.handle}</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">@{channel.handle.replace(/^@+/, "")}</p>
               )}
             </div>
           </div>

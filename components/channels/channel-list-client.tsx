@@ -149,7 +149,7 @@ export function ChannelListClient(): React.ReactElement {
                   )}
                 </div>
                 {ch.handle && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500">@{ch.handle}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">@{ch.handle.replace(/^@+/, "")}</p>
                 )}
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {ch.personaName} · {VOICE_LABELS[ch.voiceStyle] ?? ch.voiceStyle}

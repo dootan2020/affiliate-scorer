@@ -87,7 +87,7 @@ export function InboxPageContent(): React.ReactElement {
   const [priceRange, setPriceRange] = useState<{ min?: number; max?: number } | null>(null);
   const [scoreRange, setScoreRange] = useState<{ min?: number; max?: number } | null>(null);
   const [sort, setSort] = useState<SortState>({
-    field: searchParams.get("sort") || "newest",
+    field: searchParams.get("sort") || "score",
     order: (searchParams.get("order") as "asc" | "desc") || "desc",
   });
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1", 10));

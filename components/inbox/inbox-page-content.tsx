@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle, Inbox, ChevronLeft, ChevronRight,
-  Search, X, SlidersHorizontal, Sparkles, RefreshCw, Trash2,
+  Search, X, SlidersHorizontal, Sparkles, RefreshCw, Archive,
 } from "lucide-react";
 import { toast } from "sonner";
 import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
@@ -23,6 +23,7 @@ const STATE_TABS = [
   { value: "scored", label: "Đã chấm" },
   { value: "briefed", label: "Đã brief" },
   { value: "published", label: "Đã xuất bản" },
+  { value: "archived", label: "Đã ẩn" },
 ];
 
 const DELTA_OPTIONS = ["NEW", "SURGE", "COOL", "STABLE", "REAPPEAR"];
@@ -273,7 +274,7 @@ export function InboxPageContent(): React.ReactElement {
 
   async function handleBulkDelete(): Promise<void> {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Xóa ${selectedIds.size} sản phẩm? Hành động không thể hoàn tác.`)) return;
+    if (!confirm(`Ẩn ${selectedIds.size} sản phẩm? Sản phẩm sẽ chuyển vào tab "Đã ẩn".`)) return;
     setBulkLoading(true);
     try {
       const res = await fetch("/api/inbox/bulk-delete", {
@@ -282,12 +283,12 @@ export function InboxPageContent(): React.ReactElement {
         body: JSON.stringify({ ids: Array.from(selectedIds) }),
       });
       if (res.ok) {
-        toast.success(`Đã xóa ${selectedIds.size} sản phẩm`);
+        toast.success(`Đã ẩn ${selectedIds.size} sản phẩm`);
         setSelectedIds(new Set());
         fetchItems();
       } else {
         const json = await res.json();
-        toast.error(json.error || "Lỗi xóa");
+        toast.error(json.error || "Lỗi ẩn sản phẩm");
       }
     } catch {
       toast.error("Không thể kết nối server");
@@ -296,7 +297,29 @@ export function InboxPageContent(): React.ReactElement {
     }
   }
 
-  const totalAll = Object.values(stats).reduce((a, b) => a + b, 0);
+  async function handleArchiveSingle(id: string): Promise<void> {
+    try {
+      const res = await fetch("/api/inbox/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [id] }),
+      });
+      if (res.ok) {
+        toast.success("Đã ẩn sản phẩm");
+        fetchItems();
+      } else {
+        toast.error("Lỗi ẩn sản phẩm");
+      }
+    } catch {
+      toast.error("Không thể kết nối server");
+    }
+  }
+
+  // Archived count is separate from totalAll (non-archived states only)
+  const archivedCount = stats["archived"] ?? 0;
+  const totalAll = Object.entries(stats)
+    .filter(([key]) => key !== "archived")
+    .reduce((a, [, b]) => a + b, 0);
   const startIndex = (page - 1) * pageSize + 1;
 
   return (
@@ -420,7 +443,11 @@ export function InboxPageContent(): React.ReactElement {
       {/* State Tabs */}
       <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-xl p-1 overflow-x-auto scrollbar-none">
         {STATE_TABS.map((tab) => {
-          const count = tab.value ? (stats[tab.value] ?? 0) : totalAll;
+          const count = tab.value === "archived"
+            ? archivedCount
+            : tab.value
+              ? (stats[tab.value] ?? 0)
+              : totalAll;
           return (
             <button
               key={tab.value}
@@ -462,8 +489,8 @@ export function InboxPageContent(): React.ReactElement {
               Chấm lại
             </Button>
             <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={bulkLoading}>
-              <Trash2 className="w-3.5 h-3.5" />
-              Xóa
+              <Archive className="w-3.5 h-3.5" />
+              Ẩn
             </Button>
           </div>
         </div>
@@ -503,6 +530,7 @@ export function InboxPageContent(): React.ReactElement {
             items={items}
             startIndex={startIndex}
             onEnrich={setEnrichId}
+            onArchive={activeTab !== "archived" ? handleArchiveSingle : undefined}
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             onToggleAll={toggleAll}

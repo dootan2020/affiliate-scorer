@@ -115,21 +115,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       prisma.productIdentity.count({ where }),
     ]);
 
-    // Stats: count per state WITH filters applied (excluding state filter)
-    const statsWhere: PIWhere = Object.keys(filters).length > 0
-      ? { AND: [{ inboxState: { not: "archived" } }, filters] }
-      : { inboxState: { not: "archived" } };
-
-    const stats = await prisma.productIdentity.groupBy({
-      by: ["inboxState"],
-      where: statsWhere,
-      _count: { id: true },
-    });
+    // Stats: count per state WITH filters applied (includes archived for tab count)
+    const hasFilters = Object.keys(filters).length > 0;
+    const [activeStats, archivedCount] = await Promise.all([
+      prisma.productIdentity.groupBy({
+        by: ["inboxState"],
+        where: hasFilters
+          ? { AND: [{ inboxState: { not: "archived" } }, filters] }
+          : { inboxState: { not: "archived" } },
+        _count: { id: true },
+      }),
+      prisma.productIdentity.count({
+        where: { inboxState: "archived" },
+      }),
+    ]);
 
     const statMap: Record<string, number> = {};
-    for (const s of stats) {
+    for (const s of activeStats) {
       statMap[s.inboxState] = s._count.id;
     }
+    statMap["archived"] = archivedCount;
 
     return NextResponse.json({
       data: items,

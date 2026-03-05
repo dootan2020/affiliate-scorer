@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal, ChevronUp, ChevronDown } from "lucide-react";
+import { MoreHorizontal, ChevronUp, ChevronDown, Archive } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { formatVND, formatNumber } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
@@ -76,6 +76,7 @@ interface InboxTableProps {
   items: InboxIdentity[];
   startIndex: number;
   onEnrich: (id: string) => void;
+  onArchive?: (id: string) => void;
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onToggleAll: () => void;
@@ -115,7 +116,7 @@ function ColHeader({ field, label, sort, onSort, className }: ColHeaderProps): R
 }
 
 export function InboxTable({
-  items, startIndex, onEnrich,
+  items, startIndex, onEnrich, onArchive,
   selectedIds, onToggleSelect, onToggleAll, allSelected,
   sort, onSort,
 }: InboxTableProps): React.ReactElement {
@@ -246,13 +247,24 @@ export function InboxTable({
                   </td>
                   {/* Actions */}
                   <td className="py-3.5 px-4">
-                    <button
-                      onClick={() => onEnrich(item.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
-                      title="Bổ sung thông tin"
-                    >
-                      <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                    </button>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {onArchive && (
+                        <button
+                          onClick={() => onArchive(item.id)}
+                          className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                          title="Ẩn sản phẩm"
+                        >
+                          <Archive className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onEnrich(item.id)}
+                        className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
+                        title="Bổ sung thông tin"
+                      >
+                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

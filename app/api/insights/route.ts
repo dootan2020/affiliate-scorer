@@ -3,8 +3,8 @@ import { prisma } from "@/lib/db";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 const DEFAULT_WEIGHTS: WeightMap = {
-  commission: 0.2, trending: 0.2, competition: 0.2,
-  contentFit: 0.15, price: 0.15, platform: 0.1,
+  commission: 0.25, trending: 0.25, competition: 0.20,
+  priceAppeal: 0.15, salesVelocity: 0.15,
 };
 
 function safeJsonParse<T>(json: string, fallback: T): T {

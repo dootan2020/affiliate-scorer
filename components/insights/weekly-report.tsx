@@ -60,9 +60,8 @@ const WEIGHT_LABELS: Record<keyof WeightMap, string> = {
   commission: "Hoa hồng",
   trending: "Xu hướng",
   competition: "Cạnh tranh",
-  contentFit: "Phù hợp nội dung",
-  price: "Giá",
-  platform: "Platform",
+  priceAppeal: "Sức hút giá",
+  salesVelocity: "Tốc độ bán",
 };
 
 export function WeeklyReport({

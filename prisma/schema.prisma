@@ -148,6 +148,9 @@ model Feedback {
   dataImport   DataImport? @relation(fields: [dataImportId], references: [id])
 
   @@index([productId])
+  source String @default("manual") // "manual" | "implicit" | "outcome" | "quick"
+
+  @@unique([productId, source], name: "productId_source")
   @@index([overallSuccess])
   @@index([feedbackDate])
   @@index([campaignId])
@@ -1293,4 +1296,16 @@ model Episode {
 
   @@index([seriesId])
   @@index([seriesId, episodeNumber])
+}
+
+// ─── SCORING SYSTEM REDESIGN ───
+
+model ScoringGlobalStats {
+  id        String   @id @default("singleton")
+  count     Int      @default(0)
+  sumRaw    Float    @default(0)
+  sumSqRaw  Float    @default(0)
+  globalMin Float    @default(100)
+  globalMax Float    @default(0)
+  updatedAt DateTime @updatedAt
 }

@@ -1,11 +1,22 @@
-// Shared service: sync ProductIdentity scores (content potential + market + combined)
+// Phase 05: 3-Layer Combined Score with Global Normalization
+// Layer 1: Base Formula (5 components, no AI) -> raw 0-100
+// Layer 2: AI Expert (4 rubric criteria) -> raw 0-100
+// Layer 3: Combined = aiScore * 0.55 + baseFormula * 0.45 -> sigmoid normalize
+//
 // Called from:
 //   1. POST /api/upload/products — after scoreProducts() completes
 //   2. POST /api/inbox/score-all — manual batch
 //   3. POST /api/inbox/[id]/score — manual single
+//   4. POST /api/internal/rescore-identities — full re-score
 
 import { prisma } from "@/lib/db";
 import { calculateContentPotentialScore } from "@/lib/scoring/content-potential";
+import { calculateBaseScore, type BaseScoreInput } from "@/lib/scoring/formula";
+import {
+  getGlobalStats,
+  updateGlobalStats,
+  normalizeWithGlobalStats,
+} from "@/lib/scoring/global-stats";
 
 interface IdentityWithProduct {
   id: string;
@@ -22,6 +33,13 @@ interface IdentityWithProduct {
     totalKOL: number | null;
     totalVideos: number | null;
     commissionRate: number | null;
+    sales7d: number | null;
+    salesTotal: number | null;
+    salesGrowth7d: number | null;
+    kolOrderRate: number | null;
+    affiliateCount: number | null;
+    price: number;
+    commissionVND: number;
   } | null;
 }
 
@@ -32,41 +50,56 @@ const IDENTITY_INCLUDE = {
       totalKOL: true,
       totalVideos: true,
       commissionRate: true,
+      sales7d: true,
+      salesTotal: true,
+      salesGrowth7d: true,
+      kolOrderRate: true,
+      affiliateCount: true,
+      price: true,
+      commissionVND: true,
     },
   },
 } as const;
 
 const PARALLEL_WRITES = 20;
-const NORMALIZE_MIN_BATCH = 10;
 
-/** Normalize raw scores to 20-100 range for better discrimination */
-function normalizeScores(
-  updates: Array<{ id: string; scores: ReturnType<typeof computeScores> }>,
-): void {
-  const raw = updates
-    .map((u) => u.scores.combinedScore)
-    .filter((s): s is number => s != null);
-  if (raw.length < NORMALIZE_MIN_BATCH) return;
-
-  const min = Math.min(...raw);
-  const max = Math.max(...raw);
-  if (max === min) return; // all same score, skip
-
-  for (const u of updates) {
-    if (u.scores.combinedScore == null) continue;
-    u.scores.combinedScore = Math.round(
-      ((u.scores.combinedScore - min) / (max - min)) * 80 + 20,
-    );
+/** Compute raw combined score using 3-layer architecture */
+function computeRawCombinedScore(identity: IdentityWithProduct): number | null {
+  // Layer 1: BASE FORMULA SCORE (no AI, pure data — Phase 03)
+  let baseFormulaScore: number | null = null;
+  if (identity.product) {
+    const input: BaseScoreInput = {
+      commissionRate: identity.product.commissionRate ?? 0,
+      commissionVND: identity.product.commissionVND,
+      sales7d: identity.product.sales7d,
+      salesTotal: identity.product.salesTotal,
+      salesGrowth7d: identity.product.salesGrowth7d,
+      totalKOL: identity.product.totalKOL,
+      totalVideos: identity.product.totalVideos,
+      kolOrderRate: identity.product.kolOrderRate,
+      affiliateCount: identity.product.affiliateCount,
+      price: identity.product.price ?? Number(identity.price) ?? 0,
+    };
+    baseFormulaScore = calculateBaseScore(input).total;
   }
-}
 
-function computeScores(identity: IdentityWithProduct): {
-  contentPotentialScore: number;
-  marketScore: number | null;
-  combinedScore: number | null;
-  inboxState: string;
-} {
-  const contentScore = calculateContentPotentialScore({
+  // Layer 2: AI EXPERT SCORE (rubric-anchored — Phase 02)
+  const aiScore =
+    identity.product?.aiScore ??
+    (identity.marketScore ? Number(identity.marketScore) : null);
+
+  // Layer 3: COMBINED SCORE (blended)
+  const hasAI = aiScore != null && aiScore > 0;
+  const hasFormula = baseFormulaScore != null;
+
+  if (hasAI && hasFormula) {
+    return aiScore * 0.55 + baseFormulaScore! * 0.45;
+  }
+  if (hasAI) return aiScore;
+  if (hasFormula) return baseFormulaScore;
+
+  // Last resort: content potential as fallback
+  return calculateContentPotentialScore({
     imageUrl: identity.imageUrl,
     price: identity.price,
     category: identity.category,
@@ -78,30 +111,31 @@ function computeScores(identity: IdentityWithProduct): {
       : (identity.product?.commissionRate ?? null),
     description: identity.description,
   });
-
-  const marketScore = identity.product?.aiScore
-    ?? (identity.marketScore ? Number(identity.marketScore) : null);
-
-  let combinedScore: number | null = null;
-  if (marketScore != null && contentScore != null) {
-    // 70% market (AI-scored, wider range) + 30% content (formula, tends to inflate)
-    combinedScore = Math.round(marketScore * 0.70 + contentScore * 0.30);
-  } else if (contentScore != null) {
-    combinedScore = contentScore;
-  } else if (marketScore != null) {
-    combinedScore = marketScore;
-  }
-
-  const inboxState =
-    identity.inboxState === "new" || identity.inboxState === "enriched"
-      ? "scored"
-      : identity.inboxState;
-
-  return { contentPotentialScore: contentScore, marketScore, combinedScore, inboxState };
 }
 
-/** Score specific identities by ID. Returns count scored. */
-export async function syncIdentityScores(identityIds: string[]): Promise<number> {
+function computeContentScore(identity: IdentityWithProduct): number {
+  return calculateContentPotentialScore({
+    imageUrl: identity.imageUrl,
+    price: identity.price,
+    category: identity.category,
+    title: identity.title,
+    totalKOL: identity.product?.totalKOL ?? null,
+    totalVideos: identity.product?.totalVideos ?? null,
+    commissionRate: identity.commissionRate
+      ? Number(identity.commissionRate)
+      : (identity.product?.commissionRate ?? null),
+    description: identity.description,
+  });
+}
+
+function computeInboxState(current: string): string {
+  return current === "new" || current === "enriched" ? "scored" : current;
+}
+
+/** Score specific identities by ID with global normalization. Returns count scored. */
+export async function syncIdentityScores(
+  identityIds: string[],
+): Promise<number> {
   if (identityIds.length === 0) return 0;
 
   const identities = await prisma.productIdentity.findMany({
@@ -111,33 +145,48 @@ export async function syncIdentityScores(identityIds: string[]): Promise<number>
 
   const updates = identities.map((identity) => ({
     id: identity.id,
-    scores: computeScores(identity),
+    contentPotentialScore: computeContentScore(identity),
+    rawCombined: computeRawCombinedScore(identity),
+    inboxState: computeInboxState(identity.inboxState),
   }));
 
-  normalizeScores(updates);
+  // Update global stats with this batch's raw scores
+  const rawScores = updates
+    .map((u) => u.rawCombined)
+    .filter((s): s is number => s != null);
+  if (rawScores.length > 0) {
+    await updateGlobalStats(rawScores);
+  }
 
-  // Parallel standalone updates (no $transaction to avoid P2028 timeout)
+  // Get updated stats for normalization
+  const stats = await getGlobalStats();
+
+  // Normalize and write
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
     const chunk = updates.slice(i, i + PARALLEL_WRITES);
     await Promise.allSettled(
-      chunk.map(({ id, scores }) =>
-        prisma.productIdentity.update({
+      chunk.map(({ id, contentPotentialScore, rawCombined, inboxState }) => {
+        const combinedScore =
+          rawCombined != null
+            ? normalizeWithGlobalStats(rawCombined, stats)
+            : null;
+        return prisma.productIdentity.update({
           where: { id },
           data: {
-            contentPotentialScore: scores.contentPotentialScore,
-            marketScore: scores.marketScore,
-            combinedScore: scores.combinedScore,
-            inboxState: scores.inboxState,
+            contentPotentialScore,
+            marketScore: rawCombined, // Store raw for reference
+            combinedScore,
+            inboxState,
           },
-        }),
-      ),
+        });
+      }),
     );
   }
 
   return updates.length;
 }
 
-/** Score ALL non-archived identities. Returns count scored. Optional onProgress callback receives (done, total). */
+/** Score ALL non-archived identities with global normalization. */
 export async function syncAllIdentityScores(
   onProgress?: (done: number, total: number) => void,
 ): Promise<number> {
@@ -148,28 +197,41 @@ export async function syncAllIdentityScores(
 
   const updates = identities.map((identity) => ({
     id: identity.id,
-    scores: computeScores(identity),
+    contentPotentialScore: computeContentScore(identity),
+    rawCombined: computeRawCombinedScore(identity),
+    inboxState: computeInboxState(identity.inboxState),
   }));
 
-  normalizeScores(updates);
+  // Update global stats
+  const rawScores = updates
+    .map((u) => u.rawCombined)
+    .filter((s): s is number => s != null);
+  if (rawScores.length > 0) {
+    await updateGlobalStats(rawScores);
+  }
 
+  const stats = await getGlobalStats();
   const total = updates.length;
   let done = 0;
 
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
     const chunk = updates.slice(i, i + PARALLEL_WRITES);
     await Promise.allSettled(
-      chunk.map(({ id, scores }) =>
-        prisma.productIdentity.update({
+      chunk.map(({ id, contentPotentialScore, rawCombined, inboxState }) => {
+        const combinedScore =
+          rawCombined != null
+            ? normalizeWithGlobalStats(rawCombined, stats)
+            : null;
+        return prisma.productIdentity.update({
           where: { id },
           data: {
-            contentPotentialScore: scores.contentPotentialScore,
-            marketScore: scores.marketScore,
-            combinedScore: scores.combinedScore,
-            inboxState: scores.inboxState,
+            contentPotentialScore,
+            marketScore: rawCombined,
+            combinedScore,
+            inboxState,
           },
-        }),
-      ),
+        });
+      }),
     );
     done = Math.min(i + PARALLEL_WRITES, total);
     if (onProgress) onProgress(done, total);
@@ -178,8 +240,10 @@ export async function syncAllIdentityScores(
   return updates.length;
 }
 
-/** Score a single identity. Returns score data. */
-export async function syncSingleIdentityScore(identityId: string): Promise<{
+/** Score a single identity with global normalization. */
+export async function syncSingleIdentityScore(
+  identityId: string,
+): Promise<{
   contentPotentialScore: number;
   marketScore: number | null;
   combinedScore: number | null;
@@ -192,16 +256,30 @@ export async function syncSingleIdentityScore(identityId: string): Promise<{
 
   if (!identity) return null;
 
-  const scores = computeScores(identity);
+  const contentPotentialScore = computeContentScore(identity);
+  const rawCombined = computeRawCombinedScore(identity);
+  const inboxState = computeInboxState(identity.inboxState);
+
+  // Update global stats with single raw score
+  if (rawCombined != null) {
+    await updateGlobalStats([rawCombined]);
+  }
+
+  const stats = await getGlobalStats();
+  const combinedScore =
+    rawCombined != null
+      ? normalizeWithGlobalStats(rawCombined, stats)
+      : null;
+
   await prisma.productIdentity.update({
     where: { id: identityId },
     data: {
-      contentPotentialScore: scores.contentPotentialScore,
-      marketScore: scores.marketScore,
-      combinedScore: scores.combinedScore,
-      inboxState: scores.inboxState,
+      contentPotentialScore,
+      marketScore: rawCombined,
+      combinedScore,
+      inboxState,
     },
   });
 
-  return scores;
+  return { contentPotentialScore, marketScore: rawCombined, combinedScore, inboxState };
 }

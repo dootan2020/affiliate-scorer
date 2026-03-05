@@ -1,13 +1,14 @@
+// Phase 03+07: Learning weights with new 5-component formula
+
 import { prisma } from "@/lib/db";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 export const DEFAULT_WEIGHTS: WeightMap = {
-  commission: 0.2,
-  trending: 0.2,
-  competition: 0.2,
-  contentFit: 0.15,
-  price: 0.15,
-  platform: 0.1,
+  commission: 0.25,
+  trending: 0.25,
+  competition: 0.20,
+  priceAppeal: 0.15,
+  salesVelocity: 0.15,
 };
 
 export async function getWeights(): Promise<WeightMap> {
@@ -21,16 +22,13 @@ export async function getWeights(): Promise<WeightMap> {
 
     const parsed = JSON.parse(latest.weightsAfter) as Partial<WeightMap>;
 
-    const weights: WeightMap = {
+    return {
       commission: parsed.commission ?? DEFAULT_WEIGHTS.commission,
       trending: parsed.trending ?? DEFAULT_WEIGHTS.trending,
       competition: parsed.competition ?? DEFAULT_WEIGHTS.competition,
-      contentFit: parsed.contentFit ?? DEFAULT_WEIGHTS.contentFit,
-      price: parsed.price ?? DEFAULT_WEIGHTS.price,
-      platform: parsed.platform ?? DEFAULT_WEIGHTS.platform,
+      priceAppeal: parsed.priceAppeal ?? DEFAULT_WEIGHTS.priceAppeal,
+      salesVelocity: parsed.salesVelocity ?? DEFAULT_WEIGHTS.salesVelocity,
     };
-
-    return weights;
   } catch {
     return DEFAULT_WEIGHTS;
   }
@@ -47,7 +45,7 @@ export async function saveWeights(
     patterns: string[];
     insights: string;
     weightsBefore: WeightMap;
-  }
+  },
 ): Promise<void> {
   await prisma.learningLog.create({
     data: {
@@ -60,7 +58,7 @@ export async function saveWeights(
       weightsAfter: JSON.stringify(weights),
       patternsFound: JSON.stringify(context.patterns),
       insights: context.insights,
-      scoringVersion: "v1",
+      scoringVersion: "v2-rubric",
     },
   });
 }

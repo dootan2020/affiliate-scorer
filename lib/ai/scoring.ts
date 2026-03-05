@@ -1,8 +1,10 @@
+// Phase 02+05: AI Scoring Pipeline
+// Rubric-anchored scoring with 4 criteria, model tracking, batch validation
+
 import { prisma } from "@/lib/db";
 import { callAI, MAX_TOKENS_SCORING } from "@/lib/ai/call-ai";
 import { buildScoringPrompt } from "@/lib/ai/prompts";
 import { getWeights } from "@/lib/scoring/weights";
-import { calculateBaseScore } from "@/lib/scoring/formula";
 import { getPersonalizedScore, getFeedbackCount } from "@/lib/scoring/personalize";
 import { computeRealTrending } from "@/lib/utils/product-badges";
 import type { Product as ProductModel } from "@/lib/types/product";
@@ -15,27 +17,78 @@ export interface ScoredProduct extends ProductModel {
   scoringVersion: string;
 }
 
+interface RubricScores {
+  market_demand: number;
+  quality_trust: number;
+  viral_potential: number;
+  risk: number;
+}
+
 interface ClaudeScoreItem {
   id: string;
+  scores: RubricScores;
   aiScore: number;
-  scoreBreakdown: Record<
-    string,
-    { score: number; weight: number; weighted: number }
-  >;
   reason: string;
-  contentSuggestion: string;
-  platformAdvice: string;
+  contentAngle: string;
+  // Legacy compat
+  scoreBreakdown?: Record<string, unknown>;
+  contentSuggestion?: string;
+  platformAdvice?: string;
 }
 
 interface ScoreOptions {
   batchId?: string;
   productIds?: string[];
+  identityIds?: string[];
   includeAlreadyScored?: boolean;
 }
 
 const CLAUDE_BATCH_SIZE = 30;
 const CLAUDE_CONCURRENCY = 3;
 const PARALLEL_WRITES = 20;
+const VALID_TIERS = [20, 40, 60, 80, 100];
+
+/** Snap a value to the nearest valid rubric tier */
+function snapToTier(value: number): number {
+  return VALID_TIERS.reduce((a, b) =>
+    Math.abs(b - value) < Math.abs(a - value) ? b : a,
+  );
+}
+
+/** Validate and correct rubric scores from AI response */
+function validateBatchScores(scores: ClaudeScoreItem[]): ClaudeScoreItem[] {
+  const mean =
+    scores.length > 0
+      ? scores.reduce((s, p) => s + p.aiScore, 0) / scores.length
+      : 0;
+
+  if (mean > 70 || mean < 40) {
+    console.warn(
+      `[AI Scoring] Batch mean ${mean.toFixed(1)} outside expected range 40-70`,
+    );
+  }
+
+  for (const item of scores) {
+    if (!item.scores) continue;
+    // Snap each sub-score to valid tier
+    for (const key of Object.keys(item.scores) as Array<keyof RubricScores>) {
+      const val = item.scores[key];
+      if (typeof val === "number" && !VALID_TIERS.includes(val)) {
+        item.scores[key] = snapToTier(val);
+      }
+    }
+    // Recompute aiScore from corrected sub-scores
+    const s = item.scores;
+    item.aiScore = Math.round(
+      (s.market_demand ?? 60) * 0.35 +
+        (s.quality_trust ?? 60) * 0.25 +
+        (s.viral_potential ?? 60) * 0.25 +
+        (s.risk ?? 60) * 0.15,
+    );
+  }
+
+  return scores;
+}
 
 async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
   let products: ProductModel[];
@@ -59,7 +112,7 @@ async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
     });
   }
 
-  // Batch trending enrichment: 1 query instead of N findFirst
+  // Batch trending enrichment
   const needsTrending = products
     .filter((p) => p.salesGrowth7d === null)
     .map((p) => p.id);
@@ -92,34 +145,65 @@ async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
 function parseClaudeResponse(text: string): ClaudeScoreItem[] {
   const jsonMatch = text.match(/\[[\s\S]*\]/);
   if (!jsonMatch) {
-    throw new Error("Không tìm thấy JSON array trong phản hồi Claude");
+    throw new Error("No JSON array found in AI response");
   }
   try {
     return JSON.parse(jsonMatch[0]) as ClaudeScoreItem[];
   } catch (parseError) {
-    console.error("[parseClaudeResponse] JSON parse failed:", parseError, "Raw:", jsonMatch[0].substring(0, 200));
+    console.error(
+      "[parseClaudeResponse] JSON parse failed:",
+      parseError,
+      "Raw:",
+      jsonMatch[0].substring(0, 200),
+    );
     return [];
   }
 }
 
 async function scoreBatchWithClaude(
   batch: ProductModel[],
-  weights: ReturnType<typeof getWeights> extends Promise<infer T> ? T : never,
-): Promise<Map<string, ClaudeScoreItem>> {
+  weights: Awaited<ReturnType<typeof getWeights>>,
+): Promise<{ items: Map<string, ClaudeScoreItem>; modelUsed: string }> {
   try {
     const { system, user } = buildScoringPrompt({ products: batch, weights });
-    const { text: response } = await callAI(system, user, MAX_TOKENS_SCORING, "scoring");
-    const items = parseClaudeResponse(response);
-    return new Map(items.map((item) => [item.id, item]));
+    const { text: response, modelUsed } = await callAI(
+      system,
+      user,
+      MAX_TOKENS_SCORING,
+      "scoring",
+    );
+    const rawItems = parseClaudeResponse(response);
+    const validatedItems = validateBatchScores(rawItems);
+    return {
+      items: new Map(validatedItems.map((item) => [item.id, item])),
+      modelUsed,
+    };
   } catch (error) {
-    console.error(`Claude batch scoring failed (${batch.length} products), using base score:`, error);
-    return new Map();
+    console.error(
+      `Claude batch scoring failed (${batch.length} products):`,
+      error,
+    );
+    return { items: new Map(), modelUsed: "unknown" };
   }
+}
+
+function buildScoreBreakdownJson(
+  claudeItem: ClaudeScoreItem,
+  modelUsed: string,
+): string {
+  return JSON.stringify({
+    rubric: claudeItem.scores,
+    reason: claudeItem.reason,
+    contentAngle: claudeItem.contentAngle,
+    scoredByModel: modelUsed,
+    scoredAt: new Date().toISOString(),
+  });
 }
 
 async function mergeWithBaseScore(
   product: ProductModel,
   claudeItem: ClaudeScoreItem | undefined,
+  modelUsed: string,
   usePersonalization: boolean,
 ): Promise<{
   aiScore: number;
@@ -128,51 +212,32 @@ async function mergeWithBaseScore(
   platformAdvice: string;
   scoringVersion: string;
 }> {
-  const base = calculateBaseScore(product);
-
   if (!claudeItem) {
-    const baseTotal = base.total;
-    let finalScore = baseTotal;
-    let version = "v1";
-
-    if (usePersonalization) {
-      const personalized = await getPersonalizedScore(product, baseTotal);
-      if (personalized) {
-        finalScore = personalized.personalizedTotal;
-        version = "v2-personalized";
-      }
-    }
-
+    // No AI response — store null aiScore (base formula handles in score-identity)
     return {
-      aiScore: finalScore,
-      scoreBreakdown: JSON.stringify(base.breakdown),
+      aiScore: 0,
+      scoreBreakdown: JSON.stringify({ scoredByModel: modelUsed, error: "no_response" }),
       contentSuggestion: "",
       platformAdvice: "",
-      scoringVersion: version,
+      scoringVersion: "v2-rubric",
     };
   }
 
-  const blendedScore = Math.round(
-    claudeItem.aiScore * 0.6 + base.total * 0.4,
-  );
-
-  let finalScore = blendedScore;
-  let version = "v1";
+  let finalScore = claudeItem.aiScore;
 
   if (usePersonalization) {
-    const personalized = await getPersonalizedScore(product, blendedScore);
+    const personalized = await getPersonalizedScore(product, finalScore);
     if (personalized) {
       finalScore = personalized.personalizedTotal;
-      version = "v2-personalized";
     }
   }
 
   return {
     aiScore: Math.min(100, Math.max(0, finalScore)),
-    scoreBreakdown: JSON.stringify(claudeItem.scoreBreakdown),
-    contentSuggestion: claudeItem.contentSuggestion,
-    platformAdvice: claudeItem.platformAdvice,
-    scoringVersion: version,
+    scoreBreakdown: buildScoreBreakdownJson(claudeItem, modelUsed),
+    contentSuggestion: claudeItem.contentAngle || claudeItem.contentSuggestion || "",
+    platformAdvice: claudeItem.platformAdvice || "",
+    scoringVersion: "v2-rubric",
   };
 }
 
@@ -187,7 +252,7 @@ export async function scoreProducts(
 
   const weights = await getWeights();
   const fbCount = await getFeedbackCount();
-  const usePersonalization = fbCount >= 30;
+  const usePersonalization = fbCount >= 5; // Phase 07: lowered from 30 to 5
 
   // Split into Claude batches
   const batches: ProductModel[][] = [];
@@ -197,6 +262,7 @@ export async function scoreProducts(
 
   // Process Claude batches with concurrency limit
   const allClaudeItems = new Map<string, ClaudeScoreItem>();
+  let lastModelUsed = "unknown";
 
   for (let i = 0; i < batches.length; i += CLAUDE_CONCURRENCY) {
     const concurrentBatches = batches.slice(i, i + CLAUDE_CONCURRENCY);
@@ -206,23 +272,29 @@ export async function scoreProducts(
 
     for (const result of results) {
       if (result.status === "fulfilled") {
-        for (const [id, item] of result.value) {
+        lastModelUsed = result.value.modelUsed;
+        for (const [id, item] of result.value.items) {
           allClaudeItems.set(id, item);
         }
       }
     }
   }
 
-  // Merge Claude + base scores for all products
+  // Merge Claude + base scores
   const updates = await Promise.all(
     products.map(async (product) => {
       const claudeItem = allClaudeItems.get(product.id);
-      const scores = await mergeWithBaseScore(product, claudeItem, usePersonalization);
+      const scores = await mergeWithBaseScore(
+        product,
+        claudeItem,
+        lastModelUsed,
+        usePersonalization,
+      );
       return { product, scores };
     }),
   );
 
-  // Write scores to DB — parallel standalone updates (no $transaction to avoid P2028)
+  // Write scores to DB
   let writeErrors = 0;
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
     const chunk = updates.slice(i, i + PARALLEL_WRITES);
@@ -256,7 +328,6 @@ export async function scoreProducts(
   return scored as ScoredProduct[];
 }
 
-/** Score ALL products in database (including already-scored ones) */
 export async function scoreAllProducts(): Promise<ScoredProduct[]> {
   return scoreProducts({ includeAlreadyScored: true });
 }

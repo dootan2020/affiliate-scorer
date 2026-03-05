@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import type { ScoreBreakdown } from "@/lib/scoring/formula";
-
 interface ProductDetailResponse {
   id: string;
   name: string;
@@ -23,7 +21,7 @@ interface ProductDetailResponse {
   shopRating: number | null;
   aiScore: number | null;
   aiRank: number | null;
-  scoreBreakdown: ScoreBreakdown | null;
+  scoreBreakdown: Record<string, unknown> | null;
   scoringVersion: string | null;
   contentSuggestion: string | null;
   platformAdvice: string | null;
@@ -51,10 +49,10 @@ export async function GET(
       );
     }
 
-    let parsedBreakdown: ScoreBreakdown | null = null;
+    let parsedBreakdown: Record<string, unknown> | null = null;
     if (product.scoreBreakdown) {
       try {
-        parsedBreakdown = JSON.parse(product.scoreBreakdown) as ScoreBreakdown;
+        parsedBreakdown = JSON.parse(product.scoreBreakdown) as Record<string, unknown>;
       } catch {
         parsedBreakdown = null;
       }

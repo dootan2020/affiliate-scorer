@@ -160,9 +160,8 @@ export async function runLearningCycle(): Promise<LearningResult> {
       commission: parsed.weightAdjustments.commission ?? currentWeights.commission,
       trending: parsed.weightAdjustments.trending ?? currentWeights.trending,
       competition: parsed.weightAdjustments.competition ?? currentWeights.competition,
-      contentFit: parsed.weightAdjustments.contentFit ?? currentWeights.contentFit,
-      price: parsed.weightAdjustments.price ?? currentWeights.price,
-      platform: parsed.weightAdjustments.platform ?? currentWeights.platform,
+      priceAppeal: parsed.weightAdjustments.priceAppeal ?? currentWeights.priceAppeal,
+      salesVelocity: parsed.weightAdjustments.salesVelocity ?? currentWeights.salesVelocity,
     };
 
     await saveWeights(newWeights, {

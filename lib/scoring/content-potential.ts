@@ -48,6 +48,20 @@ const RISK_KEYWORDS: string[] = [
   "bổ thận", "tăng cường sinh lý", "kéo dài", "testosterone",
 ];
 
+// Phase 04: Content ease type for display badge
+export type ContentEase = "easy" | "medium" | "hard";
+
+/** Quick content ease assessment — for display only, NOT in combinedScore */
+export function assessContentEase(input: ContentScoreInput): {
+  ease: ContentEase;
+  score: number;
+} {
+  const score = calculateContentPotentialScore(input);
+  const ease: ContentEase =
+    score >= 65 ? "easy" : score >= 40 ? "medium" : "hard";
+  return { ease, score };
+}
+
 /** Tính Content Potential Score (0-100) */
 export function calculateContentPotentialScore(input: ContentScoreInput): number {
   let score = 0;

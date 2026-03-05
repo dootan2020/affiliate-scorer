@@ -1,18 +1,15 @@
+// Phase 03: Base Formula — 5 components, VN market validated
+// Commission(25%) + Trending(25%) + Competition(20%) + PriceAppeal(15%) + SalesVelocity(15%)
+// Removed: contentFit (redundant with AI), platform (no discrimination)
+
 import type { Product as ProductModel } from "@/lib/types/product";
 
-export interface CriterionScore {
-  score: number;
-  weight: number;
-  weighted: number;
-}
-
 export interface ScoreBreakdown {
-  commission: CriterionScore;
-  trending: CriterionScore;
-  competition: CriterionScore;
-  contentFit: CriterionScore;
-  price: CriterionScore;
-  platform: CriterionScore;
+  commission: number;
+  trending: number;
+  competition: number;
+  priceAppeal: number;
+  salesVelocity: number;
 }
 
 export interface BaseScoreResult {
@@ -20,253 +17,195 @@ export interface BaseScoreResult {
   breakdown: ScoreBreakdown;
 }
 
-const DEFAULT_WEIGHTS: Record<keyof ScoreBreakdown, number> = {
-  commission: 0.2,
-  trending: 0.2,
-  competition: 0.2,
-  contentFit: 0.15,
-  price: 0.15,
-  platform: 0.1,
-};
-
-/** PRD 4.1 - Commission Score (20%) */
-function scoreCommission(rate: number, commissionVND: number): number {
-  let base = 0;
-  if (rate >= 15) base = 100;
-  else if (rate >= 10) base = 80;
-  else if (rate >= 7) base = 60;
-  else if (rate >= 4) base = 40;
-  else if (rate >= 1) base = 20;
-
-  // Bonus: commission VND in 30K-80K sweet spot
-  const bonus = commissionVND >= 30000 && commissionVND <= 80000 ? 10 : 0;
-  return Math.min(100, base + bonus);
+/** Input for base formula — subset of Product fields needed */
+export interface BaseScoreInput {
+  commissionRate: number;
+  commissionVND?: number;
+  sales7d?: number | null;
+  salesTotal?: number | null;
+  salesGrowth7d?: number | null;
+  totalKOL?: number | null;
+  totalVideos?: number | null;
+  kolOrderRate?: number | null;
+  affiliateCount?: number | null;
+  price: number;
+  category?: string | null;
 }
 
-/**
- * PRD 4.1 - Trending Score (20%)
- *
- * FastMoss has NO growth rate column. Estimation strategy:
- *
- * First upload (no history): estimate trending_ratio = sales7d / salesTotal
- *   High ratio (e.g. 8351/61766 = 13.5%) → product is hot
- *   Low ratio  (e.g. 100/500000 = 0.02%) → product is cooling
- *
- * From 2nd upload: use real growth from historical snapshots
- *   trending = (sales7d_now - sales7d_prev) / sales7d_prev * 100
- */
-function scoreTrending(product: ProductModel): number {
-  // If we have actual growth data (from history or KaloData), use PRD thresholds
-  if (product.salesGrowth7d !== null) {
-    const g = product.salesGrowth7d;
-    if (g < 0) return 0;
-    if (g <= 9) return 20;
-    if (g <= 49) return 40;
-    if (g <= 99) return 60;
-    if (g <= 199) return 80;
+/** Commission Score (25%) — continuous curve for VN TikTok affiliate */
+function scoreCommission(rate: number, commissionVND?: number): number {
+  let base: number;
+  if (rate <= 0) base = 0;
+  else if (rate <= 3) base = rate * 7; // 0-21
+  else if (rate <= 7) base = 21 + (rate - 3) * 8; // 21-53
+  else if (rate <= 12) base = 53 + (rate - 7) * 7; // 53-88
+  else if (rate <= 20) base = 88 + (rate - 12) * 1.5; // 88-100
+  else base = 100;
+
+  // VND bonus: commission per sale in sweet spot 20K-100K VND
+  const vnd = commissionVND ?? 0;
+  const vndBonus =
+    vnd >= 20000 && vnd <= 100000 ? 5 : vnd > 100000 ? 3 : 0;
+
+  return Math.min(100, Math.round(base + vndBonus));
+}
+
+/** Trending Score (25%) — growth data or sales ratio estimate */
+function scoreTrending(
+  salesGrowth7d: number | null | undefined,
+  sales7d: number | null | undefined,
+  salesTotal: number | null | undefined,
+): number {
+  // Priority 1: Real growth data
+  if (salesGrowth7d != null) {
+    const g = salesGrowth7d;
+    if (g <= -30) return 0;
+    if (g <= -10) return 15;
+    if (g <= 0) return 25;
+    if (g <= 10) return 35;
+    if (g <= 30) return 50;
+    if (g <= 80) return 70;
+    if (g <= 200) return 90;
     if (g <= 500) return 100;
-    return 80; // > 500% = spike risk
+    return 75; // >500% = spike risk
   }
 
-  // Estimate from sales7d / salesTotal ratio
-  const sales7d = product.sales7d ?? 0;
-  const salesTotal = product.salesTotal ?? 0;
-  if (salesTotal <= 0 || sales7d <= 0) return 20;
+  // Priority 2: Estimate from sales7d/salesTotal ratio
+  const s7d = sales7d ?? 0;
+  const sTotal = salesTotal ?? 0;
+  if (sTotal <= 0 || s7d <= 0) return 20;
 
-  const ratio = sales7d / salesTotal;
-  // ratio interpretation:
-  // > 0.5  → almost all sales in last 7d = brand new & hot
-  // > 0.2  → very high recent momentum
-  // > 0.1  → strong recent sales
-  // > 0.05 → moderate
-  // > 0.02 → average
-  // < 0.02 → cooling down
-  if (ratio > 0.5) return 80; // too new, spike risk
-  if (ratio > 0.2) return 100; // sweet spot — bùng
-  if (ratio > 0.1) return 80;
-  if (ratio > 0.05) return 60;
-  if (ratio > 0.02) return 40;
-  return 20;
+  const ratio = s7d / sTotal;
+  if (ratio > 0.5) return 70;
+  if (ratio > 0.2) return 90;
+  if (ratio > 0.1) return 75;
+  if (ratio > 0.05) return 55;
+  if (ratio > 0.02) return 35;
+  return 15;
 }
 
-/**
- * PRD 4.1 - Competition Score (20%)
- *
- * Updated: uses 3 inputs from FastMoss:
- *   - totalKOL: number of KOLs selling this product
- *   - totalVideos: total selling videos
- *   - kolOrderRate: KOL order conversion rate (%)
- *
- * High KOL count + high videos = saturated market
- * Low KOL + high order rate = opportunity
- */
-function scoreCompetition(product: ProductModel): number {
-  const kol = product.totalKOL ?? product.affiliateCount ?? 0;
-  const videos = product.totalVideos ?? 0;
-  const kolRate = product.kolOrderRate ?? 0;
+/** Competition Score (20%) — KOL count + video saturation + conversion */
+function scoreCompetition(
+  totalKOL: number | null | undefined,
+  totalVideos: number | null | undefined,
+  kolOrderRate: number | null | undefined,
+  affiliateCount: number | null | undefined,
+): number {
+  const kol = totalKOL ?? affiliateCount ?? 0;
+  const videos = totalVideos ?? 0;
+  const kolRate = kolOrderRate ?? 0;
 
-  // Base score from KOL count (primary metric)
   let kolScore: number;
-  if (kol <= 5) kolScore = 100;
-  else if (kol <= 15) kolScore = 80;
-  else if (kol <= 30) kolScore = 60;
-  else if (kol <= 60) kolScore = 40;
-  else if (kol <= 100) kolScore = 20;
-  else kolScore = 0;
+  if (kol <= 3) kolScore = 100;
+  else if (kol <= 10) kolScore = 85;
+  else if (kol <= 25) kolScore = 65;
+  else if (kol <= 50) kolScore = 45;
+  else if (kol <= 100) kolScore = 25;
+  else kolScore = 10;
 
-  // Video competition penalty
   let videoPenalty = 0;
-  if (videos > 500) videoPenalty = -15;
+  if (videos > 1000) videoPenalty = -20;
+  else if (videos > 500) videoPenalty = -15;
   else if (videos > 200) videoPenalty = -10;
   else if (videos > 50) videoPenalty = -5;
 
-  // KOL order rate bonus (high conversion = proven product, less risk)
   let rateBonus = 0;
-  if (kolRate > 60) rateBonus = 10;
-  else if (kolRate > 40) rateBonus = 5;
+  if (kolRate > 60) rateBonus = 15;
+  else if (kolRate > 40) rateBonus = 10;
+  else if (kolRate > 20) rateBonus = 5;
 
   return Math.max(0, Math.min(100, kolScore + videoPenalty + rateBonus));
 }
 
-/** PRD 4.1 - Price Score (15%) */
-function scorePrice(priceVND: number): number {
-  if (priceVND >= 150000 && priceVND <= 500000) return 100;
-  if (priceVND > 500000 && priceVND <= 1000000) return 70;
-  if (priceVND >= 50000 && priceVND < 150000) return 60;
-  if (priceVND > 1000000 && priceVND <= 2000000) return 40;
-  return 20;
+/** Price Appeal (15%) — VN TikTok impulse buy sweet spot 80-200K */
+function scorePriceAppeal(priceVND: number): number {
+  if (priceVND >= 80000 && priceVND <= 200000) return 100;
+  if (priceVND >= 50000 && priceVND < 80000) return 80;
+  if (priceVND > 200000 && priceVND <= 400000) return 75;
+  if (priceVND >= 30000 && priceVND < 50000) return 55;
+  if (priceVND > 400000 && priceVND <= 800000) return 50;
+  if (priceVND > 800000 && priceVND <= 1500000) return 35;
+  if (priceVND < 30000) return 20;
+  return 15; // >1.5M too expensive for TikTok
 }
 
-/** Vietnamese category matching for Content Fit */
-const HOT_CATEGORIES = new Set([
-  "chăm sóc sắc đẹp & chăm sóc cá nhân",
-  "chăm sóc sắc đẹp",
-  "beauty",
-  "health",
-  "sức khỏe",
-  "làm đẹp",
-  "mỹ phẩm",
-  "thời trang",
-  "fashion",
-  "thời trang nữ",
-  "thời trang nam",
-  "công nghệ",
-  "điện tử",
-  "thiết bị gia dụng",
-  "gia dụng",
-  "đồ gia dụng",
-  "nhà cửa & đời sống",
-  "phụ kiện",
-  "đồ ăn & đồ uống",
-]);
-
-/** PRD 4.1 - Content Fit Score (15%) - AI đánh giá dựa trên product attributes */
-function scoreContentFit(product: ProductModel): number {
-  let score = 50;
-
-  // Category hotness
-  const lowerCat = product.category.toLowerCase();
-  if (HOT_CATEGORIES.has(lowerCat)) score += 20;
-  else {
-    // Partial match
-    for (const hot of HOT_CATEGORIES) {
-      if (lowerCat.includes(hot) || hot.includes(lowerCat)) {
-        score += 15;
-        break;
-      }
-    }
-  }
-
-  // Price range appeal (impulse buy range)
-  if (product.price >= 150000 && product.price <= 500000) score += 15;
-  else if (product.price >= 50000 && product.price < 150000) score += 5;
-
-  // Sales volume indicates market validation
-  const sales7d = product.sales7d ?? 0;
-  if (sales7d > 5000) score += 15;
-  else if (sales7d > 1000) score += 10;
-  else if (sales7d > 100) score += 5;
-
-  return Math.min(100, score);
+/** Sales Velocity (15%) — absolute sales7d volume = market validation */
+function scoreSalesVelocity(sales7d: number | null | undefined): number {
+  const s = sales7d ?? 0;
+  if (s >= 10000) return 100;
+  if (s >= 5000) return 90;
+  if (s >= 2000) return 75;
+  if (s >= 500) return 60;
+  if (s >= 100) return 45;
+  if (s >= 20) return 30;
+  if (s > 0) return 15;
+  return 5;
 }
 
-/** PRD 4.1 - Platform Advantage Score (10%) */
-function scorePlatform(
-  platform: string,
-  commissionRate: number
-): number {
-  const lower = platform.toLowerCase();
-  if (
-    lower === "both" ||
-    (lower.includes("shopee") && lower.includes("tiktok"))
-  ) {
-    return 100;
-  }
-  if (lower.includes("tiktok")) {
-    return commissionRate >= 7 ? 80 : 60;
-  }
-  if (lower.includes("shopee")) {
-    return commissionRate >= 7 ? 75 : 55;
-  }
-  return 50;
-}
+const WEIGHTS = {
+  commission: 0.25,
+  trending: 0.25,
+  competition: 0.2,
+  priceAppeal: 0.15,
+  salesVelocity: 0.15,
+};
 
-export function calculateBaseScore(
-  product: ProductModel,
-  weights: Partial<Record<keyof ScoreBreakdown, number>> = {}
-): BaseScoreResult {
-  const w = { ...DEFAULT_WEIGHTS, ...weights };
-
-  const commissionScore = scoreCommission(
-    product.commissionRate,
-    product.commissionVND
+/** Calculate base formula score from product data (no AI involved) */
+export function calculateBaseScore(input: BaseScoreInput): BaseScoreResult {
+  const commissionScore = scoreCommission(input.commissionRate, input.commissionVND);
+  const trendingScore = scoreTrending(
+    input.salesGrowth7d,
+    input.sales7d,
+    input.salesTotal,
   );
-  const trendingScore = scoreTrending(product);
-  const competitionScore = scoreCompetition(product);
-  const contentFitScore = scoreContentFit(product);
-  const priceScore = scorePrice(product.price);
-  const platformScore = scorePlatform(
-    product.platform,
-    product.commissionRate
+  const competitionScore = scoreCompetition(
+    input.totalKOL,
+    input.totalVideos,
+    input.kolOrderRate,
+    input.affiliateCount,
+  );
+  const priceScore = scorePriceAppeal(input.price);
+  const velocityScore = scoreSalesVelocity(input.sales7d);
+
+  const total = Math.min(
+    100,
+    Math.round(
+      commissionScore * WEIGHTS.commission +
+        trendingScore * WEIGHTS.trending +
+        competitionScore * WEIGHTS.competition +
+        priceScore * WEIGHTS.priceAppeal +
+        velocityScore * WEIGHTS.salesVelocity,
+    ),
   );
 
-  const breakdown: ScoreBreakdown = {
-    commission: {
-      score: commissionScore,
-      weight: w.commission,
-      weighted: commissionScore * w.commission,
-    },
-    trending: {
-      score: trendingScore,
-      weight: w.trending,
-      weighted: trendingScore * w.trending,
-    },
-    competition: {
-      score: competitionScore,
-      weight: w.competition,
-      weighted: competitionScore * w.competition,
-    },
-    contentFit: {
-      score: contentFitScore,
-      weight: w.contentFit,
-      weighted: contentFitScore * w.contentFit,
-    },
-    price: {
-      score: priceScore,
-      weight: w.price,
-      weighted: priceScore * w.price,
-    },
-    platform: {
-      score: platformScore,
-      weight: w.platform,
-      weighted: platformScore * w.platform,
+  return {
+    total,
+    breakdown: {
+      commission: commissionScore,
+      trending: trendingScore,
+      competition: competitionScore,
+      priceAppeal: priceScore,
+      salesVelocity: velocityScore,
     },
   };
+}
 
-  const total = Object.values(breakdown).reduce(
-    (sum, c) => sum + c.weighted,
-    0
-  );
-
-  return { total: Math.min(100, Math.round(total)), breakdown };
+/**
+ * Convenience: calculate from full Product model.
+ * Used by lib/ai/scoring.ts mergeWithBaseScore.
+ */
+export function calculateBaseScoreFromProduct(product: ProductModel): BaseScoreResult {
+  return calculateBaseScore({
+    commissionRate: product.commissionRate,
+    commissionVND: product.commissionVND,
+    sales7d: product.sales7d,
+    salesTotal: product.salesTotal,
+    salesGrowth7d: product.salesGrowth7d,
+    totalKOL: product.totalKOL,
+    totalVideos: product.totalVideos,
+    kolOrderRate: product.kolOrderRate,
+    affiliateCount: product.affiliateCount,
+    price: product.price,
+    category: product.category,
+  });
 }

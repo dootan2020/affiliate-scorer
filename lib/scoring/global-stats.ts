@@ -68,13 +68,13 @@ export async function updateGlobalStats(rawScores: number[]): Promise<void> {
 /**
  * Normalize a raw score to 0-100 using global z-score + sigmoid.
  *
- * K=1.5 gives nice spread:
- *   z=-2 -> ~5, z=-1 -> ~18, z=0 -> 50, z=1 -> ~82, z=2 -> ~95
+ * K=1.0 gives balanced spread:
+ *   z=-2 -> ~12, z=-1 -> ~27, z=0 -> 50, z=1 -> ~73, z=2 -> ~88
  *
  * Properties:
  * - Score 50 ALWAYS = average product (at global mean)
  * - Score 80+ ALWAYS = top ~10% (>1 stddev above mean)
- * - Score 30- ALWAYS = bottom ~10% (<1 stddev below mean)
+ * - Score 20- ALWAYS = bottom ~10% (<2 stddev below mean)
  */
 export function normalizeWithGlobalStats(
   rawScore: number,
@@ -86,7 +86,7 @@ export function normalizeWithGlobalStats(
   }
 
   const z = (rawScore - stats.mean) / stats.stddev;
-  const K = 1.5;
+  const K = 1.0;
   const sigmoid = 1 / (1 + Math.exp(-K * z));
   return Math.max(0, Math.min(100, Math.round(sigmoid * 100)));
 }

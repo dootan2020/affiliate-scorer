@@ -31,11 +31,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     `;
     console.log("[rescore] BEFORE:", before[0]);
 
-    // Reset global stats for full migration
-    if (body.resetStats !== false) {
-      await resetGlobalStats();
-      console.log("[rescore] Global stats reset");
-    }
+    // ALWAYS reset global stats for full re-score to avoid double-counting
+    await resetGlobalStats();
+    console.log("[rescore] Global stats reset");
 
     const count = await syncAllIdentityScores((done, total) => {
       if (done % 100 === 0 || done === total) {

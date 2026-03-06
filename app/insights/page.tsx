@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { InsightsPageClient } from "@/components/insights/insights-page-client";
 import { TriggerLearningButton } from "@/components/insights/trigger-learning-button";
@@ -190,26 +191,30 @@ export default async function InsightsPage({ searchParams }: InsightsPageProps):
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <ChannelFilter channels={channelOptions} currentChannelId={channelId} />
+          <Suspense>
+            <ChannelFilter channels={channelOptions} currentChannelId={channelId} />
+          </Suspense>
           <TriggerLearningButton />
         </div>
       </div>
 
-      <InsightsPageClient
-        totalProducts={overview.totalProducts}
-        productsWithNotes={overview.productsWithNotes}
-        shopsReviewed={overview.shopsReviewed}
-        totalFeedbackCount={insights.totalFeedbackCount}
-        scoredCount={insights.scoredCount}
-        monthIncome={overview.monthIncome}
-        monthExpense={overview.monthExpense}
-        upcomingEvents={overview.upcomingEvents}
-        confidenceLabel={confidenceLabel}
-        latestLog={insights.latestLog}
-        accuracyTrend={insights.accuracyTrend}
-        feedbackTable={insights.feedbackTable}
-        channelId={channelId}
-      />
+      <Suspense>
+        <InsightsPageClient
+          totalProducts={overview.totalProducts}
+          productsWithNotes={overview.productsWithNotes}
+          shopsReviewed={overview.shopsReviewed}
+          totalFeedbackCount={insights.totalFeedbackCount}
+          scoredCount={insights.scoredCount}
+          monthIncome={overview.monthIncome}
+          monthExpense={overview.monthExpense}
+          upcomingEvents={overview.upcomingEvents}
+          confidenceLabel={confidenceLabel}
+          latestLog={insights.latestLog}
+          accuracyTrend={insights.accuracyTrend}
+          feedbackTable={insights.feedbackTable}
+          channelId={channelId}
+        />
+      </Suspense>
 
       {/* Phase 4: AI Intelligence */}
       <div className="space-y-6 mt-8">

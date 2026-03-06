@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ProductionPageClient } from "@/components/production/production-page-client";
 import { PageHeader } from "@/components/shared/page-header";
 
@@ -12,7 +13,9 @@ export default function ProductionPage(): React.ReactElement {
     <div className="space-y-6">
       <PageHeader title="Sản xuất Content" description="Chọn sản phẩm từ Inbox → AI tạo scripts + prompts → Xuất packs sản xuất" />
 
-      <ProductionPageClient />
+      <Suspense>
+        <ProductionPageClient />
+      </Suspense>
     </div>
   );
 }

@@ -95,6 +95,9 @@ export function useActiveTasks(): {
 
   useEffect(() => {
     const poll = async (): Promise<void> => {
+      // Skip polling when browser is offline to avoid ERR_NAME_NOT_RESOLVED
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
       try {
         const [taskRes, importRes] = await Promise.all([
           fetch("/api/tasks/active"),

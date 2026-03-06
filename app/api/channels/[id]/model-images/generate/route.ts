@@ -1,5 +1,5 @@
 // POST /api/channels/[id]/model-images/generate — trigger model image generation
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
 import { createTask } from "@/lib/services/background-task";
@@ -52,18 +52,20 @@ export async function POST(_req: Request, ctx: Ctx): Promise<NextResponse> {
 
     const internalUrl = `${baseUrl}/api/internal/generate-model-images`;
 
-    // Fire-and-forget the first chunk
-    fetch(internalUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        channelId: id,
-        taskId,
-        chunkIndex: 0,
-        niche: channel.niche,
-      }),
-    }).catch((err) => {
-      console.error("[model-images/generate] Failed to start relay:", err);
+    // Use after() to start relay — keeps function alive briefly after response
+    after(() => {
+      fetch(internalUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channelId: id,
+          taskId,
+          chunkIndex: 0,
+          niche: channel.niche,
+        }),
+      }).catch((err) => {
+        console.error("[model-images/generate] Failed to start relay:", err);
+      });
     });
 
     return NextResponse.json({ taskId });

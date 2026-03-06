@@ -1,6 +1,6 @@
 // POST /api/internal/generate-model-images — chunked relay: 1 image/chunk
 // Each chunk generates 1 image (~44s < 60s Vercel timeout), then relays to self
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { getApiKey } from "@/lib/ai/providers";
 import { generateGeminiImage } from "@/lib/ai/gemini-image-generator";
@@ -99,19 +99,24 @@ export async function POST(req: Request): Promise<NextResponse> {
         ? `https://${process.env.VERCEL_URL}`
         : "http://localhost:3000");
 
-    fetch(`${baseUrl}/api/internal/generate-model-images`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        channelId,
-        taskId,
-        chunkIndex: chunkIndex + 1,
-        niche,
-        heroImageBase64: heroBase64,
-      } satisfies ChunkPayload),
-    }).catch((err) => {
-      console.error("[model-images] Relay error:", err);
-      void failTask(taskId, `Relay failed at chunk ${chunkIndex + 1}`).catch(() => {});
+    // Relay: use after() with non-awaited fetch. after() keeps the function
+    // alive briefly after response, enough for the TCP handshake to start the
+    // next Vercel function. We don't await the full response (would chain all chunks).
+    after(() => {
+      fetch(`${baseUrl}/api/internal/generate-model-images`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channelId,
+          taskId,
+          chunkIndex: chunkIndex + 1,
+          niche,
+          heroImageBase64: heroBase64,
+        } satisfies ChunkPayload),
+      }).catch((err) => {
+        console.error("[model-images] Relay error:", err);
+        void failTask(taskId, `Relay failed at chunk ${chunkIndex + 1}`).catch(() => {});
+      });
     });
 
     return NextResponse.json({ chunk: chunkIndex, next: chunkIndex + 1 });

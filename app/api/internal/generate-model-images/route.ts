@@ -1,5 +1,6 @@
 // POST /api/internal/generate-model-images — chunked relay: 1 image/chunk
-// Each chunk generates 1 image (~44s < 60s Vercel timeout), then relays to self
+// Each chunk generates 1 image (~44s < 60s Vercel timeout), then relays to self.
+// Hero image is read from DB (not passed in payload) to keep request body small.
 import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { getApiKey } from "@/lib/ai/providers";
@@ -12,7 +13,15 @@ interface ChunkPayload {
   taskId: string;
   chunkIndex: number; // 0-7, maps to POSES index
   niche: string;
-  heroImageBase64?: string; // passed from chunk 0 onwards
+}
+
+function getRelayUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL
+    ?? (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000")
+  ) + "/api/internal/generate-model-images";
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -35,9 +44,19 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const pose = POSES[chunkIndex];
     const isHero = chunkIndex === 0;
-    const referenceBase64 = isHero ? undefined : payload.heroImageBase64;
 
-    // Build prompt
+    // For non-hero poses, read hero image from DB as reference
+    let referenceBase64: string | undefined;
+    if (!isHero) {
+      const heroRecord = await prisma.channelModelImage.findUnique({
+        where: { channelId_poseType: { channelId, poseType: "hero_fullbody" } },
+        select: { imageData: true },
+      });
+      if (heroRecord?.imageData) {
+        referenceBase64 = Buffer.from(heroRecord.imageData).toString("base64");
+      }
+    }
+
     const prompt = buildPrompt(pose, niche, !isHero);
 
     console.log(`[model-images] Chunk ${chunkIndex + 1}/${totalPoses}: ${pose.type}`);
@@ -46,14 +65,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     if (!result.imageBase64) {
       console.error(`[model-images] Failed ${pose.type}:`, result.error);
-      // Continue to next pose instead of failing entire task
       await updateTaskProgress(
         taskId,
         Math.round(((chunkIndex + 1) / totalPoses) * 100),
         `${pose.type}: lỗi — ${result.error?.slice(0, 100)}`,
       );
     } else {
-      // Save image to DB
       const imageBuffer = Buffer.from(result.imageBase64, "base64");
       await prisma.channelModelImage.upsert({
         where: { channelId_poseType: { channelId, poseType: pose.type } },
@@ -81,38 +98,25 @@ export async function POST(req: Request): Promise<NextResponse> {
       console.log(`[model-images] Done ${pose.type} (${(result.durationMs / 1000).toFixed(1)}s)`);
     }
 
-    // Determine heroImageBase64 for subsequent chunks
-    let heroBase64 = payload.heroImageBase64;
-    if (isHero && result.imageBase64) {
-      heroBase64 = result.imageBase64;
-    }
-
-    // If this was the last chunk, complete
+    // If last chunk, complete
     if (chunkIndex + 1 >= totalPoses) {
       await completeTask(taskId, `${totalPoses} hình đã tạo`);
       return NextResponse.json({ done: true });
     }
 
-    // Relay to self for next chunk
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-      ?? (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000");
+    // Relay next chunk — small payload (no hero base64)
+    const nextPayload: ChunkPayload = {
+      channelId,
+      taskId,
+      chunkIndex: chunkIndex + 1,
+      niche,
+    };
 
-    // Relay: use after() with non-awaited fetch. after() keeps the function
-    // alive briefly after response, enough for the TCP handshake to start the
-    // next Vercel function. We don't await the full response (would chain all chunks).
     after(() => {
-      fetch(`${baseUrl}/api/internal/generate-model-images`, {
+      fetch(getRelayUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channelId,
-          taskId,
-          chunkIndex: chunkIndex + 1,
-          niche,
-          heroImageBase64: heroBase64,
-        } satisfies ChunkPayload),
+        body: JSON.stringify(nextPayload),
       }).catch((err) => {
         console.error("[model-images] Relay error:", err);
         void failTask(taskId, `Relay failed at chunk ${chunkIndex + 1}`).catch(() => {});

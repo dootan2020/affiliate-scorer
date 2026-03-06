@@ -1,6 +1,6 @@
-// POST /api/internal/generate-model-images — chunked relay: 1 image/chunk
-// Each chunk generates 1 image (~44s < 60s Vercel timeout), then relays to self.
-// Hero image is read from DB (not passed in payload) to keep request body small.
+// POST /api/internal/generate-model-images — two-phase parallel architecture
+// Phase 1 (chunkIndex=0): Generate hero image, then fire 7 parallel requests
+// Phase 2 (chunkIndex=1-7): Each independently generates 1 pose using hero from DB
 import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { getApiKey } from "@/lib/ai/providers";
@@ -11,7 +11,7 @@ import { updateTaskProgress, completeTask, failTask } from "@/lib/services/backg
 interface ChunkPayload {
   channelId: string;
   taskId: string;
-  chunkIndex: number; // 0-7, maps to POSES index
+  chunkIndex: number;
   niche: string;
 }
 
@@ -24,16 +24,47 @@ function getRelayUrl(): string {
   ) + "/api/internal/generate-model-images";
 }
 
-export async function POST(req: Request): Promise<NextResponse> {
-  const payload = (await req.json()) as ChunkPayload;
-  const { channelId, taskId, chunkIndex, niche } = payload;
+async function generateAndSave(
+  apiKey: string,
+  channelId: string,
+  chunkIndex: number,
+  niche: string,
+): Promise<{ success: boolean; error?: string; durationMs: number }> {
+  const pose = POSES[chunkIndex];
+  const isHero = chunkIndex === 0;
 
-  const totalPoses = POSES.length; // 8
-
-  if (chunkIndex >= totalPoses) {
-    await completeTask(taskId, `${totalPoses} hình đã tạo`);
-    return NextResponse.json({ done: true });
+  // Read hero from DB for non-hero poses
+  let referenceBase64: string | undefined;
+  if (!isHero) {
+    const heroRecord = await prisma.channelModelImage.findUnique({
+      where: { channelId_poseType: { channelId, poseType: "hero_fullbody" } },
+      select: { imageData: true },
+    });
+    if (heroRecord?.imageData) {
+      referenceBase64 = Buffer.from(heroRecord.imageData).toString("base64");
+    }
   }
+
+  const prompt = buildPrompt(pose, niche, !isHero);
+  const result = await generateGeminiImage(apiKey, prompt, referenceBase64);
+
+  if (!result.imageBase64) {
+    return { success: false, error: result.error ?? "No image", durationMs: result.durationMs };
+  }
+
+  const imageBuffer = Buffer.from(result.imageBase64, "base64");
+  await prisma.channelModelImage.upsert({
+    where: { channelId_poseType: { channelId, poseType: pose.type } },
+    create: { channelId, poseType: pose.type, imageData: imageBuffer, mimeType: "image/png", prompt },
+    update: { imageData: imageBuffer, mimeType: "image/png", prompt, createdAt: new Date() },
+  });
+
+  return { success: true, durationMs: result.durationMs };
+}
+
+export async function POST(req: Request): Promise<NextResponse> {
+  const { channelId, taskId, chunkIndex, niche } = (await req.json()) as ChunkPayload;
+  const totalPoses = POSES.length;
 
   try {
     const apiKey = process.env.GEMINI_API_KEY ?? (await getApiKey("google"));
@@ -43,87 +74,49 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const pose = POSES[chunkIndex];
-    const isHero = chunkIndex === 0;
-
-    // For non-hero poses, read hero image from DB as reference
-    let referenceBase64: string | undefined;
-    if (!isHero) {
-      const heroRecord = await prisma.channelModelImage.findUnique({
-        where: { channelId_poseType: { channelId, poseType: "hero_fullbody" } },
-        select: { imageData: true },
-      });
-      if (heroRecord?.imageData) {
-        referenceBase64 = Buffer.from(heroRecord.imageData).toString("base64");
-      }
-    }
-
-    const prompt = buildPrompt(pose, niche, !isHero);
-
     console.log(`[model-images] Chunk ${chunkIndex + 1}/${totalPoses}: ${pose.type}`);
 
-    const result = await generateGeminiImage(apiKey, prompt, referenceBase64);
+    const result = await generateAndSave(apiKey, channelId, chunkIndex, niche);
 
-    if (!result.imageBase64) {
-      console.error(`[model-images] Failed ${pose.type}:`, result.error);
-      await updateTaskProgress(
-        taskId,
-        Math.round(((chunkIndex + 1) / totalPoses) * 100),
-        `${pose.type}: lỗi — ${result.error?.slice(0, 100)}`,
-      );
-    } else {
-      const imageBuffer = Buffer.from(result.imageBase64, "base64");
-      await prisma.channelModelImage.upsert({
-        where: { channelId_poseType: { channelId, poseType: pose.type } },
-        create: {
-          channelId,
-          poseType: pose.type,
-          imageData: imageBuffer,
-          mimeType: "image/png",
-          prompt,
-        },
-        update: {
-          imageData: imageBuffer,
-          mimeType: "image/png",
-          prompt,
-          createdAt: new Date(),
-        },
-      });
-
-      await updateTaskProgress(
-        taskId,
-        Math.round(((chunkIndex + 1) / totalPoses) * 100),
-        `Tạo hình nhân vật (${chunkIndex + 1}/${totalPoses})`,
-      );
-
+    if (result.success) {
       console.log(`[model-images] Done ${pose.type} (${(result.durationMs / 1000).toFixed(1)}s)`);
+    } else {
+      console.error(`[model-images] Failed ${pose.type}: ${result.error}`);
     }
 
-    // If last chunk, complete
-    if (chunkIndex + 1 >= totalPoses) {
-      await completeTask(taskId, `${totalPoses} hình đã tạo`);
-      return NextResponse.json({ done: true });
-    }
+    // Count how many images now exist for this channel
+    const imageCount = await prisma.channelModelImage.count({ where: { channelId } });
+    const progress = Math.round((imageCount / totalPoses) * 100);
 
-    // Relay next chunk — small payload (no hero base64)
-    const nextPayload: ChunkPayload = {
-      channelId,
+    await updateTaskProgress(
       taskId,
-      chunkIndex: chunkIndex + 1,
-      niche,
-    };
+      progress,
+      `Tạo hình nhân vật (${imageCount}/${totalPoses})`,
+    );
 
-    after(() => {
-      fetch(getRelayUrl(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nextPayload),
-      }).catch((err) => {
-        console.error("[model-images] Relay error:", err);
-        void failTask(taskId, `Relay failed at chunk ${chunkIndex + 1}`).catch(() => {});
+    // If all done, mark task complete
+    if (imageCount >= totalPoses) {
+      await completeTask(taskId, `${totalPoses} hình đã tạo`);
+      return NextResponse.json({ done: true, imageCount });
+    }
+
+    // Phase 1: After hero is generated, fire 7 parallel requests for remaining poses
+    if (chunkIndex === 0 && result.success) {
+      after(() => {
+        const relayUrl = getRelayUrl();
+        for (let i = 1; i < totalPoses; i++) {
+          fetch(relayUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ channelId, taskId, chunkIndex: i, niche } satisfies ChunkPayload),
+          }).catch((err) => {
+            console.error(`[model-images] Fire chunk ${i} error:`, err);
+          });
+        }
       });
-    });
+    }
 
-    return NextResponse.json({ chunk: chunkIndex, next: chunkIndex + 1 });
+    return NextResponse.json({ chunk: chunkIndex, imageCount });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("[model-images] Chunk error:", msg);

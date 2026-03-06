@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock, BookOpen, Layers, Lightbulb, Video, Calendar } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock, BookOpen, Layers, Lightbulb, Video, Calendar, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChannelForm } from "./channel-form";
@@ -12,6 +12,7 @@ import { FormatBankList } from "./format-bank-list";
 import { IdeaMatrixGrid } from "./idea-matrix-grid";
 import { VideoBibleEditor } from "./video-bible-editor";
 import { SeriesPlanner } from "./series-planner";
+import { ModelImageGallery } from "./model-image-gallery";
 import { Button } from "@/components/ui/button";
 
 interface ChannelData {
@@ -104,7 +105,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshOpen, setRefreshOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "bible" | "formats" | "matrix" | "videoBible" | "series">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "bible" | "formats" | "matrix" | "videoBible" | "series" | "modelImages">("overview");
 
   const fetchChannel = useCallback(async (): Promise<void> => {
     setError(null);
@@ -290,6 +291,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
     { key: "matrix" as const, label: "Ý tưởng", icon: Lightbulb },
     { key: "videoBible" as const, label: "Cẩm nang video", icon: Video },
     { key: "series" as const, label: "Chuỗi nội dung", icon: Calendar },
+    { key: "modelImages" as const, label: "Hình nhân vật", icon: ImageIcon },
   ];
 
   return (
@@ -434,6 +436,7 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
         {activeTab === "matrix" && <IdeaMatrixGrid channelId={channelId} />}
         {activeTab === "videoBible" && <VideoBibleEditor channelId={channelId} />}
         {activeTab === "series" && <SeriesPlanner channelId={channelId} />}
+        {activeTab === "modelImages" && <ModelImageGallery channelId={channelId} channelNiche={channel.niche} />}
 
         {/* Overview tab — existing content */}
         {activeTab === "overview" && <>

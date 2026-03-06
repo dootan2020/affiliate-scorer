@@ -965,6 +965,21 @@ model TikTokChannel {
   ideaMatrixItems IdeaMatrixItem[]
   videoBible      VideoBible?
   series          Series[]
+  modelImages     ChannelModelImage[]
+}
+
+model ChannelModelImage {
+  id        String       @id @default(cuid())
+  channelId String
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  poseType  String       // hero_fullbody | portrait | reaction_wow | reaction_thinking | cta_pointing | closeup_product | lifestyle | fullbody_outro
+  imageData Bytes        // PNG binary data
+  mimeType  String       @default("image/png")
+  prompt    String       // prompt used to generate
+  createdAt DateTime     @default(now())
+
+  @@unique([channelId, poseType])
+  @@index([channelId])
 }
 
 model ContentSlot {

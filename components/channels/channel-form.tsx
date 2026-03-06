@@ -219,7 +219,18 @@ export function ChannelForm({ initial, onSaved, onCancel }: Props): React.ReactE
         toast.success(isEdit ? "Đã cập nhật kênh" : "Đã tạo kênh mới");
         dispatchSuggestionEvent("channel-updated");
         const body = await res.json().catch(() => null) as { data?: { id?: string } } | null;
-        onSaved(body?.data?.id);
+        const savedId = body?.data?.id;
+
+        // R6: Auto-trigger model image generation for new channels with niche
+        if (!isEdit && savedId && (aiNiche || profile.subNiche)) {
+          fetch(`/api/channels/${savedId}/model-images/generate`, { method: "POST" })
+            .then((r) => {
+              if (r.ok) toast.success("Đang tạo bộ hình nhân vật AI...");
+            })
+            .catch(() => { /* silent */ });
+        }
+
+        onSaved(savedId);
       } else {
         const body = await res.json().catch(() => null) as { error?: string } | null;
         throw new Error(body?.error ?? `Lỗi ${res.status}`);

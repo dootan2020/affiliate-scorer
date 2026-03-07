@@ -4,6 +4,26 @@ Tất cả thay đổi quan trọng của AffiliateScorer được ghi nhận t�
 
 ---
 
+## [1.8.0] — 2026-03-07 — Inbox UI & Sidebar Badge Refinements
+
+### Added
+
+- **Mobile inbox card layout** — Responsive card view on mobile (< md breakpoint) with score badge, full product name, delta, price, sales 7d, KOL count
+- **Sidebar badge verification** — Both desktop and mobile nav display 4 consistent groups (Sản xuất, Theo dõi, Công cụ, Cài đặt) with "Tìm ngách" in Công cụ group
+
+### Changed
+
+- **Inbox table responsiveness** — Desktop table unchanged, mobile now uses card layout instead of horizontal scrolling
+- **Sidebar badge counting** — Inbox badge now counts items needing briefing (new + enriched + scored) instead of just scored + enriched
+- **Navigation consistency** — Both desktop sidebar and mobile nav use identical group structure and item placement
+
+### Fixed
+
+- Mobile inbox usability — Cards now display complete product information without truncation
+- Badge calculation — More accurate reflection of items requiring action in the briefing workflow
+
+---
+
 ## [1.0.0] — 2026-02-24 — Phase 1 Complete
 
 ### Added

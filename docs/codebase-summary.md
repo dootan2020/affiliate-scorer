@@ -132,6 +132,9 @@ Key model groups:
 ## Key Features
 
 - **Inbox Pipeline:** Paste links → auto-enrich → AI score → brief → publish
+  - Mobile card layout: Responsive cards on < md breakpoint showing score badge, full product name, delta, price, sales 7d, KOL
+  - Desktop table: Full feature table with sorting, filtering, pagination
+  - Smart badge counting: Shows new + enriched + scored items (items needing briefing)
 - **AI Scoring:** Dual scoring (market + content potential), multi-provider AI
 - **Content Factory:** Batch brief generation with angles, hooks, scripts, video prompts
 - **Character Bible:** 7-layer character framework for brand consistency
@@ -145,7 +148,7 @@ Key model groups:
 - **Playbook:** Accumulated winning patterns and strategies
 - **Design System:** Shared components, design tokens, consistent styling across all 13 pages
 - **Command Palette:** Quick navigation with ⌘K keyboard shortcut
-- **Responsive Layouts:** Mobile-first design with bento layouts, collapsible navigation
+- **Responsive Layouts:** Mobile-first design with bento layouts, collapsible navigation, responsive inbox table
 - **Accessibility:** ARIA attributes, keyboard navigation, screen reader support
 
 ## Deployment

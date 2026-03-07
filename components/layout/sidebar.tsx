@@ -181,7 +181,8 @@ export function Sidebar(): React.ReactElement {
         if (inboxRes.ok) {
           const data = await inboxRes.json() as { stats?: Record<string, number> };
           const s = data?.stats ?? {};
-          results.inbox = (s.scored ?? 0) + (s.enriched ?? 0);
+          // Count items that still need briefing (new + enriched + scored)
+          results.inbox = (s.new ?? 0) + (s.enriched ?? 0) + (s.scored ?? 0);
         }
 
         if (prodRes.ok) {

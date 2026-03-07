@@ -115,6 +115,88 @@ function ColHeader({ field, label, sort, onSort, className }: ColHeaderProps): R
   );
 }
 
+function MobileCard({
+  item,
+  isSelected,
+  onToggleSelect,
+  onEnrich,
+  onArchive,
+}: {
+  item: InboxIdentity;
+  isSelected: boolean;
+  onToggleSelect: (id: string) => void;
+  onEnrich: (id: string) => void;
+  onArchive?: (id: string) => void;
+}): React.ReactElement {
+  const aiScore = item.combinedScore ? parseFloat(item.combinedScore) : null;
+  const imageUrl = item.imageUrl ?? item.product?.imageUrl ?? null;
+  const name = item.title
+    ?? (item.productIdExternal ? `SP #${item.productIdExternal.slice(-8)}` : null)
+    ?? "(Chưa bổ sung)";
+
+  return (
+    <div
+      className={cn(
+        "p-3 border-b border-gray-100 dark:border-slate-800 last:border-b-0",
+        isSelected && "bg-orange-50/50 dark:bg-orange-950/10",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(item.id)}
+          className="mt-1 rounded border-gray-300 dark:border-slate-600 text-orange-600 focus:ring-orange-500/20 shrink-0"
+        />
+        <Link href={`/inbox/${item.id}`} className="flex items-start gap-3 flex-1 min-w-0">
+          <ProductImage src={imageUrl} alt={name} className="rounded-lg shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <ScoreBadge score={aiScore} />
+              <DeltaBadge type={item.deltaType} />
+            </div>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-50 line-clamp-2 mb-1.5">
+              {name}
+            </p>
+            {item.category && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-1.5">{item.category}</p>
+            )}
+            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+              {item.price !== null && (
+                <span className="tabular-nums">{formatVND(item.price)}</span>
+              )}
+              {item.product?.sales7d != null && (
+                <span className="tabular-nums">Bán: {formatNumber(item.product.sales7d)}</span>
+              )}
+              {item.product?.totalKOL != null && item.product.totalKOL > 0 && (
+                <span className="tabular-nums">{item.product.totalKOL} KOL</span>
+              )}
+            </div>
+          </div>
+        </Link>
+        <div className="flex items-center gap-0.5 shrink-0">
+          {onArchive && (
+            <button
+              onClick={() => onArchive(item.id)}
+              className="p-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              title="Ẩn sản phẩm"
+            >
+              <Archive className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={() => onEnrich(item.id)}
+            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            title="Bổ sung thông tin"
+          >
+            <MoreHorizontal className="w-4 h-4 text-gray-400" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function InboxTable({
   items, startIndex, onEnrich, onArchive,
   selectedIds, onToggleSelect, onToggleAll, allSelected,
@@ -122,7 +204,22 @@ export function InboxTable({
 }: InboxTableProps): React.ReactElement {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Mobile card layout */}
+      <div className="md:hidden">
+        {items.map((item) => (
+          <MobileCard
+            key={item.id}
+            item={item}
+            isSelected={selectedIds.has(item.id)}
+            onToggleSelect={onToggleSelect}
+            onEnrich={onEnrich}
+            onArchive={onArchive}
+          />
+        ))}
+      </div>
+
+      {/* Desktop table layout */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-800">
@@ -271,7 +368,7 @@ export function InboxTable({
             })}
           </tbody>
         </table>
-      </div>
+      </div> {/* end desktop table */}
     </div>
   );
 }

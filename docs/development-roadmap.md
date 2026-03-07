@@ -6,9 +6,9 @@ Project phases, milestones, and implementation progress.
 
 ## Project Status
 
-- **Current Version:** 1.8.0
-- **Last Updated:** 2026-03-03
-- **Overall Progress:** ~75% complete (6 of 8 core phases done)
+- **Current Version:** 1.8.2
+- **Last Updated:** 2026-03-07
+- **Overall Progress:** ~85% complete (10 of 12 core phases done, MVP production-ready)
 
 ---
 
@@ -183,6 +183,41 @@ Project phases, milestones, and implementation progress.
 
 **Delivered:** Mar 3, 2026 — Large-scale import handling complete
 
+### Phase 10 — Niche Intelligence & Dashboard Redesign ✅ COMPLETE (v1.8.2)
+
+**Goal:** 4-step niche finder wizard, dashboard bento layout, mobile responsive improvements
+
+| Task | Status | Completion |
+|------|--------|-----------|
+| Niche Intelligence 4-step wizard | ✅ Done | 100% |
+| 10 niche categories support | ✅ Done | 100% |
+| AI niche analysis engine | ✅ Done | 100% |
+| Auto-channel creation | ✅ Done | 100% |
+| Dashboard 3-column bento grid | ✅ Done | 100% |
+| Sidebar 4-group navigation | ✅ Done | 100% |
+| Mobile inbox card layout | ✅ Done | 100% |
+| Error boundaries (8 widgets) | ✅ Done | 100% |
+| Skeleton loaders (3+ pages) | ✅ Done | 100% |
+
+**Delivered:** Mar 5–7, 2026 — Niche finder live, dashboard redesigned, mobile UX improved
+
+---
+
+### Phase 11 — Scoring System Redesign ⏳ PLANNED
+
+**Goal:** Redesign scoring formula to improve content potential score discriminative power
+
+| Task | Status | Effort | Notes |
+|------|--------|--------|-------|
+| Score formula audit | 📋 Planned | 3 days | Analyze current formula weaknesses |
+| Content potential redesign | 📋 Planned | 5 days | Add 6 dimensions, improve weighting |
+| Database migration | 📋 Planned | 2 days | Backfill scores for 394 products |
+| UI updates | 📋 Planned | 2 days | Explain new scoring in guide |
+| Testing & validation | 📋 Planned | 3 days | Verify new scores are more predictive |
+
+**Plan Location:** `plans/260305-1440-scoring-system-redesign/`
+**ETA:** Mar 17, 2026 (v1.9.0)
+
 ---
 
 ## Milestones & Key Dates
@@ -198,6 +233,8 @@ Project phases, milestones, and implementation progress.
 | UI/UX Overhaul | Mar 2, 2026 | v1.6.0 | Component library + design tokens |
 | Netlify Deployment | Mar 2, 2026 | v1.7.0 | Production deployment configured |
 | Scalable Import | Mar 3, 2026 | v1.8.0 | Handle 3000+ products in chunks |
+| Niche Intelligence | Mar 7, 2026 | v1.8.2 | Niche finder wizard + dashboard redesign |
+| Scoring Redesign | Mar 17, 2026 | v1.9.0 | Improved content potential scoring |
 
 ---
 
@@ -220,11 +257,14 @@ Project phases, milestones, and implementation progress.
 |--------|-------|--------|
 | API routes | 90+ | ✅ Complete |
 | Database models | 40+ | ✅ Complete |
-| UI pages | 15 | ✅ Complete |
-| Code files | 488 | ✅ Current |
+| UI pages | 15 | ✅ Complete (added niche-finder, guide) |
+| Code files | 500+ | ✅ Current |
 | TypeScript strict | 100% | ✅ Enabled |
 | Test coverage | ~60% | ⚠️ In progress |
 | Security audit | Resolved (50+ issues) | ✅ Complete |
+| Production readiness | 82/100 | ⚠️ Good, not excellent |
+| Error boundaries | 8 widgets | ✅ Complete |
+| Mobile responsive | 100% | ✅ Complete |
 
 ---
 
@@ -261,12 +301,13 @@ Project phases, milestones, and implementation progress.
 
 ## Release Schedule (Next 90 Days)
 
-| Version | ETA | Focus |
-|---------|-----|-------|
-| v1.9.0 | Mar 10, 2026 | Testing + documentation |
-| v1.10.0 | Mar 24, 2026 | Performance + monitoring |
-| v2.0.0 | Apr 7, 2026 | Stable release candidate |
-| v2.1.0+ | Apr–Jun 2026 | Feature backlog (webhooks, SSE, extension) |
+| Version | ETA | Focus | Status |
+|---------|-----|-------|--------|
+| v1.8.2 | Mar 7, 2026 | Niche finder + dashboard redesign | ✅ Released |
+| v1.9.0 | Mar 17, 2026 | Scoring system redesign | 📋 Planned |
+| v1.10.0 | Apr 1, 2026 | Testing + documentation | 📋 Planned |
+| v2.0.0 | Apr 15, 2026 | Stable release + monitoring | 📋 Planned |
+| v2.1.0+ | May–Jun 2026 | Webhooks, SSE, extension, multi-user | 📋 Backlog |
 
 ---
 

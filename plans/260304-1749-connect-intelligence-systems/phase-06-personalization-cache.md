@@ -9,8 +9,8 @@
 ## Overview
 
 - **Priority:** P2
-- **Status:** Pending
-- **Review Status:** Pending
+- **Status:** ✅ Complete
+- **Review Status:** ✅ Reviewed
 - **Effort:** 1h
 - **Description:** Add module-level cache to `personalize.ts` to avoid redundant DB queries per product. Remove hardcoded `take: 200` limit with recency-based approach. Add cache invalidation hook on feedback insert.
 

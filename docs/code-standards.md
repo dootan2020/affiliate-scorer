@@ -187,10 +187,25 @@ model ContentBrief {
 }
 ```
 
-**Cascade Rules:**
-- `Cascade` — Remove dependent records (use for content like Feedback, Snapshots)
-- `SetNull` — Clear foreign key (use for optional relationships, preserve data)
-- `Restrict` — Prevent deletion if dependents exist (rarely used; causes complexity)
+**Cascade Rules (Applied in PASTR):**
+
+| Strategy | Use Case | Examples |
+|----------|----------|----------|
+| **Cascade** | Transactional data with clear ownership | Feedback→Product, ProductSnapshot→Product, ContentBrief→Product, ContentAsset→Product |
+| **SetNull** | Derived/shared content, preserve production assets | ContentBrief→Channel, ContentAsset→Brief, ContentSlot→Product/Asset, NicheProfile→Channel |
+| **Restrict** | Prevent accidental deletion (rarely used, causes UX friction) | Only use if data integrity is critical and user must manually handle dependents |
+
+**Applied to 10 Critical Relations in PASTR:**
+1. Feedback → Product (Cascade)
+2. ProductSnapshot → Product (Cascade)
+3. ProductSnapshot → ImportBatch (Cascade)
+4. ContentBrief → ProductIdentity (Cascade)
+5. ContentBrief → TikTokChannel (SetNull)
+6. ContentAsset → ProductIdentity (Cascade)
+7. ContentAsset → ContentBrief (SetNull)
+8. ContentSlot → ProductIdentity (SetNull)
+9. ContentSlot → ContentAsset (SetNull)
+10. NicheProfile → TikTokChannel (SetNull)
 
 ### Transaction Safety for Multi-Step Operations
 
@@ -218,28 +233,59 @@ const result = await prisma.$transaction(async (tx) => {
 
 ### Error Boundaries for UI
 
-**Wrap interactive widgets in ErrorBoundary:**
+**Wrap interactive widgets in ErrorBoundary for resilience:**
 
 ```typescript
-// components/dashboard/dashboard.tsx
+// components/dashboard/widget-wrapper.tsx
 import { ErrorBoundary } from "react-error-boundary";
 
-export function Dashboard() {
+export function WidgetWrapper({ children, title }: Props) {
   return (
-    <div className="grid gap-6">
-      <ErrorBoundary fallback={<MorningBriefError />}>
-        <MorningBrief />
-      </ErrorBoundary>
-      <ErrorBoundary fallback={<InboxStatsError />}>
-        <InboxStats />
-      </ErrorBoundary>
-      {/* Other widgets */}
-    </div>
+    <ErrorBoundary fallback={<WidgetError title={title} />}>
+      {children}
+    </ErrorBoundary>
   );
 }
+
+// Applied to 8 widgets:
+// - Morning Brief (main recommendation engine)
+// - Inbox Stats (product count widget)
+// - Quick Paste (input widget)
+// - Chart widgets (recharts)
+// - Metric cards (stats display)
+// - Skill level indicator
+// - Pattern analysis
+// - Calendar widget
 ```
 
 **Benefits:**
-- Single widget error won't crash dashboard
-- Users can still interact with other sections
+- Single widget error won't crash entire dashboard
+- Users can continue with other features while one widget is broken
 - Graceful degradation vs. complete failure
+- Each widget shows "Widget unavailable. Retry" fallback
+
+### Mobile-First Responsive Pattern
+
+**Always write styles for mobile first, then override with breakpoints:**
+
+```typescript
+// CORRECT — mobile by default, tablet+ overrides
+<div className="p-4 sm:p-6 md:p-8 lg:p-12">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+    {/* Content */}
+  </div>
+</div>
+
+// WRONG — forces mobile to wait for media query
+<div className="p-12 md:p-4">
+  <div className="grid grid-cols-3 md:grid-cols-1">
+    {/* Content */}
+  </div>
+</div>
+```
+
+**Common patterns:**
+- **Cards:** `w-full md:w-1/2 lg:w-1/3`
+- **Inbox:** `flex flex-col md:table` (cards on mobile, table on desktop)
+- **Sidebar:** `hidden lg:block` (mobile stacks below, desktop is side nav)
+- **Buttons:** `w-full md:w-auto` (full width on mobile, auto on desktop)

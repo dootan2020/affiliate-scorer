@@ -25,9 +25,9 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 ## Thống Kê Dự Án
 
 - **Database Models:** 40+
-- **Pages:** 13
+- **Pages:** 15 (added /niche-finder, /guide)
 - **API Endpoints:** 90+
-- **Components:** 95+ (including 8 shared design system components)
+- **Components:** 100+ (including 8 shared design system components + niche wizard + guide)
 - **Shared Components:** PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible
 - **Design Tokens:** 25+ (colors, spacing, typography, shadows)
 
@@ -131,6 +131,11 @@ Key model groups:
 
 ## Key Features
 
+- **Niche Intelligence Module:** 4-step wizard for niche discovery → AI analysis → auto-channel creation
+  - Step 1: Explore 10+ niches (gia dụng, mỹ phẩm, v.v.)
+  - Step 2: AI analyzes market potential, competition, profit margin per niche
+  - Step 3: Automatically creates TikTok channel for selected niche
+  - Step 4: Success page, ready to import products
 - **Inbox Pipeline:** Paste links → auto-enrich → AI score → brief → publish
   - Mobile card layout: Responsive cards on < md breakpoint showing score badge, full product name, delta, price, sales 7d, KOL
   - Desktop table: Full feature table with sorting, filtering, pagination
@@ -146,9 +151,12 @@ Key model groups:
 - **Version Locking:** Lock bible versions for production stability
 - **Learning Engine:** RL-style weight updates from performance feedback
 - **Playbook:** Accumulated winning patterns and strategies
-- **Design System:** Shared components, design tokens, consistent styling across all 13 pages
+- **Design System:** Shared components, design tokens, consistent styling across all 15 pages
+- **Dashboard Bento Grid:** 3-column flexible layout with error boundaries on 8+ widgets (Morning Brief, Inbox Stats, Quick Paste, charts)
+- **Sidebar Navigation:** 4 groups (Sản xuất, Theo dõi, Công cụ, Cài đặt) with dynamic badge counting
+- **Mobile Navigation:** Bottom tab bar for mobile view, consistent with desktop nav structure
 - **Command Palette:** Quick navigation with ⌘K keyboard shortcut
-- **Responsive Layouts:** Mobile-first design with bento layouts, collapsible navigation, responsive inbox table
+- **Responsive Layouts:** Mobile-first design with bento layouts, card layout for inbox (<md), collapsible navigation
 - **Accessibility:** ARIA attributes, keyboard navigation, screen reader support
 
 ## Deployment

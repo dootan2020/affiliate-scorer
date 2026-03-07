@@ -11,8 +11,8 @@
 ## Overview
 
 - **Priority:** P1
-- **Status:** Pending
-- **Review Status:** Pending
+- **Status:** ✅ Complete
+- **Review Status:** ✅ Reviewed
 - **Effort:** 2h
 - **Description:** Two sub-tasks: (2a) inject upcoming CalendarEvents into brief prompt for timing-aware content, (2b) inject explore/exploit hook and format selections into brief generation.
 

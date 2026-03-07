@@ -1,0 +1,41 @@
+Create a photo with a face that is exactly the same as the attached image, 100% unchanged, 8K high resolution, 2:3 aspect ratio.
+The photo should show a white woman with a well-proportioned figure, a slim waist, and a full bust.
+Her long, very thick, rose-blonde hair has bangs and is loosely tied into a low ponytail at the side. The hair is styled in natural curls, not stiff or tightly bound. The large curls are soft and slightly voluminous, with soft baby hairs framing her cheeks.
+The hair has just the right amount of volume, neither flat nor overly puffy.
+Small strands of hair are gently blowing in the wind, lightly touching her face for a natural look.
+Facial features: Large, round, dark brown eyes with long, naturally curled eyelashes. Light makeup with a pale pink blush. Lips are painted with a glossy peach-pink shade, creating a plump, radiant look. The light reflecting off her skin makes her complexion appear bright and smooth.
+Wearing the outfit shown in picture 2.
+Position:
+She is sitting on a minimalist chair, looking at the camera with a gentle expression. She has her back to the camera. (Or turned sideways). Turning to look at the camera over her shoulder. The hand furthest from the camera is raised to adjust her ponytail. A cute and bright smile.
+Location:
+A minimalist café with light wood tones, featuring windows that let in direct sunlight. The walls are a light cream color, without any yellow lighting, allowing natural light to shine from both sides. Behind her is a large poster with pictures of food and the words "BaBo Coffee".
+```
+
+Create a photo with a face identical to the attached image, unedited, in 8K resolution, with a 9:16 aspect ratio.
+The photo should be a full-body shot of a white woman with a well-proportioned figure, a slender waist, and a full bust.
+Her long, thick, golden-pink hair has bangs and is gently swept to one side. The curls are natural, not stiff, large, soft, and slightly voluminous, with soft baby hairs framing her cheeks.
+Her hair has just the right amount of volume, neither flat nor overly puffy.
+Small strands of hair are gently blowing in the wind, lightly touching her face for a natural look.
+Facial features: Large, round, dark brown eyes with long, naturally curled eyelashes. Makeup style: A dewy foundation, light blush, and a peachy-pink lip gloss with a gradient effect, creating a radiant and glowing appearance. The light reflecting off her skin makes her complexion look bright and smooth.
+Wearing the outfit shown in photo 2.
+Posture: Standing, holding a small dessert cup with a spoon, one hand slightly raised. Relaxed, natural posture, sweet smile, playful, cute, and bright eyes.
+Background: A minimalist wooden counter, coffee machine, small glass display case for pastries and snacks, recessed ceiling lights, and natural light from the side, making the skin look bright and clean, without any orange tint.
+Wearing the outfit shown in photo 2.
+Location:
+A minimalist cafe with light wood tones, windows letting in direct sunlight, light cream walls, no yellow lighting, and natural light from the side.
+
+```
+Create a photo with a face identical to the attached image, unedited, in 8K resolution, with a 9:16 aspect ratio.
+The photo should be a full-body shot of a white woman with a well-proportioned figure, a slender waist, and a full bust.
+Her long, thick, golden-pink hair has bangs and is gently swept to one side. The curls are natural, not stiff, large, soft, and slightly voluminous, with soft baby hairs framing her cheeks.
+Her hair has just the right amount of volume, neither flat nor overly puffy.
+Small strands of hair are gently blowing in the wind, lightly touching her face for a natural look.
+Facial features: Large, round, dark brown eyes with long, naturally curled eyelashes. Makeup style: A dewy foundation, light blush, and a peachy-pink lip gloss with a gradient effect, creating a radiant and glowing appearance. The light reflecting off her skin makes her complexion look bright and smooth.
+Wearing the outfit shown in photo 2.
+Position: Sitting leaning on a chair, one hand holding a Matcha Latte, the other holding an iPhone with a pink case and a short white strap. Relaxed, natural posture, sweet smile, playful, cute, and bright eyes.
+The background is a minimalist wooden counter with recessed ceiling lights and natural light from the side, making the skin look bright and clean, without any orange tint.
+Wearing the outfit shown in photo 2.
+Location:
+A minimalist cafe with light wood tones, windows letting in direct sunlight, light cream walls, no yellow lighting, and natural light from the side.
+
+```

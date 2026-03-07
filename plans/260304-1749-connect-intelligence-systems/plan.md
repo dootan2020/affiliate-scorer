@@ -1,7 +1,7 @@
 ---
 title: "Connect Intelligence Systems"
 description: "Wire PASTR's siloed intelligence modules (Morning Brief, Content Brief, Learning, Patterns, Win Probability, Explore/Exploit) into a unified data flow with smart suggestions API, automation crons, and personalization cache."
-status: pending
+status: complete
 priority: P1
 effort: 10.5h
 branch: master
@@ -20,11 +20,11 @@ PASTR has 95% features built but intelligence systems run in silos. This plan co
 | # | Phase | Effort | Status | File |
 |---|-------|--------|--------|------|
 | 1 | Morning Brief + Pattern Injection | 1h | ✅ Complete | [phase-01](./phase-01-morning-brief-pattern-injection.md) |
-| 2 | Content Brief Intelligence | 2h | Pending | [phase-02](./phase-02-content-brief-intelligence.md) |
-| 3 | Smart Content Suggestions API | 3h | Pending | [phase-03](./phase-03-smart-suggestions-api.md) |
-| 4 | Content Suggestions Widget UI | 2h | Pending | [phase-04](./phase-04-suggestions-widget-ui.md) |
-| 5 | Automation Cron Jobs | 1.5h | Pending | [phase-05](./phase-05-automation-cron-jobs.md) |
-| 6 | Personalization Cache | 1h | Pending | [phase-06](./phase-06-personalization-cache.md) |
+| 2 | Content Brief Intelligence | 2h | ✅ Complete | [phase-02](./phase-02-content-brief-intelligence.md) |
+| 3 | Smart Content Suggestions API | 3h | ✅ Complete | [phase-03](./phase-03-smart-suggestions-api.md) |
+| 4 | Content Suggestions Widget UI | 2h | ✅ Complete | [phase-04](./phase-04-suggestions-widget-ui.md) |
+| 5 | Automation Cron Jobs | 1.5h | ✅ Complete | [phase-05](./phase-05-automation-cron-jobs.md) |
+| 6 | Personalization Cache | 1h | ✅ Complete | [phase-06](./phase-06-personalization-cache.md) |
 
 ## Key Dependencies
 

@@ -11,8 +11,8 @@
 ## Overview
 
 - **Priority:** P1
-- **Status:** Pending
-- **Review Status:** Pending
+- **Status:** ✅ Complete
+- **Review Status:** ✅ Reviewed
 - **Effort:** 2h
 - **Description:** Refactor the Content Suggestions widget to consume the new smart suggestions API, show channel tabs, explore/exploit tags, reason text, calendar event banners, lifecycle warnings, and brief-to-channel linking.
 

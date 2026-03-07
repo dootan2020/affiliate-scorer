@@ -13,8 +13,8 @@
 ## Overview
 
 - **Priority:** P1
-- **Status:** Pending
-- **Review Status:** Pending
+- **Status:** ✅ Complete
+- **Review Status:** ✅ Reviewed
 - **Effort:** 3h
 - **Description:** New server-side API endpoint that computes ranked content suggestions per channel using learning weights, explore/exploit ratio, calendar boost, lifecycle filter, and win probability formula. Returns grouped-by-channel results with reason strings and explore/exploit tags.
 

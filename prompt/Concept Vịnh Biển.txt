@@ -1,0 +1,171 @@
+Create an image that is 100% identical to the attached image #1, without any changes. It must be a close-up, natural shot of a young girl with fair, smooth, and flawless skin, a sweet and pretty face, just like in the attached image.
+• Facial features: Large, round, dark brown eyes with long, naturally curled eyelashes. Smooth, healthy skin like "glass skin." Natural Korean-style makeup.
+Highlights: Light pink blush on the cheeks for a healthy, rosy look. Glossy strawberry red lips and naturally shaped eyebrows.
+• Skin tone: Milky white / Porcelain skin: Extremely fair skin, like "milky white" or porcelain white. The lightest skin tone with minimal yellow undertones (cool tone).
+• Skin texture:
+• Velvety smooth finish: Skin with a velvety smooth, matte finish; not too shiny or glossy. But appears moisturized.
+• Smooth & Flawless: Skin is smooth and thin, with virtually no pores (Poreless). However, you must select "Natural Skin Texture" so that the AI ​​can incorporate human skin characteristics and avoid making the skin look flat and artificial.
+Hair Color: Hair: Mid-back length, loose, thick, and softly curly. Background color: Glossy black, a solid black. Middle parting with thin side bangs.
+Camera Angle:
+• Eye-level or slightly low angle (Eye-level or slightly low angle): Shoot from a medium distance (Medium shot) to capture detail of both the subject and the wide background landscape.
+• Physique:
+• Slim figure, slender waist.
+• Hair appears thick and slightly windy.
+• Clothing: As in attached image #2
+• Location:
+• By a large lake or coastal area.
+• Foreground includes rocks and dry grass.
+• A vast expanse of deep blue water unfolds, with buoys and fish farms in the middle.
+• A long, high mountain range stretches in the background.
+• A clear blue sky.
+• Elements:
+• Birds: A large flock of seagulls is soaring over the water and in the sky, both near and far.
+• Action:
+The woman is leaning to the side of the camera, her head and gaze directed towards the camera over her right shoulder. Her face shows a neutral expression, and her left arm is held close to her body. Her left hand is behind her hip, and her right hand is slightly raised.
+• Photo Style:
+• The photo should be taken in portrait mode (2:3 aspect ratio).
+• Everyday travel landscape photo.
+• Korean/Japanese internet idol style, who enjoys taking photos of expansive natural landscapes.
+• Very important: High sharpness throughout the entire photo, from the foreground to the mountains in the background (Large depth of field, sharp background). No background blur (No Bokeh), similar to wide-angle photos taken with a mobile phone lens.
+• Image Tone: Bright daylight creates sharp shadows. It gives a fresh, breezy, free, and expansive feel. The cool tones emphasize the deep blue of the water, sky, and clothing, contrasting with the white of the dress and birds. It feels like an iPhone camera photo, with realistic, natural colors, not overly vibrant like AI, with some graininess.
+🚫 Negative Note (Forbidden - to avoid image distortion): blur, haziness, low quality, pixelation, noise, grain, JPEG errors, artificial skin, animation, illustration, distortion, low quality
+```
+Create an image that is 100% identical to the attached image #1, without any changes. It must be a close-up, natural shot of a young girl with fair, smooth, and flawless skin, a sweet and pretty face, just like in the attached image.
+• Facial features: Large, round, dark brown eyes with long, naturally curled eyelashes. Smooth, healthy skin like "glass skin." Natural Korean-style makeup.
+Highlights: Light pink blush on the cheeks for a healthy, rosy look. Glossy strawberry red lips and naturally shaped eyebrows.
+• Skin tone: Milky white / Porcelain skin: Extremely fair skin, like "milky white" or porcelain white. The lightest skin tone with minimal yellow undertones (cool tone).
+• Skin texture:
+• Velvety smooth finish: Skin with a velvety smooth, matte finish; not too shiny or glossy. But appears moisturized.
+• Smooth & Flawless: Skin is smooth and thin, with virtually no pores (Poreless). However, you must select "Natural Skin Texture" so that the AI ​​can incorporate human skin characteristics and avoid making the skin look flat and artificial.
+Hair Color: Hair: Mid-back length, loose, thick, and softly curly. Background color: Glossy black, a solid black. Middle parting with thin side bangs.
+Camera Angle:
+• Eye-level or slightly low angle (Eye-level or slightly low angle): Shoot from a medium distance (Medium shot) to capture detail of both the subject and the wide background landscape.
+• Physique:
+• Slim figure, slender waist.
+• Hair appears thick and slightly windy.
+• Clothing: As in attached image #2
+• Location:
+• By a large lake or coastal area.
+• Foreground includes rocks and dry grass.
+• A vast expanse of deep blue water unfolds, with buoys and fish farms in the middle.
+• A long, high mountain range stretches in the background.
+• A clear, bright blue sky.
+• Elements:
+• Birds: A large flock of seagulls is soaring over the water and in the sky, both near and far.
+• Action:
+Standing facing the camera, looking up to the upper right and smiling. Holding the front of the dress with both hands. Slightly raising the arms, creating the pose of gently lifting the dress.
+• Photo Style:
+• The photo should be taken in portrait mode (2:3 aspect ratio).
+• Everyday travel landscape photo
+• Korean/Japanese internet idol style, fond of taking photos with expansive natural scenery. • Very important: High image sharpness throughout, from the foreground to the mountains in the background (Large depth of field, sharp background). No background blur (No Bokeh effect), similar to photos taken with a wide-angle lens on a mobile phone.
+• Image Tone: Bright daylight, strong light creating sharp shadows, fresh atmosphere, wind, freedom, vastness, cool tones, emphasizing the deep blue of the water, sky, and clothing, contrasting with the white of the dress and birds, giving the feeling of an iPhone camera photo with realistic, natural colors, not overly vibrant like AI, with a little grain noise.
+🚫 Negative Note (Forbidden - Specified to avoid image distortion): blurring, haziness, low quality, pixelation, noise, grain, JPEG image noise, artificial skin, animation, illustration, distortion, low quality
+
+```
+Create an image that is 100% identical to the attached image #1, without any changes. It must be a close-up, natural shot of a young girl with fair, smooth, and flawless skin, a sweet and pretty face, just like in the attached image.
+• Facial features: Large, round, dark brown eyes with long, naturally curled eyelashes. Smooth, healthy skin like "glass skin." Natural Korean-style makeup.
+Highlights: Light pink blush on the cheeks for a healthy, rosy look. Glossy strawberry red lips and naturally shaped eyebrows.
+• Skin tone: Milky white / Porcelain skin: Extremely fair skin, like "milky white" or porcelain white. The lightest skin tone with minimal yellow undertones (cool tone).
+• Skin texture:
+• Velvety smooth finish: Skin with a velvety smooth, matte finish; not too shiny or glossy. But appears moisturized.
+• Smooth & Flawless: Skin is smooth and thin, with virtually no pores (Poreless). However, you must select "Natural Skin Texture" so that the AI ​​can incorporate human skin characteristics and avoid making the skin look flat and artificial.
+Hair Color: Hair: Mid-back length, loose, thick, and softly curly. Background color: Glossy black, a solid black. Middle parting with thin side bangs.
+Camera Angle:
+• Eye-level or slightly low angle (Eye-level or slightly low angle): Shoot from a medium distance (Medium shot) to capture detail of both the subject and the wide background landscape.
+• Physique:
+• Slim figure, slender waist.
+• Hair appears thick and slightly windy.
+• Clothing: As in attached image #2
+• Location:
+• By a large lake or coastal area.
+• Foreground includes rocks and dry grass.
+• A vast expanse of deep blue water unfolds, with buoys and fish farms in the center.
+• A high mountain range stretches in the background.
+• A clear, bright blue sky.
+• Elements:
+• Main subject: A young woman with her back turned.
+• Balloon: A large, pinkish white balloon with a heart logo and the words "S7 Entertainment" in white printed on it, hovering on the left side of the frame, connected to the subject's arm by a string.
+• Birds: A large flock of seagulls soaring over the water and in the sky. Both close-up and wide shots.
+• Poses:
+• Back turned: Standing with her back to the camera, head tilted to the right towards the sunlight. Hair is gently swept back for a charming look.
+• Signature pose: One hand raised to touch hair/head, elbow slightly bent. This pose is like adjusting hair or gently stretching, creating a natural feel and revealing the arm, one hand holding the string of a balloon.
+• Style:
+• The photo should be taken in portrait mode (2:3 aspect ratio).
+• Everyday travel landscape photography
+• Korean/Japanese internet idol style
+• I like taking photos with vast natural landscapes.
+• Very important: The image has high sharpness throughout, from the foreground to the mountains in the background (Large depth of field, sharp background). No background blur (No Bokeh effect), unlike when shooting with a wide-angle lens on a mobile phone.
+• Image tone: Bright natural daylight outdoors. Strong light creates clear shadows. The atmosphere is fresh, breezy, free, and expansive. Cool tones, emphasizing the deep blue of the water, sky, and clothing, contrasting with the white of the dress and birds. The photo feels like it was taken with an iPhone camera, with realistic, natural colors, not overly vibrant like AI photos. There is some grain noise in the image.
+🚫 Negative comments (Forbidden - to avoid image distortion): blur, smearing, low quality, pixelation, noise, grain, JPEG errors, artificial skin, animation, illustration, distortion, low quality.
+
+```
+Create a photo that is identical to attached photo #1, without changing any details. The photo must be a close-up, natural shot of a young girl with fair, smooth, and flawless skin, a sweet and pretty face, just like in the attached photo.
+• Facial features: Large, round, dark brown eyes with long, naturally curled eyelashes. Smooth, healthy skin like "glass skin." Natural Korean-style makeup.
+Highlights: Light pink blush on the cheeks for a healthy, rosy look. Glossy strawberry red lips and naturally shaped eyebrows.
+• Skin tone: Milky white / Porcelain white: Extremely fair skin, like "milky white" or porcelain white. The lightest skin tone with little yellow undertone (cool tone).
+• Skin texture:
+• Velvety smooth finish: Skin with a velvety smooth, matte finish; not too shiny or glossy. But still looks moisturized.
+• Smooth & Flawless: Smooth and thin skin, with virtually no pores (Poreless). However, you must select "Natural Skin Texture" so that the AI ​​can incorporate human skin characteristics and avoid making the skin look flat and artificial.
+Hair Color: Hair: Mid-back length, loose, thick, and slightly wavy. Background color: Glossy black, jet black. Middle parting with thin bangs on both sides.
+Camera Angle:
+• Eye-level or slightly low angle (Eye-level or slightly low angle): Shoot from a medium distance (Medium shot) to capture detail of both the subject and the expansive landscape behind.
+• Physique:
+• Slim figure, slender waist.
+• Hair appears thick and slightly windy.
+• Clothing: As in attached image #2.
+• Location:
+• Next to a large lake or on the beach.
+• Foreground includes rocks and dry grass.
+• A vast expanse of deep blue water stretches out, with buoys and fish farms in the middle.
+• A long, high mountain range in the background.
+• A clear blue sky.
+• Elements:
+• Birds: A large flock of seagulls soars over the water and in the sky, both near and far.
+• Action:
+The woman leans forward, her head and eyes directed towards the camera, slightly squinting one eye, one hand raised to her mouth in a "blowing a kiss" gesture towards the camera. Her face expresses a cheerful, playful, and sensual expression.
+• Photography Style:
+• The photo should be taken in portrait mode (2:3 aspect ratio).
+• Everyday travel landscape photography.
+• Korean/Japanese internet idol style, fond of photographing expansive natural landscapes.
+• Very important: High sharpness throughout the entire image, from the foreground to the mountain range in the background (Large depth of field, sharp background). No background blurring effect (No Bokeh), similar to wide-angle photos taken with a mobile phone lens.
+• Image tone: Bright daylight creates sharp shadows. It gives a fresh, airy, free, and expansive feel. Cool tones highlight the deep blue of the water, sky, and clothing, contrasting with the white of the dress and birds. It feels like an iPhone photo, with realistic, natural colors, not overly vibrant like AI, and with a little grain noise.
+🚫 Negative notes (Forbidden - to avoid image distortion): blurring, haziness, low quality, pixelation, noise, grain, JPEG errors, artificial skin, animation, illustration, distortion, low quality.
+
+```
+
+Create an image that is 100% identical to the attached image #1, without any changes. It must be a close-up, natural shot of a young girl with fair, smooth, and flawless skin, a sweet and pretty face, just like in the attached image.
+• Facial features: Large, round, dark brown eyes with long, naturally curled eyelashes. Smooth, healthy skin like "glass skin." Natural Korean-style makeup.
+Highlights: Light pink blush on the cheeks for a healthy, rosy look. Glossy strawberry red lips and naturally shaped eyebrows.
+• Skin tone: Milky white / Porcelain skin: Extremely fair skin, like "milky white" or porcelain white. The lightest skin tone with minimal yellow undertones (cool tone).
+• Skin texture:
+• Velvety smooth finish: Skin with a velvety smooth, matte finish; not too shiny or glossy. But appears moisturized.
+• Smooth & Flawless: Skin is smooth and thin, with virtually no pores (Poreless). However, you must select "Natural Skin Texture" so that the AI ​​can incorporate human skin characteristics and avoid making the skin look flat and artificial.
+Hair Color: Hair: Mid-back length, loose, thick, and softly curly. Background color: Glossy black, a solid black. Middle parting with thin side bangs.
+Camera Angle:
+• Eye-level or slightly low angle (Eye-level or slightly low angle): Shoot from a medium distance (Medium shot) to capture detail of both the subject and the wide background landscape.
+• Physique:
+• Slim figure, slender waist.
+• Hair appears thick and slightly windy.
+• Clothing: As in attached image #2
+• Location:
+• By a large lake or coastal area.
+• Foreground includes rocks and dry grass.
+• A vast expanse of deep blue water unfolds, with buoys and fish farms in the center.
+• A high mountain range stretches in the background.
+• A clear, bright blue sky.
+• Elements:
+• Balloon: A large, white and pink balloon with a heart-shaped logo and the words "S7 Entertainment" printed in white is suspended on the left side of the frame, tied to the character's arm with a string.
+• Birds: A large flock of seagulls is soaring over the water and in the sky. Both close-up and wide shots are included.
+• Action in the photo (emphasis on precision):
+• A cheerful running pose towards the camera, with a smiling, slightly giggling expression; bright and lively.
+• Action:
+The woman is leaning to the side of the camera, her head and gaze directed towards the camera over her right shoulder. Her face shows a neutral expression, and her left arm is held close to her body. Left hand behind hip, right hand slightly raised.
+• Photography Style:
+• The photo should be taken in portrait mode (2:3 aspect ratio).
+• Everyday travel landscape photography.
+• Korean/Japanese internet idol style.
+• I like taking photos of vast natural landscapes.
+• Very important: The image has high sharpness throughout, from the foreground to the mountains in the background (large depth of field, sharp background). No background blur (no bokeh), unlike when shooting with a wide-angle lens on a mobile phone.
+• Image Tone: Bright natural daylight outdoors. Strong light creates clear shadows. The air is fresh, breezy, free, and expansive. Cool tones, emphasizing the deep blue of the water, sky, and clothing, contrasting with the blue-white of the dress and birds. It feels like a photo taken with an iPhone camera, with realistic, natural colors, not overly vibrant like AI. There is a little grain in the image.
+🚫 Negative comments (Forbidden - to avoid image distortion): blur, smearing, low quality, pixelation, noise, grain, JPEG errors, artificial skin, animation, illustration, distortion, low quality.
+

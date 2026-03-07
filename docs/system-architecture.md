@@ -60,7 +60,60 @@ graph TB
 
 ---
 
-## 2. Chunked Import & Relay Architecture
+## 2. Niche Intelligence Module Architecture
+
+### Overview
+
+The Niche Intelligence module guides users through a 4-step wizard to discover profitable niches and auto-create TikTok channels.
+
+**Flow:**
+1. **Explore:** User selects from 10+ niche categories
+2. **Analyze:** AI analyzes market potential, competition, profit margin
+3. **Create:** System auto-creates TikTok channel with Character Bible
+4. **Success:** Channel ready, user can start importing products
+
+### 2.1 Niche Finder Wizard
+
+**Pages:** `/niche-finder`
+
+**Components:**
+- `NicheExploreStep` — Display 10 niche categories with descriptions
+- `NicheAnalyzeStep` — AI analysis results (market potential, competition level, avg margin, recommendations)
+- `NicheCreateStep` — Channel creation confirmation, auto-fill channel name
+- `NicheSuccessStep` — Success message, link to start importing
+
+**API Endpoints:**
+- `POST /api/ai/analyze-niche` — AI analyzes niche market data
+- `POST /api/channels/create-from-niche` — Auto-create channel with generated Character Bible
+- `GET /api/niche-finder/categories` — List 10 niche categories
+
+### 2.2 Niche Analysis Engine
+
+**Code:** `lib/ai/analyze-niche.ts`
+
+AI performs market analysis on selected niche:
+- **Market potential (30%):** Search volume, trend trajectory, market size
+- **Competition level (25%):** Number of competitors, market saturation
+- **Profit margin (25%):** Typical commission rates, product prices, profit estimates
+- **Content difficulty (20%):** Ease of creating compelling videos, asset availability
+
+**Output:** JSON with scores, recommendations, suggested channel name, description
+
+### 2.3 Auto-Channel Creation
+
+**Code:** `lib/content/create-niche-channel.ts`
+
+When user confirms channel creation:
+1. **Generate channel profile:** AI creates channel name, description, persona
+2. **Generate Character Bible:** AI creates 7-layer character framework for the niche
+3. **Create TikTokChannel record:** Store in database with generated profile + Character Bible
+4. **Create NicheProfile:** Link channel to original niche selection (for analytics)
+
+**Benefits:** Users don't manually create 50+ fields; AI handles entire setup in 2 minutes
+
+---
+
+## 3. Chunked Import & Relay Architecture
 
 ### Overview
 
@@ -322,7 +375,7 @@ export async function GET(): Promise<NextResponse> {
 
 ---
 
-## 3. Import Progress Tracking
+## 4. Import Progress Tracking
 
 **Code:** `lib/import/update-batch-progress.ts`
 
@@ -349,7 +402,7 @@ return <Progress value={(processed / total) * 100} />;
 
 ---
 
-## 4. Product Data Flow
+## 5. Product Data Flow
 
 ### Step 1: Classification
 
@@ -382,7 +435,7 @@ If >= 30 feedbacks exist → Apply personalized weight adjustments
 
 ---
 
-## 5. Database Schema
+## 6. Database Schema
 
 **Key Tables for Import:**
 
@@ -420,7 +473,74 @@ This design prevents orphaned records while preserving production assets when so
 
 ---
 
-## 6. Idempotency & Race Condition Prevention
+## 7. Widget Error Boundaries & Dashboard Resilience
+
+### Overview
+
+8 key dashboard widgets are wrapped in React ErrorBoundary components to prevent single widget errors from crashing the entire dashboard.
+
+### Applied Widgets
+
+| Widget | Component | Error Fallback |
+|--------|-----------|-----------------|
+| Morning Brief | `MorningBriefWidget` | "Widget unavailable. Retry" + error details |
+| Inbox Stats | `InboxStatsWidget` | Show cached count or "0 items" |
+| Quick Paste | `QuickPasteBox` | Show input disabled + error message |
+| Chart Widget | `TrendChart` | Empty state with explanation |
+| Metric Cards | `StatCard` | Loading skeleton or "N/A" |
+| Skill Level | `SkillIndicator` | "N/A" gracefully |
+| Pattern Analysis | `PatternInsights` | Empty state message |
+| Calendar Widget | `EventCalendar` | Fallback text |
+
+### Implementation Pattern
+
+```typescript
+// components/dashboard/dashboard.tsx
+import { ErrorBoundary } from "react-error-boundary";
+import { WidgetError } from "./widget-error";
+
+export function Dashboard() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <ErrorBoundary fallback={<WidgetError title="Morning Brief" />}>
+        <MorningBriefWidget />
+      </ErrorBoundary>
+
+      <ErrorBoundary fallback={<WidgetError title="Inbox Stats" />}>
+        <InboxStatsWidget />
+      </ErrorBoundary>
+
+      {/* Other widgets... */}
+    </div>
+  );
+}
+
+// components/dashboard/widget-error.tsx
+export function WidgetError({ title }: { title: string }) {
+  return (
+    <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 rounded-lg p-4">
+      <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+        {title} không khả dụng
+      </p>
+      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+        Vui lòng refresh trang hoặc liên hệ hỗ trợ
+      </p>
+    </div>
+  );
+}
+```
+
+### Benefits
+
+- **Isolated Failures:** Single widget error doesn't crash dashboard
+- **Graceful Degradation:** Users continue with other features while one widget is broken
+- **Better UX:** Clear message instead of blank page
+- **Debug-Friendly:** Errors logged to console; dev can inspect
+- **Production-Ready:** Prevents cascading failures from affecting entire app
+
+---
+
+## 8. Idempotency & Race Condition Prevention
 
 ### ProductIdentity Upsert Pattern
 
@@ -452,7 +572,7 @@ const identity = await prisma.productIdentity.upsert({
 
 ---
 
-## 7. Error Handling & Resilience
+## 9. Error Handling & Resilience
 
 ### Dashboard Widget Error Boundaries
 
@@ -512,7 +632,7 @@ export function WidgetWrapper({ children, title }: Props) {
 
 ---
 
-## 7. Performance Tuning
+## 10. Performance Tuning
 
 ### Database Optimization
 
@@ -545,7 +665,7 @@ export function WidgetWrapper({ children, title }: Props) {
 
 ---
 
-## 8. Monitoring & Logging
+## 11. Monitoring & Logging
 
 ### Key Metrics
 
@@ -572,7 +692,7 @@ if (status === "failed") showRetryButton();
 
 ---
 
-## 9. API Endpoints (Import & Scoring)
+## 12. API Endpoints (Import & Scoring)
 
 | Endpoint | Method | Responsibility |
 |----------|--------|-----------------|
@@ -584,7 +704,7 @@ if (status === "failed") showRetryButton();
 
 ---
 
-## 10. Deployment Configuration
+## 13. Deployment Configuration
 
 **Vercel Config** (`vercel.json`):
 ```json
@@ -608,7 +728,7 @@ if (status === "failed") showRetryButton();
 
 ---
 
-## 11. Key Design Decisions
+## 14. Key Design Decisions
 
 | Decision | Rationale |
 |----------|-----------|
@@ -622,7 +742,7 @@ if (status === "failed") showRetryButton();
 
 ---
 
-## 12. Future Improvements
+## 15. Future Improvements
 
 - **Webhook callbacks** instead of polling (requires client-side event listener)
 - **Server-sent events (SSE)** for real-time progress updates

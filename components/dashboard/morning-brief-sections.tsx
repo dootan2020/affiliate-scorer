@@ -103,7 +103,7 @@ export function EventProductBoostSection({
             </span>
           </div>
           {evt.products.length > 0 && (
-            <div className="ml-5.5 space-y-1">
+            <div className="ml-6 space-y-1">
               {evt.products.map((p, j) => (
                 <div key={`epb-p-${i}-${j}`} className="flex items-center gap-2 text-xs">
                   <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />

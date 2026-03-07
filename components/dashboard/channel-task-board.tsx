@@ -85,7 +85,7 @@ export function ChannelTaskBoard(): React.ReactElement {
           {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric" })}
         </span>
       </div>
-      <div className="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin">
+      <div className="space-y-3 max-h-[600px] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
         {tasks.map((task) => (
           <ChannelCard key={task.channelId} task={task} />
         ))}

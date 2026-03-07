@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock, BookOpen, Layers, Lightbulb, Video, Calendar, ImageIcon } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Download, Loader2, Pencil, RefreshCw, Trash2, Sparkles, Film, LayoutGrid, FileText, Clock, BookOpen, Layers, Lightbulb, Video, Calendar, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChannelForm } from "./channel-form";
@@ -106,6 +106,17 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [refreshOpen, setRefreshOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "bible" | "formats" | "matrix" | "videoBible" | "series" | "modelImages">("overview");
+  const [nicheProfileId, setNicheProfileId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const pid = sessionStorage.getItem("pastr-niche-profile-id");
+    if (pid) setNicheProfileId(pid);
+  }, []);
+
+  const dismissNicheBanner = useCallback((): void => {
+    setNicheProfileId(null);
+    sessionStorage.removeItem("pastr-niche-profile-id");
+  }, []);
 
   const fetchChannel = useCallback(async (): Promise<void> => {
     setError(null);
@@ -302,6 +313,30 @@ export function ChannelDetailClient({ channelId }: Props): React.ReactElement {
       >
         <ArrowLeft className="w-4 h-4" /> Danh sách kênh
       </Link>
+
+      {nicheProfileId && (
+        <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-xl px-4 py-3">
+          <span className="text-sm text-orange-700 dark:text-orange-300">
+            Kênh được tạo từ gợi ý ngách AI
+          </span>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/niche-finder"
+              className="flex items-center gap-1 text-sm font-medium text-orange-600 dark:text-orange-400 hover:underline"
+            >
+              Quay lại gợi ý ngách <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <button
+              type="button"
+              onClick={dismissNicheBanner}
+              className="text-orange-400 hover:text-orange-600 dark:hover:text-orange-300 p-1"
+              title="Ẩn"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">

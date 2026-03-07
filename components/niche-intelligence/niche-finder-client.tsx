@@ -11,6 +11,7 @@ import {
   StepStyle,
 } from "./questionnaire-steps";
 import { NicheRecommendations } from "./niche-recommendations";
+import { NicheConfirmDialog } from "./niche-confirm-dialog";
 import type { QuestionnaireAnswers, NicheRecommendation } from "@/lib/niche-intelligence/types";
 
 const STEPS = [
@@ -39,6 +40,7 @@ export function NicheFinderClient(): React.ReactElement {
   const [summary, setSummary] = useState("");
   const [profileId, setProfileId] = useState("");
   const [error, setError] = useState("");
+  const [confirmRec, setConfirmRec] = useState<NicheRecommendation | null>(null);
 
   const stepIndex = STEPS.findIndex((s) => s.key === activeStep);
   const isFirstStep = stepIndex === 0;
@@ -99,8 +101,13 @@ export function NicheFinderClient(): React.ReactElement {
     }
   }, [isFirstStep, stepIndex]);
 
+  const handleConfirmNiche = useCallback((rec: NicheRecommendation): void => {
+    setConfirmRec(rec);
+  }, []);
+
   const handleSelectNiche = useCallback(
-    async (nicheKey: string, nicheLabel: string): Promise<void> => {
+    async (nicheKey: string, nicheLabel: string, reasoning?: string): Promise<void> => {
+      setConfirmRec(null);
       try {
         // Check if channel with same niche already exists
         const checkRes = await fetch(`/api/channels?niche=${encodeURIComponent(nicheKey)}`);
@@ -110,16 +117,21 @@ export function NicheFinderClient(): React.ReactElement {
             ? channels.data.find((ch: { niche?: string; isActive?: boolean }) => ch.niche === nicheKey && ch.isActive !== false)
             : null;
           if (existing) {
-            // Update NicheProfile and redirect to existing channel
             await fetch("/api/niche-intelligence/select", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ profileId, selectedNiche: nicheKey, channelId: existing.id }),
             });
+            sessionStorage.setItem("pastr-niche-profile-id", profileId);
             router.push(`/channels/${existing.id}`);
             return;
           }
         }
+
+        // Use first sentence of reasoning as persona description (more descriptive than generic)
+        const personaDesc = reasoning
+          ? reasoning.split(/[.!。]/)[0].trim().slice(0, 200)
+          : `Kênh affiliate ${nicheLabel} trên TikTok`;
 
         const res = await fetch("/api/channels", {
           method: "POST",
@@ -128,7 +140,7 @@ export function NicheFinderClient(): React.ReactElement {
             name: nicheLabel,
             niche: nicheKey,
             personaName: nicheLabel,
-            personaDesc: `Kênh affiliate ${nicheLabel} trên TikTok`,
+            personaDesc: personaDesc || `Kênh affiliate ${nicheLabel} trên TikTok`,
           }),
         });
 
@@ -144,7 +156,6 @@ export function NicheFinderClient(): React.ReactElement {
           throw new Error("Không nhận được ID kênh từ server");
         }
 
-        // Update NicheProfile with selected niche and channel
         const selectRes = await fetch("/api/niche-intelligence/select", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -159,6 +170,7 @@ export function NicheFinderClient(): React.ReactElement {
           console.error("[niche-finder] Failed to update NicheProfile");
         }
 
+        sessionStorage.setItem("pastr-niche-profile-id", profileId);
         router.push(`/channels/${channelId}`);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Lỗi khi tạo kênh");
@@ -218,12 +230,19 @@ export function NicheFinderClient(): React.ReactElement {
     }
 
     return (
-      <NicheRecommendations
-        recommendations={recommendations}
-        summary={summary}
-        onSelect={handleSelectNiche}
-        onRetry={handleRetry}
-      />
+      <>
+        <NicheRecommendations
+          recommendations={recommendations}
+          summary={summary}
+          onSelect={handleConfirmNiche}
+          onRetry={handleRetry}
+        />
+        <NicheConfirmDialog
+          recommendation={confirmRec}
+          onConfirm={(rec) => handleSelectNiche(rec.nicheKey, rec.nicheLabel, rec.reasoning)}
+          onCancel={() => setConfirmRec(null)}
+        />
+      </>
     );
   }
 

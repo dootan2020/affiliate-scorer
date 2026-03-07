@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import {
   Trophy,
   TrendingUp,
   Lightbulb,
-  Loader2,
   RotateCcw,
   Shield,
 } from "lucide-react";
@@ -15,7 +13,7 @@ import type { NicheRecommendation } from "@/lib/niche-intelligence/types";
 interface NicheRecommendationsProps {
   recommendations: NicheRecommendation[];
   summary: string;
-  onSelect: (nicheKey: string, nicheLabel: string) => Promise<void>;
+  onSelect: (rec: NicheRecommendation) => void;
   onRetry: () => void;
 }
 
@@ -31,16 +29,8 @@ export function NicheRecommendations({
   onSelect,
   onRetry,
 }: NicheRecommendationsProps): React.ReactElement {
-  const [selecting, setSelecting] = useState<string | null>(null);
-
-  const handleSelect = async (rec: NicheRecommendation): Promise<void> => {
-    if (selecting !== null) return;
-    setSelecting(rec.nicheKey);
-    try {
-      await onSelect(rec.nicheKey, rec.nicheLabel);
-    } finally {
-      setSelecting(null);
-    }
+  const handleSelect = (rec: NicheRecommendation): void => {
+    onSelect(rec);
   };
 
   return (
@@ -166,23 +156,14 @@ export function NicheRecommendations({
                 <button
                   type="button"
                   onClick={() => handleSelect(rec)}
-                  disabled={selecting !== null}
                   className={cn(
                     "w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
                     isTop
                       ? "bg-orange-500 hover:bg-orange-600 text-white shadow-sm hover:shadow"
-                      : "bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300",
-                    selecting !== null && "opacity-50 cursor-not-allowed"
+                      : "bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
                   )}
                 >
-                  {selecting === rec.nicheKey ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Đang tạo kênh...
-                    </>
-                  ) : (
-                    "Chọn ngách này"
-                  )}
+                  Chọn ngách này
                 </button>
               </div>
             </div>

@@ -38,9 +38,11 @@ export function MorningBriefWidget(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
   const [isStale, setIsStale] = useState(false);
+  const [todayString, setTodayString] = useState("");
 
-  // Collapse by default on mobile
+  // Set date string on client only to avoid hydration mismatch
   useEffect(() => {
+    setTodayString(formatTodayString());
     if (window.innerWidth < 1024) setExpanded(false);
   }, []);
 
@@ -88,7 +90,7 @@ export function MorningBriefWidget(): React.ReactElement {
         <div className="flex items-center gap-2">
           <Sun className="w-5 h-5 text-amber-500" />
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-            Bản tin sáng — {formatTodayString()}
+            Bản tin sáng{todayString ? ` — ${todayString}` : ""}
           </h3>
           {loading && <span className="text-xs text-gray-400 animate-pulse">Đang tạo...</span>}
           {error && !loading && <span className="text-xs text-rose-500">Lỗi</span>}

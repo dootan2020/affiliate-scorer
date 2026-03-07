@@ -18,8 +18,10 @@ interface ChannelTask {
 export function ChannelTaskBoard(): React.ReactElement {
   const [tasks, setTasks] = useState<ChannelTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateLabel, setDateLabel] = useState("");
 
   useEffect(() => {
+    setDateLabel(new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric" }));
     fetch("/api/dashboard/channel-tasks")
       .then((r) => r.json())
       .then((json: { data?: ChannelTask[] }) => setTasks(json.data ?? []))
@@ -81,9 +83,9 @@ export function ChannelTaskBoard(): React.ReactElement {
       <div className="flex items-center gap-2 mb-3">
         <Tv className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">Kênh hôm nay</h2>
-        <span className="text-xs text-gray-400 ml-auto">
-          {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric" })}
-        </span>
+        {dateLabel && (
+          <span className="text-xs text-gray-400 ml-auto">{dateLabel}</span>
+        )}
       </div>
       <div className="space-y-3 max-h-[600px] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
         {tasks.map((task) => (

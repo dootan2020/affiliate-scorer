@@ -35,11 +35,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     await processChunk(batchId, chunk);
 
     if (remaining.length > 0) {
-      fireRelay(
-        "/api/internal/import-chunk",
-        { batchId, products: remaining },
-        "import-chunk",
-      );
+      try {
+        await fireRelay(
+          "/api/internal/import-chunk",
+          { batchId, products: remaining },
+          "import-chunk",
+        );
+      } catch (relayErr) {
+        console.error("[import-chunk] relay failed, marking batch as failed:", relayErr);
+        await updateBatchProgress(batchId, {
+          status: "failed",
+          errorLog: { relayError: relayErr instanceof Error ? relayErr.message : String(relayErr) },
+        });
+      }
       return NextResponse.json({
         ok: true,
         processed: chunk.length,

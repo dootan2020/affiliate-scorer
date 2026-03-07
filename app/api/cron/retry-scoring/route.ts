@@ -69,12 +69,24 @@ export async function GET(): Promise<NextResponse> {
         },
       });
 
-      fireRelay(
-        "/api/internal/score-batch",
-        { batchId: batch.id },
-        `scoring-retry-${retryCount + 1}`,
-      );
-      retried++;
+      try {
+        await fireRelay(
+          "/api/internal/score-batch",
+          { batchId: batch.id },
+          `scoring-retry-${retryCount + 1}`,
+        );
+        retried++;
+      } catch (relayErr) {
+        console.error(`[retry-scoring] relay failed for batch ${batch.id}:`, relayErr);
+        await prisma.importBatch.update({
+          where: { id: batch.id },
+          data: {
+            scoringStatus: "failed",
+            errorLog: { ...log, scoringRetryCount: retryCount + 1, relayError: relayErr instanceof Error ? relayErr.message : String(relayErr) },
+          },
+        });
+        skipped++;
+      }
     }
 
     // Cleanup zombie BackgroundTasks stuck in processing > 3 min

@@ -151,9 +151,12 @@ export async function PUT(
     return NextResponse.json({ data: channel });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation failed", details: err.issues }, { status: 400 });
+      return NextResponse.json({ error: "Dữ liệu không hợp lệ", details: err.issues }, { status: 400 });
     }
-    return NextResponse.json({ error: "Failed to update channel" }, { status: 500 });
+    if (isPrismaNotFound(err)) {
+      return NextResponse.json({ error: "Không tìm thấy kênh" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Lỗi cập nhật kênh" }, { status: 500 });
   }
 }
 
@@ -166,7 +169,19 @@ export async function DELETE(
   try {
     await prisma.tikTokChannel.delete({ where: { id } });
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Failed to delete channel" }, { status: 500 });
+  } catch (err) {
+    if (isPrismaNotFound(err)) {
+      return NextResponse.json({ error: "Không tìm thấy kênh" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Lỗi xóa kênh" }, { status: 500 });
   }
+}
+
+function isPrismaNotFound(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code: string }).code === "P2025"
+  );
 }

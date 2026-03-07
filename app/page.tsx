@@ -8,6 +8,7 @@ import { YesterdayStatsWidget } from "@/components/dashboard/yesterday-stats-wid
 import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-widget";
 import { DashboardEmptyState } from "@/components/dashboard/dashboard-empty-state";
 import { OnboardingChecklist } from "@/components/niche-intelligence/onboarding-checklist";
+import { WidgetErrorBoundary } from "@/components/dashboard/widget-error-boundary";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -46,31 +47,47 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
         Tổng quan
       </h1>
 
-      <OnboardingChecklist />
+      <WidgetErrorBoundary name="Onboarding">
+        <OnboardingChecklist />
+      </WidgetErrorBoundary>
 
       {/* Alert bar */}
-      <OrphanAlertWidget />
+      <WidgetErrorBoundary name="Cảnh báo">
+        <OrphanAlertWidget />
+      </WidgetErrorBoundary>
 
       {/* Stat cards */}
-      <YesterdayStatsWidget />
+      <WidgetErrorBoundary name="Thống kê">
+        <YesterdayStatsWidget />
+      </WidgetErrorBoundary>
 
       {/* 3-column bento grid — mobile: ContentSuggestions first, MorningBrief collapsed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="order-2 lg:order-1">
-          <MorningBriefWidget />
+          <WidgetErrorBoundary name="Bản tin sáng">
+            <MorningBriefWidget />
+          </WidgetErrorBoundary>
         </div>
         <div className="order-1 lg:order-2">
-          <ContentSuggestionsWidget />
+          <WidgetErrorBoundary name="Gợi ý nội dung">
+            <ContentSuggestionsWidget />
+          </WidgetErrorBoundary>
         </div>
         <div className="order-3">
-          <ChannelTaskBoard />
+          <WidgetErrorBoundary name="Kênh hôm nay">
+            <ChannelTaskBoard />
+          </WidgetErrorBoundary>
         </div>
       </div>
 
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <WinningPatternsWidget />
-        <UpcomingEventsWidget />
+        <WidgetErrorBoundary name="Winning Patterns">
+          <WinningPatternsWidget />
+        </WidgetErrorBoundary>
+        <WidgetErrorBoundary name="Sự kiện">
+          <UpcomingEventsWidget />
+        </WidgetErrorBoundary>
       </div>
     </div>
   );

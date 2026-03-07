@@ -100,7 +100,7 @@ model Product {
 model Feedback {
   id                 String   @id @default(cuid())
   productId          String
-  product            Product  @relation(fields: [productId], references: [id])
+  product            Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   aiScoreAtSelection Float
 
   // Ads
@@ -176,9 +176,9 @@ model LearningLog {
 model ProductSnapshot {
   id            String      @id @default(cuid())
   productId     String
-  product       Product     @relation(fields: [productId], references: [id])
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   importBatchId String
-  importBatch   ImportBatch @relation(fields: [importBatchId], references: [id])
+  importBatch   ImportBatch @relation(fields: [importBatchId], references: [id], onDelete: Cascade)
 
   price          Float
   commissionRate Float
@@ -546,11 +546,11 @@ model InboxItem {
 model ContentBrief {
   id                String          @id @default(cuid())
   productIdentityId String
-  productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id])
+  productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id], onDelete: Cascade)
 
   // Channel (nullable for migration — new briefs enforce via API)
   channelId String?
-  channel   TikTokChannel? @relation(fields: [channelId], references: [id])
+  channel   TikTokChannel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
 
   // Generated content
   angles  Json @default("[]") // 5 angles
@@ -588,9 +588,9 @@ model ContentAsset {
 
   // Relations
   productIdentityId String
-  productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id])
+  productIdentity   ProductIdentity @relation(fields: [productIdentityId], references: [id], onDelete: Cascade)
   briefId           String?
-  brief             ContentBrief? @relation(fields: [briefId], references: [id])
+  brief             ContentBrief? @relation(fields: [briefId], references: [id], onDelete: SetNull)
   productionBatchId String?
   productionBatch   ProductionBatch? @relation(fields: [productionBatchId], references: [id])
 
@@ -995,9 +995,9 @@ model ContentSlot {
   videoFormat String? // "before_after" | "product_showcase" | ...
 
   productIdentityId String?
-  productIdentity   ProductIdentity? @relation(fields: [productIdentityId], references: [id])
+  productIdentity   ProductIdentity? @relation(fields: [productIdentityId], references: [id], onDelete: SetNull)
   contentAssetId    String?
-  contentAsset      ContentAsset? @relation("SlotAsset", fields: [contentAssetId], references: [id])
+  contentAsset      ContentAsset? @relation("SlotAsset", fields: [contentAssetId], references: [id], onDelete: SetNull)
 
   status String @default("planned") // "planned" | "briefed" | "produced" | "published" | "skipped"
   notes  String?
@@ -1329,7 +1329,7 @@ model NicheProfile {
   // Selection
   selectedNiche String?
   channelId     String?
-  channel       TikTokChannel? @relation(fields: [channelId], references: [id])
+  channel       TikTokChannel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

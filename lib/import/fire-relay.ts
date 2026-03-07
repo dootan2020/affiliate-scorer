@@ -62,6 +62,8 @@ async function attemptRelay(
       await new Promise((r) => setTimeout(r, BACKOFF_MS[attempt]));
       return attemptRelay(url, body, attempt + 1, label);
     }
-    console.error(`${label} relay failed after ${MAX_RETRIES} attempts:`, err);
+    const error = new Error(`${label} relay failed after ${MAX_RETRIES} attempts: ${err instanceof Error ? err.message : String(err)}`);
+    console.error(error.message);
+    throw error;
   }
 }

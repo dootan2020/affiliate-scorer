@@ -116,11 +116,24 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     if (remaining > 0) {
-      fireRelay(
-        "/api/internal/score-batch",
-        { batchId },
-        "score-chain",
-      );
+      try {
+        await fireRelay(
+          "/api/internal/score-batch",
+          { batchId },
+          "score-chain",
+        );
+      } catch (relayErr) {
+        console.error("[score-batch] relay failed, marking batch scoring as failed:", relayErr);
+        const existingBatch = await prisma.importBatch.findUnique({
+          where: { id: batchId },
+          select: { errorLog: true },
+        });
+        const existingLog = (existingBatch?.errorLog as Record<string, unknown>) ?? {};
+        await updateBatchProgress(batchId, {
+          scoringStatus: "failed",
+          errorLog: { ...existingLog, relayError: relayErr instanceof Error ? relayErr.message : String(relayErr) },
+        });
+      }
       return NextResponse.json({
         done: false,
         scored: productIds.length,

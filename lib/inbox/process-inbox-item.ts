@@ -86,16 +86,71 @@ export async function processInboxItem(parsed: ParsedLink): Promise<ProcessResul
         }
       }
 
-      // 3) Mới → tạo product_identity
+      // 3) Mới → tạo product_identity (upsert to prevent race condition duplicates)
       const fingerprint = generateFingerprint(canonical, null, null);
-      const identity = await prisma.productIdentity.create({
-        data: {
+      if (canonical) {
+        // Use upsert on canonicalUrl to prevent duplicate when concurrent requests
+        const identity = await prisma.productIdentity.upsert({
+          where: { canonicalUrl: canonical },
+          update: { lastSeenAt: new Date() },
+          create: {
+            canonicalUrl: canonical,
+            productIdExternal: parsed.externalId,
+            fingerprintHash: fingerprint,
+            inboxState: "new",
+          },
+        });
+        // Check if this was actually an existing record (upsert hit update path)
+        const isExisting = identity.updatedAt > identity.createdAt;
+        if (isExisting) {
+          await addUrlIfNew(identity.id, parsed.originalUrl, parsed.type);
+          await prisma.inboxItem.create({
+            data: {
+              rawUrl: parsed.originalUrl,
+              detectedType: base.detectedType,
+              productIdentityId: identity.id,
+              status: "duplicate",
+            },
+          });
+          return { ...base, status: "duplicate", identityId: identity.id, title: identity.title };
+        }
+
+        await addUrlIfNew(identity.id, parsed.originalUrl, parsed.type);
+        await prisma.inboxItem.create({
+          data: {
+            rawUrl: parsed.originalUrl,
+            detectedType: base.detectedType,
+            productIdentityId: identity.id,
+            status: "new_product",
+          },
+        });
+        return { ...base, status: "new_product", identityId: identity.id, title: null };
+      }
+
+      // No canonical URL — use fingerprint as unique key
+      const identity = await prisma.productIdentity.upsert({
+        where: { fingerprintHash: fingerprint },
+        update: { lastSeenAt: new Date() },
+        create: {
           canonicalUrl: canonical,
           productIdExternal: parsed.externalId,
           fingerprintHash: fingerprint,
           inboxState: "new",
         },
       });
+      const isExisting = identity.updatedAt > identity.createdAt;
+      if (isExisting) {
+        await addUrlIfNew(identity.id, parsed.originalUrl, parsed.type);
+        await prisma.inboxItem.create({
+          data: {
+            rawUrl: parsed.originalUrl,
+            detectedType: base.detectedType,
+            productIdentityId: identity.id,
+            status: "duplicate",
+          },
+        });
+        return { ...base, status: "duplicate", identityId: identity.id, title: identity.title };
+      }
 
       await addUrlIfNew(identity.id, parsed.originalUrl, parsed.type);
 

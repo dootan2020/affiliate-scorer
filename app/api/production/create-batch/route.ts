@@ -10,18 +10,21 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (validation.error) return validation.error;
     const { assetIds, notes } = validation.data;
 
-    // Tạo batch
-    const batch = await prisma.productionBatch.create({
-      data: {
-        targetVideoCount: assetIds.length,
-        notes: notes || null,
-      },
-    });
+    // Atomic: tạo batch + gán assets trong 1 transaction
+    const batch = await prisma.$transaction(async (tx) => {
+      const newBatch = await tx.productionBatch.create({
+        data: {
+          targetVideoCount: assetIds.length,
+          notes: notes || null,
+        },
+      });
 
-    // Gán assets vào batch
-    await prisma.contentAsset.updateMany({
-      where: { id: { in: assetIds } },
-      data: { productionBatchId: batch.id },
+      await tx.contentAsset.updateMany({
+        where: { id: { in: assetIds } },
+        data: { productionBatchId: newBatch.id },
+      });
+
+      return newBatch;
     });
 
     return NextResponse.json({

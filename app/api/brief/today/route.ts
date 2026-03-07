@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateMorningBrief } from "@/lib/brief/generate-morning-brief";
 
+// Simple in-memory lock to prevent concurrent brief generation
+let generatingBrief = false;
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = request.nextUrl;
@@ -17,8 +20,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
     if (!brief || forceRefresh) {
-      const briefId = await generateMorningBrief();
-      brief = await prisma.dailyBrief.findUnique({ where: { id: briefId } });
+      // Prevent concurrent AI calls — if already generating, return existing or wait
+      if (generatingBrief) {
+        if (brief) {
+          return NextResponse.json({ data: brief, latestDataChange: null });
+        }
+        return NextResponse.json(
+          { error: "Brief đang được tạo, vui lòng thử lại sau vài giây" },
+          { status: 429 },
+        );
+      }
+
+      generatingBrief = true;
+      try {
+        const briefId = await generateMorningBrief();
+        brief = await prisma.dailyBrief.findUnique({ where: { id: briefId } });
+      } finally {
+        generatingBrief = false;
+      }
     }
 
     if (!brief) {

@@ -139,3 +139,107 @@ Mọi page và component tương tác đều phải có đủ 3 states:
 ## Cấu Trúc Import
 
 Thứ tự: (1) External packages, (2) Internal modules (`@/lib/...`), (3) Types (`import type`).
+
+## Database Patterns
+
+### Idempotency & Race Conditions
+
+**Use `upsert` for concurrent operations:**
+
+```typescript
+// BAD — create may fail if race condition creates duplicate
+const item = await prisma.item.create({
+  data: { uniqueField: value, ... }
+});
+
+// GOOD — handles concurrent creates atomically
+const item = await prisma.item.upsert({
+  where: { uniqueField: value },
+  create: { uniqueField: value, ... },
+  update: { ... } // update if already exists
+});
+```
+
+**Applied to:** ProductIdentity, InboxItem, ContentBrief uniqueness checks.
+
+### Cascading Deletes & Data Integrity
+
+**Always specify `onDelete` for foreign key relations:**
+
+```typescript
+// Database enforces referential integrity
+model Feedback {
+  productId String
+  product   Product @relation(
+    fields: [productId],
+    references: [id],
+    onDelete: Cascade  // Required: remove feedback when product deleted
+  )
+}
+
+model ContentBrief {
+  channelId String?
+  channel   TikTokChannel? @relation(
+    fields: [channelId],
+    references: [id],
+    onDelete: SetNull  // Preserve brief when channel deleted
+  )
+}
+```
+
+**Cascade Rules:**
+- `Cascade` — Remove dependent records (use for content like Feedback, Snapshots)
+- `SetNull` — Clear foreign key (use for optional relationships, preserve data)
+- `Restrict` — Prevent deletion if dependents exist (rarely used; causes complexity)
+
+### Transaction Safety for Multi-Step Operations
+
+**Use `$transaction()` for atomic batch operations only:**
+
+```typescript
+// BAD — steps can fail independently; batch left in inconsistent state
+await prisma.importBatch.create({ ... });
+for (const product of products) {
+  await prisma.productAsset.create({ ... });
+}
+
+// GOOD — all-or-nothing atomicity
+const result = await prisma.$transaction(async (tx) => {
+  const batch = await tx.importBatch.create({ ... });
+  for (const product of products) {
+    await tx.productAsset.create({ batchId: batch.id, ... });
+  }
+  return batch;
+});
+```
+
+**When to use:** Batch creation with dependent records, critical financial operations.
+**When NOT to use:** Large chunked imports (use parallel updates instead, with fallback cron).
+
+### Error Boundaries for UI
+
+**Wrap interactive widgets in ErrorBoundary:**
+
+```typescript
+// components/dashboard/dashboard.tsx
+import { ErrorBoundary } from "react-error-boundary";
+
+export function Dashboard() {
+  return (
+    <div className="grid gap-6">
+      <ErrorBoundary fallback={<MorningBriefError />}>
+        <MorningBrief />
+      </ErrorBoundary>
+      <ErrorBoundary fallback={<InboxStatsError />}>
+        <InboxStats />
+      </ErrorBoundary>
+      {/* Other widgets */}
+    </div>
+  );
+}
+```
+
+**Benefits:**
+- Single widget error won't crash dashboard
+- Users can still interact with other sections
+- Graceful degradation vs. complete failure

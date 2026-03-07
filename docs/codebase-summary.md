@@ -110,6 +110,25 @@ Key model groups:
 **Business:** Commission, FinancialRecord, GoalP5, CalendarEvent
 **Settings:** AiModelConfig, ApiProvider
 
+### Data Integrity & Cascading Rules
+
+10 critical relations enforce referential integrity via cascading deletes/setNull:
+
+| Relation | Rule | Purpose |
+|----------|------|---------|
+| Feedback → Product | Cascade | Auto-remove feedback when product deleted |
+| ProductSnapshot → Product | Cascade | Auto-remove snapshots when product removed |
+| ProductSnapshot → ImportBatch | Cascade | Cleanup snapshots on batch deletion |
+| ContentBrief → ProductIdentity | Cascade | Remove briefs when product deleted |
+| ContentBrief → TikTokChannel | SetNull | Preserve brief when channel deleted |
+| ContentAsset → ProductIdentity | Cascade | Remove assets when product deleted |
+| ContentAsset → ContentBrief | SetNull | Preserve asset when brief deleted |
+| ContentSlot → ProductIdentity | SetNull | Preserve slot when product deleted |
+| ContentSlot → ContentAsset | SetNull | Preserve slot when asset deleted |
+| NicheProfile → TikTokChannel | SetNull | Preserve profile when channel deleted |
+
+**Philosophy:** Cascade for transactional data (feedback, snapshots), SetNull for derived content (briefs, assets).
+
 ## Key Features
 
 - **Inbox Pipeline:** Paste links → auto-enrich → AI score → brief → publish

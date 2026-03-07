@@ -79,10 +79,43 @@ The system handles file imports up to 3000+ products by chunking across multiple
 // Phase 1: Parse file, normalize data, deduplicate URLs
 const { totalRows, deduplicatedProducts } = parseAndNormalize(file);
 
+// Phase 2: Create batch with initial asset assignments (atomic)
+const batch = await prisma.$transaction(async (tx) => {
+  const batch = await tx.importBatch.create({
+    data: {
+      batchId: generateId(),
+      fileName: file.name,
+      format: detectFormat(file),
+      status: "processing",
+      totalRows,
+      recordCount: deduplicatedProducts.length,
+      scoringStatus: "pending",
+      importDate: new Date(),
+    },
+  });
+
+  // Atomic: only create if batch creation succeeds
+  for (const product of deduplicatedProducts.slice(0, 10)) {
+    await tx.productAsset.create({
+      data: {
+        batchId: batch.id,
+        productUrl: product.url,
+        status: "assigned",
+      },
+    });
+  }
+  return batch;
+});
+
 // Fire processProductBatch immediately (async, background)
-await processProductBatch(batchId, deduplicatedProducts);
+await processProductBatch(batch.id, deduplicatedProducts);
 // Returns 202 Accepted to client
 ```
+
+**Transaction Safety:**
+- Batch creation + initial asset assignments succeed or fail together
+- Prevents partial batch creation if asset assignment fails
+- Uses `$transaction()` for atomic operations (only where needed)
 
 **Config:**
 - `IMPORT_CHUNK = 300` — Products per invocation (in `lib/import/process-product-batch.ts`)
@@ -366,9 +399,91 @@ If >= 30 feedbacks exist → Apply personalized weight adjustments
 - `ProductIdentity` 1:N `ProductUrl`, `ProductSnapshot`
 - `ImportBatch.id` → linked products via `ProductSnapshot.importBatchId`
 
+**Data Integrity & Cascading Rules:**
+
+Database enforces referential integrity with cascade/setNull rules on 10 critical relations:
+
+| Relation | On Delete | Purpose |
+|----------|-----------|---------|
+| `Feedback` → `Product` | Cascade | Remove feedback when product deleted |
+| `ProductSnapshot` → `Product` | Cascade | Remove snapshots when product identity removed |
+| `ProductSnapshot` → `ImportBatch` | Cascade | Cleanup snapshots when batch deleted |
+| `ContentBrief` → `ProductIdentity` | Cascade | Remove briefs when product deleted |
+| `ContentBrief` → `TikTokChannel` | SetNull | Preserve brief when channel deleted |
+| `ContentAsset` → `ProductIdentity` | Cascade | Remove assets when product deleted |
+| `ContentAsset` → `ContentBrief` | SetNull | Preserve asset when brief deleted |
+| `ContentSlot` → `ProductIdentity` | SetNull | Preserve slot when product deleted |
+| `ContentSlot` → `ContentAsset` | SetNull | Preserve slot when asset deleted |
+| `NicheProfile` → `TikTokChannel` | SetNull | Preserve profile when channel deleted |
+
+This design prevents orphaned records while preserving production assets when source products are cleaned up.
+
 ---
 
-## 6. Error Handling & Resilience
+## 6. Idempotency & Race Condition Prevention
+
+### ProductIdentity Upsert Pattern
+
+**Problem:** Concurrent paste events could create duplicate ProductIdentity records for same URL.
+
+**Solution:** `processInboxItem` uses Prisma `upsert` instead of `create`:
+
+```typescript
+const identity = await prisma.productIdentity.upsert({
+  where: { productUrl: normalizedUrl },
+  create: {
+    productUrl: normalizedUrl,
+    combinedScore: 0,
+    lifecycleStage: "new",
+    inboxState: "pending",
+    source: "paste",
+  },
+  update: {
+    lastSeenAt: new Date(),
+    inboxState: "pending", // refresh state if re-pasted
+  },
+});
+```
+
+**Benefits:**
+- Prevents race condition when user pastes same URL twice
+- Idempotent: safe to retry without creating duplicates
+- Single source of truth for product identity
+
+---
+
+## 7. Error Handling & Resilience
+
+### Dashboard Widget Error Boundaries
+
+**Problem:** Single widget crash could take down entire dashboard.
+
+**Solution:** All dashboard widgets wrapped in ErrorBoundary:
+
+```typescript
+// components/dashboard/widget-wrapper.tsx
+export function WidgetWrapper({ children, title }: Props) {
+  return (
+    <ErrorBoundary fallback={<WidgetError title={title} />}>
+      {children}
+    </ErrorBoundary>
+  );
+}
+
+// WidgetError shows: "Widget unavailable. Retry" button + error details in dev
+```
+
+**Applied to:**
+- Morning Brief widget
+- Inbox Stats widget
+- Quick Paste widget
+- Chart widgets
+- Metric cards
+
+**Benefits:**
+- Isolated failures: one widget error doesn't cascade
+- User can continue with other features
+- Fallback UI guides users to retry or report issue
 
 ### Relay Chain Failures
 

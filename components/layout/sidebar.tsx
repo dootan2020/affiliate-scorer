@@ -38,34 +38,34 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    title: "Công việc hàng ngày",
+    title: "Sản xuất",
     items: [
       { href: "/", label: "Tổng quan", icon: LayoutDashboard },
       { href: "/inbox", label: "Hộp sản phẩm", icon: Inbox, badgeKey: "inbox" },
       { href: "/production", label: "Sản xuất", icon: Clapperboard, badgeKey: "production" },
       { href: "/channels", label: "Kênh TikTok", icon: Tv },
-      { href: "/niche-finder", label: "Tìm ngách", icon: Compass },
     ],
   },
   {
-    title: "Dữ liệu",
+    title: "Theo dõi",
     items: [
       { href: "/log", label: "Nhật ký", icon: FileText },
-      { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
-      { href: "/library", label: "Thư viện", icon: BookOpen },
-    ],
-  },
-  {
-    title: "Phân tích",
-    items: [
       { href: "/insights", label: "Phân tích", icon: TrendingUp },
     ],
   },
   {
-    title: "Hỗ trợ",
+    title: "Công cụ",
     items: [
-      { href: "/guide", label: "Hướng dẫn", icon: HelpCircle },
+      { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
+      { href: "/library", label: "Thư viện", icon: BookOpen },
+      { href: "/niche-finder", label: "Tìm ngách", icon: Compass },
+    ],
+  },
+  {
+    title: "Cài đặt",
+    items: [
       { href: "/settings", label: "Cài đặt", icon: Settings },
+      { href: "/guide", label: "Hướng dẫn", icon: HelpCircle },
     ],
   },
 ];

@@ -134,7 +134,8 @@ export function PatternHighlightCard({
   highlight,
 }: {
   highlight: string;
-}): React.ReactElement {
+}): React.ReactElement | null {
+  if (!highlight || highlight === "null" || highlight.trim() === "") return null;
   return (
     <div className="flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-800/30 px-3 py-2.5">
       <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />

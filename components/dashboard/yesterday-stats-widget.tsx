@@ -60,7 +60,6 @@ export function YesterdayStatsWidget(): React.ReactElement {
           <p className={`text-2xl font-semibold ${color}`}>
             {loading ? "—" : format(stats[key])}
           </p>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">vs hôm kia</p>
         </div>
       ))}
     </div>

@@ -23,6 +23,7 @@ import { getChannelRecommendations } from "@/lib/ai/recommendations";
 import { calculateConfidence } from "@/lib/ai/confidence";
 import { formatVND, formatPercent, formatNumber } from "@/lib/utils/format";
 import { computeBadges } from "@/lib/utils/product-badges";
+import { PageContainer } from "@/components/shared/page-container";
 import { generateContentTips, generatePlatformStrategy } from "@/lib/utils/content-suggestions";
 
 interface InboxDetailPageProps {
@@ -145,6 +146,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
   });
 
   return (
+    <PageContainer>
     <div className="space-y-6">
       <Breadcrumb items={[
         { label: "Hộp sản phẩm", href: "/inbox" },
@@ -297,6 +299,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
         </div>
       )}
     </div>
+    </PageContainer>
   );
 }
 

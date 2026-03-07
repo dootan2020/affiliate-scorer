@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Tv, Calendar, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -18,9 +18,6 @@ interface ChannelTask {
 export function ChannelTaskBoard(): React.ReactElement {
   const [tasks, setTasks] = useState<ChannelTask[]>([]);
   const [loading, setLoading] = useState(true);
-  const [visibleMap, setVisibleMap] = useState<Record<string, boolean>>({});
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     fetch("/api/dashboard/channel-tasks")
@@ -30,47 +27,16 @@ export function ChannelTaskBoard(): React.ReactElement {
       .finally(() => setLoading(false));
   }, []);
 
-  // Track which cards are visible using IntersectionObserver
-  const observeCard = useCallback((id: string, el: HTMLDivElement | null) => {
-    if (el) {
-      cardRefs.current.set(id, el);
-    } else {
-      cardRefs.current.delete(id);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (tasks.length === 0 || !scrollRef.current) return;
-
-    const root = scrollRef.current;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        setVisibleMap((prev) => {
-          const next = { ...prev };
-          entries.forEach((entry) => {
-            const id = (entry.target as HTMLElement).dataset.cardId;
-            if (id) next[id] = entry.isIntersecting;
-          });
-          return next;
-        });
-      },
-      { root, threshold: 0.5 }
-    );
-
-    cardRefs.current.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [tasks]);
-
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+        <div className="flex items-center gap-2 mb-3">
           <Tv className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Kênh hôm nay</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">Kênh hôm nay</h2>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 animate-pulse">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="min-w-[260px] flex-shrink-0 border border-gray-100 dark:border-slate-800 rounded-xl p-4">
+        <div className="space-y-3 animate-pulse">
+          {[1, 2].map((i) => (
+            <div key={i} className="border border-gray-100 dark:border-slate-800 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-slate-700" />
                 <div className="space-y-1 flex-1">
@@ -92,20 +58,17 @@ export function ChannelTaskBoard(): React.ReactElement {
 
   if (tasks.length === 0) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+        <div className="flex items-center gap-2 mb-3">
           <Tv className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Kênh hôm nay</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">Kênh hôm nay</h2>
         </div>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-3">
             <Tv className="w-6 h-6 text-gray-400" />
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Chưa có kênh nào</p>
-          <Link
-            href="/channels"
-            className="text-sm text-blue-600 hover:underline"
-          >
+          <Link href="/channels" className="text-sm text-blue-600 hover:underline">
             Tạo kênh mới
           </Link>
         </div>
@@ -113,54 +76,20 @@ export function ChannelTaskBoard(): React.ReactElement {
     );
   }
 
-  // Only show dots when there are multiple cards and some overflow is possible
-  const showDots = tasks.length > 1;
-
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4">
+      <div className="flex items-center gap-2 mb-3">
         <Tv className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Kênh hôm nay</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">Kênh hôm nay</h2>
         <span className="text-xs text-gray-400 ml-auto">
           {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric" })}
         </span>
       </div>
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin"
-      >
+      <div className="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin">
         {tasks.map((task) => (
-          <div
-            key={task.channelId}
-            ref={(el) => observeCard(task.channelId, el)}
-            data-card-id={task.channelId}
-            className="min-w-[260px] max-w-[320px] flex-shrink-0"
-          >
-            <ChannelCard task={task} />
-          </div>
+          <ChannelCard key={task.channelId} task={task} />
         ))}
       </div>
-
-      {/* Scroll indicator dots */}
-      {showDots && (
-        <div className="flex items-center justify-center gap-1.5 mt-3">
-          {tasks.map((task) => (
-            <button
-              key={`dot-${task.channelId}`}
-              onClick={() => {
-                const el = cardRefs.current.get(task.channelId);
-                el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-              }}
-              aria-label={`Chuyển đến kênh ${task.channelName}`}
-              className={`rounded-full transition-all duration-200 ${
-                visibleMap[task.channelId]
-                  ? "w-4 h-1.5 bg-blue-500"
-                  : "w-1.5 h-1.5 bg-gray-200 dark:bg-slate-700"
-              }`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -172,15 +101,14 @@ function ChannelCard({ task }: { task: ChannelTask }): React.ReactElement {
 
   return (
     <div className="border border-gray-100 dark:border-slate-800 rounded-xl p-4 hover:border-gray-200 dark:hover:border-slate-700 transition-colors">
-      {/* Header */}
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+        <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
           {task.channelName.charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
           <Link
             href={`/channels/${task.channelId}`}
-            className="text-sm font-medium text-gray-900 dark:text-gray-50 block hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            className="text-sm font-medium text-gray-900 dark:text-gray-50 block hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate"
           >
             {task.channelName}
           </Link>
@@ -188,7 +116,6 @@ function ChannelCard({ task }: { task: ChannelTask }): React.ReactElement {
         </div>
       </div>
 
-      {/* Slot stats */}
       {totalSlots > 0 && (
         <div className="mb-3">
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -204,14 +131,12 @@ function ChannelCard({ task }: { task: ChannelTask }): React.ReactElement {
         </div>
       )}
 
-      {/* Metrics row */}
       <div className="grid grid-cols-3 gap-2 mb-3">
         <MetricBadge label="Chưa nội dung" value={task.needsBrief} color="amber" />
         <MetricBadge label="Nháp" value={task.drafts} color="blue" />
         <MetricBadge label="Sẵn đăng" value={task.readyToPublish} color="emerald" />
       </div>
 
-      {/* Quick actions */}
       <div className="flex gap-2">
         <Link
           href={`/production?channel=${task.channelId}`}

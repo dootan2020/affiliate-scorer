@@ -275,7 +275,7 @@ export function buildPrompt(d: PromptData): string {
   "yesterday_recap": "1-2 câu",
   "tip": "Gợi ý cụ thể dựa trên winning patterns + character bible",
   "weekly_progress": "X/Y videos",
-  "pattern_highlight": "Combo hook+format win rate XX% — hoặc null nếu chưa có"
+  "pattern_highlight": "Combo hook+format win rate XX% — hoặc để trống '' nếu chưa có dữ liệu"
 }
 
 Chỉ output JSON, không text khác.`);

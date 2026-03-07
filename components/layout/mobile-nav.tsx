@@ -20,6 +20,7 @@ import {
   Settings,
   MoreHorizontal,
   Tv,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    title: "Công việc hàng ngày",
+    title: "Sản xuất",
     items: [
       { href: "/", label: "Tổng quan", icon: LayoutDashboard },
       { href: "/inbox", label: "Hộp sản phẩm", icon: Inbox },
@@ -46,24 +47,25 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    title: "Dữ liệu",
+    title: "Theo dõi",
     items: [
       { href: "/log", label: "Nhật ký", icon: FileText },
-      { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
-      { href: "/library", label: "Thư viện", icon: BookOpen },
-    ],
-  },
-  {
-    title: "Phân tích",
-    items: [
       { href: "/insights", label: "Phân tích", icon: TrendingUp },
     ],
   },
   {
-    title: "Hỗ trợ",
+    title: "Công cụ",
     items: [
-      { href: "/guide", label: "Hướng dẫn", icon: HelpCircle },
+      { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
+      { href: "/library", label: "Thư viện", icon: BookOpen },
+      { href: "/niche-finder", label: "Tìm ngách", icon: Compass },
+    ],
+  },
+  {
+    title: "Cài đặt",
+    items: [
       { href: "/settings", label: "Cài đặt", icon: Settings },
+      { href: "/guide", label: "Hướng dẫn", icon: HelpCircle },
     ],
   },
 ];
@@ -79,11 +81,12 @@ const BOTTOM_TABS: NavItem[] = [
 // Everything not in bottom tabs goes into overflow menu
 const OVERFLOW_ITEMS: NavItem[] = [
   { href: "/log", label: "Nhật ký", icon: FileText },
+  { href: "/insights", label: "Phân tích", icon: TrendingUp },
   { href: "/sync", label: "Đồng bộ", icon: RefreshCw },
   { href: "/library", label: "Thư viện", icon: BookOpen },
-  { href: "/insights", label: "Phân tích", icon: TrendingUp },
-  { href: "/guide", label: "Hướng dẫn", icon: HelpCircle },
+  { href: "/niche-finder", label: "Tìm ngách", icon: Compass },
   { href: "/settings", label: "Cài đặt", icon: Settings },
+  { href: "/guide", label: "Hướng dẫn", icon: HelpCircle },
 ];
 
 function ThemeToggle(): React.ReactElement | null {

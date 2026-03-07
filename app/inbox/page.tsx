@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { InboxPageContent } from "@/components/inbox/inbox-page-content";
+import { PageContainer } from "@/components/shared/page-container";
 
 export const metadata: Metadata = {
   title: "Hộp sản phẩm",
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function InboxPage(): React.ReactElement {
   return (
-    <Suspense>
-      <InboxPageContent />
-    </Suspense>
+    <PageContainer>
+      <Suspense>
+        <InboxPageContent />
+      </Suspense>
+    </PageContainer>
   );
 }

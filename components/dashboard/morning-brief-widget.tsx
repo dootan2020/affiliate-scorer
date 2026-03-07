@@ -39,6 +39,11 @@ export function MorningBriefWidget(): React.ReactElement {
   const [expanded, setExpanded] = useState(true);
   const [isStale, setIsStale] = useState(false);
 
+  // Collapse by default on mobile
+  useEffect(() => {
+    if (window.innerWidth < 1024) setExpanded(false);
+  }, []);
+
   async function fetchBrief(refresh = false): Promise<void> {
     try {
       if (refresh) setRefreshing(true);
@@ -167,7 +172,7 @@ export function MorningBriefWidget(): React.ReactElement {
             <p className="text-sm text-gray-600 dark:text-gray-300">{content.greeting}</p>
 
             {/* V2: Pattern Highlight */}
-            {content.pattern_highlight && (
+            {content.pattern_highlight && content.pattern_highlight !== "null" && content.pattern_highlight.trim() !== "" && (
               <PatternHighlightCard highlight={content.pattern_highlight} />
             )}
 

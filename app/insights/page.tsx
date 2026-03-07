@@ -7,6 +7,7 @@ import { ChannelFilter } from "@/components/insights/channel-filter";
 import { ConfidenceWidget } from "@/components/ai/confidence-widget";
 import { WeeklyReportCard } from "@/components/ai/weekly-report-card";
 import { PlaybookSection } from "@/components/ai/playbook-section";
+import { PageContainer } from "@/components/shared/page-container";
 import type { WeightMap } from "@/lib/ai/prompts";
 
 export const metadata: Metadata = {
@@ -180,6 +181,7 @@ export default async function InsightsPage({ searchParams }: InsightsPageProps):
   }));
 
   return (
+    <PageContainer>
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -226,5 +228,6 @@ export default async function InsightsPage({ searchParams }: InsightsPageProps):
         <PlaybookSection />
       </div>
     </div>
+    </PageContainer>
   );
 }

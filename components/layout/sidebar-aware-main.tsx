@@ -34,7 +34,7 @@ export function SidebarAwareMain({ children }: { children: React.ReactNode }): R
     <main
       className={`flex-1 overflow-auto pt-14 pb-20 md:pt-0 md:pb-0 transition-[margin] duration-200 ${marginClass}`}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</div>
+      {children}
     </main>
   );
 }

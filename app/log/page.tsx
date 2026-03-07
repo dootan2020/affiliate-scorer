@@ -3,6 +3,7 @@ import Link from "next/link";
 import { RefreshCw } from "lucide-react";
 import { LogPageClient } from "@/components/log/log-page-client";
 import { PageHeader } from "@/components/shared/page-header";
+import { PageContainer } from "@/components/shared/page-container";
 
 export const metadata: Metadata = {
   title: "Nhật ký",
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 
 export default function LogPage(): React.ReactElement {
   return (
+    <PageContainer>
     <div className="space-y-6">
       <PageHeader title="Log kết quả" description="Paste link TikTok → nhập views/likes/orders → AI học pattern thắng/thua" />
 
@@ -28,5 +30,6 @@ export default function LogPage(): React.ReactElement {
 
       <LogPageClient />
     </div>
+    </PageContainer>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ChannelDetailClient } from "@/components/channels/channel-detail-client";
+import { PageContainer } from "@/components/shared/page-container";
 
 export const metadata: Metadata = {
   title: "Chi tiết kênh",
@@ -13,11 +14,13 @@ export default async function ChannelDetailPage({
 }): Promise<React.ReactElement> {
   const { id } = await params;
   return (
-    <div className="space-y-6">
-      <Suspense fallback={<ChannelDetailSkeleton />}>
-        <ChannelDetailClient channelId={id} />
-      </Suspense>
-    </div>
+    <PageContainer>
+      <div className="space-y-6">
+        <Suspense fallback={<ChannelDetailSkeleton />}>
+          <ChannelDetailClient channelId={id} />
+        </Suspense>
+      </div>
+    </PageContainer>
   );
 }
 

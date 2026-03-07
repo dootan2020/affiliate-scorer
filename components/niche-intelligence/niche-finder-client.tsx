@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, SearchX, RotateCcw } from "lucide-react";
 import { PipelineStepper } from "@/components/shared/pipeline-stepper";
 import {
   StepInterests,
@@ -102,6 +102,25 @@ export function NicheFinderClient(): React.ReactElement {
   const handleSelectNiche = useCallback(
     async (nicheKey: string, nicheLabel: string): Promise<void> => {
       try {
+        // Check if channel with same niche already exists
+        const checkRes = await fetch(`/api/channels?niche=${encodeURIComponent(nicheKey)}`);
+        if (checkRes.ok) {
+          const channels = await checkRes.json();
+          const existing = Array.isArray(channels?.data)
+            ? channels.data.find((ch: { niche?: string; isActive?: boolean }) => ch.niche === nicheKey && ch.isActive !== false)
+            : null;
+          if (existing) {
+            // Update NicheProfile and redirect to existing channel
+            await fetch("/api/niche-intelligence/select", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ profileId, selectedNiche: nicheKey, channelId: existing.id }),
+            });
+            router.push(`/channels/${existing.id}`);
+            return;
+          }
+        }
+
         const res = await fetch("/api/channels", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -121,7 +140,7 @@ export function NicheFinderClient(): React.ReactElement {
         const channel = await res.json();
 
         // Update NicheProfile with selected niche and channel
-        await fetch("/api/niche-intelligence/select", {
+        const selectRes = await fetch("/api/niche-intelligence/select", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -130,6 +149,10 @@ export function NicheFinderClient(): React.ReactElement {
             channelId: channel.id,
           }),
         });
+
+        if (!selectRes.ok) {
+          console.error("[niche-finder] Failed to update NicheProfile");
+        }
 
         router.push(`/channels/${channel.id}`);
       } catch (err) {
@@ -165,6 +188,30 @@ export function NicheFinderClient(): React.ReactElement {
 
   // ─── Results phase ───
   if (phase === "results") {
+    if (recommendations.length === 0) {
+      return (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-12 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+            <SearchX className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-2">
+            Không tìm thấy ngách phù hợp
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">
+            AI chưa thể đề xuất ngách dựa trên câu trả lời của bạn. Hãy thử lại với lựa chọn khác.
+          </p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-6 py-2.5 text-sm font-medium shadow-sm hover:shadow transition-all"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Thử lại
+          </button>
+        </div>
+      );
+    }
+
     return (
       <NicheRecommendations
         recommendations={recommendations}

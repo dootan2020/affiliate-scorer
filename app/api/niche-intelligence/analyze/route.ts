@@ -41,25 +41,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Build prompt
     const { systemPrompt, userPrompt } = buildNichePrompt(answers, stats);
 
-    // Call AI
-    const { text, modelUsed } = await callAI(
-      systemPrompt,
-      userPrompt,
-      4096,
-      "niche_intelligence"
+    // Call AI with timeout
+    const aiPromise = callAI(systemPrompt, userPrompt, 4096, "niche_intelligence");
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("AI phân tích quá lâu. Vui lòng thử lại.")), 50_000)
     );
+    const { text, modelUsed } = await Promise.race([aiPromise, timeoutPromise]);
 
     // Parse AI response
     const result = parseAiResponse(text);
 
-    // Save NicheProfile
-    const profile = await prisma.nicheProfile.create({
-      data: {
-        answers: JSON.parse(JSON.stringify(answers)),
-        recommendations: JSON.parse(JSON.stringify(result.recommendations)),
-        summary: result.summary,
-      },
+    // Upsert NicheProfile (avoid duplicates from re-runs)
+    const answersJson = JSON.parse(JSON.stringify(answers));
+    const recsJson = JSON.parse(JSON.stringify(result.recommendations));
+
+    // Find most recent profile with same interests to update, or create new
+    const existing = await prisma.nicheProfile.findFirst({
+      where: { selectedNiche: null },
+      orderBy: { createdAt: "desc" },
     });
+
+    const profile = existing
+      ? await prisma.nicheProfile.update({
+          where: { id: existing.id },
+          data: { answers: answersJson, recommendations: recsJson, summary: result.summary },
+        })
+      : await prisma.nicheProfile.create({
+          data: { answers: answersJson, recommendations: recsJson, summary: result.summary },
+        });
 
     return NextResponse.json({
       profileId: profile.id,
@@ -71,8 +80,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const message =
       error instanceof Error ? error.message : "Lỗi không xác định";
 
-    // Check for missing AI config
-    if (message.includes("Chua cau hinh")) {
+    // Check for missing AI config (matches both old and new Vietnamese strings)
+    if (message.includes("Chưa cấu hình") || message.includes("Chua cau hinh")) {
       return NextResponse.json({ error: message }, { status: 503 });
     }
 

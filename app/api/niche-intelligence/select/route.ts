@@ -15,7 +15,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Du lieu khong hop le" },
+        { error: "Dữ liệu không hợp lệ" },
         { status: 400 }
       );
     }
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (error) {
     console.error("[niche-intelligence/select] Error:", error);
     return NextResponse.json(
-      { error: "Khong the cap nhat niche profile" },
+      { error: "Không thể cập nhật hồ sơ ngách" },
       { status: 500 }
     );
   }

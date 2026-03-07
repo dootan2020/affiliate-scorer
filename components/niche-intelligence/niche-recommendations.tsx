@@ -34,6 +34,7 @@ export function NicheRecommendations({
   const [selecting, setSelecting] = useState<string | null>(null);
 
   const handleSelect = async (rec: NicheRecommendation): Promise<void> => {
+    if (selecting !== null) return;
     setSelecting(rec.nicheKey);
     try {
       await onSelect(rec.nicheKey, rec.nicheLabel);

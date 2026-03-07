@@ -133,11 +133,16 @@ export function NicheFinderClient(): React.ReactElement {
         });
 
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error ?? "Lỗi khi tạo kênh");
+          const errData = await res.json();
+          throw new Error(errData.error ?? "Lỗi khi tạo kênh");
         }
 
-        const channel = await res.json();
+        const channelRes = await res.json();
+        const channelId = channelRes.data?.id ?? channelRes.id;
+
+        if (!channelId) {
+          throw new Error("Không nhận được ID kênh từ server");
+        }
 
         // Update NicheProfile with selected niche and channel
         const selectRes = await fetch("/api/niche-intelligence/select", {
@@ -146,7 +151,7 @@ export function NicheFinderClient(): React.ReactElement {
           body: JSON.stringify({
             profileId,
             selectedNiche: nicheKey,
-            channelId: channel.id,
+            channelId,
           }),
         });
 
@@ -154,7 +159,7 @@ export function NicheFinderClient(): React.ReactElement {
           console.error("[niche-finder] Failed to update NicheProfile");
         }
 
-        router.push(`/channels/${channel.id}`);
+        router.push(`/channels/${channelId}`);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Lỗi khi tạo kênh");
       }

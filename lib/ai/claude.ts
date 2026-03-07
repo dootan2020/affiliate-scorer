@@ -23,14 +23,18 @@ function getClient(apiKey: string): Anthropic {
   return new Anthropic({ apiKey });
 }
 
+const DEFAULT_MODEL_ID = "claude-sonnet-4-6";
+
 export async function getModelForTask(taskType: AiTaskType): Promise<string> {
   const config = await prisma.aiModelConfig.findUnique({
     where: { taskType },
   });
   if (!config?.modelId) {
-    throw new Error(
-      `Chưa cấu hình AI model cho task "${taskType}". Vào Settings → AI Models để chọn model.`
-    );
+    // Fallback: use scoring config's model, or default
+    const fallback = await prisma.aiModelConfig.findUnique({
+      where: { taskType: "scoring" },
+    });
+    return fallback?.modelId ?? DEFAULT_MODEL_ID;
   }
   return config.modelId;
 }

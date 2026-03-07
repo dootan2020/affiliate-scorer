@@ -889,7 +889,7 @@ model BackgroundTask {
 
 model AiModelConfig {
   id        String   @id @default(cuid())
-  taskType  String   @unique // "scoring" | "content_brief" | "morning_brief" | "weekly_report"
+  taskType  String   @unique // "scoring" | "content_brief" | "morning_brief" | "weekly_report" | "niche_intelligence"
   modelId   String   // e.g. "claude-sonnet-4-6"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

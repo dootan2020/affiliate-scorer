@@ -74,16 +74,16 @@ function SelectionCard({
 // ─── Step 1: Interests ───
 
 const NICHE_OPTIONS = [
-  { key: "beauty_skincare", label: "Lam dep & Skincare", icon: <Sparkles className="w-5 h-5" /> },
-  { key: "fashion", label: "Thoi trang", icon: <ShoppingBag className="w-5 h-5" /> },
-  { key: "food", label: "Do an & Do uong", icon: <UtensilsCrossed className="w-5 h-5" /> },
-  { key: "home_living", label: "Do gia dung", icon: <Home className="w-5 h-5" /> },
-  { key: "health", label: "Suc khoe", icon: <Heart className="w-5 h-5" /> },
-  { key: "tech", label: "Cong nghe", icon: <Smartphone className="w-5 h-5" /> },
-  { key: "mom_baby", label: "Me va be", icon: <Baby className="w-5 h-5" /> },
-  { key: "pet", label: "Thu cung", icon: <PawPrint className="w-5 h-5" /> },
-  { key: "stationery", label: "Van phong pham", icon: <Pencil className="w-5 h-5" /> },
-  { key: "lifestyle", label: "Phong cach song", icon: <Compass className="w-5 h-5" /> },
+  { key: "beauty_skincare", label: "Làm đẹp & Skincare", icon: <Sparkles className="w-5 h-5" /> },
+  { key: "fashion", label: "Thời trang", icon: <ShoppingBag className="w-5 h-5" /> },
+  { key: "food", label: "Đồ ăn & Đồ uống", icon: <UtensilsCrossed className="w-5 h-5" /> },
+  { key: "home_living", label: "Đồ gia dụng", icon: <Home className="w-5 h-5" /> },
+  { key: "health", label: "Sức khỏe", icon: <Heart className="w-5 h-5" /> },
+  { key: "tech", label: "Công nghệ", icon: <Smartphone className="w-5 h-5" /> },
+  { key: "mom_baby", label: "Mẹ và bé", icon: <Baby className="w-5 h-5" /> },
+  { key: "pet", label: "Thú cưng", icon: <PawPrint className="w-5 h-5" /> },
+  { key: "stationery", label: "Văn phòng phẩm", icon: <Pencil className="w-5 h-5" /> },
+  { key: "lifestyle", label: "Phong cách sống", icon: <Compass className="w-5 h-5" /> },
 ];
 
 export function StepInterests({
@@ -104,10 +104,10 @@ export function StepInterests({
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-          Ban quan tam linh vuc nao?
+          Bạn quan tâm lĩnh vực nào?
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Chon 1 hoac nhieu linh vuc ban muon lam affiliate
+          Chọn 1 hoặc nhiều lĩnh vực bạn muốn làm affiliate
         </p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -128,9 +128,9 @@ export function StepInterests({
 // ─── Step 2: Experience ───
 
 const EXPERIENCE_OPTIONS = [
-  { key: "beginner" as const, label: "Moi bat dau", description: "Chua tung lam affiliate" },
-  { key: "intermediate" as const, label: "Co kinh nghiem", description: "Da lam 3-6 thang" },
-  { key: "expert" as const, label: "Chuyen nghiep", description: "Da co thu nhap on dinh" },
+  { key: "beginner" as const, label: "Mới bắt đầu", description: "Chưa từng làm affiliate" },
+  { key: "intermediate" as const, label: "Có kinh nghiệm", description: "Đã làm 3-6 tháng" },
+  { key: "expert" as const, label: "Chuyên nghiệp", description: "Đã có thu nhập ổn định" },
 ];
 
 export function StepExperience({
@@ -144,10 +144,10 @@ export function StepExperience({
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-          Kinh nghiem cua ban?
+          Kinh nghiệm của bạn?
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Giup AI goi y ngach phu hop voi trinh do
+          Giúp AI gợi ý ngách phù hợp với trình độ
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -173,17 +173,17 @@ export function StepExperience({
 // ─── Step 3: Goals ───
 
 const GOAL_OPTIONS = [
-  { key: "passive_income", label: "Thu nhap thu dong", description: "Kiem them ngoai gio" },
-  { key: "full_time", label: "Lam full-time", description: "Nghi viec, lam affiliate chinh" },
-  { key: "brand_building", label: "Xay thuong hieu", description: "Xay kenh ca nhan lau dai" },
-  { key: "quick_money", label: "Kiem tien nhanh", description: "Muon co thu nhap som" },
+  { key: "passive_income", label: "Thu nhập thụ động", description: "Kiếm thêm ngoài giờ" },
+  { key: "full_time", label: "Làm full-time", description: "Nghỉ việc, làm affiliate chính" },
+  { key: "brand_building", label: "Xây thương hiệu", description: "Xây kênh cá nhân lâu dài" },
+  { key: "quick_money", label: "Kiếm tiền nhanh", description: "Muốn có thu nhập sớm" },
 ];
 
 const BUDGET_OPTIONS = [
-  { key: "zero" as const, label: "Khong co", description: "Chi organic" },
-  { key: "low" as const, label: "< 1 trieu", description: "Ngan sach thap" },
-  { key: "medium" as const, label: "1-5 trieu", description: "Dau tu vua phai" },
-  { key: "high" as const, label: "> 5 trieu", description: "Dau tu manh" },
+  { key: "zero" as const, label: "Không có", description: "Chỉ organic" },
+  { key: "low" as const, label: "< 1 triệu", description: "Ngân sách thấp" },
+  { key: "medium" as const, label: "1-5 triệu", description: "Đầu tư vừa phải" },
+  { key: "high" as const, label: "> 5 triệu", description: "Đầu tư mạnh" },
 ];
 
 export function StepGoals({
@@ -204,10 +204,10 @@ export function StepGoals({
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-          Muc tieu cua ban?
+          Mục tiêu của bạn?
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Chon 1 hoac nhieu muc tieu
+          Chọn 1 hoặc nhiều mục tiêu
         </p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -225,10 +225,10 @@ export function StepGoals({
 
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-          Ngan sach hang thang?
+          Ngân sách hàng tháng?
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Cho quang cao va cong cu
+          Cho quảng cáo và công cụ
         </p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -250,10 +250,10 @@ export function StepGoals({
 // ─── Step 4: Content Style ───
 
 const STYLE_OPTIONS = [
-  { key: "entertaining", label: "Giai tri", description: "Hai huoc, thu vi, viral" },
-  { key: "educational", label: "Chia se kien thuc", description: "Huong dan, tips, review sau" },
-  { key: "review", label: "Review san pham", description: "Danh gia, so sanh, unbox" },
-  { key: "lifestyle", label: "Lifestyle", description: "Cuoc song hang ngay, vlog" },
+  { key: "entertaining", label: "Giải trí", description: "Hài hước, thú vị, viral" },
+  { key: "educational", label: "Chia sẻ kiến thức", description: "Hướng dẫn, tips, review sâu" },
+  { key: "review", label: "Review sản phẩm", description: "Đánh giá, so sánh, unbox" },
+  { key: "lifestyle", label: "Phong cách sống", description: "Cuộc sống hàng ngày, vlog" },
 ];
 
 export function StepStyle({
@@ -274,10 +274,10 @@ export function StepStyle({
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-          Phong cach noi dung?
+          Phong cách nội dung?
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Chon phong cach ban muon lam (co the chon nhieu)
+          Chọn phong cách bạn muốn làm (có thể chọn nhiều)
         </p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

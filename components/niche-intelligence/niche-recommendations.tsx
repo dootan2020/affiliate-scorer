@@ -20,9 +20,9 @@ interface NicheRecommendationsProps {
 }
 
 const COMPETITION_CONFIG = {
-  low: { label: "Canh tranh thap", cls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" },
-  medium: { label: "Canh tranh vua", cls: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" },
-  high: { label: "Canh tranh cao", cls: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" },
+  low: { label: "Cạnh tranh thấp", cls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" },
+  medium: { label: "Cạnh tranh vừa", cls: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" },
+  high: { label: "Cạnh tranh cao", cls: "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400" },
 };
 
 export function NicheRecommendations({
@@ -53,7 +53,7 @@ export function NicheRecommendations({
             </div>
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-50 mb-1">
-                Phan tich tong hop
+                Phân tích tổng hợp
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {summary}
@@ -97,7 +97,7 @@ export function NicheRecommendations({
               {/* Score bar */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Do phu hop</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Độ phù hợp</span>
                   <span className="text-sm font-bold text-gray-900 dark:text-gray-50">
                     {rec.score}/100
                   </span>
@@ -135,7 +135,7 @@ export function NicheRecommendations({
                 <div className="flex items-center gap-2 mb-3">
                   <Shield className="w-3.5 h-3.5 text-gray-400" />
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Uoc tinh: <span className="font-medium text-gray-700 dark:text-gray-300">{rec.estimatedEarning}</span>
+                    Ước tính: <span className="font-medium text-gray-700 dark:text-gray-300">{rec.estimatedEarning}</span>
                   </span>
                 </div>
               )}
@@ -144,7 +144,7 @@ export function NicheRecommendations({
               {rec.contentIdeas.length > 0 && (
                 <div className="mb-4">
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                    Y tuong noi dung:
+                    Ý tưởng nội dung:
                   </p>
                   <ul className="space-y-1">
                     {rec.contentIdeas.slice(0, 3).map((idea, i) => (
@@ -177,10 +177,10 @@ export function NicheRecommendations({
                   {selecting === rec.nicheKey ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Dang tao kenh...
+                      Đang tạo kênh...
                     </>
                   ) : (
-                    "Chon ngach nay"
+                    "Chọn ngách này"
                   )}
                 </button>
               </div>
@@ -197,7 +197,7 @@ export function NicheRecommendations({
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
         >
           <RotateCcw className="w-4 h-4" />
-          Lam lai tu dau
+          Làm lại từ đầu
         </button>
       </div>
     </div>

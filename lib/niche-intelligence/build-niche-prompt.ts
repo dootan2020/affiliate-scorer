@@ -1,109 +1,109 @@
 import type { QuestionnaireAnswers, NicheStats } from "./types";
 
-const SYSTEM_PROMPT = `Ban la chuyen gia tu van ngach (niche) cho nguoi lam affiliate TikTok tai Viet Nam.
-Nhiem vu: Phan tich thong tin nguoi dung + du lieu thi truong -> goi y 3-5 ngach phu hop nhat.
+const SYSTEM_PROMPT = `Bạn là chuyên gia tư vấn ngách (niche) cho người làm affiliate TikTok tại Việt Nam.
+Nhiệm vụ: Phân tích thông tin người dùng + dữ liệu thị trường -> gợi ý 3-5 ngách phù hợp nhất.
 
-Yeu cau:
-- Tra loi bang tieng Viet
-- Moi goi y phai co ly do cu the, khong chung chung
-- Danh gia muc do canh tranh thuc te tren TikTok Viet Nam
-- Goi y content ideas cu the, co the lam ngay
-- Uoc tinh thu nhap thuc te (khong phai hua suong)
+Yêu cầu:
+- Trả lời bằng tiếng Việt
+- Mỗi gợi ý phải có lý do cụ thể, không chung chung
+- Đánh giá mức độ cạnh tranh thực tế trên TikTok Việt Nam
+- Gợi ý content ideas cụ thể, có thể làm ngay
+- Ước tính thu nhập thực tế (không phải hứa suông)
 
-Tra ve JSON THUAN (khong markdown, khong code block) voi format:
+Trả về JSON THUẦN (không markdown, không code block) với format:
 {
   "recommendations": [
     {
       "nicheKey": "beauty_skincare",
-      "nicheLabel": "Lam dep & Skincare",
+      "nicheLabel": "Làm đẹp & Skincare",
       "score": 85,
-      "reasoning": "Ly do cu the...",
-      "marketInsight": "Thong tin thi truong...",
+      "reasoning": "Lý do cụ thể...",
+      "marketInsight": "Thông tin thị trường...",
       "competitionLevel": "medium",
-      "contentIdeas": ["Y tuong 1", "Y tuong 2", "Y tuong 3"],
-      "estimatedEarning": "3-8 trieu/thang"
+      "contentIdeas": ["Ý tưởng 1", "Ý tưởng 2", "Ý tưởng 3"],
+      "estimatedEarning": "3-8 triệu/tháng"
     }
   ],
-  "summary": "Tom tat phan tich tong the..."
+  "summary": "Tóm tắt phân tích tổng thể..."
 }
 
-Cac ngach pho bien tren TikTok Viet Nam:
-- beauty_skincare: Lam dep, skincare, my pham
-- fashion: Thoi trang, phu kien
-- food: Do an, do uong, snack
-- home_living: Do gia dung, noi that, bep
-- health: Suc khoe, thuc pham chuc nang, fitness
-- tech: Cong nghe, dien tu, phu kien dien thoai
-- mom_baby: Me va be, do tre em
-- pet: Thu cung, phu kien thu cung
-- stationery: Van phong pham, do hoc tap
-- lifestyle: Phong cach song, du lich, cafe`;
+Các ngách phổ biến trên TikTok Việt Nam:
+- beauty_skincare: Làm đẹp, skincare, mỹ phẩm
+- fashion: Thời trang, phụ kiện
+- food: Đồ ăn, đồ uống, snack
+- home_living: Đồ gia dụng, nội thất, bếp
+- health: Sức khỏe, thực phẩm chức năng, fitness
+- tech: Công nghệ, điện tử, phụ kiện điện thoại
+- mom_baby: Mẹ và bé, đồ trẻ em
+- pet: Thú cưng, phụ kiện thú cưng
+- stationery: Văn phòng phẩm, đồ học tập
+- lifestyle: Phong cách sống, du lịch, cafe`;
 
 export function buildNichePrompt(
   answers: QuestionnaireAnswers,
   stats: NicheStats[]
 ): { systemPrompt: string; userPrompt: string } {
   const interestLabels: Record<string, string> = {
-    beauty_skincare: "Lam dep & Skincare",
-    fashion: "Thoi trang",
-    food: "Do an & Do uong",
-    home_living: "Do gia dung",
-    health: "Suc khoe",
-    tech: "Cong nghe",
-    mom_baby: "Me va be",
-    pet: "Thu cung",
-    stationery: "Van phong pham",
-    lifestyle: "Phong cach song",
+    beauty_skincare: "Làm đẹp & Skincare",
+    fashion: "Thời trang",
+    food: "Đồ ăn & Đồ uống",
+    home_living: "Đồ gia dụng",
+    health: "Sức khỏe",
+    tech: "Công nghệ",
+    mom_baby: "Mẹ và bé",
+    pet: "Thú cưng",
+    stationery: "Văn phòng phẩm",
+    lifestyle: "Phong cách sống",
   };
 
   const experienceLabels: Record<string, string> = {
-    beginner: "Moi bat dau, chua co kinh nghiem",
-    intermediate: "Da lam 3-6 thang, co kinh nghiem co ban",
-    expert: "Chuyen nghiep, da co thu nhap on dinh",
+    beginner: "Mới bắt đầu, chưa có kinh nghiệm",
+    intermediate: "Đã làm 3-6 tháng, có kinh nghiệm cơ bản",
+    expert: "Chuyên nghiệp, đã có thu nhập ổn định",
   };
 
   const goalLabels: Record<string, string> = {
-    passive_income: "Thu nhap thu dong",
-    full_time: "Lam full-time",
-    brand_building: "Xay dung thuong hieu ca nhan",
-    quick_money: "Kiem tien nhanh",
+    passive_income: "Thu nhập thụ động",
+    full_time: "Làm full-time",
+    brand_building: "Xây dựng thương hiệu cá nhân",
+    quick_money: "Kiếm tiền nhanh",
   };
 
   const budgetLabels: Record<string, string> = {
-    zero: "Khong co ngan sach (chi organic)",
-    low: "Duoi 1 trieu/thang",
-    medium: "1-5 trieu/thang",
-    high: "Tren 5 trieu/thang",
+    zero: "Không có ngân sách (chỉ organic)",
+    low: "Dưới 1 triệu/tháng",
+    medium: "1-5 triệu/tháng",
+    high: "Trên 5 triệu/tháng",
   };
 
   // Build user context section
   const userContext = [
-    `## Thong tin nguoi dung`,
-    `- Linh vuc quan tam: ${answers.interests.map((i) => interestLabels[i] ?? i).join(", ")}`,
-    `- Kinh nghiem: ${experienceLabels[answers.experience] ?? answers.experience}`,
-    `- Muc tieu: ${answers.goals.map((g) => goalLabels[g] ?? g).join(", ")}`,
-    `- Phong cach noi dung: ${answers.contentStyle.join(", ")}`,
-    `- Ngan sach: ${budgetLabels[answers.budget] ?? answers.budget}`,
+    `## Thông tin người dùng`,
+    `- Lĩnh vực quan tâm: ${answers.interests.map((i) => interestLabels[i] ?? i).join(", ")}`,
+    `- Kinh nghiệm: ${experienceLabels[answers.experience] ?? answers.experience}`,
+    `- Mục tiêu: ${answers.goals.map((g) => goalLabels[g] ?? g).join(", ")}`,
+    `- Phong cách nội dung: ${answers.contentStyle.join(", ")}`,
+    `- Ngân sách: ${budgetLabels[answers.budget] ?? answers.budget}`,
   ].join("\n");
 
   // Build market data section
-  let marketData = "\n## Du lieu thi truong tu he thong\n";
+  let marketData = "\n## Dữ liệu thị trường từ hệ thống\n";
   if (stats.length === 0) {
     marketData +=
-      "Chua co du lieu san pham trong he thong. Hay dua vao kien thuc thi truong TikTok Viet Nam de tu van.\n";
+      "Chưa có dữ liệu sản phẩm trong hệ thống. Hãy dựa vào kiến thức thị trường TikTok Việt Nam để tư vấn.\n";
   } else {
     for (const s of stats) {
       marketData += `\n### ${interestLabels[s.nicheKey] ?? s.nicheKey}\n`;
-      marketData += `- So san pham: ${s.productCount}\n`;
-      marketData += `- Diem trung binh: ${s.avgScore?.toFixed(1) ?? "N/A"}\n`;
-      marketData += `- So kenh dang hoat dong: ${s.channelCount}\n`;
+      marketData += `- Số sản phẩm: ${s.productCount}\n`;
+      marketData += `- Điểm trung bình: ${s.avgScore?.toFixed(1) ?? "N/A"}\n`;
+      marketData += `- Số kênh đang hoạt động: ${s.channelCount}\n`;
       if (s.topProducts.length > 0) {
-        marketData += `- Top san pham: ${s.topProducts.map((p) => `${p.title} (${p.score.toFixed(1)})`).join(", ")}\n`;
+        marketData += `- Top sản phẩm: ${s.topProducts.map((p) => `${p.title} (${p.score.toFixed(1)})`).join(", ")}\n`;
       }
     }
   }
 
-  const userPrompt = userContext + marketData + "\n\nHay phan tich va goi y 3-5 ngach phu hop nhat.";
+  const userPrompt = userContext + marketData + "\n\nHãy phân tích và gợi ý 3-5 ngách phù hợp nhất.";
 
   return { systemPrompt: SYSTEM_PROMPT, userPrompt };
 }

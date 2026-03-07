@@ -12,12 +12,12 @@ import type {
 const answersSchema = z.object({
   interests: z
     .array(z.string())
-    .min(1, "Chon it nhat 1 linh vuc quan tam"),
+    .min(1, "Chọn ít nhất 1 lĩnh vực quan tâm"),
   experience: z.enum(["beginner", "intermediate", "expert"]),
-  goals: z.array(z.string()).min(1, "Chon it nhat 1 muc tieu"),
+  goals: z.array(z.string()).min(1, "Chọn ít nhất 1 mục tiêu"),
   contentStyle: z
     .array(z.string())
-    .min(1, "Chon it nhat 1 phong cach noi dung"),
+    .min(1, "Chọn ít nhất 1 phong cách nội dung"),
   budget: z.enum(["zero", "low", "medium", "high"]),
 });
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? "Du lieu khong hop le" },
+        { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" },
         { status: 400 }
       );
     }
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Loi khong xac dinh";
+      error instanceof Error ? error.message : "Lỗi không xác định";
 
     // Check for missing AI config
     if (message.includes("Chua cau hinh")) {
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     console.error("[niche-intelligence] Error:", error);
     return NextResponse.json(
-      { error: "Khong the phan tich ngach. Vui long thu lai." },
+      { error: "Không thể phân tích ngách. Vui lòng thử lại." },
       { status: 500 }
     );
   }
@@ -108,7 +108,7 @@ function parseAiResponse(text: string): NicheAnalysisResult {
   } catch {
     console.error("[niche-intelligence] Failed to parse AI response:", text);
     throw new Error(
-      "AI tra ve du lieu khong hop le. Vui long thu lai."
+      "AI trả về dữ liệu không hợp lệ. Vui lòng thử lại."
     );
   }
 }

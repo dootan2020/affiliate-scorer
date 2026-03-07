@@ -14,10 +14,10 @@ import { NicheRecommendations } from "./niche-recommendations";
 import type { QuestionnaireAnswers, NicheRecommendation } from "@/lib/niche-intelligence/types";
 
 const STEPS = [
-  { key: "interests", label: "Linh vuc" },
-  { key: "experience", label: "Kinh nghiem" },
-  { key: "goals", label: "Muc tieu" },
-  { key: "style", label: "Phong cach" },
+  { key: "interests", label: "Lĩnh vực" },
+  { key: "experience", label: "Kinh nghiệm" },
+  { key: "goals", label: "Mục tiêu" },
+  { key: "style", label: "Phong cách" },
 ];
 
 const DEFAULT_ANSWERS: QuestionnaireAnswers = {
@@ -76,7 +76,7 @@ export function NicheFinderClient(): React.ReactElement {
 
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error ?? "Loi khi phan tich");
+          throw new Error(data.error ?? "Lỗi khi phân tích");
         }
 
         const data = await res.json();
@@ -85,7 +85,7 @@ export function NicheFinderClient(): React.ReactElement {
         setProfileId(data.profileId);
         setPhase("results");
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Loi khong xac dinh");
+        setError(err instanceof Error ? err.message : "Lỗi không xác định");
         setPhase("questionnaire");
       }
     } else {
@@ -109,13 +109,13 @@ export function NicheFinderClient(): React.ReactElement {
             name: nicheLabel,
             niche: nicheKey,
             personaName: nicheLabel,
-            personaDesc: `Kenh affiliate ${nicheLabel} tren TikTok`,
+            personaDesc: `Kênh affiliate ${nicheLabel} trên TikTok`,
           }),
         });
 
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error ?? "Loi khi tao kenh");
+          throw new Error(data.error ?? "Lỗi khi tạo kênh");
         }
 
         const channel = await res.json();
@@ -133,7 +133,7 @@ export function NicheFinderClient(): React.ReactElement {
 
         router.push(`/channels/${channel.id}`);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Loi khi tao kenh");
+        setError(err instanceof Error ? err.message : "Lỗi khi tạo kênh");
       }
     },
     [profileId, router]
@@ -154,10 +154,10 @@ export function NicheFinderClient(): React.ReactElement {
           <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
         </div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-2">
-          AI dang phan tich...
+          AI đang phân tích...
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
-          Dang ket hop du lieu thi truong voi cau tra loi cua ban de tim ngach phu hop nhat
+          Đang kết hợp dữ liệu thị trường với câu trả lời của bạn để tìm ngách phù hợp nhất
         </p>
       </div>
     );
@@ -216,7 +216,7 @@ export function NicheFinderClient(): React.ReactElement {
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ArrowLeft className="w-4 h-4" />
-          Quay lai
+          Quay lại
         </button>
 
         <button
@@ -228,11 +228,11 @@ export function NicheFinderClient(): React.ReactElement {
           {isLastStep ? (
             <>
               <Sparkles className="w-4 h-4" />
-              Phan tich ngach
+              Phân tích ngách
             </>
           ) : (
             <>
-              Tiep theo
+              Tiếp theo
               <ArrowRight className="w-4 h-4" />
             </>
           )}

@@ -54,24 +54,24 @@ export function OnboardingChecklist(): React.ReactElement | null {
   const steps: OnboardingStep[] = [
     {
       key: "apiKeys",
-      label: "Ket noi API key",
-      description: "Cau hinh AI provider de su dung cac tinh nang AI",
+      label: "Kết nối API key",
+      description: "Cấu hình AI provider để sử dụng các tính năng AI",
       href: "/settings",
       icon: <Key className="w-4 h-4" />,
       done: data.steps.apiKeys,
     },
     {
       key: "syncProducts",
-      label: "Dong bo san pham",
-      description: "Import san pham tu TikTok Shop de bat dau",
+      label: "Đồng bộ sản phẩm",
+      description: "Import sản phẩm từ TikTok Shop để bắt đầu",
       href: "/sync",
       icon: <Package className="w-4 h-4" />,
       done: data.steps.syncProducts,
     },
     {
       key: "generateBrief",
-      label: "Tao content brief",
-      description: "AI tao kich ban video tu san pham cua ban",
+      label: "Tạo content brief",
+      description: "AI tạo kịch bản video từ sản phẩm của bạn",
       href: data.channelId ? `/channels/${data.channelId}` : "/channels",
       icon: <FileText className="w-4 h-4" />,
       done: data.steps.generateBrief,
@@ -95,10 +95,10 @@ export function OnboardingChecklist(): React.ReactElement | null {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-50">
-              Bat dau voi ngach cua ban
+              Bắt đầu với ngách của bạn
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {doneCount}/{steps.length} buoc hoan thanh
+              {doneCount}/{steps.length} bước hoàn thành
             </p>
           </div>
         </div>
@@ -106,7 +106,7 @@ export function OnboardingChecklist(): React.ReactElement | null {
           type="button"
           onClick={handleDismiss}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-          title="An checklist"
+          title="Ẩn checklist"
         >
           <X className="w-4 h-4" />
         </button>
@@ -165,7 +165,7 @@ export function OnboardingChecklist(): React.ReactElement | null {
       {allDone && (
         <div className="mt-4 text-center">
           <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-            Tuyet voi! Ban da san sang bat dau!
+            Tuyệt vời! Bạn đã sẵn sàng bắt đầu!
           </p>
         </div>
       )}

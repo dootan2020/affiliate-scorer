@@ -6,6 +6,7 @@ import { WinningPatternsWidget } from "@/components/dashboard/winning-patterns-w
 import { OrphanAlertWidget } from "@/components/dashboard/orphan-alert-widget";
 import { YesterdayStatsWidget } from "@/components/dashboard/yesterday-stats-widget";
 import { DashboardEmptyState } from "@/components/dashboard/dashboard-empty-state";
+import { OnboardingChecklist } from "@/components/niche-intelligence/onboarding-checklist";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -44,6 +45,9 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
       <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
         Tổng quan
       </h1>
+
+      {/* Row 0: Onboarding checklist — shows for niche-intelligence users */}
+      <OnboardingChecklist />
 
       {/* Row 1: Alert bar — full width, only shows if real orphans exist */}
       <OrphanAlertWidget />

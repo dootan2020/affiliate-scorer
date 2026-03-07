@@ -966,6 +966,7 @@ model TikTokChannel {
   videoBible      VideoBible?
   series          Series[]
   modelImages     ChannelModelImage[]
+  nicheProfiles   NicheProfile[]
 }
 
 model ChannelModelImage {
@@ -1311,6 +1312,29 @@ model Episode {
 
   @@index([seriesId])
   @@index([seriesId, episodeNumber])
+}
+
+// ─── NICHE INTELLIGENCE ───
+
+model NicheProfile {
+  id String @id @default(cuid())
+
+  // Questionnaire answers
+  answers Json // { interests, experience, goals, contentStyle, budget }
+
+  // AI recommendations
+  recommendations Json // [{ nicheKey, nicheLabel, score, reasoning, ... }]
+  summary         String?
+
+  // Selection
+  selectedNiche String?
+  channelId     String?
+  channel       TikTokChannel? @relation(fields: [channelId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([channelId])
 }
 
 // ─── SCORING SYSTEM REDESIGN ───

@@ -9,7 +9,8 @@ export type AiTaskType =
   | "content_brief"
   | "channel_profile"
   | "morning_brief"
-  | "weekly_report";
+  | "weekly_report"
+  | "niche_intelligence";
 
 export const MAX_TOKENS_SCORING = 4096;
 export const MAX_TOKENS_LEARNING = 8192;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RefreshCw, Tv } from "lucide-react";
+import { RefreshCw, Tv, Compass } from "lucide-react";
 
 export function DashboardEmptyState(): React.ReactElement {
   return (
@@ -35,6 +35,13 @@ export function DashboardEmptyState(): React.ReactElement {
         >
           <Tv className="w-4 h-4" />
           Tạo kênh
+        </Link>
+        <Link
+          href="/niche-finder"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/30 dark:hover:bg-orange-950/50 text-orange-700 dark:text-orange-400 px-6 py-2.5 text-sm font-medium transition-colors"
+        >
+          <Compass className="w-4 h-4" />
+          Tìm ngách phù hợp
         </Link>
       </div>
     </div>

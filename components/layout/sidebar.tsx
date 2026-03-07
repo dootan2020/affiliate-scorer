@@ -19,6 +19,7 @@ import {
   Tv,
   PanelLeftClose,
   PanelLeftOpen,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "./mobile-nav";
@@ -43,6 +44,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/inbox", label: "Hộp sản phẩm", icon: Inbox, badgeKey: "inbox" },
       { href: "/production", label: "Sản xuất", icon: Clapperboard, badgeKey: "production" },
       { href: "/channels", label: "Kênh TikTok", icon: Tv },
+      { href: "/niche-finder", label: "Tìm ngách", icon: Compass },
     ],
   },
   {

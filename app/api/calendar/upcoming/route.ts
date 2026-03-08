@@ -17,15 +17,14 @@ interface UpcomingEvent {
 export async function GET(): Promise<NextResponse> {
   try {
     const now = new Date();
+    const tomorrowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const thirtyDaysLater = new Date();
     thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
 
     const events = await prisma.calendarEvent.findMany({
       where: {
-        startDate: {
-          gte: now,
-          lte: thirtyDaysLater,
-        },
+        endDate: { gt: tomorrowStart },
+        startDate: { lte: thirtyDaysLater },
       },
       orderBy: { startDate: "asc" },
     });

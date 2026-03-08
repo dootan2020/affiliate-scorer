@@ -14,6 +14,9 @@ WARNING:        #F59E0B → dark: #FBBF24
 DANGER:         #EF4444 → dark: #F87171
 ACCENT:         #3B82F6 → dark: #60A5FA
 
+ORANGE SCALE:   orange-50 | orange-400 | orange-500 | orange-700 | orange-950
+                (Used for: Guide TOC active indicator, UI highlights, interactive feedback)
+
 GRAY-50:        #F9FAFB (Light bg)
 GRAY-100:       #F3F4F6 (Alt bg)
 GRAY-200:       #E5E7EB (Border)

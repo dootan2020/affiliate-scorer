@@ -16,17 +16,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface OnboardingStep {
-  id: string;
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  href: string;
-  linkLabel: string;
-  time: string;
-  tip?: string;
-}
+import type { OnboardingStep } from "./guide-onboarding-steps";
+import { STORAGE_KEY } from "./guide-onboarding-steps";
 
 const STEPS: OnboardingStep[] = [
   {
@@ -96,7 +87,25 @@ const STEPS: OnboardingStep[] = [
   },
 ];
 
-const STORAGE_KEY = "pastr-onboarding-completed";
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch { /* storage unavailable */ }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch { /* storage unavailable */ }
+}
 
 export function GuideOnboardingChecklist(): React.ReactElement {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
@@ -104,13 +113,11 @@ export function GuideOnboardingChecklist(): React.ReactElement {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = safeGetItem(STORAGE_KEY);
     if (stored) {
       try {
         setCompleted(new Set(JSON.parse(stored) as string[]));
-      } catch {
-        // ignore invalid data
-      }
+      } catch { /* ignore invalid data */ }
     }
     setMounted(true);
   }, []);
@@ -123,28 +130,29 @@ export function GuideOnboardingChecklist(): React.ReactElement {
       } else {
         next.add(id);
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
+      safeSetItem(STORAGE_KEY, JSON.stringify([...next]));
       return next;
     });
   }
 
   function handleReset(): void {
     setCompleted(new Set());
-    localStorage.removeItem(STORAGE_KEY);
+    safeRemoveItem(STORAGE_KEY);
   }
 
   const completedCount = completed.size;
   const totalSteps = STEPS.length;
   const allDone = completedCount === totalSteps;
   const progress = Math.round((completedCount / totalSteps) * 100);
+  const nextStepId = STEPS.find((s) => !completed.has(s.id))?.id;
 
   if (!mounted) return <></>;
 
   return (
     <div className="not-prose mb-10 rounded-2xl border border-orange-200 dark:border-orange-900/50 bg-gradient-to-b from-orange-50/80 to-white dark:from-orange-950/20 dark:to-slate-900 overflow-hidden">
-      {/* Header */}
       <button
         type="button"
+        aria-expanded={isExpanded}
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between px-5 py-4 text-left"
       >
@@ -183,7 +191,6 @@ export function GuideOnboardingChecklist(): React.ReactElement {
         </div>
       </button>
 
-      {/* Progress bar */}
       {!allDone && (
         <div className="px-5 pb-1">
           <div className="h-1 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
@@ -195,12 +202,11 @@ export function GuideOnboardingChecklist(): React.ReactElement {
         </div>
       )}
 
-      {/* Steps */}
       {isExpanded && (
         <div className="px-5 pb-5 pt-3 space-y-2">
-          {STEPS.map((step, idx) => {
+          {STEPS.map((step) => {
             const isDone = completed.has(step.id);
-            const isNext = !isDone && idx === STEPS.findIndex((s) => !completed.has(s.id));
+            const isNext = !isDone && step.id === nextStepId;
 
             return (
               <div
@@ -211,9 +217,11 @@ export function GuideOnboardingChecklist(): React.ReactElement {
                   isDone && "opacity-60",
                 )}
               >
-                {/* Checkbox */}
                 <button
                   type="button"
+                  role="checkbox"
+                  aria-checked={isDone}
+                  aria-label={step.title}
                   onClick={() => toggleStep(step.id)}
                   className={cn(
                     "w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all",
@@ -225,7 +233,6 @@ export function GuideOnboardingChecklist(): React.ReactElement {
                   {isDone && <Check className="w-3.5 h-3.5" />}
                 </button>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={cn(
@@ -264,7 +271,6 @@ export function GuideOnboardingChecklist(): React.ReactElement {
             );
           })}
 
-          {/* Reset */}
           {completedCount > 0 && (
             <div className="pt-2 flex justify-end">
               <button

@@ -6,6 +6,7 @@ const PUBLIC_API_PATHS = [
   "/api/image-proxy", // Needed for img src
   "/api/internal/",   // Server-to-server relay (import-chunk, score-batch)
   "/api/cron/",       // Vercel cron jobs
+  "/api/telegram/",   // Telegram bot webhook (external POST from Telegram servers)
 ];
 
 function isPublicApi(pathname: string): boolean {

@@ -27,7 +27,7 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 - **Database Models:** 51
 - **Pages:** 16 (dashboard, inbox, production, channels, library, insights, log, playbook, sync, settings, guide, advisor, niche-finder, error pages)
 - **API Endpoints:** 140+ (advisory, briefs, channels, production, inbox, learning, cron, telegram, and more)
-- **Component Files:** ~146 across 21 directories (layout, advisor, channels, production, insights, guide, inbox, products, dashboard, ai, settings, log, niche-intelligence, advisor, shared, ui)
+- **Component Files:** ~147 across 21 directories (layout, advisor, channels, production, insights, guide, inbox, products, dashboard, ai, settings, log, niche-intelligence, advisor, shared, ui)
 - **Shared Components:** PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible, MobileFAB, PWAHead
 - **Design Tokens:** 25+ (colors, spacing, typography, shadows)
 - **AI Agent Modules:** 8 (channel-memory-builder, brief-personalization, content-analyzer, tiktok-oembed, telegram-bot-handler, trend-intelligence, win-predictor, nightly-learning)
@@ -60,7 +60,7 @@ affiliate-scorer/
 │   ├── playbook/               # Winning patterns + strategies
 │   ├── sync/                   # TikTok Studio import
 │   ├── settings/               # API keys, AI models
-│   ├── guide/                  # User documentation
+│   ├── guide/                  # User documentation + onboarding checklist
 │   ├── api/                    # 100+ API route handlers
 │   │   ├── advisor/            # Advisory Agent System: analyze, followup, handle-request
 │   │   ├── inbox/              # Paste, list, score, retry
@@ -83,6 +83,7 @@ affiliate-scorer/
 │   ├── inbox/                  # Paste box, inbox table, filters, pagination, detail panel (modularized)
 │   ├── insights/               # Charts, calendar, financial, overview tab (consolidated)
 │   ├── dashboard/              # Bento layout cards, widgets, stat cards
+│   ├── guide/                 # Sections: quick-start, terminology, upload, scoring, etc. + onboarding-checklist
 │   ├── shared/                 # Design system: PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible, Sparkline, QC badge
 │   ├── ai/                     # Intelligence components
 │   └── ui/                     # Radix primitives, shadcn components
@@ -210,6 +211,7 @@ Key model groups:
 - **Sidebar Navigation:** 4 groups (Sản xuất, Theo dõi, Công cụ, Cài đặt) with dynamic badge counting
 - **Mobile Navigation:** Bottom tab bar for mobile view, consistent with desktop nav structure
 - **Command Palette:** Quick navigation with ⌘K keyboard shortcut
+- **Onboarding Checklist:** Interactive 7-step progress tracker with localStorage persistence, localStorage-based state, tips, time estimates, direct navigation links
 - **Responsive Layouts:** Mobile-first design with bento layouts, card layout for inbox (<md), collapsible navigation
 - **Accessibility:** ARIA attributes, keyboard navigation, screen reader support
 - **PWA Support:** Progressive Web App with manifest.json, service worker, mobile FAB, installable

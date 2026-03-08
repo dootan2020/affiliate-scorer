@@ -590,6 +590,38 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 
 ---
 
+## [1.10.1] — 2026-03-08 — Interactive Onboarding Checklist
+
+### Added
+
+- **Guide Onboarding Checklist** — Interactive 7-step onboarding progress tracker for quick-start guide
+  - NEW component: `components/guide/guide-onboarding-checklist.tsx`
+  - 7 sequential steps with progress bar and visual indicators:
+    1. Kết nối khóa API (2 min) → Settings
+    2. Tạo kênh TikTok (3 min) → Channels
+    3. Import sản phẩm từ FastMoss (1 min) → Sync
+    4. Chọn sản phẩm điểm cao (2 min) → Inbox
+    5. Tạo Brief nội dung (1 min) → Production
+    6. Quay video & đăng TikTok (15-30 min) → Production
+    7. Log kết quả (1 min) → Log
+  - Features:
+    - localStorage persistence of completed steps
+    - Collapsible UI with expand/collapse toggle
+    - Orange progress bar with percentage display
+    - Time estimate for each step
+    - Contextual tips for specific steps (e.g., "Chọn preset Tiết kiệm nếu muốn chi phí thấp nhất")
+    - Direct navigation links to relevant app pages
+    - Reset button to clear progress
+    - Responsive design (dark mode + mobile)
+    - Total time estimate: ~25 minutes
+  - Integrated into: `components/guide/guide-section-quick-start.tsx`
+
+### Changed
+
+- **Guide Quick Start Section** — Now leads with interactive onboarding checklist before text instructions
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned

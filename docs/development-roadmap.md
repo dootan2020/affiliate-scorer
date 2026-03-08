@@ -6,9 +6,9 @@ Project phases, milestones, and implementation progress.
 
 ## Project Status
 
-- **Current Version:** 1.10.0
+- **Current Version:** 1.10.1
 - **Last Updated:** 2026-03-08
-- **Overall Progress:** ~92% complete (12 of 13 core phases done, Guide Page & Advisory System live)
+- **Overall Progress:** ~93% complete (13 of 14 core phases done, Guide Page & Advisory System & Onboarding Checklist live)
 
 ---
 
@@ -246,7 +246,26 @@ Project phases, milestones, and implementation progress.
 
 ---
 
-### Phase 13 — Scoring System Redesign ⏳ PLANNED
+### Phase 13 — Interactive Onboarding Checklist ✅ COMPLETE (v1.10.1)
+
+**Goal:** Add interactive 7-step onboarding checklist to guide page for improved user onboarding UX
+
+| Task | Status | Completion |
+|------|--------|-----------|
+| Create guide-onboarding-checklist component | ✅ Done | 100% |
+| Implement localStorage persistence | ✅ Done | 100% |
+| Add progress bar + percentage display | ✅ Done | 100% |
+| Collapsible UI with expand/collapse | ✅ Done | 100% |
+| Add time estimates + tips for each step | ✅ Done | 100% |
+| Direct navigation links to app pages | ✅ Done | 100% |
+| Dark mode + responsive design | ✅ Done | 100% |
+| Integrate into quick-start section | ✅ Done | 100% |
+
+**Delivered:** Mar 8, 2026 — Interactive onboarding checklist live in guide page
+
+---
+
+### Phase 14 — Scoring System Redesign ⏳ PLANNED
 
 **Goal:** Redesign scoring formula to improve content potential score discriminative power
 
@@ -259,7 +278,7 @@ Project phases, milestones, and implementation progress.
 | Testing & validation | 📋 Planned | 3 days | Verify new scores are more predictive |
 
 **Plan Location:** `plans/260305-1440-scoring-system-redesign/`
-**ETA:** Mar 24, 2026 (v1.11.0)
+**ETA:** Mar 24, 2026 (v1.12.0)
 
 ---
 
@@ -280,7 +299,8 @@ Project phases, milestones, and implementation progress.
 | AI Agent System | Mar 8, 2026 | v1.9.0 | 6-phase intelligent agents + telegram bot + PWA |
 | Guide Page Expansion | Mar 8, 2026 | v1.10.0 | TikTok Channel, AI Advisor, Telegram Bot sections |
 | Advisory System | Mar 8, 2026 | v1.10.0 | Company hierarchy decision-making system |
-| Scoring Redesign | Mar 24, 2026 | v1.11.0 | Improved content potential scoring |
+| Onboarding Checklist | Mar 8, 2026 | v1.10.1 | Interactive 7-step progress tracker in guide |
+| Scoring Redesign | Mar 24, 2026 | v1.12.0 | Improved content potential scoring |
 
 ---
 
@@ -355,8 +375,9 @@ Project phases, milestones, and implementation progress.
 | v1.8.2 | Mar 7, 2026 | Niche finder + dashboard redesign | ✅ Released |
 | v1.9.0 | Mar 8, 2026 | AI Agent System (6 phases) | ✅ Released |
 | v1.10.0 | Mar 8, 2026 | Guide page expansion + advisory system | ✅ Released |
-| v1.11.0 | Mar 24, 2026 | Scoring system redesign | 📋 Planned |
-| v1.12.0 | Apr 7, 2026 | Testing + documentation | 📋 Planned |
+| v1.10.1 | Mar 8, 2026 | Interactive onboarding checklist | ✅ Released |
+| v1.12.0 | Mar 24, 2026 | Scoring system redesign | 📋 Planned |
+| v1.13.0 | Apr 7, 2026 | Testing + documentation | 📋 Planned |
 | v2.0.0 | Apr 21, 2026 | Stable release + monitoring | 📋 Planned |
 | v2.1.0+ | May–Jun 2026 | Webhooks, SSE, extension, multi-user | 📋 Backlog |
 

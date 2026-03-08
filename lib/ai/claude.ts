@@ -12,7 +12,8 @@ export type AiTaskType =
   | "weekly_report"
   | "niche_intelligence"
   | "content_analysis"
-  | "trend_analysis";
+  | "trend_analysis"
+  | "advisor";
 
 export const MAX_TOKENS_SCORING = 4096;
 export const MAX_TOKENS_LEARNING = 8192;

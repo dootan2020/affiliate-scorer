@@ -484,6 +484,77 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 
 ---
 
+## [1.10.0] — 2026-03-08 — Advisory Agent System Restructure (Company Hierarchy)
+
+### Changed
+
+- **Advisory Agent Architecture Refactor** — Transitioned from 4 independent personas (GROK, SOCRATES, LIBRARIAN, MUNGER) to company hierarchy model:
+  - **ANALYST** (runs first) — Data aggregation role; queries DB for products, patterns, channels; prepares briefing for decision-makers
+  - **CMO, CFO, CTO** (run in parallel) — Analysis roles; each provides independent perspective:
+    - CMO: Content strategy, audience insight, positioning, growth recommendations
+    - CFO: ROI analysis, opportunity cost, financial risk assessment, efficiency metrics
+    - CTO: Execution feasibility, workflow optimization, technical blockers, risk mitigation
+  - **CEO** (runs last) — Decision maker role; synthesizes all perspectives; provides 1 clear decision + action steps
+
+### API Changes
+
+- `/api/advisor/analyze` — POST with question + optional context → returns full pipeline result with CEO decision prominent
+- `/api/advisor/followup` — POST for follow-up questions using same pipeline
+- Response structure now includes:
+  - `ceoDecision` — Top-level decision (✅ Decision, 📝 Reason, 👉 Next Steps)
+  - `cLevelResponses[]` — Expandable C-level analysis details (CMO, CFO, CTO)
+  - `analystBriefing` — Data context and key metrics
+  - `question`, `timestamp` — Request metadata
+
+### Data Gathering
+
+- **New module:** `lib/advisor/gather-advisor-data.ts`
+  - Queries ProductIdentity (top 10 by score + delta type)
+  - Queries UserPattern (winning/losing patterns with win rates)
+  - Queries ChannelMemory (channel performance + insights)
+  - Gathers metrics: total products, scored, briefed, published videos
+  - Formats into compact data briefing for ANALYST role
+
+### UI Updates
+
+- **Advisor page redesign** — CEO decision displayed prominently at top
+- Expandable C-level section below with individual role analysis
+- Historical context support for multi-turn conversations
+- Loading indicators show analysis stage (analyst → c-levels → ceo)
+- Visual role badges with semantic colors (CMO: violet, CFO: emerald, CTO: blue, CEO: amber)
+
+### Files Added
+
+- `lib/advisor/c-level-roles.ts` — Role definitions, system prompts for 5 personas
+- `lib/advisor/analyze-pipeline.ts` — Orchestration logic: ANALYST → [CMO,CFO,CTO] → CEO
+- `lib/advisor/gather-advisor-data.ts` — DB queries and data formatting
+- `app/api/advisor/analyze/route.ts` — Main analysis endpoint
+- `app/api/advisor/followup/route.ts` — Follow-up question endpoint
+- `app/api/advisor/handle-advisor-request.ts` — Shared request validation + error handling
+- `components/advisor/advisor-page-client.tsx` — Client component with full UI
+- `app/advisor/page.tsx` — Server component wrapper
+
+### Files Modified
+
+- `lib/advisor/personas.ts` — Kept for backward compatibility; new system doesn't use
+- `lib/advisor/analyze.ts` — Legacy; superceded by analyze-pipeline.ts
+
+### Morning Brief Integration
+
+- **New function:** `ceoBriefReview()` in analyze-pipeline.ts
+- Used by morning brief generation to get CEO quick review instead of MUNGER+SOCRATES critique
+- Lighter weight: skip data gathering, just review brief summary → 2-3 sentences actionable
+- Maintains single CEO voice for brief decisions
+
+### Cost & Performance
+
+- **Token optimization:** ANALYST gathers data once, passes to all C-levels → no redundant queries
+- **Parallel execution:** CMO, CFO, CTO run in Promise.all() → faster analysis
+- **Max tokens:** C-levels capped at 1024; CEO at 1200 for final synthesis
+- **Data freshness:** Real DB queries every request (no caching) → always current context
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned

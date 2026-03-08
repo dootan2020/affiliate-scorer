@@ -30,7 +30,7 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 - **Components:** 100+ (including 8 shared design system components + PWA support)
 - **Shared Components:** PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible, MobileFAB, PWAHead
 - **Design Tokens:** 25+ (colors, spacing, typography, shadows)
-- **AI Agent Modules:** 8 (channel-memory-builder, brief-personalization, content-analyzer, tiktok-oembed, telegram-bot-handler, trend-intelligence, win-predictor, nightly-learning)
+- **AI Agent Modules:** 9 (advisor system: c-level-roles, analyze-pipeline, gather-advisor-data; phase 1-6: channel-memory-builder, brief-personalization, content-analyzer, tiktok-oembed, telegram-bot-handler, trend-intelligence, win-predictor, nightly-learning)
 
 ## Trạng Thái Phát Triển
 
@@ -61,6 +61,7 @@ affiliate-scorer/
 │   ├── settings/               # API keys, AI models
 │   ├── guide/                  # User documentation
 │   ├── api/                    # 100+ API route handlers
+│   │   ├── advisor/            # Advisory Agent System: analyze, followup, handle-request
 │   │   ├── inbox/              # Paste, list, score, retry
 │   │   ├── briefs/             # Generate, batch, regenerate
 │   │   ├── production/         # Batches, export, export-pack
@@ -75,6 +76,7 @@ affiliate-scorer/
 │
 ├── components/                 # 100+ React components
 │   ├── layout/                 # Header, nav, sidebar, PageHeader, mobile-fab, pwa-head
+│   ├── advisor/                # Advisory page client with CEO decision display + C-level expandable panels
 │   ├── channels/               # Channel detail, bible editors, format bank, idea matrix, video bible, series planner
 │   ├── production/             # Product selector, brief preview, export, production stepper
 │   ├── inbox/                  # Paste box, inbox table, filters, pagination, detail panel (modularized)
@@ -85,7 +87,13 @@ affiliate-scorer/
 │   └── ui/                     # Radix primitives, shadcn components
 │
 ├── lib/                        # Business logic + utilities
-│   ├── agents/                 # AI Agent System (6 phases)
+│   ├── advisor/                # Advisory Agent System (Company Hierarchy)
+│   │   ├── c-level-roles.ts                   # 5 role definitions (ANALYST, CMO, CFO, CTO, CEO)
+│   │   ├── analyze-pipeline.ts                # Pipeline: ANALYST → [CMO,CFO,CTO] → CEO
+│   │   ├── gather-advisor-data.ts             # DB queries for ANALYST data gathering
+│   │   ├── analyze.ts                         # Legacy (kept for backward compatibility)
+│   │   └── personas.ts                        # Legacy personas (not used in new system)
+│   ├── agents/                # AI Agent System (6 phases)
 │   │   ├── channel-memory-builder.ts          # Phase 1: ChannelMemory context enrichment
 │   │   ├── brief-personalization.ts           # Phase 2: Auto-inject memory into briefs
 │   │   ├── content-analyzer.ts                # Phase 3: TikTok oembed + AI classification
@@ -149,8 +157,33 @@ Key model groups:
 
 **Philosophy:** Cascade for transactional data (feedback, snapshots), SetNull for derived content (briefs, assets).
 
+## Advisory Agent System (Company Hierarchy)
+
+**Architecture:** ANALYST (data) → [CMO, CFO, CTO parallel] → CEO (decision)
+
+- **ANALYST role** — Gathers real data from DB (top products, patterns, channels, metrics); prepares briefing
+- **CMO role** — Content strategy, audience insights, positioning, growth recommendations
+- **CFO role** — ROI analysis, opportunity cost, financial risk, efficiency metrics
+- **CTO role** — Execution feasibility, workflow optimization, technical risks
+- **CEO role** — Final decision synthesis; provides clear action steps for today
+
+**Key Modules:**
+- `lib/advisor/c-level-roles.ts` — 5 role definitions with system prompts
+- `lib/advisor/analyze-pipeline.ts` — Pipeline orchestration logic
+- `lib/advisor/gather-advisor-data.ts` — DB queries for ANALYST role
+- `app/api/advisor/analyze` — Main analysis endpoint
+- `app/api/advisor/followup` — Follow-up question endpoint
+- `components/advisor/advisor-page-client.tsx` — Full UI with collapsible C-level details
+
+**Cost:** ~2-5 AI calls per analysis (1 per role + CEO synthesis)
+
 ## Key Features
 
+- **Advisory Agent System:** Company hierarchy model with ANALYST → C-levels → CEO decision pipeline
+  - Data-driven analysis: real DB queries for products, patterns, channels
+  - Multi-perspective synthesis: CMO (marketing), CFO (financial), CTO (execution)
+  - CEO decisions: clear action steps for today, not theoretical suggestions
+  - Morning Brief integration: lightweight CEO review function for brief generation
 - **Niche Intelligence Module:** 4-step wizard for niche discovery → AI analysis → auto-channel creation
   - Step 1: Explore 10+ niches (gia dụng, mỹ phẩm, v.v.)
   - Step 2: AI analyzes market potential, competition, profit margin per niche
@@ -179,13 +212,14 @@ Key model groups:
 - **Responsive Layouts:** Mobile-first design with bento layouts, card layout for inbox (<md), collapsible navigation
 - **Accessibility:** ARIA attributes, keyboard navigation, screen reader support
 - **PWA Support:** Progressive Web App with manifest.json, service worker, mobile FAB, installable
-- **AI Agent System (6 phases):**
+- **AI Agent System (6 phases + Advisory):**
   - **Phase 1:** ChannelMemory + nightly learning (22:00 UTC daily)
   - **Phase 2:** Brief personalization via memory context injection
   - **Phase 3:** Content analyzer with TikTok oembed + AI classification
   - **Phase 4:** Telegram bot integration + competitor trend analysis (22:30 UTC daily)
   - **Phase 5:** Win predictor with 6-feature formula scoring
   - **Phase 6:** Mobile quick-log FAB + PWA installability
+  - **Advisory System:** Company hierarchy (ANALYST → C-levels → CEO) for strategic decision-making
 
 ## Deployment
 
@@ -197,3 +231,58 @@ Key model groups:
 - **Environment Variables:** DATABASE_URL, DIRECT_URL, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, ANTHROPIC_API_KEY
 - **Build Metrics:** 74 routes, 0 TypeScript errors, 67 second deploy time
 - **Fallback:** Vercel configuration retained for multi-platform flexibility
+
+## Key API Endpoints
+
+### Advisory Agent System
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/advisor/analyze` | POST | Run full pipeline: ANALYST → [CMO,CFO,CTO] → CEO |
+| `/api/advisor/followup` | POST | Follow-up question with same pipeline |
+
+**Request:** `{ question: string, context?: string }`
+**Response:** `{ ceoDecision, cLevelResponses[], analystBriefing, question, timestamp }`
+
+### Content & Briefs
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/briefs/generate` | POST | Generate single brief with AI |
+| `/api/briefs/batch` | POST | Generate multiple briefs in batch |
+| `/api/production/export-pack` | POST | Create ZIP export with all production files |
+
+### Channel Management
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/channels/create-from-niche` | POST | Auto-create channel from niche wizard |
+| `/api/channels/[id]/character-bible` | PUT | Update character bible |
+| `/api/channels/[id]/video-bible` | PUT | Update video bible |
+| `/api/channels/[id]/series` | POST | Create new series |
+
+### Import & Scoring
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/upload` | POST | Parse file, normalize, deduplicate, fire initial batch |
+| `/api/internal/import-chunk` | POST | Process 300-product chunk, fire next relay |
+| `/api/internal/score-batch` | POST | Score all products in batch |
+| `/api/cron/retry-scoring` | GET | Detect & retry failed/stuck batches every 5 min |
+
+### Cron & Learning
+
+| Endpoint | Method | Schedule | Purpose |
+|----------|--------|----------|---------|
+| `/api/cron/nightly-learning` | GET | 22:00 UTC daily | Aggregate feedback, update ChannelMemory |
+| `/api/cron/trend-analysis` | GET | 22:30 UTC daily | Analyze competitor captures, generate insights |
+| `/api/cron/retry-scoring` | GET | Every 5 min | Safety net for failed imports |
+
+### AI Agents
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/agents/predict-win` | POST | Formula-based win probability scoring |
+| `/api/log/quick` | POST | Quick-log asset result, trigger content analyzer |
+| `/api/telegram/setup` | POST | Initialize Telegram webhook |
+| `/api/telegram/webhook` | POST | Receive messages from Telegram bot |

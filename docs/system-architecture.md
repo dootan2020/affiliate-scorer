@@ -962,6 +962,340 @@ User sends TikTok link in Telegram
 
 ---
 
+## 17. Advisory Agent System — Company Hierarchy Model
+
+### Overview
+
+The Advisory Agent System transforms user questions into structured decisions through a company hierarchy pipeline. Unlike the previous 4-persona system (GROK, SOCRATES, LIBRARIAN, MUNGER), the new architecture organizes analysis by organizational roles: data gathering → parallel analysis → executive decision.
+
+**Pipeline:** ANALYST (data) → [CMO, CFO, CTO parallel] → CEO (decision)
+
+### Step 1: ANALYST — Data Aggregation
+
+**Role:** Gathers real data from database and formats into briefing for decision-makers.
+
+**Responsibilities:**
+- Query ProductIdentity for top 10 products by combined score
+- Query UserPattern for winning/losing patterns with win rates and sample sizes
+- Query ChannelMemory for channel performance metrics (videos, orders, avg reward, insights)
+- Aggregate system metrics: total products, scored count, briefed count, published videos
+
+**Code:** `lib/advisor/gather-advisor-data.ts`
+
+```typescript
+export async function gatherAdvisorData(): Promise<AdvisorData> {
+  // Parallel queries to avoid sequential DB hits
+  const [topProducts, winningPatterns, losingPatterns, channelMemories, metrics...] = await Promise.all([
+    prisma.productIdentity.findMany({ orderBy: { combinedScore: "desc" }, take: 10 }),
+    prisma.userPattern.findMany({ where: { patternType: "winning", sampleSize: { gte: 2 } }, take: 5 }),
+    // ... more queries
+  ]);
+
+  return { topProducts, winningPatterns, losingPatterns, channelMemories, recentMetrics };
+}
+
+// Format data into readable briefing for C-levels
+export function formatDataBriefing(data: AdvisorData): string {
+  // Returns structured text with metrics, top products, patterns, channel info
+}
+```
+
+**Output Format:**
+```
+=== DỮ LIỆU HỆ THỐNG ===
+📊 Tổng quan: 500 SP | 350 đã chấm | 200 đã brief | 45 đã xuất bản
+🏆 Top sản phẩm: [list with scores, delta, commission]
+✅ Pattern thắng: [winning patterns with win rates]
+❌ Pattern thua: [losing patterns with win rates]
+📺 Kênh: [channel performance and insights]
+```
+
+### Step 2: C-Level Analysis (Parallel)
+
+Three roles analyze the ANALYST briefing independently, each providing their perspective:
+
+#### CMO — Chief Marketing Officer
+
+**System Prompt Focus:**
+- Content strategy and format trends
+- Audience insights and engagement patterns
+- Market positioning and differentiation
+- Growth opportunities
+
+**Output Format:**
+```
+🎯 KHUYẾN NGHỊ MARKETING
+[1 paragraph recommendation]
+
+CHI TIẾT:
+- Content: [formats/hooks to use]
+- Ngách: [niche trend assessment]
+- Audience: [key insights]
+```
+
+#### CFO — Chief Financial Officer
+
+**System Prompt Focus:**
+- ROI analysis (commission vs effort)
+- Opportunity cost assessment
+- Financial risk and dependencies
+- Efficiency metrics
+
+**Output Format:**
+```
+💰 KHUYẾN NGHỊ TÀI CHÍNH
+[1 paragraph ROI/feasibility assessment]
+
+CHI TIẾT:
+- ROI: [profit/effort estimates]
+- Chi phí cơ hội: [opportunity cost]
+- Rủi ro: [financial risks]
+```
+
+#### CTO — Chief Technical Officer
+
+**System Prompt Focus:**
+- Execution feasibility and workflow
+- Tool optimization and optimization
+- Technical bottlenecks and risks
+- Performance improvement strategies
+
+**Output Format:**
+```
+⚙️ KHUYẾN NGHỊ THỰC THI
+[1 paragraph execution assessment]
+
+CHI TIẾT:
+- Workflow: [specific steps]
+- Tools: [tools/methods needed]
+- Rủi ro: [failure points]
+```
+
+**Parallel Execution:**
+```typescript
+async function runCLevels(
+  question: string,
+  analystContent: string,
+  context?: string,
+): Promise<CLevelResponse[]> {
+  return Promise.all(
+    C_LEVEL_IDS.map(async (roleId) => {
+      const role = C_ROLES[roleId];
+      const { text, modelUsed } = await callAI(
+        role.systemPrompt,
+        userPrompt, // ANALYST content + question
+        MAX_TOKENS_CLEVEL,
+        "advisor",
+      );
+      return { roleId, name: role.name, title: role.title, content: text, modelUsed };
+    }),
+  );
+}
+```
+
+**Key Feature:** CMO, CFO, CTO execute simultaneously with `Promise.all()` → faster response than sequential analysis.
+
+### Step 3: CEO — Decision Synthesis
+
+**Role:** Review all C-level perspectives and make 1 final decision with clear action steps.
+
+**System Prompt Characteristics:**
+- Balanced synthesis (considers all viewpoints)
+- Conflict resolution (if perspectives disagree, CEO decides direction)
+- Clear decision statement (not suggestions or alternatives)
+- Specific next steps (actionable, numbered tasks for today)
+
+**Output Format (Mandatory):**
+```
+✅ QUYẾT ĐỊNH
+[1-2 sentences — clear decision]
+
+📝 LÝ DO
+[2-3 sentences — why this direction]
+
+👉 BƯỚC TIẾP THEO
+1. [Specific task #1 — do today]
+2. [Specific task #2]
+3. [Specific task #3 if needed]
+
+Max 200 words. Tiếng Việt. NO theory, NO "có thể" — just actions.
+```
+
+**Synthesis Logic:**
+```typescript
+async function runCEO(
+  question: string,
+  cLevelResponses: CLevelResponse[],
+): Promise<CLevelResponse> {
+  const role = C_ROLES.ceo;
+
+  // Build synthesis prompt from successful C-level responses
+  const inputs = cLevelResponses
+    .filter((r) => !r.error)
+    .map((r) => `[${r.name} — ${r.title}]:\n${r.content}`)
+    .join("\n\n---\n\n");
+
+  const userPrompt = `CÂU HỎI GỐC: ${question}\n\n---\nPHÂN TÍCH TỪ BAN LÃNH ĐẠO:\n\n${inputs}`;
+
+  const { text, modelUsed } = await callAI(role.systemPrompt, userPrompt, MAX_TOKENS_CEO, "advisor");
+  return { roleId: "ceo", name: role.name, title: role.title, content: text, modelUsed };
+}
+```
+
+### Full Pipeline Orchestration
+
+**Code:** `lib/advisor/analyze-pipeline.ts`
+
+```typescript
+export async function runAdvisorPipeline(
+  question: string,
+  context?: string,
+): Promise<PipelineResult> {
+  // Step 1: ANALYST gathers and formats data
+  const { response: analystResponse } = await runAnalyst(question);
+
+  // Step 2: CMO, CFO, CTO analyze in parallel
+  const cLevelResponses = await runCLevels(
+    question,
+    analystResponse.content,
+    context,
+  );
+
+  // Step 3: CEO synthesizes all responses
+  const ceoDecision = await runCEO(question, cLevelResponses);
+
+  return {
+    ceoDecision,
+    cLevelResponses,
+    analystBriefing: analystResponse,
+    question,
+    timestamp: new Date().toISOString(),
+  };
+}
+```
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/advisor/analyze` | POST | Run full pipeline: ANALYST → C-levels → CEO |
+| `/api/advisor/followup` | POST | Follow-up question (same pipeline) |
+
+**Request:**
+```json
+{
+  "question": "Nên focus vào ngách nào trong tháng này?",
+  "context": "Đang chạy 3 kênh TikTok, mỗi kênh khác ngành"
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "ceoDecision": {
+      "roleId": "ceo",
+      "name": "CEO",
+      "title": "Tổng giám đốc",
+      "content": "✅ QUYẾT ĐỊNH\nFocus kênh mỹ phẩm...",
+      "modelUsed": "claude-haiku-4.5"
+    },
+    "cLevelResponses": [
+      { "roleId": "cmo", "name": "CMO", "title": "Giám đốc Marketing", "content": "..." },
+      { "roleId": "cfo", "name": "CFO", "title": "Giám đốc Tài chính", "content": "..." },
+      { "roleId": "cto", "name": "CTO", "title": "Giám đốc Kỹ thuật", "content": "..." }
+    ],
+    "analystBriefing": { "roleId": "analyst", "name": "ANALYST", "content": "..." },
+    "question": "Nên focus vào ngách nào?",
+    "timestamp": "2026-03-08T14:32:00.000Z"
+  }
+}
+```
+
+### Morning Brief Integration
+
+**Function:** `ceoBriefReview(briefSummary: string) → string`
+
+Lightweight CEO review for morning brief generation (skips ANALYST data gathering):
+
+```typescript
+export async function ceoBriefReview(briefSummary: string): Promise<string> {
+  const role = C_ROLES.ceo;
+  const systemPrompt = `${role.systemPrompt}\n\nĐẶC BIỆT: Bạn đang review Morning Brief. Chỉ cần trả lời 2-3 câu actionable.`;
+  const userPrompt = `Đây là Morning Brief:\n\n${briefSummary}\n\nBrief này có thực tế không? Bước đầu tiên cụ thể nhất là gì?`;
+
+  const { text } = await callAI(systemPrompt, userPrompt, 512, "advisor");
+  return text;
+}
+```
+
+**Use Case:**
+- Morning brief generation → generates brief summary → calls `ceoBriefReview()` → returns CEO insight
+- Faster than full pipeline (no ANALYST data gathering, no parallel C-levels)
+- Single-turn, concise response
+
+### UI Architecture
+
+**Component:** `components/advisor/advisor-page-client.tsx`
+
+**Features:**
+- **Question input** with send button
+- **Loading states** showing analysis stage (analyst → c-levels → ceo)
+- **CEO decision displayed prominently** at top:
+  - Decision statement (✅)
+  - Reasoning (📝)
+  - Action steps (👉)
+- **Expandable C-level details** below:
+  - Each role (CMO, CFO, CTO) collapsible
+  - Analyst briefing summary
+- **Historical context** support:
+  - User can add previous analysis context for multi-turn conversations
+  - Context fed to all C-levels for continuity
+- **Visual role badges:**
+  - Analyst: slate gray (BarChart3 icon)
+  - CMO: violet (Megaphone icon)
+  - CFO: emerald (DollarSign icon)
+  - CTO: blue (Wrench icon)
+  - CEO: amber (Crown icon)
+- **Error states** with graceful fallbacks
+
+### Data Model Integration
+
+**Database Queries in ANALYST:**
+
+| Table | Query | Purpose |
+|-------|-------|---------|
+| `ProductIdentity` | Top 10 by combined score | Gauge product quality |
+| `UserPattern` | Winning patterns (patternType = "winning") | Identify success factors |
+| `UserPattern` | Losing patterns (patternType = "losing") | Identify pitfalls |
+| `ChannelMemory` | Latest 5 channels | Channel health + insights |
+| Counts | Total, scored, briefed, published | System metrics |
+
+### Performance & Optimization
+
+| Aspect | Strategy |
+|--------|----------|
+| **DB queries** | Parallel `Promise.all()` in gatherAdvisorData |
+| **C-level analysis** | Parallel `Promise.all()` for CMO, CFO, CTO |
+| **Token limits** | C-levels: 1024 tokens; CEO: 1200 tokens |
+| **Context reuse** | ANALYST data passed to all C-levels → no redundancy |
+| **Caching** | None (real-time DB queries every request) |
+| **Timeout** | Per-role AI calls have individual error handling |
+
+### Error Handling
+
+**Partial failures:**
+- If ANALYST fails → proceed with empty data briefing
+- If 1 C-level fails → CEO synthesis with 2 successful responses + failure note
+- If CEO fails → return last successful pipeline state
+
+**Retry logic:**
+- No automatic retries (single attempt per pipeline)
+- Errors logged for debugging
+- User can retry entire pipeline by submitting question again
+
+---
+
 ## 15. Future Improvements
 
 - **Webhook callbacks** instead of polling (requires client-side event listener)

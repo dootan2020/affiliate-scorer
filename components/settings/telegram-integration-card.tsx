@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   CheckCircle,
@@ -31,17 +31,20 @@ export function TelegramIntegrationCard({ status, onRefresh }: TelegramIntegrati
   const [deleting, setDeleting] = useState(false);
   const [botName, setBotName] = useState<string | null>(null);
 
-  // Fetch bot info on mount if connected
-  const fetchBotInfo = useCallback(async () => {
-    if (!status?.connected) return;
-    try {
-      const res = await fetch("/api/settings/api-keys/telegram-info");
-      const data = await res.json();
-      if (data.botUsername) setBotName(data.botUsername);
-    } catch { /* non-critical */ }
-  }, [status?.connected]);
-
-  useEffect(() => { void fetchBotInfo(); }, [fetchBotInfo]);
+  // Fetch bot info when connected; reset when disconnected
+  useEffect(() => {
+    if (!status?.connected) {
+      setBotName(null);
+      return;
+    }
+    // Cache-bust to avoid stale browser cache after token change
+    fetch(`/api/settings/api-keys/telegram-info?t=${Date.now()}`)
+      .then((r) => r.json())
+      .then((data: { botUsername?: string }) => {
+        if (data.botUsername) setBotName(data.botUsername);
+      })
+      .catch(() => {});
+  }, [status?.connected, status?.lastChars]);
 
   async function handleSave(): Promise<void> {
     if (!tokenInput.trim()) {

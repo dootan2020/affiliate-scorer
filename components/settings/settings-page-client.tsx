@@ -43,12 +43,33 @@ const AI_PROVIDERS: { id: ProviderName; label: string; consoleUrl: string }[] = 
 const TASK_LABELS: Record<string, { label: string; description: string }> = {
   scoring: { label: "Chấm điểm sản phẩm", description: "Phân tích và xếp hạng sản phẩm affiliate" },
   content_brief: { label: "Tạo Brief nội dung", description: "Tạo kịch bản, câu mở đầu, prompts cho video" },
+  channel_profile: { label: "Hồ sơ kênh", description: "Tạo character bible và video bible cho kênh" },
   morning_brief: { label: "Bản tin sáng", description: "Tóm tắt tình hình hàng ngày" },
   weekly_report: { label: "Báo cáo tuần", description: "Phân tích hiệu suất hàng tuần" },
-  channel_profile: { label: "Hồ sơ kênh", description: "Tạo character bible và video bible cho kênh" },
   niche_intelligence: { label: "Phân tích ngách", description: "AI tư vấn ngách phù hợp cho người mới" },
-  advisor: { label: "Cố vấn chiến lược", description: "Ban lãnh đạo AI (CMO, CFO, CTO, CEO) phân tích và ra quyết định" },
+  advisor: { label: "Cố vấn AI", description: "Phân tích CMO/CFO/CTO và quyết định CEO — nên dùng model mạnh" },
 };
+
+type TaskKey = keyof typeof TASK_LABELS;
+
+interface TaskGroup {
+  title: string;
+  description: string;
+  tasks: TaskKey[];
+}
+
+const TASK_GROUPS: TaskGroup[] = [
+  {
+    title: "Sản xuất nội dung",
+    description: "Chấm điểm, tạo brief, xây dựng kênh",
+    tasks: ["scoring", "content_brief", "channel_profile"],
+  },
+  {
+    title: "Phân tích & Quyết định",
+    description: "Báo cáo, phân tích xu hướng, cố vấn chiến lược",
+    tasks: ["morning_brief", "weekly_report", "niche_intelligence", "advisor"],
+  },
+];
 
 const DEFAULT_MODELS: Record<string, string> = {
   scoring: "claude-haiku-4-5-20251001",
@@ -468,31 +489,49 @@ export function SettingsPageClient(): React.ReactElement {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {Object.entries(TASK_LABELS).map(([taskType, meta]) => (
-                  <div
-                    key={taskType}
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 bg-gray-50 dark:bg-slate-800 rounded-xl"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
-                        {meta.label}
+              <div className="space-y-6">
+                {TASK_GROUPS.map((group) => (
+                  <div key={group.title}>
+                    <div className="mb-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                        {group.title}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {meta.description}
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                        {group.description}
                       </p>
                     </div>
-                    <select
-                      value={models[taskType] ?? DEFAULT_MODELS[taskType] ?? ""}
-                      onChange={(e) => setModels((prev) => ({ ...prev, [taskType]: e.target.value }))}
-                      className="w-full sm:w-64 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
-                    >
-                      {sortedModels.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name} — {m.tierLabel}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="space-y-2">
+                      {group.tasks.map((taskType) => {
+                        const meta = TASK_LABELS[taskType];
+                        if (!meta) return null;
+                        return (
+                          <div
+                            key={taskType}
+                            className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3.5 bg-gray-50 dark:bg-slate-800 rounded-xl"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                                {meta.label}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {meta.description}
+                              </p>
+                            </div>
+                            <select
+                              value={models[taskType] ?? DEFAULT_MODELS[taskType] ?? ""}
+                              onChange={(e) => setModels((prev) => ({ ...prev, [taskType]: e.target.value }))}
+                              className="w-full sm:w-64 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
+                            >
+                              {sortedModels.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name} — {m.tierLabel}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>

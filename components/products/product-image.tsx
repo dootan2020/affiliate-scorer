@@ -77,7 +77,9 @@ export function ProductImage({
     );
   }
 
-  const imageUrl = useFallback ? getProxiedUrl(src) : src;
+  // Always proxy 500fd.com URLs to avoid 403 hotlink errors
+  const needsProxy = src.includes("500fd.com");
+  const imageUrl = needsProxy || useFallback ? getProxiedUrl(src) : src;
   const canPreview = !noPreview && size < PREVIEW_SIZE;
 
   return (

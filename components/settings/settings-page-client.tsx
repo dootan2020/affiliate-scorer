@@ -14,6 +14,7 @@ import {
   Scale,
   Sparkles,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TelegramIntegrationCard } from "./telegram-integration-card";
 
@@ -207,6 +208,8 @@ export function SettingsPageClient(): React.ReactElement {
   const [deleting, setDeleting] = useState(false);
   // Track if provider was manually changed (to trigger model auto-switch)
   const [providerManuallyChanged, setProviderManuallyChanged] = useState(false);
+  // Track active preset — reset when user manually changes a dropdown
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
   // ─── Data loading ───
 
@@ -409,6 +412,7 @@ export function SettingsPageClient(): React.ReactElement {
       return updated;
     });
 
+    setActivePreset(preset.id);
     toast.success(`Đã áp dụng preset "${preset.label}"`);
   }
 
@@ -567,7 +571,12 @@ export function SettingsPageClient(): React.ReactElement {
                       key={preset.id}
                       onClick={() => applyPreset(preset)}
                       title={preset.description}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-gray-300 dark:hover:border-slate-600 transition-all"
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-sm font-medium transition-all",
+                        activePreset === preset.id
+                          ? "border-orange-500 bg-orange-50 text-orange-700 dark:border-orange-400 dark:bg-orange-950/30 dark:text-orange-300"
+                          : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
+                      )}
                     >
                       <Icon className="w-3.5 h-3.5" />
                       {preset.label}
@@ -628,7 +637,7 @@ export function SettingsPageClient(): React.ReactElement {
                             </div>
                             <select
                               value={models[taskType] ?? DEFAULT_MODELS[taskType] ?? ""}
-                              onChange={(e) => setModels((prev) => ({ ...prev, [taskType]: e.target.value }))}
+                              onChange={(e) => { setModels((prev) => ({ ...prev, [taskType]: e.target.value })); setActivePreset(null); }}
                               className="w-full sm:w-64 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
                             >
                               {sortedModels.map((m) => (

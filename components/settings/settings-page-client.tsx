@@ -10,6 +10,9 @@ import {
   Loader2,
   ExternalLink,
   Trash2,
+  Zap,
+  Scale,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TelegramIntegrationCard } from "./telegram-integration-card";
@@ -68,6 +71,61 @@ const TASK_GROUPS: TaskGroup[] = [
     title: "Phân tích & Quyết định",
     description: "Báo cáo, phân tích xu hướng, cố vấn chiến lược",
     tasks: ["morning_brief", "weekly_report", "niche_intelligence", "advisor"],
+  },
+];
+
+// Preset: maps each task to a tier based on frequency/importance
+type Tier = "fast" | "balanced" | "powerful";
+
+interface Preset {
+  id: string;
+  label: string;
+  description: string;
+  mapping: Record<TaskKey, Tier>;
+}
+
+const PRESETS: Preset[] = [
+  {
+    id: "economy",
+    label: "Tiết kiệm",
+    description: "Model nhẹ cho mọi tác vụ — tốc độ cao, chi phí thấp",
+    mapping: {
+      scoring: "fast",
+      content_brief: "fast",
+      channel_profile: "balanced",
+      morning_brief: "fast",
+      weekly_report: "fast",
+      niche_intelligence: "fast",
+      advisor: "balanced",
+    },
+  },
+  {
+    id: "balanced",
+    label: "Cân bằng",
+    description: "Tác vụ lặp dùng nhẹ, tác vụ quan trọng dùng mạnh",
+    mapping: {
+      scoring: "fast",
+      content_brief: "balanced",
+      channel_profile: "balanced",
+      morning_brief: "fast",
+      weekly_report: "balanced",
+      niche_intelligence: "balanced",
+      advisor: "powerful",
+    },
+  },
+  {
+    id: "quality",
+    label: "Chất lượng cao",
+    description: "Model mạnh nhất cho mọi tác vụ — chậm hơn, đắt hơn",
+    mapping: {
+      scoring: "balanced",
+      content_brief: "powerful",
+      channel_profile: "powerful",
+      morning_brief: "balanced",
+      weekly_report: "powerful",
+      niche_intelligence: "powerful",
+      advisor: "powerful",
+    },
   },
 ];
 
@@ -323,6 +381,37 @@ export function SettingsPageClient(): React.ReactElement {
     }
   }
 
+  function applyPreset(preset: Preset): void {
+    const providerModels = allModels[selectedProvider] ?? [];
+    if (providerModels.length === 0) {
+      toast.error("Chưa có danh sách model — kết nối provider trước");
+      return;
+    }
+
+    // Fallback chain: requested tier → next best → any available
+    const TIER_FALLBACK: Record<Tier, Tier[]> = {
+      powerful: ["powerful", "balanced", "fast"],
+      balanced: ["balanced", "powerful", "fast"],
+      fast: ["fast", "balanced", "powerful"],
+    };
+
+    setModels((prev) => {
+      const updated = { ...prev };
+      for (const [taskType, tier] of Object.entries(preset.mapping)) {
+        const chain = TIER_FALLBACK[tier];
+        const match = chain
+          .map((t) => providerModels.find((m) => m.tier === t))
+          .find(Boolean);
+        if (match) {
+          updated[taskType] = match.id;
+        }
+      }
+      return updated;
+    });
+
+    toast.success(`Đã áp dụng preset "${preset.label}"`);
+  }
+
   function handleProviderChange(newProvider: ProviderName): void {
     setSelectedProvider(newProvider);
     setKeyInput("");
@@ -467,6 +556,26 @@ export function SettingsPageClient(): React.ReactElement {
               </span>
               . Đổi provider ở trên để xem models khác.
             </p>
+
+            {/* Preset buttons */}
+            {sortedModels.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-5">
+                {PRESETS.map((preset) => {
+                  const Icon = preset.id === "economy" ? Zap : preset.id === "balanced" ? Scale : Sparkles;
+                  return (
+                    <button
+                      key={preset.id}
+                      onClick={() => applyPreset(preset)}
+                      title={preset.description}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:border-gray-300 dark:hover:border-slate-600 transition-all"
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {loadingModels ? (
               <div className="space-y-3 animate-pulse">

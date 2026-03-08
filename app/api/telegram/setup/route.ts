@@ -17,7 +17,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || "").trim();
   if (!appUrl) {
     return NextResponse.json(
       { error: "NEXT_PUBLIC_APP_URL chưa được cấu hình" },

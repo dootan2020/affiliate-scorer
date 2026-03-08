@@ -21,12 +21,12 @@ export async function POST(): Promise<NextResponse> {
     return NextResponse.json({ error: "No token configured" }, { status: 404 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
-  if (!appUrl) {
+  const rawAppUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || "").trim();
+  if (!rawAppUrl) {
     return NextResponse.json({ error: "No app URL configured" }, { status: 503 });
   }
 
-  const webhookUrl = `https://${appUrl.replace(/^https?:\/\//, "")}/api/telegram/webhook`;
+  const webhookUrl = `https://${rawAppUrl.replace(/^https?:\/\//, "")}/api/telegram/webhook`;
   const body: Record<string, string> = { url: webhookUrl };
   if (process.env.TELEGRAM_WEBHOOK_SECRET) {
     body.secret_token = process.env.TELEGRAM_WEBHOOK_SECRET;

@@ -40,7 +40,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     let webhookWarning: string | undefined;
     if (body.provider === "telegram") {
       try {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
+        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || "").trim();
         if (appUrl) {
           const webhookUrl = `https://${appUrl.replace(/^https?:\/\//, "")}/api/telegram/webhook`;
           const webhookBody: Record<string, string> = { url: webhookUrl };

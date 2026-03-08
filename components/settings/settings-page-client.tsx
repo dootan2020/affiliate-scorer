@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TelegramIntegrationCard } from "./telegram-integration-card";
 
 // ─── Types ───
 
@@ -33,11 +34,10 @@ interface ClassifiedModel {
 
 // ─── Constants ───
 
-const PROVIDERS: { id: ProviderName; label: string; consoleUrl: string }[] = [
+const AI_PROVIDERS: { id: ProviderName; label: string; consoleUrl: string }[] = [
   { id: "anthropic", label: "Anthropic (Claude)", consoleUrl: "https://console.anthropic.com/settings/keys" },
   { id: "openai", label: "OpenAI (GPT)", consoleUrl: "https://platform.openai.com/api-keys" },
   { id: "google", label: "Google (Gemini)", consoleUrl: "https://aistudio.google.com/apikey" },
-  { id: "telegram", label: "Telegram Bot", consoleUrl: "https://t.me/BotFather" },
 ];
 
 const TASK_LABELS: Record<string, { label: string; description: string }> = {
@@ -124,8 +124,6 @@ export function SettingsPageClient(): React.ReactElement {
   const [keyInput, setKeyInput] = useState("");
   const [testing, setTesting] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [telegramBotName, setTelegramBotName] = useState<string | null>(null);
-
   // Track if provider was manually changed (to trigger model auto-switch)
   const [providerManuallyChanged, setProviderManuallyChanged] = useState(false);
 
@@ -142,16 +140,6 @@ export function SettingsPageClient(): React.ReactElement {
 
       setProviders(providerList);
       setModels(savedModels);
-
-      // Fetch telegram bot info if connected
-      const telegramStatus = providerList.find((p: ProviderStatus) => p.provider === "telegram");
-      if (telegramStatus?.connected) {
-        fetch("/api/settings/api-keys/telegram-info").then((r) => r.json())
-          .then((data: { botUsername?: string }) => {
-            if (data.botUsername) setTelegramBotName(data.botUsername);
-          })
-          .catch(() => {}); // Non-critical
-      }
 
       // Determine default provider from saved models (exclude telegram — not AI provider)
       const connected = providerList.filter((p: ProviderStatus) => p.connected && p.provider !== "telegram").map((p: ProviderStatus) => p.provider);
@@ -220,8 +208,9 @@ export function SettingsPageClient(): React.ReactElement {
   // ─── Derived state ───
 
   const currentStatus = providers.find((p) => p.provider === selectedProvider);
-  const currentProviderConfig = PROVIDERS.find((p) => p.id === selectedProvider)!;
+  const currentAiProvider = AI_PROVIDERS.find((p) => p.id === selectedProvider)!;
   const connectedProviders = providers.filter((p) => p.connected && p.provider !== "telegram");
+  const telegramStatus = providers.find((p) => p.provider === "telegram");
   const filteredModels = allModels[selectedProvider] ?? [];
 
   // For model dropdowns: show models of selected provider
@@ -251,11 +240,6 @@ export function SettingsPageClient(): React.ReactElement {
         return;
       }
 
-      // Store bot username for telegram
-      if (selectedProvider === "telegram" && testData.botUsername) {
-        setTelegramBotName(testData.botUsername);
-      }
-
       const saveRes = await fetch("/api/settings/api-keys/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -268,7 +252,7 @@ export function SettingsPageClient(): React.ReactElement {
         return;
       }
 
-      toast.success(`Đã kết nối ${currentProviderConfig.label}`);
+      toast.success(`Đã kết nối ${currentAiProvider.label}`);
       setKeyInput("");
       await fetchAll();
     } catch {
@@ -289,7 +273,7 @@ export function SettingsPageClient(): React.ReactElement {
         toast.error(data.error ?? "Lỗi khi xoá API key");
         return;
       }
-      toast.success(`Đã xoá API key ${currentProviderConfig.label}`);
+      toast.success(`Đã xoá API key ${currentAiProvider.label}`);
       await fetchAll();
     } catch {
       toast.error("Lỗi kết nối server");
@@ -354,7 +338,7 @@ export function SettingsPageClient(): React.ReactElement {
               onChange={(e) => handleProviderChange(e.target.value as ProviderName)}
               className="w-full sm:w-64 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none"
             >
-              {PROVIDERS.map((p) => {
+              {AI_PROVIDERS.map((p) => {
                 const status = providers.find((s) => s.provider === p.id);
                 return (
                   <option key={p.id} value={p.id}>
@@ -372,11 +356,6 @@ export function SettingsPageClient(): React.ReactElement {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
                     Đã kết nối
-                    {selectedProvider === "telegram" && telegramBotName && (
-                      <span className="ml-1.5 font-normal text-emerald-600/80 dark:text-emerald-400/80">
-                        @{telegramBotName}
-                      </span>
-                    )}
                   </p>
                   <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 font-mono mt-0.5">
                     {currentStatus.lastChars}
@@ -407,14 +386,12 @@ export function SettingsPageClient(): React.ReactElement {
                     Chưa kết nối
                   </p>
                   <a
-                    href={currentProviderConfig.consoleUrl}
+                    href={currentAiProvider.consoleUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-amber-600/70 dark:text-amber-400/70 hover:underline inline-flex items-center gap-1 mt-0.5"
                   >
-                    {selectedProvider === "telegram"
-                      ? "Tạo bot qua @BotFather → /newbot → copy token"
-                      : `Lấy key tại ${currentProviderConfig.consoleUrl.replace("https://", "")}`}
+                    {`Lấy key tại ${currentAiProvider.consoleUrl.replace("https://", "")}`}
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
@@ -425,7 +402,7 @@ export function SettingsPageClient(): React.ReactElement {
                   type="password"
                   value={keyInput}
                   onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder={selectedProvider === "telegram" ? "Nhập Bot Token từ @BotFather" : `Nhập ${currentProviderConfig.label} API key`}
+                  placeholder={`Nhập ${currentAiProvider.label} API key`}
                   className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-mono"
                 />
                 <Button
@@ -463,7 +440,7 @@ export function SettingsPageClient(): React.ReactElement {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Chọn model cho từng loại tác vụ. Đang hiện models của{" "}
               <span className="font-medium text-gray-700 dark:text-gray-200">
-                {currentProviderConfig.label}
+                {currentAiProvider.label}
               </span>
               . Đổi provider ở trên để xem models khác.
             </p>
@@ -521,7 +498,7 @@ export function SettingsPageClient(): React.ReactElement {
 
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100 dark:border-slate-800">
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Models lấy trực tiếp từ API {currentProviderConfig.label}
+                Models lấy trực tiếp từ API {currentAiProvider.label}
               </p>
               <Button
                 onClick={() => void handleSaveModels()}
@@ -535,6 +512,12 @@ export function SettingsPageClient(): React.ReactElement {
           </>
         )}
       </div>
+
+      {/* Card 3: Tích hợp — Telegram Bot */}
+      <TelegramIntegrationCard
+        status={telegramStatus}
+        onRefresh={fetchAll}
+      />
     </div>
   );
 }

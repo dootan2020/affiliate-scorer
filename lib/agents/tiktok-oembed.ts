@@ -12,7 +12,7 @@ export interface OembedResult {
  * Fetch TikTok video metadata via oembed API.
  * Returns null on any error — never throws.
  */
-const VALID_TIKTOK_HOSTS = ["www.tiktok.com", "tiktok.com", "vm.tiktok.com", "vn.tiktok.com"];
+const VALID_TIKTOK_HOSTS = ["www.tiktok.com", "tiktok.com", "vm.tiktok.com", "vt.tiktok.com", "vn.tiktok.com"];
 
 export async function fetchTikTokOembed(url: string): Promise<OembedResult | null> {
   try {

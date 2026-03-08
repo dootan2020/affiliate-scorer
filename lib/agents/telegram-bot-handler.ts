@@ -22,7 +22,7 @@ export interface BotResponse {
   replyMarkup?: unknown;
 }
 
-const TIKTOK_URL_REGEX = /(?:https?:\/\/)?(?:www\.)?(?:tiktok\.com\/@[\w.]+\/video\/\d+|vm\.tiktok\.com\/[\w]+|vn\.tiktok\.com\/[\w]+)/i;
+const TIKTOK_URL_REGEX = /(?:https?:\/\/)?(?:(?:www\.)?tiktok\.com\/@[\w.]+\/(?:video|photo)\/\d+|(?:vm|vt|vn)\.tiktok\.com\/[\w]+\/?)/i;
 
 /**
  * Handle incoming Telegram update. Returns response to send, or null if no response needed.
@@ -135,28 +135,33 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<BotR
       return { chatId, text: "Đã đạt giới hạn 50 video/ngày. Thử lại ngày mai." };
     }
 
-    // Fetch oembed
-    const oembed = await fetchTikTokOembed(tiktokUrl);
+    try {
+      // Fetch oembed (non-blocking — capture still saved if oembed fails)
+      const oembed = await fetchTikTokOembed(tiktokUrl).catch(() => null);
 
-    // Save capture
-    await prisma.competitorCapture.create({
-      data: {
-        channelId: chat.activeChannelId,
-        tiktokUrl,
-        authorHandle: oembed?.authorName || null,
-        caption: oembed?.caption || null,
-        hashtags: oembed?.hashtags || [],
-        thumbnailUrl: oembed?.thumbnailUrl || null,
-      },
-    });
+      // Save capture
+      await prisma.competitorCapture.create({
+        data: {
+          channelId: chat.activeChannelId,
+          tiktokUrl,
+          authorHandle: oembed?.authorName || null,
+          caption: oembed?.caption || null,
+          hashtags: oembed?.hashtags || [],
+          thumbnailUrl: oembed?.thumbnailUrl || null,
+        },
+      });
 
-    const channel = await prisma.tikTokChannel.findUnique({
-      where: { id: chat.activeChannelId },
-      select: { name: true },
-    });
+      const channel = await prisma.tikTokChannel.findUnique({
+        where: { id: chat.activeChannelId },
+        select: { name: true },
+      });
 
-    const authorInfo = oembed?.authorName ? ` (@${oembed.authorName})` : "";
-    return { chatId, text: `Đã lưu cho ${channel?.name}${authorInfo}` };
+      const authorInfo = oembed?.authorName ? ` (@${oembed.authorName})` : "";
+      return { chatId, text: `Đã lưu cho ${channel?.name}${authorInfo}` };
+    } catch (err) {
+      console.error("[telegram] Failed to save capture:", err);
+      return { chatId, text: "Lỗi khi lưu video. Thử lại sau." };
+    }
   }
 
   // Default help

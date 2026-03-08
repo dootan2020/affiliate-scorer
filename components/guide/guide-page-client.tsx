@@ -37,6 +37,7 @@ const TOC_ITEMS: TocItem[] = [
 export function GuidePageClient(): React.ReactElement {
   const [activeId, setActiveId] = useState(TOC_ITEMS[0].id);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const sectionIds = TOC_ITEMS.map((i) => i.id);
@@ -56,7 +57,7 @@ export function GuidePageClient(): React.ReactElement {
           setActiveId(topmost.target.id);
         }
       },
-      { rootMargin: "-80px 0px -60% 0px", threshold: 0.1 },
+      { root: contentRef.current, rootMargin: "-80px 0px -60% 0px", threshold: 0.1 },
     );
 
     for (const el of elements) {
@@ -67,10 +68,10 @@ export function GuidePageClient(): React.ReactElement {
   }, []);
 
   return (
-    <div className="flex min-h-screen">
-      {/* Fixed TOC sidebar — positioned right after the main app sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50">
-        <div className="sticky top-0 h-screen overflow-y-auto py-8 px-4">
+    <div className="flex h-[calc(100vh-3.5rem)] md:h-screen">
+      {/* Fixed TOC sidebar — own scroll context, never moves */}
+      <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50 overflow-y-auto">
+        <div className="py-8 px-4">
           <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
             Hướng dẫn
           </p>
@@ -81,8 +82,8 @@ export function GuidePageClient(): React.ReactElement {
         </div>
       </aside>
 
-      {/* Main content area — fills remaining width */}
-      <div className="flex-1 min-w-0">
+      {/* Main content area — own scroll context */}
+      <div ref={contentRef} className="flex-1 min-w-0 overflow-y-auto">
         {/* Header */}
         <div className="border-b border-gray-100 dark:border-slate-800 px-6 sm:px-10 py-8">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-50">

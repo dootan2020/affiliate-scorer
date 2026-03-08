@@ -27,6 +27,7 @@ export function GuideToc({ items, activeId }: GuideTocProps): React.ReactElement
           <button
             key={item.id}
             onClick={() => handleClick(item.id)}
+            aria-current={isActive ? "true" : undefined}
             className={cn(
               "group relative block w-full text-left py-1.5 pr-3 transition-colors rounded-r-lg",
               item.indent ? "pl-7 text-[13px]" : "pl-3 text-[13px] font-medium",
@@ -47,12 +48,7 @@ export function GuideToc({ items, activeId }: GuideTocProps): React.ReactElement
   );
 }
 
-interface GuideTocMobileProps {
-  items: TocItem[];
-  activeId: string;
-}
-
-export function GuideTocMobile({ items, activeId }: GuideTocMobileProps): React.ReactElement {
+export function GuideTocMobile({ items, activeId }: GuideTocProps): React.ReactElement {
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>): void {
     const el = document.getElementById(e.target.value);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -62,11 +58,12 @@ export function GuideTocMobile({ items, activeId }: GuideTocMobileProps): React.
     <select
       value={activeId}
       onChange={handleChange}
+      aria-label="Mục lục"
       className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none mb-6"
     >
       {items.map((item) => (
         <option key={item.id} value={item.id}>
-          {item.indent ? "  " : ""}{item.label}
+          {item.indent ? "\u00A0\u00A0" : ""}{item.label}
         </option>
       ))}
     </select>

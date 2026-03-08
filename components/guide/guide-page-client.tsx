@@ -48,11 +48,12 @@ export function GuidePageClient(): React.ReactElement {
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-            break;
-          }
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length > 0) {
+          const topmost = visible.reduce((a, b) =>
+            a.boundingClientRect.top < b.boundingClientRect.top ? a : b,
+          );
+          setActiveId(topmost.target.id);
         }
       },
       { rootMargin: "-80px 0px -60% 0px", threshold: 0.1 },

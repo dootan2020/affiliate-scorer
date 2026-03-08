@@ -189,6 +189,34 @@ function findMatchingTierModel(
   return models.find((m) => m.tier === targetTier)?.id ?? models[0]?.id ?? null;
 }
 
+/**
+ * Detect which preset matches the current model config, if any.
+ * Compares each task's model tier against preset tier mapping.
+ */
+function detectActivePreset(
+  savedModels: Record<string, string>,
+  providerModels: ClassifiedModel[],
+): string | null {
+  if (providerModels.length === 0) return null;
+
+  // Build tier lookup: modelId → tier
+  const tierOf: Record<string, Tier> = {};
+  for (const m of providerModels) {
+    tierOf[m.id] = m.tier;
+  }
+
+  for (const preset of PRESETS) {
+    const allMatch = Object.entries(preset.mapping).every(([taskType, expectedTier]) => {
+      const modelId = savedModels[taskType];
+      if (!modelId) return false;
+      return tierOf[modelId] === expectedTier;
+    });
+    if (allMatch) return preset.id;
+  }
+
+  return null;
+}
+
 // ─── Component ───
 
 export function SettingsPageClient(): React.ReactElement {
@@ -265,6 +293,19 @@ export function SettingsPageClient(): React.ReactElement {
   }
 
   useEffect(() => { void fetchAll(); }, [fetchAll]);
+
+  // Detect active preset on initial load (when models and provider data are ready)
+  const [presetDetected, setPresetDetected] = useState(false);
+  useEffect(() => {
+    if (presetDetected) return;
+    const providerModels = allModels[selectedProvider];
+    if (!providerModels || providerModels.length === 0) return;
+    if (Object.keys(models).length === 0) return;
+
+    const detected = detectActivePreset(models, providerModels);
+    setActivePreset(detected);
+    setPresetDetected(true);
+  }, [allModels, selectedProvider, models, presetDetected]);
 
   // Auto-switch models when provider is manually changed
   useEffect(() => {

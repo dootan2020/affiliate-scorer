@@ -1,7 +1,7 @@
 # Project Status — PASTR (v1.10.0)
 
 **Last Updated:** 2026-03-08
-**Overall Status:** MVP Complete, Production Ready (85/100)
+**Overall Status:** MVP Complete, Production Ready (85/100 — from 82/100)
 
 ---
 
@@ -94,7 +94,7 @@
 
 ## Known Issues & Limitations
 
-### Production Readiness (82/100)
+### Production Readiness (85/100)
 
 **Strengths:**
 - All 15 pages load without error
@@ -211,7 +211,7 @@ concurrentLocks.delete(userId);
 
 ---
 
-## Database Models (48+)
+## Database Models (51)
 
 **Core:** Product, ProductIdentity, ProductUrl, InboxItem, ImportBatch
 **Content:** ContentBrief, ContentAsset, ProductionBatch, ContentSlot
@@ -227,7 +227,7 @@ concurrentLocks.delete(userId);
 
 ---
 
-## API Endpoints (105+)
+## API Endpoints (140+)
 
 **Import & Scoring:** `/api/upload`, `/api/internal/import-chunk`, `/api/internal/score-batch`, `/api/cron/retry-scoring`
 **Inbox:** `/api/inbox/paste`, `/api/inbox/list`, `/api/inbox/[id]`
@@ -302,6 +302,6 @@ concurrentLocks.delete(userId);
 
 ## Summary
 
-PASTR is a production-ready MVP (v1.10.0, 85/100 readiness) with all core modules functional. The 3-layer scoring system, character-driven content framework, AI advisory system, and chunked import architecture support scaling to 3600+ products. v1.10 highlights: guide page redesigned with fixed TOC sidebar + wider prose + larger text (professional docs-style UX); expanded to 15 sections covering TikTok channels, AI advisor, Telegram bot; AI config extended to 7 task types. Next priority: Phase 13 (Scoring System Redesign) to improve content potential score discriminative power.
+PASTR is a production-ready MVP (v1.10.0, 85/100 readiness) with 51 database models and 140+ API endpoints across 12+ namespaces. All core modules functional: 3-layer scoring system, character-driven content framework (Character Bible + Video Bible), AI advisory system (ANALYST → C-levels → CEO), 6-phase AI agent system, Telegram bot integration, and chunked import architecture supporting 3600+ products. v1.10 highlights: guide page redesigned (fixed TOC sidebar, wider prose, larger text, professional docs-style UX); expanded to 15 sections; AI config extended to 7 task types. Next priority: Phase 13 (Scoring System Redesign) to improve content potential score discriminative power.
 
 **Guide page redesign:** Fixed sticky TOC (lg+), orange active indicator, mobile dropdown select, wider content without container constraints, larger typography (prose-base, leading-7).

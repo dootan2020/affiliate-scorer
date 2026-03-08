@@ -24,7 +24,9 @@ pnpm dev               # Mở http://localhost:3000
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router, TypeScript)
-- **Database**: PostgreSQL + Prisma ORM
+- **Database**: PostgreSQL (Supabase) + Prisma ORM (51 models)
 - **AI**: Claude / GPT / Gemini (multi-provider, encrypted DB keys)
 - **UI**: Tailwind CSS, Radix UI, Recharts, Lucide Icons
 - **Theme**: next-themes (light/dark auto)
+- **Version**: v1.10.0 (Mar 8, 2026)
+- **Production Readiness**: 85/100

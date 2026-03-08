@@ -24,13 +24,14 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 
 ## Thống Kê Dự Án
 
-- **Database Models:** 45+
-- **Pages:** 15 (added /niche-finder, /guide)
-- **API Endpoints:** 100+ (added /api/agents/*, /api/cron/nightly-learning, /api/cron/trend-analysis, /api/telegram/*)
-- **Components:** 100+ (including 8 shared design system components + PWA support)
+- **Database Models:** 51
+- **Pages:** 16 (dashboard, inbox, production, channels, library, insights, log, playbook, sync, settings, guide, advisor, niche-finder, error pages)
+- **API Endpoints:** 140+ (advisory, briefs, channels, production, inbox, learning, cron, telegram, and more)
+- **Component Files:** ~146 across 21 directories (layout, advisor, channels, production, insights, guide, inbox, products, dashboard, ai, settings, log, niche-intelligence, advisor, shared, ui)
 - **Shared Components:** PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible, MobileFAB, PWAHead
 - **Design Tokens:** 25+ (colors, spacing, typography, shadows)
-- **AI Agent Modules:** 9 (advisor system: c-level-roles, analyze-pipeline, gather-advisor-data; phase 1-6: channel-memory-builder, brief-personalization, content-analyzer, tiktok-oembed, telegram-bot-handler, trend-intelligence, win-predictor, nightly-learning)
+- **AI Agent Modules:** 8 (channel-memory-builder, brief-personalization, content-analyzer, tiktok-oembed, telegram-bot-handler, trend-intelligence, win-predictor, nightly-learning)
+- **Advisory System:** 5 roles (ANALYST, CMO, CFO, CTO, CEO) with company hierarchy decision pipeline
 
 ## Trạng Thái Phát Triển
 
@@ -123,20 +124,20 @@ affiliate-scorer/
 └── prompt/                     # Task specifications
 ```
 
-## Database Models (45+)
+## Database Models (51)
 
 Key model groups:
 
-**Core:** Product, ProductIdentity, ProductUrl, InboxItem, ImportBatch, ProductSnapshot
-**Content:** ContentBrief, ContentAsset, ProductionBatch, ContentSlot
-**Channel:** TikTokChannel, CharacterBible, VideoBible, FormatTemplate, IdeaMatrixItem
-**AI Agents:** ChannelMemory, CompetitorCapture, TelegramChat
-**Production:** ShotCode, SceneTemplate, Series, Episode
+**Core:** Product, ProductIdentity, ProductUrl, ProductSnapshot, Shop, InboxItem, ImportBatch, DataImport
+**Content:** ContentBrief, ContentAsset, ProductionBatch, ContentSlot, ProductGalleryImage
+**Channel:** TikTokChannel, ChannelModelImage, ChannelMemory, CharacterBible, FormatTemplate, VideoBible, ShotCode, SceneTemplate, Series, Episode, VideoTracking, IdeaMatrixItem
+**Analytics:** AccountDailyStat, FollowerActivity, AccountInsight, TacticalRefreshLog
+**Intelligence:** CompetitorCapture, TelegramChat, NicheProfile
 **Tracking:** AssetMetric, VideoTracking, ContentPost, Campaign
-**Learning:** Feedback, LearningLog, LearningWeightP4, UserPattern, WinPattern
+**Learning:** Feedback, LearningLog, LearningWeightP4, UserPattern, WinPattern, ScoringGlobalStats
 **Intelligence:** WeeklyReport, DailyBrief
-**Business:** Commission, FinancialRecord, GoalP5, CalendarEvent
-**Settings:** AiModelConfig, ApiProvider
+**Business:** Commission, FinancialRecord, Campaign, GoalP5, CalendarEvent, UserGoal
+**Settings:** AiModelConfig, ApiProvider, BackgroundTask
 
 ### Data Integrity & Cascading Rules
 
@@ -232,7 +233,7 @@ Key model groups:
 - **Build Metrics:** 74 routes, 0 TypeScript errors, 67 second deploy time
 - **Fallback:** Vercel configuration retained for multi-platform flexibility
 
-## Key API Endpoints
+## Key API Endpoints (~140 routes across 12+ namespaces)
 
 ### Advisory Agent System
 
@@ -240,9 +241,7 @@ Key model groups:
 |----------|--------|---------|
 | `/api/advisor/analyze` | POST | Run full pipeline: ANALYST → [CMO,CFO,CTO] → CEO |
 | `/api/advisor/followup` | POST | Follow-up question with same pipeline |
-
-**Request:** `{ question: string, context?: string }`
-**Response:** `{ ceoDecision, cLevelResponses[], analystBriefing, question, timestamp }`
+| `/api/advisor/handle-advisor-request` | POST | Handle structured advisor requests |
 
 ### Content & Briefs
 
@@ -250,16 +249,20 @@ Key model groups:
 |----------|--------|---------|
 | `/api/briefs/generate` | POST | Generate single brief with AI |
 | `/api/briefs/batch` | POST | Generate multiple briefs in batch |
+| `/api/briefs/today` | GET | Get today's brief |
+| `/api/briefs/regenerate` | POST | Regenerate brief for product |
 | `/api/production/export-pack` | POST | Create ZIP export with all production files |
 
-### Channel Management
+### Channel Management (29 routes)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/channels/create-from-niche` | POST | Auto-create channel from niche wizard |
-| `/api/channels/[id]/character-bible` | PUT | Update character bible |
-| `/api/channels/[id]/video-bible` | PUT | Update video bible |
-| `/api/channels/[id]/series` | POST | Create new series |
+| `/api/channels/crud` | GET, POST, PATCH, DELETE | Channel CRUD operations |
+| `/api/channels/[id]/character-bible` | GET, PUT, DELETE, POST | Character bible CRUD & AI generation |
+| `/api/channels/[id]/video-bible` | GET, PUT, DELETE, POST | Video bible CRUD, lock, seed, shot-codes, scene-templates |
+| `/api/channels/[id]/format-templates` | GET, POST, PUT, DELETE | Format bank CRUD & defaults |
+| `/api/channels/[id]/idea-matrix` | GET, POST, PUT | Idea matrix CRUD & AI generation |
+| `/api/channels/[id]/series` | GET, POST, PUT, DELETE | Series CRUD + episode operations |
 
 ### Import & Scoring
 
@@ -269,16 +272,20 @@ Key model groups:
 | `/api/internal/import-chunk` | POST | Process 300-product chunk, fire next relay |
 | `/api/internal/score-batch` | POST | Score all products in batch |
 | `/api/cron/retry-scoring` | GET | Detect & retry failed/stuck batches every 5 min |
+| `/api/settings/ai-models` | GET, POST | AI model configuration for 7 task types |
 
-### Cron & Learning
+### Cron Jobs (6 total)
 
 | Endpoint | Method | Schedule | Purpose |
 |----------|--------|----------|---------|
+| `/api/cron/morning-brief` | GET | Daily | Generate morning brief |
 | `/api/cron/nightly-learning` | GET | 22:00 UTC daily | Aggregate feedback, update ChannelMemory |
 | `/api/cron/trend-analysis` | GET | 22:30 UTC daily | Analyze competitor captures, generate insights |
+| `/api/cron/weekly-learning` | GET | Weekly | Weekly learning cycle |
+| `/api/cron/decay` | GET | Daily | Apply decay to learning weights |
 | `/api/cron/retry-scoring` | GET | Every 5 min | Safety net for failed imports |
 
-### AI Agents
+### AI Agents & Telegram
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -286,3 +293,12 @@ Key model groups:
 | `/api/log/quick` | POST | Quick-log asset result, trigger content analyzer |
 | `/api/telegram/setup` | POST | Initialize Telegram webhook |
 | `/api/telegram/webhook` | POST | Receive messages from Telegram bot |
+| `/api/settings/telegram-info` | GET | Retrieve telegram bot configuration info |
+
+### Other Namespaces
+- `/api/inbox/*` (8 routes) — Paste, list, score, retry
+- `/api/products/*` (10 routes) — Gallery, notes, seasonal
+- `/api/dashboard/*` (4 routes) — Suggestions, orphan stats, yesterday stats
+- `/api/ai/*` (4 routes) — Anomalies, confidence, intelligence, weekly-report
+- `/api/learning/*` (3 routes) — History, trigger, weights
+- `/api/calendar/*`, `/api/commissions/*`, `/api/financial/*`, `/api/sync/*`, and more

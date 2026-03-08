@@ -111,6 +111,101 @@ Mọi page và component tương tác đều phải có đủ 3 states:
 - Nếu vượt quá, tách thành modules nhỏ hơn
 - Components lớn tách thành sub-components
 
+## AI Agent Module Patterns
+
+**Location:** `lib/agents/`
+
+All agent modules export a main handler function that:
+1. Validates input via Zod schema
+2. Queries database for context
+3. Calls AI provider
+4. Returns typed result
+
+```typescript
+// Pattern
+export async function agentName(input: InputType): Promise<OutputType> {
+  const validated = InputSchema.parse(input);
+  const context = await db.query(/* ... */);
+  const aiResponse = await ai.call(/* ... */);
+  return OutputSchema.parse(aiResponse);
+}
+```
+
+**Module naming:** kebab-case, descriptive (e.g., `telegram-bot-handler.ts`, `channel-memory-builder.ts`)
+
+## Advisory System Patterns
+
+**Location:** `lib/advisor/`
+
+Advisory pipeline follows company hierarchy:
+
+1. **c-level-roles.ts** — Define 5 roles with system prompts (ANALYST, CMO, CFO, CTO, CEO)
+2. **gather-advisor-data.ts** — ANALYST role: DB queries for briefing data
+3. **analyze-pipeline.ts** — Orchestrate pipeline: ANALYST → [parallel CMO/CFO/CTO] → CEO
+4. **analyze.ts** — Main public API for analysis requests
+
+```typescript
+// Pattern
+export async function analyzePipeline(question: string): Promise<PipelineResult> {
+  // 1. Gather analyst briefing
+  const analystBriefing = await gatherAdvisorData(/* ... */);
+
+  // 2. Parallel C-level analysis
+  const [cmoAnalysis, cfoAnalysis, ctoAnalysis] = await Promise.all([
+    analyzeWithRole('CMO', analystBriefing, question),
+    analyzeWithRole('CFO', analystBriefing, question),
+    analyzeWithRole('CTO', analystBriefing, question),
+  ]);
+
+  // 3. CEO synthesis
+  const ceoDecision = await analyzeWithRole('CEO',
+    { cmoAnalysis, cfoAnalysis, ctoAnalysis, analystBriefing },
+    question
+  );
+
+  return { ceoDecision, cLevelResponses: [...], analystBriefing };
+}
+```
+
+## Cron Job Conventions
+
+**Location:** `app/api/cron/`
+
+Cron jobs are GET endpoints that:
+1. Check authorization (secret header or Vercel cron signature)
+2. Query database for pending work
+3. Process in batches (to avoid timeout)
+4. Return JSON status summary
+
+```typescript
+// Pattern
+export async function GET(request: Request): Promise<NextResponse> {
+  // Verify cron authorization
+  if (request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    // Do work
+    const count = await processPendingItems();
+
+    return NextResponse.json({
+      status: 'success',
+      processed: count,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    // Always return JSON, never throw (Vercel needs to log)
+    return NextResponse.json({
+      status: 'error',
+      message: String(error)
+    }, { status: 500 });
+  }
+}
+```
+
+**Schedule via Vercel `vercel.json` or Netlify cron environment**
+
 ## API Patterns
 
 - Next.js Route Handlers (`app/api/.../route.ts`)

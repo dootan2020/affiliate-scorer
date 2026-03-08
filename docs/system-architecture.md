@@ -14,7 +14,7 @@ graph TB
     end
 
     subgraph Server["Next.js Server (App Router)"]
-        API["API Route Handlers (90+ endpoints)"]
+        API["API Route Handlers (140+ endpoints)"]
         MW["Middleware (auth + origin check)"]
         ServerComponents["Server Components"]
     end
@@ -126,279 +126,33 @@ The system handles file imports up to 3000+ products by chunking across multiple
 
 ### 2.1 Import Phase
 
-**Endpoint:** `POST /api/upload`
+**Endpoint:** `POST /api/upload` — Parses file, normalizes, deduplicates, fires initial batch processing.
 
-```typescript
-// Phase 1: Parse file, normalize data, deduplicate URLs
-const { totalRows, deduplicatedProducts } = parseAndNormalize(file);
+**Config:** `IMPORT_CHUNK = 300` products/invocation, `PARALLEL = 20` concurrent DB operations.
 
-// Phase 2: Create batch with initial asset assignments (atomic)
-const batch = await prisma.$transaction(async (tx) => {
-  const batch = await tx.importBatch.create({
-    data: {
-      batchId: generateId(),
-      fileName: file.name,
-      format: detectFormat(file),
-      status: "processing",
-      totalRows,
-      recordCount: deduplicatedProducts.length,
-      scoringStatus: "pending",
-      importDate: new Date(),
-    },
-  });
+### 2.2-2.3 Chunked Relay Pipeline
 
-  // Atomic: only create if batch creation succeeds
-  for (const product of deduplicatedProducts.slice(0, 10)) {
-    await tx.productAsset.create({
-      data: {
-        batchId: batch.id,
-        productUrl: product.url,
-        status: "assigned",
-      },
-    });
-  }
-  return batch;
-});
-
-// Fire processProductBatch immediately (async, background)
-await processProductBatch(batch.id, deduplicatedProducts);
-// Returns 202 Accepted to client
-```
-
-**Transaction Safety:**
-- Batch creation + initial asset assignments succeed or fail together
-- Prevents partial batch creation if asset assignment fails
-- Uses `$transaction()` for atomic operations (only where needed)
-
-**Config:**
-- `IMPORT_CHUNK = 300` — Products per invocation (in `lib/import/process-product-batch.ts`)
-- Respects Vercel `maxDuration = 60s` per invocation
-- Parallel queries: `PARALLEL = 20` concurrent database operations
-
-### 2.2 Process Product Batch (Initial Chunk)
-
-**Code:** `lib/import/process-product-batch.ts`
-
-```typescript
-export async function processProductBatch(
-  batchId: string,
-  deduplicated: NormalizedProduct[],
-): Promise<void> {
-  // Split into chunks
-  const chunk = deduplicated.slice(0, IMPORT_CHUNK);      // [0:300]
-  const remaining = deduplicated.slice(IMPORT_CHUNK);     // [300:N]
-
-  // Process first chunk (classify, upsert, sync identities, update progress)
-  await processChunk(batchId, chunk);
-
-  if (remaining.length > 0) {
-    // Fire relay to handle remaining
-    fireRelay(
-      "/api/internal/import-chunk",
-      { batchId, products: remaining },
-      "import-chunk",
-    );
-  } else {
-    // All chunks done, trigger scoring
-    await finalizeImportAndFireScoring(batchId);
-  }
-}
-```
-
-### 2.3 Import-Chunk Relay Endpoint
-
-**Endpoint:** `POST /api/internal/import-chunk`
-
-```typescript
-export async function POST(req: NextRequest) {
-  const { batchId, products } = await req.json();
-
-  // Process current chunk (same logic as initial)
-  const chunk = products.slice(0, IMPORT_CHUNK);
-  const remaining = products.slice(IMPORT_CHUNK);
-
-  await processChunk(batchId, chunk);
-
-  if (remaining.length > 0) {
-    // Relay next chunk
-    fireRelay(
-      "/api/internal/import-chunk",
-      { batchId, products: remaining },
-      "import-chunk",
-    );
-  } else {
-    // Final chunk, trigger scoring
-    await finalizeImportAndFireScoring(batchId);
-  }
-}
-```
-
-**Key Characteristics:**
-- Each invocation handles **exactly 300 products** (or fewer for final chunk)
-- Processes in ~10-15s, leaving 45-50s buffer within 60s limit
-- Parallel updates (no `$transaction`) to avoid PgBouncer timeout
-
-### 2.4 Fire-and-Forget Relay Utility
-
-**Code:** `lib/import/fire-relay.ts`
-
-```typescript
-export function fireRelay(
-  path: string,
-  body: Record<string, unknown>,
-  label?: string,
-): void {
-  // Non-blocking relay with internal retries
-  void attemptRelay(`${base}${path}`, body, 0, label);
-}
-
-async function attemptRelay(
-  url: string,
-  body: Record<string, unknown>,
-  attempt: number,
-  label: string,
-): Promise<void> {
-  try {
-    const res = await fetch(url, { method: "POST", body });
-    if (res.ok) return;
-    if (res.status < 500) {
-      console.warn(`${label} relay got ${res.status} — not retrying`);
-      return;
-    }
-    throw new Error(`HTTP ${res.status}`);
-  } catch (err) {
-    if (attempt < MAX_RETRIES - 1) {
-      await sleep(BACKOFF_MS[attempt]); // 1s, 2s, 4s
-      return attemptRelay(url, body, attempt + 1, label);
-    }
-    console.error(`${label} relay failed after ${MAX_RETRIES} attempts:`, err);
-  }
-}
-```
+**Flow:**
+1. `/api/upload` parses first 300 products, fires `/api/internal/import-chunk` for remainder
+2. Each relay processes 300 products (~10-15s), fires next if remaining
+3. Final chunk triggers `/api/internal/score-batch`
 
 **Features:**
-- **Exponential backoff:** 1s → 2s → 4s between retries
-- **Max 3 retries** before giving up
-- **Non-blocking:** Returns immediately; retries run in background
-- **Auth header:** Includes `x-auth-secret` for server-to-server validation
-- **No await:** Caller does not wait; safety net is cron job
+- Chunks execute in parallel (no waiting)
+- Exponential backoff retry (1s → 2s → 4s) with max 3 attempts
+- Atomic progress updates (no transactions to avoid PgBouncer conflicts)
+- Non-blocking: returns 202 Accepted to client immediately
 
-### 2.5 Scoring Relay Endpoint
+### 2.4 Retry-Scoring Cron Service
 
-**Endpoint:** `POST /api/internal/score-batch`
+**Endpoint:** `GET /api/cron/retry-scoring` — Every 5 minutes
 
-```typescript
-export async function POST(req: NextRequest) {
-  const { batchId } = await req.json();
+**Logic:**
+- Detects stuck batches using scaled threshold: `BASE (3 min) + (recordCount / 150) * 1 min`
+- Retries failed/stuck scoring up to 3 times per batch
+- Rate-limited to 5 candidates per run to prevent cascade failures
 
-  // Fetch batch + all imported products
-  const batch = await prisma.importBatch.findUnique({ where: { id: batchId } });
-  const products = await prisma.productIdentity.findMany({
-    where: { importBatchId: batchId },
-  });
-
-  // Trigger scoring
-  await scoreProductsInBatch(batchId, products);
-  // Max 30 concurrent scores (3 chunks of 10)
-}
-```
-
-**Key Points:**
-- Called after **final import chunk** completes
-- Batches 30 concurrent AI scoring requests
-- Chunks: 10 → 10 → 10 products per parallel batch
-- If scoring fails or gets stuck, cron job retries
-
-### 2.6 Retry-Scoring Cron Service
-
-**Endpoint:** `GET /api/cron/retry-scoring`
-
-**Schedule:** Every 5 minutes (Vercel cron config in `vercel.json`)
-
-```typescript
-export async function GET(): Promise<NextResponse> {
-  const now = new Date();
-
-  // Two-pass approach:
-  // Pass 1: Find candidates with generous cutoff
-  const potentials = await prisma.importBatch.findMany({
-    where: {
-      status: { in: ["completed", "partial"] },
-      OR: [
-        { scoringStatus: "failed" },
-        {
-          scoringStatus: "processing",
-          importDate: { lt: maxCutoff },  // 3 min base
-        },
-      ],
-    },
-    take: 10,
-  });
-
-  // Pass 2: Filter stuck batches using scaled threshold
-  // Scale: +1 min per 150-product scoring chunk
-  const candidates = potentials.filter((batch) => {
-    if (batch.scoringStatus === "failed") return true;
-    const chunks = Math.ceil(batch.recordCount / 150);
-    const threshold = BASE_STUCK_MS + chunks * PER_CHUNK_STUCK_MS;
-    const age = now.getTime() - batch.importDate.getTime();
-    return age > threshold;
-  }).slice(0, 5);
-
-  // Retry up to 3 times per batch
-  for (const batch of candidates) {
-    const retryCount = batch.errorLog.scoringRetryCount ?? 0;
-    if (retryCount >= 3) continue;
-
-    // Reset status and increment counter
-    await prisma.importBatch.update({
-      where: { id: batch.id },
-      data: {
-        scoringStatus: "processing",
-        completedAt: null,
-        errorLog: { ...log, scoringRetryCount: retryCount + 1 },
-      },
-    });
-
-    // Fire scoring relay
-    fireRelay("/api/internal/score-batch", { batchId: batch.id });
-  }
-}
-```
-
-**Features:**
-- **Scaled stuck detection:** Threshold increases by 1 min per 150 products
-- **Max 3 retries** per batch (tracked in `errorLog.scoringRetryCount`)
-- **Retroactive:** Handles both initial failures and stuck processing
-- **Rate-limited:** Max 5 candidates per cron run to avoid cascade failures
-- **Runs every 5 min:** Provides safety net for missed relay chains
-
----
-
-## 4. Import Progress Tracking
-
-**Code:** `lib/import/update-batch-progress.ts`
-
-```typescript
-// Atomic progress updates (no $transaction)
-await prisma.importBatch.update({
-  where: { id: batchId },
-  data: {
-    processedRows: { increment: chunk.length },
-    // OR
-    processedRows: processed,  // atomic set
-  },
-});
-```
-
-**UI Component:** `components/upload/upload-progress.tsx`
-
-```typescript
-// Shows: "Đang import 600/3000..." during processing
-// Polling: client refreshes status every 500ms
-const { processed, total } = await fetchImportStatus(batchId);
-return <Progress value={(processed / total) * 100} />;
-```
+**Benefits:** Safety net catches missed relays, network transients, DB connection drops
 
 ---
 
@@ -475,100 +229,13 @@ This design prevents orphaned records while preserving production assets when so
 
 ## 7. Widget Error Boundaries & Dashboard Resilience
 
-### Overview
-
-8 key dashboard widgets are wrapped in React ErrorBoundary components to prevent single widget errors from crashing the entire dashboard.
-
-### Applied Widgets
-
-| Widget | Component | Error Fallback |
-|--------|-----------|-----------------|
-| Morning Brief | `MorningBriefWidget` | "Widget unavailable. Retry" + error details |
-| Inbox Stats | `InboxStatsWidget` | Show cached count or "0 items" |
-| Quick Paste | `QuickPasteBox` | Show input disabled + error message |
-| Chart Widget | `TrendChart` | Empty state with explanation |
-| Metric Cards | `StatCard` | Loading skeleton or "N/A" |
-| Skill Level | `SkillIndicator` | "N/A" gracefully |
-| Pattern Analysis | `PatternInsights` | Empty state message |
-| Calendar Widget | `EventCalendar` | Fallback text |
-
-### Implementation Pattern
-
-```typescript
-// components/dashboard/dashboard.tsx
-import { ErrorBoundary } from "react-error-boundary";
-import { WidgetError } from "./widget-error";
-
-export function Dashboard() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <ErrorBoundary fallback={<WidgetError title="Morning Brief" />}>
-        <MorningBriefWidget />
-      </ErrorBoundary>
-
-      <ErrorBoundary fallback={<WidgetError title="Inbox Stats" />}>
-        <InboxStatsWidget />
-      </ErrorBoundary>
-
-      {/* Other widgets... */}
-    </div>
-  );
-}
-
-// components/dashboard/widget-error.tsx
-export function WidgetError({ title }: { title: string }) {
-  return (
-    <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 rounded-lg p-4">
-      <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-        {title} không khả dụng
-      </p>
-      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-        Vui lòng refresh trang hoặc liên hệ hỗ trợ
-      </p>
-    </div>
-  );
-}
-```
-
-### Benefits
-
-- **Isolated Failures:** Single widget error doesn't crash dashboard
-- **Graceful Degradation:** Users continue with other features while one widget is broken
-- **Better UX:** Clear message instead of blank page
-- **Debug-Friendly:** Errors logged to console; dev can inspect
-- **Production-Ready:** Prevents cascading failures from affecting entire app
+8 key dashboard widgets wrapped in React ErrorBoundary components prevent single widget crashes from affecting entire dashboard. Each shows graceful fallback UI ("Widget unavailable. Retry").
 
 ---
 
 ## 8. Idempotency & Race Condition Prevention
 
-### ProductIdentity Upsert Pattern
-
-**Problem:** Concurrent paste events could create duplicate ProductIdentity records for same URL.
-
-**Solution:** `processInboxItem` uses Prisma `upsert` instead of `create`:
-
-```typescript
-const identity = await prisma.productIdentity.upsert({
-  where: { productUrl: normalizedUrl },
-  create: {
-    productUrl: normalizedUrl,
-    combinedScore: 0,
-    lifecycleStage: "new",
-    inboxState: "pending",
-    source: "paste",
-  },
-  update: {
-    lastSeenAt: new Date(),
-    inboxState: "pending", // refresh state if re-pasted
-  },
-});
-```
-
-**Benefits:**
-- Prevents race condition when user pastes same URL twice
-- Idempotent: safe to retry without creating duplicates
-- Single source of truth for product identity
+**ProductIdentity Upsert:** Uses `prisma.upsert()` to prevent duplicates on concurrent paste events. Idempotent: safe to retry without duplicates.
 
 ---
 
@@ -576,34 +243,9 @@ const identity = await prisma.productIdentity.upsert({
 
 ### Dashboard Widget Error Boundaries
 
-**Problem:** Single widget crash could take down entire dashboard.
+**8 Widgets wrapped in ErrorBoundary:** Morning Brief, Inbox Stats, Quick Paste, Chart widgets, Metric cards, Skill indicator, Pattern analysis, Calendar.
 
-**Solution:** All dashboard widgets wrapped in ErrorBoundary:
-
-```typescript
-// components/dashboard/widget-wrapper.tsx
-export function WidgetWrapper({ children, title }: Props) {
-  return (
-    <ErrorBoundary fallback={<WidgetError title={title} />}>
-      {children}
-    </ErrorBoundary>
-  );
-}
-
-// WidgetError shows: "Widget unavailable. Retry" button + error details in dev
-```
-
-**Applied to:**
-- Morning Brief widget
-- Inbox Stats widget
-- Quick Paste widget
-- Chart widgets
-- Metric cards
-
-**Benefits:**
-- Isolated failures: one widget error doesn't cascade
-- User can continue with other features
-- Fallback UI guides users to retry or report issue
+**Benefits:** Isolated failures prevent cascading crashes. Users continue with other features while one widget recovers.
 
 ### Relay Chain Failures
 
@@ -972,207 +614,37 @@ The Advisory Agent System transforms user questions into structured decisions th
 
 ### Step 1: ANALYST — Data Aggregation
 
-**Role:** Gathers real data from database and formats into briefing for decision-makers.
+**Role:** Queries top 10 products, winning/losing patterns, channel memory, system metrics. Formats into readable briefing for decision-makers.
 
-**Responsibilities:**
-- Query ProductIdentity for top 10 products by combined score
-- Query UserPattern for winning/losing patterns with win rates and sample sizes
-- Query ChannelMemory for channel performance metrics (videos, orders, avg reward, insights)
-- Aggregate system metrics: total products, scored count, briefed count, published videos
-
-**Code:** `lib/advisor/gather-advisor-data.ts`
-
-```typescript
-export async function gatherAdvisorData(): Promise<AdvisorData> {
-  // Parallel queries to avoid sequential DB hits
-  const [topProducts, winningPatterns, losingPatterns, channelMemories, metrics...] = await Promise.all([
-    prisma.productIdentity.findMany({ orderBy: { combinedScore: "desc" }, take: 10 }),
-    prisma.userPattern.findMany({ where: { patternType: "winning", sampleSize: { gte: 2 } }, take: 5 }),
-    // ... more queries
-  ]);
-
-  return { topProducts, winningPatterns, losingPatterns, channelMemories, recentMetrics };
-}
-
-// Format data into readable briefing for C-levels
-export function formatDataBriefing(data: AdvisorData): string {
-  // Returns structured text with metrics, top products, patterns, channel info
-}
-```
-
-**Output Format:**
-```
-=== DỮ LIỆU HỆ THỐNG ===
-📊 Tổng quan: 500 SP | 350 đã chấm | 200 đã brief | 45 đã xuất bản
-🏆 Top sản phẩm: [list with scores, delta, commission]
-✅ Pattern thắng: [winning patterns with win rates]
-❌ Pattern thua: [losing patterns with win rates]
-📺 Kênh: [channel performance and insights]
-```
+**Code:** `lib/advisor/gather-advisor-data.ts` — Parallel queries via `Promise.all()` to avoid sequential DB hits.
 
 ### Step 2: C-Level Analysis (Parallel)
 
 Three roles analyze the ANALYST briefing independently, each providing their perspective:
 
-#### CMO — Chief Marketing Officer
+#### CMO, CFO, CTO — Parallel C-Level Analysis
 
-**System Prompt Focus:**
-- Content strategy and format trends
-- Audience insights and engagement patterns
-- Market positioning and differentiation
-- Growth opportunities
+**CMO (Chief Marketing Officer):** Content strategy, format trends, audience insights, growth opportunities.
 
-**Output Format:**
-```
-🎯 KHUYẾN NGHỊ MARKETING
-[1 paragraph recommendation]
+**CFO (Chief Financial Officer):** ROI analysis, opportunity cost, financial risk, efficiency metrics.
 
-CHI TIẾT:
-- Content: [formats/hooks to use]
-- Ngách: [niche trend assessment]
-- Audience: [key insights]
-```
+**CTO (Chief Technical Officer):** Execution feasibility, workflow optimization, technical risks.
 
-#### CFO — Chief Financial Officer
-
-**System Prompt Focus:**
-- ROI analysis (commission vs effort)
-- Opportunity cost assessment
-- Financial risk and dependencies
-- Efficiency metrics
-
-**Output Format:**
-```
-💰 KHUYẾN NGHỊ TÀI CHÍNH
-[1 paragraph ROI/feasibility assessment]
-
-CHI TIẾT:
-- ROI: [profit/effort estimates]
-- Chi phí cơ hội: [opportunity cost]
-- Rủi ro: [financial risks]
-```
-
-#### CTO — Chief Technical Officer
-
-**System Prompt Focus:**
-- Execution feasibility and workflow
-- Tool optimization and optimization
-- Technical bottlenecks and risks
-- Performance improvement strategies
-
-**Output Format:**
-```
-⚙️ KHUYẾN NGHỊ THỰC THI
-[1 paragraph execution assessment]
-
-CHI TIẾT:
-- Workflow: [specific steps]
-- Tools: [tools/methods needed]
-- Rủi ro: [failure points]
-```
-
-**Parallel Execution:**
-```typescript
-async function runCLevels(
-  question: string,
-  analystContent: string,
-  context?: string,
-): Promise<CLevelResponse[]> {
-  return Promise.all(
-    C_LEVEL_IDS.map(async (roleId) => {
-      const role = C_ROLES[roleId];
-      const { text, modelUsed } = await callAI(
-        role.systemPrompt,
-        userPrompt, // ANALYST content + question
-        MAX_TOKENS_CLEVEL,
-        "advisor",
-      );
-      return { roleId, name: role.name, title: role.title, content: text, modelUsed };
-    }),
-  );
-}
-```
-
-**Key Feature:** CMO, CFO, CTO execute simultaneously with `Promise.all()` → faster response than sequential analysis.
+**Parallel Execution:** All 3 roles execute simultaneously via `Promise.all()` → faster than sequential analysis.
 
 ### Step 3: CEO — Decision Synthesis
 
-**Role:** Review all C-level perspectives and make 1 final decision with clear action steps.
+**Role:** Synthesize C-level perspectives into 1 final decision with clear action steps (today).
 
-**System Prompt Characteristics:**
-- Balanced synthesis (considers all viewpoints)
-- Conflict resolution (if perspectives disagree, CEO decides direction)
-- Clear decision statement (not suggestions or alternatives)
-- Specific next steps (actionable, numbered tasks for today)
+**Output:** Decision statement + reasoning + numbered action steps (max 200 words, tiếng Việt, no theory).
 
-**Output Format (Mandatory):**
-```
-✅ QUYẾT ĐỊNH
-[1-2 sentences — clear decision]
-
-📝 LÝ DO
-[2-3 sentences — why this direction]
-
-👉 BƯỚC TIẾP THEO
-1. [Specific task #1 — do today]
-2. [Specific task #2]
-3. [Specific task #3 if needed]
-
-Max 200 words. Tiếng Việt. NO theory, NO "có thể" — just actions.
-```
-
-**Synthesis Logic:**
-```typescript
-async function runCEO(
-  question: string,
-  cLevelResponses: CLevelResponse[],
-): Promise<CLevelResponse> {
-  const role = C_ROLES.ceo;
-
-  // Build synthesis prompt from successful C-level responses
-  const inputs = cLevelResponses
-    .filter((r) => !r.error)
-    .map((r) => `[${r.name} — ${r.title}]:\n${r.content}`)
-    .join("\n\n---\n\n");
-
-  const userPrompt = `CÂU HỎI GỐC: ${question}\n\n---\nPHÂN TÍCH TỪ BAN LÃNH ĐẠO:\n\n${inputs}`;
-
-  const { text, modelUsed } = await callAI(role.systemPrompt, userPrompt, MAX_TOKENS_CEO, "advisor");
-  return { roleId: "ceo", name: role.name, title: role.title, content: text, modelUsed };
-}
-```
+**Code:** `lib/advisor/analyze-pipeline.ts` — Builds synthesis prompt from C-level responses, calls AI CEO role.
 
 ### Full Pipeline Orchestration
 
-**Code:** `lib/advisor/analyze-pipeline.ts`
+**Flow:** ANALYST data → [CMO, CFO, CTO parallel] → CEO decision
 
-```typescript
-export async function runAdvisorPipeline(
-  question: string,
-  context?: string,
-): Promise<PipelineResult> {
-  // Step 1: ANALYST gathers and formats data
-  const { response: analystResponse } = await runAnalyst(question);
-
-  // Step 2: CMO, CFO, CTO analyze in parallel
-  const cLevelResponses = await runCLevels(
-    question,
-    analystResponse.content,
-    context,
-  );
-
-  // Step 3: CEO synthesizes all responses
-  const ceoDecision = await runCEO(question, cLevelResponses);
-
-  return {
-    ceoDecision,
-    cLevelResponses,
-    analystBriefing: analystResponse,
-    question,
-    timestamp: new Date().toISOString(),
-  };
-}
-```
+**Code:** `lib/advisor/analyze-pipeline.ts` — Orchestrates all 3 steps, returns structured result with CEO decision, C-level responses, and analyst briefing.
 
 ### API Endpoints
 
@@ -1181,95 +653,21 @@ export async function runAdvisorPipeline(
 | `/api/advisor/analyze` | POST | Run full pipeline: ANALYST → C-levels → CEO |
 | `/api/advisor/followup` | POST | Follow-up question (same pipeline) |
 
-**Request:**
-```json
-{
-  "question": "Nên focus vào ngách nào trong tháng này?",
-  "context": "Đang chạy 3 kênh TikTok, mỗi kênh khác ngành"
-}
-```
+**Example Request:** `{ question: "Nên focus vào ngách nào tháng này?", context: "3 kênh TikTok khác ngành" }`
 
-**Response:**
-```json
-{
-  "data": {
-    "ceoDecision": {
-      "roleId": "ceo",
-      "name": "CEO",
-      "title": "Tổng giám đốc",
-      "content": "✅ QUYẾT ĐỊNH\nFocus kênh mỹ phẩm...",
-      "modelUsed": "claude-haiku-4.5"
-    },
-    "cLevelResponses": [
-      { "roleId": "cmo", "name": "CMO", "title": "Giám đốc Marketing", "content": "..." },
-      { "roleId": "cfo", "name": "CFO", "title": "Giám đốc Tài chính", "content": "..." },
-      { "roleId": "cto", "name": "CTO", "title": "Giám đốc Kỹ thuật", "content": "..." }
-    ],
-    "analystBriefing": { "roleId": "analyst", "name": "ANALYST", "content": "..." },
-    "question": "Nên focus vào ngách nào?",
-    "timestamp": "2026-03-08T14:32:00.000Z"
-  }
-}
-```
+**Response:** `{ ceoDecision, cLevelResponses[], analystBriefing, question, timestamp }`
 
 ### Morning Brief Integration
 
-**Function:** `ceoBriefReview(briefSummary: string) → string`
+**Function:** `ceoBriefReview(briefSummary: string)` — Lightweight CEO review (skips ANALYST + C-levels). Used for morning brief generation.
 
-Lightweight CEO review for morning brief generation (skips ANALYST data gathering):
+**Speed:** Faster than full pipeline (single AI call vs 5 calls total).
 
-```typescript
-export async function ceoBriefReview(briefSummary: string): Promise<string> {
-  const role = C_ROLES.ceo;
-  const systemPrompt = `${role.systemPrompt}\n\nĐẶC BIỆT: Bạn đang review Morning Brief. Chỉ cần trả lời 2-3 câu actionable.`;
-  const userPrompt = `Đây là Morning Brief:\n\n${briefSummary}\n\nBrief này có thực tế không? Bước đầu tiên cụ thể nhất là gì?`;
+### UI & Database Integration
 
-  const { text } = await callAI(systemPrompt, userPrompt, 512, "advisor");
-  return text;
-}
-```
+**Component:** `components/advisor/advisor-page-client.tsx` — CEO decision displayed prominently, expandable C-level details, role badges with icons.
 
-**Use Case:**
-- Morning brief generation → generates brief summary → calls `ceoBriefReview()` → returns CEO insight
-- Faster than full pipeline (no ANALYST data gathering, no parallel C-levels)
-- Single-turn, concise response
-
-### UI Architecture
-
-**Component:** `components/advisor/advisor-page-client.tsx`
-
-**Features:**
-- **Question input** with send button
-- **Loading states** showing analysis stage (analyst → c-levels → ceo)
-- **CEO decision displayed prominently** at top:
-  - Decision statement (✅)
-  - Reasoning (📝)
-  - Action steps (👉)
-- **Expandable C-level details** below:
-  - Each role (CMO, CFO, CTO) collapsible
-  - Analyst briefing summary
-- **Historical context** support:
-  - User can add previous analysis context for multi-turn conversations
-  - Context fed to all C-levels for continuity
-- **Visual role badges:**
-  - Analyst: slate gray (BarChart3 icon)
-  - CMO: violet (Megaphone icon)
-  - CFO: emerald (DollarSign icon)
-  - CTO: blue (Wrench icon)
-  - CEO: amber (Crown icon)
-- **Error states** with graceful fallbacks
-
-### Data Model Integration
-
-**Database Queries in ANALYST:**
-
-| Table | Query | Purpose |
-|-------|-------|---------|
-| `ProductIdentity` | Top 10 by combined score | Gauge product quality |
-| `UserPattern` | Winning patterns (patternType = "winning") | Identify success factors |
-| `UserPattern` | Losing patterns (patternType = "losing") | Identify pitfalls |
-| `ChannelMemory` | Latest 5 channels | Channel health + insights |
-| Counts | Total, scored, briefed, published | System metrics |
+**Database Queries:** ProductIdentity (top 10), UserPattern (winning/losing), ChannelMemory (latest 5), system counts.
 
 ### Performance & Optimization
 

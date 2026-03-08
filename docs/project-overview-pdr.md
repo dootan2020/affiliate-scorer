@@ -137,8 +137,19 @@
 
 ### 3.13 Settings & Configuration
 - **API key management:** Encrypted storage (AES-256-GCM) for Anthropic, OpenAI, Google keys
-- **Per-task AI model selection:** Choose which model handles scoring, briefs, morning brief, weekly report
+- **Per-task AI model selection:** Choose which model handles 7 task types (Content Brief, Channel Profile, Character Bible, Video Bible, Niche Analysis, Trend Intelligence, Win Prediction)
 - **Graceful degradation:** Missing API keys show setup banner, never crash
+
+### 3.14 AI Advisory System
+- **Company Hierarchy:** ANALYST → [CMO, CFO, CTO] parallel → CEO synthesis
+  - **ANALYST role:** Gathers real DB data (top products, patterns, channels, metrics)
+  - **CMO role:** Content strategy, audience insights, positioning, growth recommendations
+  - **CFO role:** ROI analysis, opportunity cost, financial risk, efficiency metrics
+  - **CTO role:** Execution feasibility, workflow optimization, technical risks
+  - **CEO role:** Final decision synthesis; provides clear action steps for today
+- **Data-driven analysis:** Real DB queries, not theoretical suggestions
+- **Interactive UI:** Collapsible C-level detail panels, follow-up questions
+- **Cost:** ~2-5 AI calls per analysis (1 per role + CEO synthesis)
 
 ---
 
@@ -249,7 +260,7 @@ Business (commission tracking, P&L, goal progress)
 
 ## 6. Data Models
 
-### Entity Summary (40+ models)
+### Entity Summary (51 models)
 
 | Category | Model | Purpose | Key Fields |
 |----------|-------|---------|------------|

@@ -143,6 +143,94 @@ To deactivate Vercel deployments:
 
 ---
 
+## Cron Job Deployment
+
+### Scheduled Tasks (6 Total)
+
+PASTR includes background cron jobs for learning, analytics, and resilience:
+
+| Job | Schedule | Purpose | Endpoint |
+|-----|----------|---------|----------|
+| Morning Brief | Daily | Generate daily AI brief | `/api/cron/morning-brief` |
+| Nightly Learning | 22:00 UTC | Aggregate feedback, update memory | `/api/cron/nightly-learning` |
+| Trend Analysis | 22:30 UTC | Analyze competitor captures | `/api/cron/trend-analysis` |
+| Weekly Learning | Weekly | Weekly learning cycle | `/api/cron/weekly-learning` |
+| Decay | Daily | Apply decay to learning weights | `/api/cron/decay` |
+| Retry Scoring | Every 5 min | Detect & retry failed imports | `/api/cron/retry-scoring` |
+
+### Netlify Cron Setup
+
+Netlify does not have native cron support. Use external service:
+
+**Option A: EasyCron (Free)**
+1. Go to [easycron.com](https://easycron.com)
+2. Create cron job for each endpoint:
+   ```
+   https://pastr-app.netlify.app/api/cron/nightly-learning?secret=YOUR_CRON_SECRET
+   ```
+3. Set schedule (e.g., `0 22 * * *` for 22:00 UTC)
+4. Set `CRON_SECRET` env var in Netlify dashboard
+
+**Option B: GitHub Actions**
+```yaml
+# .github/workflows/cron.yml
+name: Scheduled Cron Jobs
+on:
+  schedule:
+    - cron: '0 22 * * *'  # 22:00 UTC daily
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -X GET https://pastr-app.netlify.app/api/cron/nightly-learning \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+```
+
+### Vercel Cron Setup
+
+Vercel has native cron support via `vercel.json`:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/morning-brief",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/nightly-learning",
+      "schedule": "0 22 * * *"
+    },
+    {
+      "path": "/api/cron/trend-analysis",
+      "schedule": "30 22 * * *"
+    },
+    {
+      "path": "/api/cron/retry-scoring",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
+```
+
+No additional configuration needed — Vercel handles scheduling automatically.
+
+### Cron Job Security
+
+All cron endpoints should validate authorization:
+
+```typescript
+// app/api/cron/[job]/route.ts
+if (request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
+```
+
+**Set `CRON_SECRET` environment variable** in deployment platform dashboard.
+
+---
+
 ## Environment Variables
 
 ### Required Variables

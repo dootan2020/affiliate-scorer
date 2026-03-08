@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { GuideOnboardingChecklist } from "./guide-onboarding-checklist";
 
 export function GuideSectionQuickStart(): React.ReactElement {
   return (
     <section id="bat-dau">
       <h2>1. Bắt đầu nhanh</h2>
+
+      <GuideOnboardingChecklist />
 
       <h3>Bước 1: Tìm ngách sản phẩm (Niche Finder)</h3>
       <p>

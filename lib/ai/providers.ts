@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { decrypt } from "@/lib/encryption";
 
-export type ProviderName = "anthropic" | "openai" | "google";
+export type ProviderName = "anthropic" | "openai" | "google" | "telegram";
 
 interface ProviderConfig {
   label: string;
@@ -21,9 +21,13 @@ export const PROVIDER_CONFIGS: Record<ProviderName, ProviderConfig> = {
     label: "Google (Gemini)",
     consoleUrl: "https://aistudio.google.com/apikey",
   },
+  telegram: {
+    label: "Telegram Bot",
+    consoleUrl: "https://t.me/BotFather",
+  },
 };
 
-export const PROVIDER_NAMES: ProviderName[] = ["anthropic", "openai", "google"];
+export const PROVIDER_NAMES: ProviderName[] = ["anthropic", "openai", "google", "telegram"];
 
 /** Model ID → friendly name mapping (fallback for display) */
 export const MODEL_FRIENDLY_NAMES: Record<string, { name: string; description: string }> = {
@@ -73,4 +77,11 @@ export async function getApiKey(provider: ProviderName): Promise<string | null> 
 export function maskKey(key: string): string {
   if (key.length <= 8) return "••••";
   return "••••••••" + key.slice(-4);
+}
+
+/** Get Telegram Bot Token: DB (encrypted) → env var fallback */
+export async function getTelegramToken(): Promise<string | null> {
+  const dbToken = await getApiKey("telegram");
+  if (dbToken) return dbToken;
+  return process.env.TELEGRAM_BOT_TOKEN || null;
 }

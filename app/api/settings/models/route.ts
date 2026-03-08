@@ -260,7 +260,7 @@ function versionSort(a: string, b: string): number {
 // ─── Fallback models ───
 
 function getFallbackModels(provider: ProviderName): ClassifiedModel[] {
-  const fallbacks: Record<ProviderName, ClassifiedModel[]> = {
+  const fallbacks: Partial<Record<ProviderName, ClassifiedModel[]>> = {
     anthropic: [
       { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", tier: "fast", tierLabel: "Nhanh", provider: "anthropic" },
       { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", tier: "balanced", tierLabel: "Cân bằng", provider: "anthropic" },
@@ -290,6 +290,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       { error: "Provider không hợp lệ" },
       { status: 400 }
     );
+  }
+
+  // Telegram is not an AI provider — no models to list
+  if (provider === "telegram") {
+    return NextResponse.json({ models: [] });
   }
 
   const apiKey = await getApiKey(provider);

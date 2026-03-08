@@ -45,6 +45,21 @@ async function testOpenAI(apiKey: string): Promise<{ success: boolean; error?: s
   }
 }
 
+async function testTelegram(apiKey: string): Promise<{ success: boolean; error?: string; botUsername?: string }> {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${apiKey}/getMe`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      return { success: false, error: body?.description ?? `HTTP ${res.status}` };
+    }
+    const data = await res.json() as { ok: boolean; result?: { username?: string } };
+    if (!data.ok) return { success: false, error: "Token không hợp lệ" };
+    return { success: true, botUsername: data.result?.username || undefined };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Lỗi kết nối" };
+  }
+}
+
 async function testGoogle(apiKey: string): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await fetch(
@@ -85,6 +100,9 @@ export async function POST(req: Request): Promise<NextResponse> {
         break;
       case "google":
         result = await testGoogle(body.apiKey);
+        break;
+      case "telegram":
+        result = await testTelegram(body.apiKey);
         break;
       default:
         return NextResponse.json({ error: "Provider không được hỗ trợ" }, { status: 400 });

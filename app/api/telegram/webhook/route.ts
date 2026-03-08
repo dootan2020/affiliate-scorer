@@ -1,11 +1,13 @@
 // Telegram Bot Webhook — receives messages from Telegram
 import { NextResponse } from "next/server";
 import { handleTelegramUpdate, sendTelegramMessage, type TelegramUpdate } from "@/lib/agents/telegram-bot-handler";
+import { getTelegramToken } from "@/lib/ai/providers";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    // Verify bot token is configured
-    if (!process.env.TELEGRAM_BOT_TOKEN) {
+    // Verify bot token is configured (DB or env)
+    const token = await getTelegramToken();
+    if (!token) {
       return NextResponse.json({ ok: true }); // Silent — not configured
     }
 

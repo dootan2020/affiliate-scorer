@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 // ─── Types ───
 
-type ProviderName = "anthropic" | "openai" | "google";
+type ProviderName = "anthropic" | "openai" | "google" | "telegram";
 
 interface ProviderStatus {
   provider: ProviderName;
@@ -37,6 +37,7 @@ const PROVIDERS: { id: ProviderName; label: string; consoleUrl: string }[] = [
   { id: "anthropic", label: "Anthropic (Claude)", consoleUrl: "https://console.anthropic.com/settings/keys" },
   { id: "openai", label: "OpenAI (GPT)", consoleUrl: "https://platform.openai.com/api-keys" },
   { id: "google", label: "Google (Gemini)", consoleUrl: "https://aistudio.google.com/apikey" },
+  { id: "telegram", label: "Telegram Bot", consoleUrl: "https://t.me/BotFather" },
 ];
 
 const TASK_LABELS: Record<string, { label: string; description: string }> = {
@@ -123,6 +124,7 @@ export function SettingsPageClient(): React.ReactElement {
   const [keyInput, setKeyInput] = useState("");
   const [testing, setTesting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [telegramBotName, setTelegramBotName] = useState<string | null>(null);
 
   // Track if provider was manually changed (to trigger model auto-switch)
   const [providerManuallyChanged, setProviderManuallyChanged] = useState(false);
@@ -141,8 +143,18 @@ export function SettingsPageClient(): React.ReactElement {
       setProviders(providerList);
       setModels(savedModels);
 
-      // Determine default provider from saved models
-      const connected = providerList.filter((p) => p.connected).map((p) => p.provider);
+      // Fetch telegram bot info if connected
+      const telegramStatus = providerList.find((p: ProviderStatus) => p.provider === "telegram");
+      if (telegramStatus?.connected) {
+        fetch("/api/settings/api-keys/telegram-info").then((r) => r.json())
+          .then((data: { botUsername?: string }) => {
+            if (data.botUsername) setTelegramBotName(data.botUsername);
+          })
+          .catch(() => {}); // Non-critical
+      }
+
+      // Determine default provider from saved models (exclude telegram — not AI provider)
+      const connected = providerList.filter((p: ProviderStatus) => p.connected && p.provider !== "telegram").map((p: ProviderStatus) => p.provider);
       const defaultProv = detectDefaultProvider(savedModels, connected);
       setSelectedProvider(defaultProv);
 
@@ -156,7 +168,7 @@ export function SettingsPageClient(): React.ReactElement {
   }, []);
 
   async function loadModelsForProviders(providerList: ProviderStatus[]): Promise<void> {
-    const connected = providerList.filter((p) => p.connected);
+    const connected = providerList.filter((p) => p.connected && p.provider !== "telegram");
     if (connected.length === 0) return;
 
     setLoadingModels(true);
@@ -209,7 +221,7 @@ export function SettingsPageClient(): React.ReactElement {
 
   const currentStatus = providers.find((p) => p.provider === selectedProvider);
   const currentProviderConfig = PROVIDERS.find((p) => p.id === selectedProvider)!;
-  const connectedProviders = providers.filter((p) => p.connected);
+  const connectedProviders = providers.filter((p) => p.connected && p.provider !== "telegram");
   const filteredModels = allModels[selectedProvider] ?? [];
 
   // For model dropdowns: show models of selected provider
@@ -237,6 +249,11 @@ export function SettingsPageClient(): React.ReactElement {
       if (!testData.success) {
         toast.error(testData.error ?? "API key không hợp lệ");
         return;
+      }
+
+      // Store bot username for telegram
+      if (selectedProvider === "telegram" && testData.botUsername) {
+        setTelegramBotName(testData.botUsername);
       }
 
       const saveRes = await fetch("/api/settings/api-keys/save", {
@@ -330,7 +347,7 @@ export function SettingsPageClient(): React.ReactElement {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-gray-500 dark:text-gray-400 mb-1.5 block">
-              Chọn nhà cung cấp AI
+              Chọn nhà cung cấp
             </label>
             <select
               value={selectedProvider}
@@ -355,6 +372,11 @@ export function SettingsPageClient(): React.ReactElement {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
                     Đã kết nối
+                    {selectedProvider === "telegram" && telegramBotName && (
+                      <span className="ml-1.5 font-normal text-emerald-600/80 dark:text-emerald-400/80">
+                        @{telegramBotName}
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 font-mono mt-0.5">
                     {currentStatus.lastChars}
@@ -390,7 +412,9 @@ export function SettingsPageClient(): React.ReactElement {
                     rel="noopener noreferrer"
                     className="text-xs text-amber-600/70 dark:text-amber-400/70 hover:underline inline-flex items-center gap-1 mt-0.5"
                   >
-                    Lấy key tại {currentProviderConfig.consoleUrl.replace("https://", "")}
+                    {selectedProvider === "telegram"
+                      ? "Tạo bot qua @BotFather → /newbot → copy token"
+                      : `Lấy key tại ${currentProviderConfig.consoleUrl.replace("https://", "")}`}
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
@@ -401,7 +425,7 @@ export function SettingsPageClient(): React.ReactElement {
                   type="password"
                   value={keyInput}
                   onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder={`Nhập ${currentProviderConfig.label} API key`}
+                  placeholder={selectedProvider === "telegram" ? "Nhập Bot Token từ @BotFather" : `Nhập ${currentProviderConfig.label} API key`}
                   className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-mono"
                 />
                 <Button

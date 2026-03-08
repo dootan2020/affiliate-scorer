@@ -1,6 +1,7 @@
 // Telegram Bot Setup — registers webhook URL with Telegram API
 import { NextResponse } from "next/server";
 import { verifyCronAuth } from "@/lib/utils/verify-cron-auth";
+import { getTelegramToken } from "@/lib/ai/providers";
 
 export async function POST(request: Request): Promise<NextResponse> {
   // Admin-only: require CRON_SECRET
@@ -8,10 +9,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = await getTelegramToken();
   if (!token) {
     return NextResponse.json(
-      { error: "TELEGRAM_BOT_TOKEN chưa được cấu hình" },
+      { error: "Telegram Bot Token chưa được cấu hình (DB hoặc env)" },
       { status: 503 }
     );
   }

@@ -1,6 +1,7 @@
 // Telegram Bot Handler — captures competitor TikTok videos for trend analysis
 import { prisma } from "@/lib/db";
 import { fetchTikTokOembed } from "@/lib/agents/tiktok-oembed";
+import { getTelegramToken } from "@/lib/ai/providers";
 
 export interface TelegramUpdate {
   message?: {
@@ -173,9 +174,9 @@ export async function sendTelegramMessage(
   text: string,
   replyMarkup?: unknown
 ): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = await getTelegramToken();
   if (!token) {
-    console.warn("[telegram] TELEGRAM_BOT_TOKEN not configured");
+    console.warn("[telegram] Telegram Bot Token not configured (DB or env)");
     return;
   }
 

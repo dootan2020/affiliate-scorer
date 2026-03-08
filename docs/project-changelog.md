@@ -555,6 +555,41 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 
 ---
 
+## [1.10.0] — 2026-03-08 — Guide Page Redesign & Advisory System
+
+### Added
+
+- **Guide Page UI Redesign**
+  - Fixed TOC sidebar (sticky, always visible on lg+ breakpoint)
+  - Wider content area (removed max-w-6xl constraint for full-width prose)
+  - Larger typography (prose-base, leading-7 for better readability)
+  - Linear TOC with orange active indicator (left border, colored background)
+  - Mobile TOC dropdown select (replaces hidden sidebar on <lg)
+  - 3 new sections: Kênh TikTok (10), Cố vấn AI (11), Telegram Bot (12)
+
+- **Guide Section 10: Kênh TikTok** — Channel profile setup, Character Bible, Video Bible, best practices
+- **Guide Section 11: Cố vấn AI** — ANALYST → CMO/CFO/CTO → CEO decision hierarchy, workflow
+- **Guide Section 12: Telegram Bot** — Bot setup, competitor link capture, trend analysis integration
+
+- **AI Config Section** — Expanded 4→7 task types, consolidated preset comparison table
+- **FAQ Section** — 2 new entries on advisor decision logic and Telegram bot automation
+
+### Changed
+
+- **Guide page layout** — TOC fixed + content area wider (no container constraint)
+- **Guide navigation** — 15 total sections (was 13), clearer visual hierarchy
+- **TOC styling** — Orange active indicator instead of blue, better visual contrast
+- **Mobile UX** — Dropdown select instead of collapsible nav for TOC navigation
+
+### Technical Updates
+
+- New component: `guide-toc.tsx` with GuideToc + GuideTocMobile variants
+- Updated: `guide-page-client.tsx` with flex layout (sidebar + content)
+- Intersection observer for dynamic TOC highlight on scroll
+- Orange color tokens: orange-500, orange-700, orange-50, orange-400, orange-950 in Tailwind
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned

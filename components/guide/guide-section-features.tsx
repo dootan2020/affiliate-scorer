@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { GuideCallout } from "./guide-callout";
 
 export function GuideSectionFeatures(): React.ReactElement {
@@ -5,7 +6,7 @@ export function GuideSectionFeatures(): React.ReactElement {
     <>
       {/* Tổng quan */}
       <section id="tong-quan">
-        <h2>4. Tổng quan (trang chính)</h2>
+        <h2>4. Tổng quan</h2>
         <p>Trang chính khi mở app. Gồm:</p>
         <ul>
           <li><strong>Bản tin sáng</strong> — AI tóm tắt tình hình mỗi ngày: SP nên quay, sự kiện sắp tới, phân tích nhanh.</li>
@@ -77,25 +78,42 @@ export function GuideSectionFeatures(): React.ReactElement {
 
       {/* Nhật ký */}
       <section id="nhat-ky">
-        <h2>8. Nhật ký</h2>
-        <p>Ghi nhận video đã sản xuất: SP đã quay, link video TikTok, trạng thái (đã quay / đã đăng / đang chỉnh sửa), ghi chú cá nhân.</p>
-        <p><strong>Tại sao nhật ký quan trọng?</strong> Dữ liệu từ nhật ký giúp AI biết SP nào đã quay, học pattern bạn hay chọn, tính toán năng suất.</p>
+        <h2>8. Nhật ký (Log kết quả)</h2>
+        <p>
+          Vào <Link href="/log"><strong>Nhật ký</strong></Link> (nhóm Theo dõi) để ghi nhận kết quả video.
+        </p>
+        <h3>Cách dùng</h3>
+        <ul>
+          <li><strong>Quick (1 video):</strong> Dán link TikTok → bấm Match → hệ thống tự ghép với SP trong Hộp sản phẩm</li>
+          <li><strong>Batch (nhiều video):</strong> Nhập nhiều link cùng lúc hoặc upload file TikTok Studio từ trang Đồng bộ</li>
+        </ul>
+        <p><strong>Tại sao nhật ký quan trọng?</strong> Dữ liệu từ nhật ký giúp AI biết SP nào đã quay, học pattern thắng/thua, cải thiện brief và điểm số theo thời gian.</p>
       </section>
 
       {/* Phân tích */}
       <section id="phan-tich">
-        <h2>9. Phân tích</h2>
-        <p>Trung tâm phân tích AI:</p>
+        <h2>9. Phân tích (AI Insights)</h2>
+        <p>
+          Vào <Link href="/insights"><strong>Phân tích</strong></Link> (nhóm Theo dõi) — trung tâm phân tích AI với 4 tab:
+        </p>
         <ul>
-          <li><strong>Tổng quan</strong> — Số liệu chính: tổng SP, shop đánh giá, thu chi tháng.</li>
-          <li><strong>Thu chi</strong> — Theo dõi thu nhập affiliate và chi phí. Tính lợi nhuận tự động.</li>
-          <li><strong>Lịch sự kiện</strong> — Mega Sale, ngày lễ, campaign. Thêm sự kiện tùy chỉnh.</li>
-          <li><strong>Phản hồi</strong> — Đánh giá kết quả video, SP bán tốt/tệ.</li>
-          <li><strong>Học</strong> — AI học từ phản hồi. Chạy Học để cập nhật trọng số.</li>
-          <li><strong>Sổ tay chiến lược</strong> — Bài học tổng hợp: chiến lược nào thắng, thua, insight.</li>
+          <li><strong>Tổng quan</strong> — Số liệu chính (tổng SP, shop, thu chi), sự kiện sắp tới, gợi ý hành động, AI Confidence level</li>
+          <li><strong>Tài chính</strong> — Theo dõi thu nhập affiliate và chi phí. Tính lợi nhuận tự động</li>
+          <li><strong>Học &amp; Patterns</strong> — AI học từ phản hồi. Bấm <strong>Chạy Learning</strong> để cập nhật trọng số. Xem pattern thắng/thua</li>
+          <li><strong>Playbook</strong> — Sổ tay chiến lược tổng hợp. Báo cáo tuần. AI Confidence và insight</li>
         </ul>
+
+        <h3>AI Confidence</h3>
+        <p>Mức độ tin cậy của AI tăng theo lượng feedback:</p>
+        <ul>
+          <li><strong>Level 1 — Sơ khởi (0-25):</strong> Cần thêm dữ liệu, gợi ý chung</li>
+          <li><strong>Level 2 — Cơ bản (26-50):</strong> AI nhận ra pattern cơ bản</li>
+          <li><strong>Level 3 — Trung bình (51-75):</strong> Gợi ý đáng tin cậy</li>
+          <li><strong>Level 4 — Cao (76-100):</strong> AI hiểu rõ phong cách, gợi ý chính xác</li>
+        </ul>
+
         <GuideCallout variant="info">
-          <strong>Quy trình Học:</strong> Ghi nhật ký video &rarr; Ghi phản hồi (bán tốt/tệ) &rarr; Chạy Học &rarr; AI cập nhật điểm &rarr; Brief ngày mai chính xác hơn
+          <strong>Quy trình Học:</strong> Ghi nhật ký video &rarr; Ghi phản hồi (bán tốt/tệ) &rarr; Chạy Learning &rarr; AI cập nhật điểm &rarr; Brief ngày mai chính xác hơn
         </GuideCallout>
       </section>
     </>

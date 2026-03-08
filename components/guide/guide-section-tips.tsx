@@ -18,7 +18,7 @@ function TipTitle({ children }: { children: React.ReactNode }): React.ReactEleme
 export function GuideSectionTips(): React.ReactElement {
   return (
     <section id="meo">
-      <h2>12. Mẹo sử dụng</h2>
+      <h2>15. Mẹo sử dụng</h2>
       <p>Tổng hợp mẹo giúp bạn dùng PASTR hiệu quả hơn, chia theo 5 nhóm.</p>
 
       {/* Nhóm 1: Quản lý dữ liệu */}

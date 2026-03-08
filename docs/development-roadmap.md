@@ -6,9 +6,9 @@ Project phases, milestones, and implementation progress.
 
 ## Project Status
 
-- **Current Version:** 1.9.0
+- **Current Version:** 1.10.0
 - **Last Updated:** 2026-03-08
-- **Overall Progress:** ~90% complete (11 of 12 core phases done, AI Agent System live)
+- **Overall Progress:** ~92% complete (12 of 13 core phases done, Guide Page & Advisory System live)
 
 ---
 
@@ -223,7 +223,30 @@ Project phases, milestones, and implementation progress.
 
 ---
 
-### Phase 12 — Scoring System Redesign ⏳ PLANNED
+### Phase 12 — Guide Page Redesign & Expansion ✅ COMPLETE (v1.10.0)
+
+**Goal:** Redesign guide page UI (fixed TOC, wider content) and expand sections (TikTok, AI Advisor, Telegram Bot)
+
+| Task | Status | Completion |
+|------|--------|-----------|
+| Guide page layout redesign | ✅ Done | 100% |
+| Fixed sticky TOC sidebar | ✅ Done | 100% |
+| Wider content area (removed max-w constraint) | ✅ Done | 100% |
+| Larger typography (prose-base, leading-7) | ✅ Done | 100% |
+| TOC mobile dropdown (lg: hidden) | ✅ Done | 100% |
+| Orange active indicator styling | ✅ Done | 100% |
+| Guide Section 10: Kênh TikTok | ✅ Done | 100% |
+| Guide Section 11: Cố vấn AI (Company hierarchy) | ✅ Done | 100% |
+| Guide Section 12: Telegram Bot | ✅ Done | 100% |
+| AI Config task types (4→7) | ✅ Done | 100% |
+| Preset comparison consolidation | ✅ Done | 100% |
+| FAQ entries (add 2 new) | ✅ Done | 100% |
+
+**Delivered:** Mar 8, 2026 — Guide page fully redesigned and expanded (15 sections, professional docs-style UX)
+
+---
+
+### Phase 13 — Scoring System Redesign ⏳ PLANNED
 
 **Goal:** Redesign scoring formula to improve content potential score discriminative power
 
@@ -236,7 +259,7 @@ Project phases, milestones, and implementation progress.
 | Testing & validation | 📋 Planned | 3 days | Verify new scores are more predictive |
 
 **Plan Location:** `plans/260305-1440-scoring-system-redesign/`
-**ETA:** Mar 17, 2026 (v1.10.0)
+**ETA:** Mar 24, 2026 (v1.11.0)
 
 ---
 
@@ -255,7 +278,9 @@ Project phases, milestones, and implementation progress.
 | Scalable Import | Mar 3, 2026 | v1.8.0 | Handle 3000+ products in chunks |
 | Niche Intelligence | Mar 7, 2026 | v1.8.2 | Niche finder wizard + dashboard redesign |
 | AI Agent System | Mar 8, 2026 | v1.9.0 | 6-phase intelligent agents + telegram bot + PWA |
-| Scoring Redesign | Mar 17, 2026 | v1.10.0 | Improved content potential scoring |
+| Guide Page Expansion | Mar 8, 2026 | v1.10.0 | TikTok Channel, AI Advisor, Telegram Bot sections |
+| Advisory System | Mar 8, 2026 | v1.10.0 | Company hierarchy decision-making system |
+| Scoring Redesign | Mar 24, 2026 | v1.11.0 | Improved content potential scoring |
 
 ---
 
@@ -329,9 +354,10 @@ Project phases, milestones, and implementation progress.
 |---------|-----|-------|--------|
 | v1.8.2 | Mar 7, 2026 | Niche finder + dashboard redesign | ✅ Released |
 | v1.9.0 | Mar 8, 2026 | AI Agent System (6 phases) | ✅ Released |
-| v1.10.0 | Mar 17, 2026 | Scoring system redesign | 📋 Planned |
-| v1.11.0 | Apr 1, 2026 | Testing + documentation | 📋 Planned |
-| v2.0.0 | Apr 15, 2026 | Stable release + monitoring | 📋 Planned |
+| v1.10.0 | Mar 8, 2026 | Guide page expansion + advisory system | ✅ Released |
+| v1.11.0 | Mar 24, 2026 | Scoring system redesign | 📋 Planned |
+| v1.12.0 | Apr 7, 2026 | Testing + documentation | 📋 Planned |
+| v2.0.0 | Apr 21, 2026 | Stable release + monitoring | 📋 Planned |
 | v2.1.0+ | May–Jun 2026 | Webhooks, SSE, extension, multi-user | 📋 Backlog |
 
 ---

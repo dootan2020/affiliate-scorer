@@ -1,7 +1,7 @@
 export function GuideSectionFaq(): React.ReactElement {
   return (
     <section id="cau-hoi">
-      <h2>11. Câu hỏi thường gặp</h2>
+      <h2>14. Câu hỏi thường gặp</h2>
 
       <h3>Tại sao điểm sản phẩm thay đổi?</h3>
       <p>
@@ -88,6 +88,21 @@ export function GuideSectionFaq(): React.ReactElement {
         <li><strong>Bình thường:</strong> Video mới cần 1–2 giờ để TikTok phát tán</li>
         <li><strong>Kiểm tra:</strong> Vào TikTok xem video đã live chưa, xem stats trong TikTok Studio</li>
         <li><strong>Hook không hay?</strong> Nếu 1000 views đầu mà jump low, hook cần cải thiện. Xem nó flop thế nào → update script sau</li>
+      </ul>
+
+      <h3>Cố vấn AI trả lời chung chung?</h3>
+      <ul>
+        <li><strong>Thêm dữ liệu:</strong> Import thêm SP, ghi nhật ký, chạy Learning — AI cần dữ liệu thật để tư vấn cụ thể</li>
+        <li><strong>Đặt câu hỏi cụ thể:</strong> &ldquo;Nên quay SP nào hôm nay?&rdquo; tốt hơn &ldquo;Nên làm gì?&rdquo;</li>
+        <li><strong>Dùng model mạnh:</strong> Cố vấn AI cần model Sonnet trở lên để phân tích sâu</li>
+        <li><strong>Hỏi tiếp:</strong> Dùng nút Hỏi tiếp để đào sâu hơn</li>
+      </ul>
+
+      <h3>Telegram Bot không nhận tin nhắn?</h3>
+      <ul>
+        <li><strong>Kiểm tra token:</strong> Vào Cài đặt → Tích hợp Telegram → bấm Kiểm tra</li>
+        <li><strong>Gõ /start:</strong> Mở bot trên Telegram, gõ <code>/start</code> để kích hoạt</li>
+        <li><strong>Kiểm tra webhook:</strong> Nếu vẫn lỗi, xóa token → nhập lại → Lưu &amp; Kích hoạt</li>
       </ul>
 
       <h3>Muốn xóa toàn bộ SP?</h3>

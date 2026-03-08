@@ -20,22 +20,29 @@ export function GuideToc({ items, activeId }: GuideTocProps): React.ReactElement
   }
 
   return (
-    <nav className="space-y-0.5">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => handleClick(item.id)}
-          className={cn(
-            "block w-full text-left py-1.5 rounded-lg text-sm transition-colors",
-            item.indent ? "pl-6 pr-3 text-xs" : "px-3",
-            activeId === item.id
-              ? "bg-orange-50 text-orange-700 font-medium dark:bg-orange-950/20 dark:text-orange-400"
-              : "text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-slate-800"
-          )}
-        >
-          {item.label}
-        </button>
-      ))}
+    <nav className="space-y-px">
+      {items.map((item) => {
+        const isActive = activeId === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => handleClick(item.id)}
+            className={cn(
+              "group relative block w-full text-left py-1.5 pr-3 transition-colors rounded-r-lg",
+              item.indent ? "pl-7 text-[13px]" : "pl-3 text-[13px] font-medium",
+              isActive
+                ? "text-orange-700 bg-orange-50/80 dark:text-orange-400 dark:bg-orange-950/20"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100/80 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-slate-800/80",
+            )}
+          >
+            {/* Active indicator bar */}
+            {isActive && (
+              <span className="absolute left-0 top-1 bottom-1 w-[2px] rounded-full bg-orange-500 dark:bg-orange-400" />
+            )}
+            {item.label}
+          </button>
+        );
+      })}
     </nav>
   );
 }

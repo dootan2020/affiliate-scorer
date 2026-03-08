@@ -26,9 +26,12 @@ const TOC_ITEMS: TocItem[] = [
   { id: "san-xuat", label: "7. Sản xuất" },
   { id: "nhat-ky", label: "8. Nhật ký" },
   { id: "phan-tich", label: "9. Phân tích" },
-  { id: "cau-hinh-ai", label: "10. Cấu hình AI" },
-  { id: "cau-hoi", label: "11. Câu hỏi thường gặp" },
-  { id: "meo", label: "12. Mẹo sử dụng" },
+  { id: "kenh-tiktok", label: "10. Kênh TikTok" },
+  { id: "co-van-ai", label: "11. Cố vấn AI" },
+  { id: "telegram-bot", label: "12. Telegram Bot" },
+  { id: "cau-hinh-ai", label: "13. Cấu hình AI" },
+  { id: "cau-hoi", label: "14. Câu hỏi thường gặp" },
+  { id: "meo", label: "15. Mẹo sử dụng" },
 ];
 
 export function GuidePageClient(): React.ReactElement {
@@ -52,7 +55,7 @@ export function GuidePageClient(): React.ReactElement {
           }
         }
       },
-      { rootMargin: "-80px 0px -60% 0px", threshold: 0.1 }
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0.1 },
     );
 
     for (const el of elements) {
@@ -63,33 +66,42 @@ export function GuidePageClient(): React.ReactElement {
   }, []);
 
   return (
-    <div className="flex gap-8">
-      {/* Desktop TOC */}
-      <aside className="hidden lg:block w-56 shrink-0">
-        <div className="sticky top-6">
-          <p className="px-3 mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            Mục lục
+    <div className="flex min-h-screen">
+      {/* Fixed TOC sidebar — positioned right after the main app sidebar */}
+      <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50">
+        <div className="sticky top-0 h-screen overflow-y-auto py-8 px-4">
+          <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            Hướng dẫn
+          </p>
+          <p className="px-3 mb-5 text-xs text-gray-400 dark:text-gray-500">
+            PASTR Documentation
           </p>
           <GuideToc items={TOC_ITEMS} activeId={activeId} />
         </div>
       </aside>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 max-w-3xl">
-        <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50 mb-2">
-          Hướng dẫn sử dụng PASTR
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-          Paste links. Ship videos. Learn fast.
-        </p>
+      {/* Main content area — fills remaining width */}
+      <div className="flex-1 min-w-0">
+        {/* Header */}
+        <div className="border-b border-gray-100 dark:border-slate-800 px-6 sm:px-10 py-8">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
+            Hướng dẫn sử dụng PASTR
+          </h1>
+          <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
+            Paste links. Ship videos. Learn fast.
+          </p>
+        </div>
 
         {/* Mobile TOC dropdown */}
-        <div className="lg:hidden">
+        <div className="lg:hidden px-6 sm:px-10 pt-6">
           <GuideTocMobile items={TOC_ITEMS} activeId={activeId} />
         </div>
 
-        <div className="prose prose-gray dark:prose-invert prose-headings:scroll-mt-20 prose-h2:text-xl prose-h2:font-semibold prose-h2:tracking-tight prose-h3:text-base prose-h3:font-medium prose-sm max-w-none">
-          <GuideContent />
+        {/* Prose content — larger text, wider, better reading experience */}
+        <div className="px-6 sm:px-10 py-8 max-w-4xl">
+          <div className="prose prose-gray dark:prose-invert prose-headings:scroll-mt-20 prose-h2:text-2xl prose-h2:font-bold prose-h2:tracking-tight prose-h2:mt-16 prose-h2:mb-4 prose-h2:pb-3 prose-h2:border-b prose-h2:border-gray-100 prose-h2:dark:border-slate-800 prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-8 prose-p:text-base prose-p:leading-7 prose-li:text-base prose-li:leading-7 prose-code:text-sm prose-pre:text-sm max-w-none">
+            <GuideContent />
+          </div>
         </div>
       </div>
     </div>

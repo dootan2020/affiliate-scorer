@@ -21,6 +21,7 @@ import {
   MoreHorizontal,
   Tv,
   Compass,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/sync", label: "Đồng bộ dữ liệu", icon: RefreshCw },
       { href: "/library", label: "Thư viện", icon: BookOpen },
       { href: "/niche-finder", label: "Tìm ngách", icon: Compass },
+      { href: "/advisor", label: "Cố vấn AI", icon: Brain },
     ],
   },
   {
@@ -85,6 +87,7 @@ const OVERFLOW_ITEMS: NavItem[] = [
   { href: "/sync", label: "Đồng bộ", icon: RefreshCw },
   { href: "/library", label: "Thư viện", icon: BookOpen },
   { href: "/niche-finder", label: "Tìm ngách", icon: Compass },
+  { href: "/advisor", label: "Cố vấn AI", icon: Brain },
   { href: "/settings", label: "Cài đặt", icon: Settings },
   { href: "/guide", label: "Hướng dẫn", icon: HelpCircle },
 ];

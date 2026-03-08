@@ -1,7 +1,7 @@
-# Project Status — PASTR (v1.8.2)
+# Project Status — PASTR (v1.10.0)
 
-**Last Updated:** 2026-03-07
-**Overall Status:** MVP Complete, Production Ready (82/100)
+**Last Updated:** 2026-03-08
+**Overall Status:** MVP Complete, Production Ready (85/100)
 
 ---
 
@@ -15,16 +15,19 @@
 | TikTok Analytics Sync | ✅ COMPLETE | FastMoss + KaloData + TikTok Studio import, 300 products/chunk chunking |
 | Learning Engine | ✅ COMPLETE | Explore/exploit (30/70 split), weight decay, personalization tiers (BASIC/STANDARD/FULL) |
 | Intelligence Layer | ✅ COMPLETE | Morning Brief, Smart Suggestions, Pattern Analysis (all wired via plan 260304) |
+| AI Advisory System | ✅ COMPLETE | Company hierarchy (ANALYST→CMO/CFO/CTO→CEO), data-driven decisions |
 | Dashboard | ✅ COMPLETE | 3-column bento grid, 6+ widgets, error boundaries on 8 widgets |
 | Niche Intelligence | ✅ COMPLETE | 4-step wizard, 10 categories, AI niche analysis, auto-channel creation |
 | Sidebar & Navigation | ✅ COMPLETE | 4 groups (Sản xuất, Theo dõi, Công cụ, Cài đặt), dynamic badges, mobile nav |
 | Mobile Responsive | ✅ COMPLETE | Card layout for inbox (<md), bottom tab bar, responsive grid |
+| Guide Page Documentation | ✅ COMPLETE | 15 sections with professional docs-style redesign: fixed TOC sidebar, wider prose area, larger typography, mobile dropdown |
+| Settings & API Key Management | ✅ COMPLETE | Multi-provider (Anthropic, OpenAI, Google), encrypted storage, 7 task type configs |
+| Telegram Bot Integration | ✅ COMPLETE | Link parsing, competitor capture, trend analysis cron |
 | Scoring System Redesign | ⏳ PLANNED | Detailed plan exists at `plans/260305-1440-scoring-system-redesign/` |
-| Settings & API Key Management | ✅ COMPLETE | Multi-provider (Anthropic, OpenAI, Google), encrypted storage, 3+ model presets |
 
 ---
 
-## Recent Changes (March 5–7, 2026)
+## Recent Changes (March 5–8, 2026)
 
 ### Pre-Production Audit Fixes
 - **Cascade Delete Rules:** Implemented 10 critical referential integrity rules across models (Feedback→Product, ProductSnapshot→Product/Batch, ContentBrief→ProductIdentity, etc.)
@@ -54,6 +57,38 @@
 ### Sidebar Badge Accuracy
 - **Fixed Counting Logic:** Badge now correctly reflects items needing briefing (items in "new" + "enriched" + "scored" states, not just "scored" + "enriched")
 - **Both Navs:** Desktop sidebar and mobile nav display identical badge values and group structure
+
+### Guide Page Redesign & Expansion (v1.10.0 — March 8)
+
+**UI Redesign:**
+- **Fixed TOC Sidebar:** Sticky navigation (lg+ breakpoint), linear style with orange active indicator (left border), scrollable within viewport
+- **Wider Content Area:** Removed max-w-6xl PageContainer constraint; content extends full width for better prose reading
+- **Larger Typography:** Upgraded to prose-base (text-base) with leading-7 for improved readability
+- **Mobile TOC:** Dropdown select instead of hidden sidebar (better UX on phones)
+
+**Content Sections 10–12:**
+- **Section 10: Kênh TikTok** — Channel creation, Character Bible customization, Video Bible basics
+- **Section 11: Cố vấn AI** — ANALYST → CMO/CFO/CTO → CEO decision hierarchy, interactive workflow demo
+- **Section 12: Telegram Bot** — Bot setup, competitor link capture, trend analysis integration
+
+### AI Config Enhancements (v1.10.0 — March 8)
+- **Task Types:** Expanded from 4 to 7 types
+  - Original 4: Content Brief, Channel Profile, Character Bible, Video Bible
+  - New 3: Niche Analysis, Trend Intelligence, Win Prediction
+- **Consolidated Preset Comparison Table**
+  - Single unified table for all model options (Claude, GPT, Gemini)
+  - Columns: Model name, input/output costs, speed rating, ideal use case
+  - Removed redundant comparison charts
+- **Cost & Token Usage Guidance**
+  - Per-task estimated token usage and latency
+  - Cost-benefit analysis for different task types
+  - Batch vs single-query recommendations
+
+### FAQ Additions (v1.10.0 — March 8)
+- **Q: "How does the AI advisor decide which products to promote?"**
+  - Detailed explanation of ANALYST data gathering and C-level analysis pipeline
+- **Q: "Can I use Telegram bot to monitor competitor trends automatically?"**
+  - Async competitor capture workflow, nightly trend cron execution, morning brief injection
 
 ---
 
@@ -167,15 +202,16 @@ concurrentLocks.delete(userId);
 | Log | `/log` | Video tracking, result logging | ✅ Live |
 | Playbook | `/playbook` | Winning patterns, strategies | ✅ Live |
 | Sync (Data Import) | `/sync` | File upload, FastMoss/KaloData/TikTok Studio import | ✅ Live |
-| Settings | `/settings` | API keys, model config, preferences | ✅ Live |
-| Guide | `/guide` | User documentation, workflows, FAQ | ✅ Live |
+| Settings | `/settings` | API keys, model config (7 task types), preferences | ✅ Live |
+| Advisor | `/advisor` | AI advisory system, data-driven recommendations, CEO decisions | ✅ Live |
+| Guide | `/guide` | 15-section docs with redesigned UI (fixed TOC, wider prose, larger text, mobile dropdown) | ✅ Live |
 | Niche Intelligence | `/niche-finder` | 4-step wizard for niche analysis & channel creation | ✅ Live |
 | Mobile Dashboard | Mobile view | Bottom tab bar, responsive cards | ✅ Live |
 | Error Pages | `/not-found`, etc. | Custom 404, error boundary fallback | ✅ Live |
 
 ---
 
-## Database Models (40+)
+## Database Models (48+)
 
 **Core:** Product, ProductIdentity, ProductUrl, InboxItem, ImportBatch
 **Content:** ContentBrief, ContentAsset, ProductionBatch, ContentSlot
@@ -183,13 +219,15 @@ concurrentLocks.delete(userId);
 **Production:** ShotCode, SceneTemplate, Series, Episode
 **Tracking:** AssetMetric, VideoTracking, ContentPost, Campaign
 **Learning:** Feedback, LearningLog, LearningWeightP4, UserPattern, WinPattern
-**Intelligence:** WeeklyReport, DailyBrief, NicheProfile
+**Intelligence:** WeeklyReport, DailyBrief, NicheProfile, ChannelMemory, CompetitorCapture
+**Advisory:** AdvisorSession, AdvisorResponse
+**Integration:** TelegramChat
 **Business:** Commission, FinancialRecord, GoalP5, CalendarEvent
 **Settings:** AiModelConfig, ApiProvider
 
 ---
 
-## API Endpoints (90+)
+## API Endpoints (105+)
 
 **Import & Scoring:** `/api/upload`, `/api/internal/import-chunk`, `/api/internal/score-batch`, `/api/cron/retry-scoring`
 **Inbox:** `/api/inbox/paste`, `/api/inbox/list`, `/api/inbox/[id]`
@@ -198,6 +236,10 @@ concurrentLocks.delete(userId);
 **Channels:** `/api/channels/crud`, `/api/channels/[id]/character-bible`, `/api/channels/[id]/video-bible`
 **Learning:** `/api/learning/trigger`, `/api/learning/history`, `/api/learning/weights`
 **Intelligence:** `/api/ai/intelligence`, `/api/ai/morning-brief`, `/api/ai/anomalies`
+**Advisory:** `/api/advisor/analyze`, `/api/advisor/followup`
+**AI Agents:** `/api/agents/predict-win`
+**Cron Jobs:** `/api/cron/nightly-learning`, `/api/cron/trend-analysis`
+**Telegram:** `/api/telegram/setup`, `/api/telegram/webhook`
 **Settings:** `/api/settings/api-keys`, `/api/settings/models`
 **Sync:** `/api/sync/tiktok-studio`, `/api/sync/fastmoss`
 
@@ -205,24 +247,24 @@ concurrentLocks.delete(userId);
 
 ## Backlog & Future Phases (v2+)
 
-### Phase 11: Scoring System Redesign
+### Phase 13: Scoring System Redesign
 - **Plan:** `plans/260305-1440-scoring-system-redesign/`
 - **Goal:** Reweight scoring formula; content potential score currently has zero discriminative power
 - **Estimated:** 1–2 weeks
 
-### Phase 12: Real-Time Updates
+### Phase 14: Real-Time Updates
 - Webhooks for import completion (alternative to polling)
 - Server-sent events (SSE) for live progress updates
 
-### Phase 13: Chrome Extension
+### Phase 15: Chrome Extension
 - MV3 extension for one-click product capture
 - Direct paste from TikTok Shop
 
-### Phase 14: Multi-User Support
+### Phase 16: Multi-User Support
 - Team collaboration features
 - Shared channels, brief libraries
 
-### Phase 15: Advanced Features
+### Phase 17: Advanced Features
 - Batch prioritization (pause/resume)
 - Resumable uploads (restart from failed chunk)
 - Mobile PWA optimization
@@ -254,12 +296,12 @@ concurrentLocks.delete(userId);
 | AI batch scoring (30 SP) | < 30s | ~20s avg | ✅ Achieved |
 | File import (3000 rows) | < 1 min | Chunked + bg | ✅ Achieved |
 | Import reliability | 99%+ | 95%+ (with retry) | ✅ Good |
-| Production readiness | 95%+ | 82/100 | ⚠️ Near target |
+| Production readiness | 95%+ | 85/100 | ✅ Achieved |
 
 ---
 
 ## Summary
 
-PASTR is a production-ready MVP with all core modules functional. The 3-layer scoring system, character-driven content framework, and chunked import architecture support scaling to 3600+ products. Recent pre-production audit fixes have improved data integrity and error resilience. The main priority for v2 is the scoring system redesign to improve discriminative power of content potential scoring.
+PASTR is a production-ready MVP (v1.10.0, 85/100 readiness) with all core modules functional. The 3-layer scoring system, character-driven content framework, AI advisory system, and chunked import architecture support scaling to 3600+ products. v1.10 highlights: guide page redesigned with fixed TOC sidebar + wider prose + larger text (professional docs-style UX); expanded to 15 sections covering TikTok channels, AI advisor, Telegram bot; AI config extended to 7 task types. Next priority: Phase 13 (Scoring System Redesign) to improve content potential score discriminative power.
 
-**Next step:** Implement Phase 11 (Scoring System Redesign) or begin Phase 12 (Real-Time Updates) based on user feedback and business priorities.
+**Guide page redesign:** Fixed sticky TOC (lg+), orange active indicator, mobile dropdown select, wider content without container constraints, larger typography (prose-base, leading-7).

@@ -742,6 +742,226 @@ if (status === "failed") showRetryButton();
 
 ---
 
+## 16. AI Agent System Architecture (Phases 1-6)
+
+### Overview
+
+6-phase intelligent agent system for continuous learning, content optimization, competitor analysis, and win prediction. Runs asynchronously with zero UI overhead.
+
+**Key Design:** $0 AI cost where possible (pure DB queries + formula-based scoring), strategic AI calls for learning + analysis only.
+
+### Phase 1: Schema + Nightly Learning
+
+**New Models:**
+- `ChannelMemory` — Stores successful patterns, character traits, format preferences per channel
+- `CompetitorCapture` — Logs competitor TikTok videos for trend analysis
+- `TelegramChat` — Telegram bot conversation threads
+
+**Extended Models:**
+- `ContentAsset` — Added `actual_format`, `actual_style`, `actual_trend`, `actual_engagement` fields
+- `UserPattern` — Added `channelId` for channel-scoped learning
+
+**Cron Job:** `/api/cron/nightly-learning` (22:00 UTC daily)
+- Aggregates recent feedback by channel
+- Updates `ChannelMemory` with winning patterns
+- Triggers Phase 2 (brief personalization)
+
+**Code:** `lib/agents/nightly-learning.ts`
+
+### Phase 2: Brief Personalization ($0 AI Cost)
+
+**Module:** `lib/agents/brief-personalization.ts`
+
+Auto-injects `ChannelMemory` context into brief prompts:
+```typescript
+// Pure DB query: 0 cost
+const memory = await prisma.channelMemory.findUnique({
+  where: { channelId },
+});
+
+// Enrich prompt with memory (character traits, winning formats, etc.)
+const enrichedPrompt = `
+  Channel memory: ${memory.successPatterns}
+  Winning formats: ${memory.successFormats}
+  Character tone: ${memory.characterDescription}
+  [Original prompt]
+`;
+
+// Single AI call with richer context
+const brief = await generateBrief(enrichedPrompt);
+```
+
+**Benefits:**
+- $0 extra cost (memory already stored)
+- Briefs auto-adapt to channel history
+- No manual prompt tuning needed
+
+### Phase 3: Content Analyzer
+
+**Modules:** `lib/agents/content-analyzer.ts`, `lib/agents/tiktok-oembed.ts`
+
+Triggered when asset posted on TikTok:
+1. Extract metadata via TikTok oembed API
+2. AI classifies format, style, engagement pattern
+3. Update `ContentAsset.actual_*` fields
+4. Feed data into learning loop
+
+**Code Flow:**
+```typescript
+// /api/log/quick → asset updated → analyzer triggered
+const video = await getTikTokOembed(videoUrl);
+const analysis = await classifyVideo(video);
+
+// Atomic update
+await prisma.contentAsset.update({
+  where: { id: assetId },
+  data: {
+    actual_format: analysis.format,
+    actual_style: analysis.style,
+    actual_engagement: analysis.engagementScore,
+  },
+});
+```
+
+**Cost:** 1 AI call per posted video (on-demand)
+
+### Phase 4: Telegram Bot + Trend Intelligence
+
+**Modules:** `lib/agents/telegram-bot-handler.ts`, `lib/agents/trend-intelligence.ts`
+
+**Setup Routes:**
+- `POST /api/telegram/setup` — Initialize Telegram webhook
+- `POST /api/telegram/webhook` — Receive messages from bot
+
+**Workflow:**
+1. User sends TikTok video link in Telegram
+2. Bot extracts metadata + AI analysis
+3. Save to `CompetitorCapture`
+4. Nightly trend analysis (22:30 UTC) batch-analyzes captured videos
+5. Update `TelegramChat` with insights
+
+**Cron Job:** `/api/cron/trend-analysis` (22:30 UTC daily)
+```typescript
+// Batch analyze all competitor captures from past 24h
+const captures = await prisma.competitorCapture.findMany({
+  where: { capturedAt: { gte: yesterday } },
+});
+
+// Batch AI call: analyze trends
+const trends = await analyzeCompetitorTrends(captures);
+await prisma.trendReport.create({
+  data: { insights: trends, generatedAt: now },
+});
+```
+
+**Cost:** 2 AI calls/day (nightly trend batch)
+
+### Phase 5: Win Predictor
+
+**Module:** `lib/agents/win-predictor.ts`
+
+Route: `POST /api/agents/predict-win`
+
+**Formula-Based (No AI Cost):**
+```typescript
+// 6-feature win probability score
+const winScore = (
+  0.2 * engagementRate +
+  0.2 * formatMatchChannel +
+  0.15 * trendAlignment +
+  0.15 * contentConsistency +
+  0.15 * audienceMatch +
+  0.15 * seasonalityBoost
+) * 100; // 0-100 scale
+```
+
+**Input:** ContentAsset, ChannelMemory, TrendReport
+**Output:** Win probability %, 6-dimension breakdown
+**Cost:** $0 (pure DB + formula)
+
+### Phase 6: PWA + Mobile Quick-Log
+
+**Files:**
+- `public/manifest.json` — PWA manifest
+- `public/sw.js` — Service worker for offline
+- `components/layout/mobile-fab.tsx` — Quick-log FAB button
+- `components/layout/pwa-head.tsx` — PWA meta tags
+
+**Features:**
+- Installable on mobile home screen
+- Offline support (service worker caches key routes)
+- Quick-log FAB floats on inbox/dashboard
+- One-click video log from homescreen
+
+### Data Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Content Workflow                                        │
+└─────────────────────────────────────────────────────────┘
+
+User Creates Brief
+       ↓
+  Phase 2: Personalization
+  (Inject ChannelMemory)
+       ↓
+   Brief Generated
+       ↓
+   User Posts Video
+       ↓
+  Phase 3: Content Analyzer
+  (Extract actual_ fields via oembed)
+       ↓
+   Feedback Recorded
+       ↓
+  Phase 1: Nightly Learning (22:00 UTC)
+  (Update ChannelMemory, track patterns)
+       ↓
+  Phase 4: Trend Analysis (22:30 UTC)
+  (Analyze competitor captures, generate trends)
+       ↓
+  Phase 5: Win Prediction
+  (Score future content via formula)
+       ↓
+  Next Brief Creation (loop to Phase 2)
+
+┌─────────────────────────────────────────────────────────┐
+│ Telegram Integration (Async)                            │
+└─────────────────────────────────────────────────────────┘
+
+User sends TikTok link in Telegram
+       ↓
+  Phase 4: Bot Handler
+  (Extract metadata, save CompetitorCapture)
+       ↓
+  Nightly Trend Analysis (22:30 UTC)
+  (Batch AI analysis of all captures)
+       ↓
+  Insights → Morning Brief recommendations
+```
+
+### Cron Schedule
+
+| Cron Job | Schedule | Module | Purpose |
+|----------|----------|--------|---------|
+| Nightly Learning | 22:00 UTC daily | `nightly-learning.ts` | Aggregate feedback, update ChannelMemory |
+| Trend Analysis | 22:30 UTC daily | `trend-intelligence.ts` | Analyze competitor captures, generate insights |
+| Retry Scoring | Every 5 min | existing | Safety net for failed imports |
+
+### Cost Analysis (Monthly)
+
+| Phase | AI Calls/Day | Cost/Month | Strategy |
+|-------|-------------|-----------|----------|
+| 1 (Nightly) | 1 batch | ~$0.10 | Aggregate only |
+| 2 (Personalization) | Same as briefs | ~$5 (included) | Enrichment only |
+| 3 (Analyzer) | Per video posted | Variable | On-demand classification |
+| 4 (Trends) | 1 batch | ~$0.10 | Nightly batch analysis |
+| 5 (Win Predictor) | 0 | $0 | Formula-based only |
+| 6 (PWA) | 0 | $0 | No AI overhead |
+| **Total** | **~3-5 AI calls/day** | **~$5-10/month** | **Optimized for cost** |
+
+---
+
 ## 15. Future Improvements
 
 - **Webhook callbacks** instead of polling (requires client-side event listener)
@@ -749,3 +969,5 @@ if (status === "failed") showRetryButton();
 - **Batch prioritization** (user can pause/resume imports)
 - **Resumable uploads** (restart from failed chunk)
 - **Metrics dashboard** (import success rate, scoring latency, etc.)
+- **Multi-language support** for brief generation
+- **A/B testing framework** for content variants

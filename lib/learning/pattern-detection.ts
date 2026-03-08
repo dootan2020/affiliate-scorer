@@ -14,13 +14,15 @@ interface PatternResult {
 
 /**
  * Regenerate patterns: group assets theo hook_type × format × category.
- * Pattern cần ≥ 3 assets. Win = reward > 1.5× avg, Loss = reward < 0.5× avg.
+ * Pattern cần ≥ 2 assets. Win = reward > 1.5× avg, Loss = reward < 0.5× avg.
+ * @param channelId — if provided, only process assets for this channel (per-channel patterns)
  */
-export async function regeneratePatterns(): Promise<{ patterns: number }> {
-  // Lấy tất cả assets có metrics
+export async function regeneratePatterns(channelId?: string): Promise<{ patterns: number }> {
+  // Lấy assets có metrics, optionally filtered by channel
   const assets = await prisma.contentAsset.findMany({
     where: {
       metrics: { some: {} },
+      ...(channelId ? { channelId } : {}),
     },
     include: {
       metrics: { orderBy: { capturedAt: "desc" }, take: 1 },
@@ -110,8 +112,10 @@ export async function regeneratePatterns(): Promise<{ patterns: number }> {
     }
   }
 
-  // Clear old patterns
-  await prisma.userPattern.deleteMany();
+  // Clear old patterns (scoped to channel or global)
+  await prisma.userPattern.deleteMany({
+    where: { channelId: channelId ?? "" },
+  });
 
   // Save new patterns
   for (const p of results) {
@@ -125,6 +129,7 @@ export async function regeneratePatterns(): Promise<{ patterns: number }> {
         avgViews: p.avgViews,
         avgReward: p.avgReward,
         winRate: p.winRate,
+        channelId: channelId ?? "",
       },
     });
   }

@@ -24,12 +24,13 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 
 ## Thống Kê Dự Án
 
-- **Database Models:** 40+
+- **Database Models:** 45+
 - **Pages:** 15 (added /niche-finder, /guide)
-- **API Endpoints:** 90+
-- **Components:** 100+ (including 8 shared design system components + niche wizard + guide)
-- **Shared Components:** PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible
+- **API Endpoints:** 100+ (added /api/agents/*, /api/cron/nightly-learning, /api/cron/trend-analysis, /api/telegram/*)
+- **Components:** 100+ (including 8 shared design system components + PWA support)
+- **Shared Components:** PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible, MobileFAB, PWAHead
 - **Design Tokens:** 25+ (colors, spacing, typography, shadows)
+- **AI Agent Modules:** 8 (channel-memory-builder, brief-personalization, content-analyzer, tiktok-oembed, telegram-bot-handler, trend-intelligence, win-predictor, nightly-learning)
 
 ## Trạng Thái Phát Triển
 
@@ -59,18 +60,21 @@ affiliate-scorer/
 │   ├── sync/                   # TikTok Studio import
 │   ├── settings/               # API keys, AI models
 │   ├── guide/                  # User documentation
-│   ├── api/                    # 90+ API route handlers
+│   ├── api/                    # 100+ API route handlers
 │   │   ├── inbox/              # Paste, list, score, retry
 │   │   ├── briefs/             # Generate, batch, regenerate
 │   │   ├── production/         # Batches, export, export-pack
 │   │   ├── channels/           # CRUD, character-bible, video-bible, series, format-templates, idea-matrix
 │   │   ├── learning/           # Trigger, history, weights
-│   │   ├── ai/                 # Intelligence, anomalies, confidence
+│   │   ├── ai/                 # Intelligence, anomalies, confidence, agents, predict-win
+│   │   ├── cron/               # Nightly-learning, trend-analysis, retry-scoring
+│   │   ├── internal/           # import-chunk, score-batch, relay endpoints
+│   │   ├── telegram/           # Telegram webhook, bot setup
 │   │   └── ...                 # tracking, settings, calendar, etc.
 │   └── layout.tsx              # Root layout + metadata + ThemeProvider
 │
-├── components/                 # 95+ React components
-│   ├── layout/                 # Header, nav, sidebar, PageHeader
+├── components/                 # 100+ React components
+│   ├── layout/                 # Header, nav, sidebar, PageHeader, mobile-fab, pwa-head
 │   ├── channels/               # Channel detail, bible editors, format bank, idea matrix, video bible, series planner
 │   ├── production/             # Product selector, brief preview, export, production stepper
 │   ├── inbox/                  # Paste box, inbox table, filters, pagination, detail panel (modularized)
@@ -81,28 +85,44 @@ affiliate-scorer/
 │   └── ui/                     # Radix primitives, shadcn components
 │
 ├── lib/                        # Business logic + utilities
+│   ├── agents/                 # AI Agent System (6 phases)
+│   │   ├── channel-memory-builder.ts          # Phase 1: ChannelMemory context enrichment
+│   │   ├── brief-personalization.ts           # Phase 2: Auto-inject memory into briefs
+│   │   ├── content-analyzer.ts                # Phase 3: TikTok oembed + AI classification
+│   │   ├── tiktok-oembed.ts                   # TikTok metadata extraction
+│   │   ├── telegram-bot-handler.ts            # Phase 4: Telegram bot + competitor capture
+│   │   ├── trend-intelligence.ts              # Phase 4: Batch trend analysis
+│   │   ├── win-predictor.ts                   # Phase 5: Formula-based win probability
+│   │   └── nightly-learning.ts                # Cron job: Daily AI tasks + memory updates
 │   ├── ai/                     # AI scoring engine
 │   ├── content/                # Brief generation, character bible, video bible, format templates, idea matrix, episodes, export packs
 │   ├── parsers/                # FastMoss, KaloData, TikTok Studio
 │   ├── scoring/                # Scoring formula, learning weights
+│   ├── import/                 # Chunked import utilities, fire-relay
 │   ├── utils/                  # Helpers, rate limiting, encryption
 │   ├── types/                  # TypeScript type definitions
 │   └── validations/            # Zod schemas (content, character, video-bible, series)
 │
 ├── prisma/                     # Database
-│   └── schema.prisma           # 40+ models
+│   └── schema.prisma           # 45+ models (added ChannelMemory, CompetitorCapture, TelegramChat)
+│
+├── public/                     # PWA assets
+│   ├── manifest.json           # PWA manifest
+│   ├── sw.js                   # Service worker
+│   └── icons/                  # App icons
 │
 ├── docs/                       # Documentation
 └── prompt/                     # Task specifications
 ```
 
-## Database Models (40+)
+## Database Models (45+)
 
 Key model groups:
 
 **Core:** Product, ProductIdentity, ProductUrl, InboxItem, ImportBatch, ProductSnapshot
 **Content:** ContentBrief, ContentAsset, ProductionBatch, ContentSlot
 **Channel:** TikTokChannel, CharacterBible, VideoBible, FormatTemplate, IdeaMatrixItem
+**AI Agents:** ChannelMemory, CompetitorCapture, TelegramChat
 **Production:** ShotCode, SceneTemplate, Series, Episode
 **Tracking:** AssetMetric, VideoTracking, ContentPost, Campaign
 **Learning:** Feedback, LearningLog, LearningWeightP4, UserPattern, WinPattern
@@ -158,6 +178,14 @@ Key model groups:
 - **Command Palette:** Quick navigation with ⌘K keyboard shortcut
 - **Responsive Layouts:** Mobile-first design with bento layouts, card layout for inbox (<md), collapsible navigation
 - **Accessibility:** ARIA attributes, keyboard navigation, screen reader support
+- **PWA Support:** Progressive Web App with manifest.json, service worker, mobile FAB, installable
+- **AI Agent System (6 phases):**
+  - **Phase 1:** ChannelMemory + nightly learning (22:00 UTC daily)
+  - **Phase 2:** Brief personalization via memory context injection
+  - **Phase 3:** Content analyzer with TikTok oembed + AI classification
+  - **Phase 4:** Telegram bot integration + competitor trend analysis (22:30 UTC daily)
+  - **Phase 5:** Win predictor with 6-feature formula scoring
+  - **Phase 6:** Mobile quick-log FAB + PWA installability
 
 ## Deployment
 

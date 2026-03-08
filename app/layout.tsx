@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SetupBanner } from "@/components/shared/setup-banner";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { TaskProgressWidget } from "@/components/shared/task-progress-widget";
+import { MobileFab } from "@/components/shared/mobile-fab";
+import { PwaHead } from "@/components/shared/pwa-head";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -47,6 +49,14 @@ export default function RootLayout({
 }>): React.ReactElement {
   return (
     <html lang="vi" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="PASTR" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        <meta name="theme-color" content="#2563eb" />
+      </head>
       <body
         className={`${beVietnamPro.variable} ${geistMono.variable} font-sans antialiased bg-gray-50 dark:bg-slate-950 min-h-screen`}
       >
@@ -58,6 +68,8 @@ export default function RootLayout({
               {children}
             </SidebarAwareMain>
           </div>
+          <MobileFab />
+          <PwaHead />
           <CommandPalette />
           <TaskProgressWidget />
           <Toaster richColors position="top-right" />

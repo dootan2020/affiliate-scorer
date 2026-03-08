@@ -9,6 +9,7 @@ import type { FormatTemplateData } from "./format-template-types";
 import { buildCharacterBlock, buildFormatBlock } from "./build-character-prompt-block";
 import { buildVideoBibleBlock } from "./build-video-bible-prompt-block";
 import { runConsistencyQc } from "./consistency-qc";
+import { buildBriefPersonalization } from "@/lib/agents/brief-personalization";
 
 export interface ChannelContext {
   channelId: string;
@@ -51,6 +52,7 @@ export interface BriefOptions {
   calendarEvents?: CalendarEventInput[] | null;
   suggestedHooks?: SuggestedHookInput[] | null;
   suggestedFormats?: SuggestedFormatInput[] | null;
+  personalizationPromptBlock?: string | null; // Injected by brief-personalization agent
 }
 
 export interface ProductInput {
@@ -220,6 +222,11 @@ THỜI LƯỢNG MỤC TIÊU: ${options.targetDuration} giây
     ? `\n${buildCharacterBlock(options.characterBible)}\n`
     : "";
 
+  // Channel performance history from ChannelMemory (injected by brief-personalization agent)
+  const personalizationBlock = options?.personalizationPromptBlock
+    ? `\n${options.personalizationPromptBlock}\n`
+    : "";
+
   const formatBlock = options?.formatTemplate
     ? `\n${buildFormatBlock(options.formatTemplate)}\n`
     : "";
@@ -254,7 +261,7 @@ ${options.suggestedFormats.map((f) => `- ${f.name}: ${f.description}`).join("\n"
     return parts.length > 0 ? "\n" + parts.join("\n\n") + "\n" : "";
   })();
 
-  return `${channelBlock}${characterBlock}${formatBlock}${videoBibleBlock}${calendarBlock}${exploreExploitBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
+  return `${channelBlock}${characterBlock}${personalizationBlock}${formatBlock}${videoBibleBlock}${calendarBlock}${exploreExploitBlock}${contentTypeBlock}${videoFormatBlock}${durationBlock}
 SẢN PHẨM:
 - Tên: ${product.title || "Chưa có tên"}
 - Giá: ${product.price ? formatVND(product.price) : "chưa rõ"}
@@ -389,9 +396,22 @@ export async function generateBrief(product: ProductInput, options?: BriefOption
     );
   }
 
+  // Auto-fetch personalization context if channel provided and not already set
+  let enrichedOptions = options;
+  if (options?.channel?.channelId && !options.personalizationPromptBlock) {
+    try {
+      const personalization = await buildBriefPersonalization(options.channel.channelId);
+      if (personalization) {
+        enrichedOptions = { ...options, personalizationPromptBlock: personalization.promptBlock };
+      }
+    } catch (err) {
+      console.warn("[generateBrief] Personalization fetch failed, continuing without:", err);
+    }
+  }
+
   // AI call — OUTSIDE transaction (slow, external service)
   const startTime = Date.now();
-  const prompt = buildBriefPrompt(product, options);
+  const prompt = buildBriefPrompt(product, enrichedOptions);
   const { modelUsed, parsed: brief } = await callAIWithRetry(
     SYSTEM_PROMPT, prompt, 6000, "content_brief",
   );

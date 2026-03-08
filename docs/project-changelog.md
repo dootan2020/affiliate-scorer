@@ -417,6 +417,73 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 
 ---
 
+## [1.9.0] — 2026-03-08 — AI Agent System (6 Phases)
+
+### Added
+
+- **Phase 1: Schema + Nightly Learning**
+  - New models: ChannelMemory, CompetitorCapture, TelegramChat
+  - Extended ContentAsset with actual_format, actual_style, actual_trend, actual_engagement fields
+  - Extended UserPattern with channelId for channel-scoped learning
+  - Cron: `/api/cron/nightly-learning` at 22:00 UTC daily
+  - Module: `lib/agents/nightly-learning.ts`
+
+- **Phase 2: Brief Personalization ($0 cost)**
+  - Auto-inject ChannelMemory context into brief prompts
+  - Module: `lib/agents/brief-personalization.ts`
+  - Enriches briefs with channel history, winning formats, character traits
+
+- **Phase 3: Content Analyzer**
+  - TikTok oembed integration for metadata extraction
+  - AI classification of video format, style, engagement
+  - Modules: `lib/agents/content-analyzer.ts`, `lib/agents/tiktok-oembed.ts`
+  - Triggered on `/api/log/quick` when asset posted
+  - Populates actual_* fields on ContentAsset
+
+- **Phase 4: Telegram Bot + Trend Intelligence**
+  - Telegram bot webhook setup at `/api/telegram/setup`
+  - Receive & analyze competitor TikTok links via bot
+  - Store captures in CompetitorCapture model
+  - Cron: `/api/cron/trend-analysis` at 22:30 UTC daily
+  - Batch analyze competitor trends, feed into morning briefs
+  - Modules: `lib/agents/telegram-bot-handler.ts`, `lib/agents/trend-intelligence.ts`
+
+- **Phase 5: Win Predictor ($0 cost)**
+  - Formula-based win probability scoring (no AI calls)
+  - 6-feature model: engagement, format match, trend alignment, content consistency, audience match, seasonality
+  - Route: `POST /api/agents/predict-win`
+  - Module: `lib/agents/win-predictor.ts`
+
+- **Phase 6: PWA + Mobile Quick-Log**
+  - Progressive Web App manifest + service worker
+  - Mobile FAB button for quick-log access
+  - Installable on mobile home screen
+  - Offline support via service worker
+  - Files: `public/manifest.json`, `public/sw.js`, `components/layout/mobile-fab.tsx`, `components/layout/pwa-head.tsx`
+
+### Cost Optimization
+
+- **Total AI calls:** ~3-5 per day
+- **Estimated cost:** ~$5-10/month
+- **Zero-cost phases:** Phase 2 (memory enrichment), Phase 5 (formula scoring), Phase 6 (PWA)
+- **Strategic AI usage:** Phase 1 (nightly batch), Phase 4 (daily trend batch), Phase 3 (on-demand)
+
+### Database Additions
+
+- Added 3 new models (ChannelMemory, CompetitorCapture, TelegramChat)
+- Extended 2 existing models (ContentAsset, UserPattern)
+- Total models: 45+
+
+### API Additions
+
+- `/api/cron/nightly-learning` — Daily at 22:00 UTC
+- `/api/cron/trend-analysis` — Daily at 22:30 UTC
+- `/api/agents/predict-win` — Formula-based win prediction
+- `/api/telegram/setup` — Telegram bot initialization
+- `/api/telegram/webhook` — Telegram message receiver
+
+---
+
 ## [Unreleased] — Future
 
 ### Planned
@@ -428,4 +495,6 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 - Chrome Extension (MV3) for one-click product capture
 - Multi-channel expansion beyond TikTok
 - Advanced analytics dashboards
-- Mobile PWA optimization
+- Enhanced mobile PWA offline sync
+- Multi-language support for briefs
+- A/B testing framework for content variants

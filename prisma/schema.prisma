@@ -631,6 +631,13 @@ model ContentAsset {
   postId       String?
   publishedAt  DateTime?
 
+  // Agent-extracted actual metadata (post-publish)
+  actualHookType String?
+  actualFormat   String?
+  actualAngle    String?
+  postedAt       DateTime?
+  tiktokVideoId  String?
+
   // Versioning
   version       Int     @default(1)
   parentAssetId String?
@@ -750,8 +757,13 @@ model UserPattern {
   avgReward Decimal? @db.Decimal(8, 4)
   winRate   Decimal? @db.Decimal(3, 2)
 
+  // Per-channel pattern support (empty = global)
+  channelId String @default("")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([channelId])
 }
 
 // ─── PHASE 5: BUSINESS LAYER ───
@@ -967,6 +979,10 @@ model TikTokChannel {
   series          Series[]
   modelImages     ChannelModelImage[]
   nicheProfiles   NicheProfile[]
+
+  // AI Agent System
+  channelMemory      ChannelMemory?
+  competitorCaptures CompetitorCapture[]
 }
 
 model ChannelModelImage {
@@ -1347,4 +1363,61 @@ model ScoringGlobalStats {
   globalMin Float    @default(100)
   globalMax Float    @default(0)
   updatedAt DateTime @updatedAt
+}
+
+// ─── AI AGENT SYSTEM ───
+
+model ChannelMemory {
+  id        String @id @default(cuid())
+  channelId String @unique
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  totalVideos Int     @default(0)
+  totalOrders Int     @default(0)
+  avgReward   Decimal @default(0) @db.Decimal(8, 4)
+
+  winningCombos    Json @default("[]") // [{ hookType, format, category, winRate, sampleSize }]
+  losingCombos     Json @default("[]")
+  usedAngles       Json @default("[]") // string[]
+  usedHooks        Json @default("[]") // [{ hookText, avgReward, count }]
+  trendingInsights Json @default("[]") // [{ hook, format, angle, trendScore }]
+
+  insightSummary String? // AI-generated 1-2 sentence Vietnamese summary
+
+  lastUpdated DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+model CompetitorCapture {
+  id        String @id @default(cuid())
+  channelId String
+  channel   TikTokChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  tiktokUrl    String
+  authorHandle String?
+  caption      String?
+  hashtags     Json    @default("[]")
+  thumbnailUrl String?
+  userNote     String?
+
+  // AI analysis results (filled by trend-intelligence agent)
+  detectedHookType String?
+  detectedFormat   String?
+  detectedAngle    String?
+  trendScore       Int?
+  analyzedAt       DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([channelId])
+  @@index([createdAt(sort: Desc)])
+  @@index([analyzedAt])
+}
+
+model TelegramChat {
+  id              String  @id @default(cuid())
+  chatId          String  @unique
+  activeChannelId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

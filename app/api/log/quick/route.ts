@@ -8,6 +8,7 @@ import { matchTikTokLink, extractPostId } from "@/lib/learning/match-tiktok-link
 import { validateBody } from "@/lib/validations/validate-body";
 import { quickLogSchema } from "@/lib/validations/schemas-content";
 import { validateTransition } from "@/lib/state-machines/transitions";
+import { analyzeContent } from "@/lib/agents/content-analyzer";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
@@ -85,7 +86,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     await prisma.contentAsset.update({ where: { id: assetId }, data: updateData });
 
-    // Update learning weights (channel-specific + global)
+    // Content Analyzer: fire-and-forget (runs async, doesn't block response)
+    // Nightly learning will pick up actual* fields for weight updates
+    if (body.tiktokUrl) {
+      analyzeContent(assetId, body.tiktokUrl).catch((err) => {
+        console.warn("[log/quick] Background content analysis failed:", err);
+      });
+    }
+
+    // Update learning weights (using planned metadata — actual* updated async by analyzer)
     await updateLearningWeights(
       {
         hookType: asset.hookType,

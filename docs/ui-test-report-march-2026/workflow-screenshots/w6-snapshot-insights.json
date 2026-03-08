@@ -1,0 +1,608 @@
+{
+  "success": true,
+  "url": "https://affiliate-scorer.vercel.app/insights",
+  "title": "Phân tích | PASTR",
+  "elementCount": 30,
+  "elements": [
+    {
+      "index": 0,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-2 min-w-0",
+      "name": null,
+      "value": null,
+      "text": "PPASTR",
+      "href": "https://affiliate-scorer.vercel.app/",
+      "selector": "a.flex.items-center.gap-2.min-w-0",
+      "xpath": "/html/body/div[2]/aside[1]/div[1]/a[1]",
+      "visible": true,
+      "position": {
+        "x": 20,
+        "y": 18,
+        "width": 101.375,
+        "height": 28
+      }
+    },
+    {
+      "index": 1,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Tổng quan",
+      "href": "https://affiliate-scorer.vercel.app/",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[1]/div[1]/a[1]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 92.5,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 2,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Hộp sản phẩm99+",
+      "href": "https://affiliate-scorer.vercel.app/inbox",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[1]/div[1]/a[2]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 130.5,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 3,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Sản xuất3",
+      "href": "https://affiliate-scorer.vercel.app/production",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[1]/div[1]/a[3]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 168.5,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 4,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Kênh TikTok",
+      "href": "https://affiliate-scorer.vercel.app/channels",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[1]/div[1]/a[4]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 206.5,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 5,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Nhật ký",
+      "href": "https://affiliate-scorer.vercel.app/log",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[2]/div[1]/a[1]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 287,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 6,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-[#E87B35] bg-orange-50 text-orange-700 font-medium dark:border-l-[#FF8F47] dark:bg-orange-950/20 dark:text-orange-400",
+      "name": null,
+      "value": null,
+      "text": "Phân tích",
+      "href": "https://affiliate-scorer.vercel.app/insights",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-[#E87B35].bg-orange-50.text-orange-700.font-medium.dark:border-l-[#FF8F47].dark:bg-orange-950/20.dark:text-orange-400",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[2]/div[1]/a[2]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 325,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 7,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Đồng bộ dữ liệu",
+      "href": "https://affiliate-scorer.vercel.app/sync",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[3]/div[1]/a[1]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 405.5,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 8,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Thư viện",
+      "href": "https://affiliate-scorer.vercel.app/library",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[3]/div[1]/a[2]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 443.5,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 9,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Tìm ngách",
+      "href": "https://affiliate-scorer.vercel.app/niche-finder",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[3]/div[1]/a[3]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 481.5,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 10,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Cài đặt",
+      "href": "https://affiliate-scorer.vercel.app/settings",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[4]/div[1]/a[1]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 562,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 11,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex items-center gap-3 px-3 py-2 rounded-r-xl text-sm transition-colors border-l-[3px] border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-slate-800 dark:hover:text-gray-200",
+      "name": null,
+      "value": null,
+      "text": "Hướng dẫn",
+      "href": "https://affiliate-scorer.vercel.app/guide",
+      "selector": "a.flex.items-center.gap-3.px-3.py-2.rounded-r-xl.text-sm.transition-colors.border-l-[3px].border-l-transparent.text-gray-600.hover:bg-gray-50.hover:text-gray-900.dark:text-gray-400.dark:hover:bg-slate-800.dark:hover:text-gray-200",
+      "xpath": "/html/body/div[2]/aside[1]/nav[1]/div[4]/div[1]/a[2]",
+      "visible": true,
+      "position": {
+        "x": 12,
+        "y": 600,
+        "width": 215,
+        "height": 36
+      }
+    },
+    {
+      "index": 12,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0",
+      "name": null,
+      "value": null,
+      "text": null,
+      "href": null,
+      "selector": "button.w-9.h-9.flex.items-center.justify-center.rounded-lg.text-gray-500.hover:text-gray-900.dark:text-gray-400.dark:hover:text-gray-50.hover:bg-gray-100.dark:hover:bg-slate-800.transition-colors.shrink-0",
+      "xpath": "/html/body/div[2]/aside[1]/div[2]/div[1]/div[1]/button[1]",
+      "visible": true,
+      "position": {
+        "x": 143,
+        "y": 552,
+        "width": 36,
+        "height": 36
+      }
+    },
+    {
+      "index": 13,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors",
+      "name": null,
+      "value": null,
+      "text": null,
+      "href": null,
+      "selector": "button.w-9.h-9.flex.items-center.justify-center.rounded-lg.text-gray-500.hover:text-gray-900.dark:text-gray-400.dark:hover:text-gray-50.hover:bg-gray-100.dark:hover:bg-slate-800.transition-colors",
+      "xpath": "/html/body/div[2]/aside[1]/div[2]/div[1]/div[1]/button[2]",
+      "visible": true,
+      "position": {
+        "x": 183,
+        "y": 552,
+        "width": 36,
+        "height": 36
+      }
+    },
+    {
+      "index": 14,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 size-9",
+      "name": null,
+      "value": null,
+      "text": null,
+      "href": null,
+      "selector": "button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-xl.text-sm.font-medium.transition-all.disabled:pointer-events-none.disabled:opacity-50.[&_svg]:pointer-events-none.[&_svg:not([class*='size-'])]:size-4.shrink-0.[&_svg]:shrink-0.outline-none.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:ring-[3px].aria-invalid:ring-destructive/20.dark:aria-invalid:ring-destructive/40.aria-invalid:border-destructive.hover:bg-accent.hover:text-accent-foreground.dark:hover:bg-accent/50.size-9",
+      "xpath": "/html/body/div[2]/header[1]/button[1]",
+      "visible": false,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "index": 15,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 size-9",
+      "name": null,
+      "value": null,
+      "text": null,
+      "href": null,
+      "selector": "button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-xl.text-sm.font-medium.transition-all.disabled:pointer-events-none.disabled:opacity-50.[&_svg]:pointer-events-none.[&_svg:not([class*='size-'])]:size-4.shrink-0.[&_svg]:shrink-0.outline-none.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:ring-[3px].aria-invalid:ring-destructive/20.dark:aria-invalid:ring-destructive/40.aria-invalid:border-destructive.hover:bg-accent.hover:text-accent-foreground.dark:hover:bg-accent/50.size-9",
+      "xpath": "/html/body/div[2]/header[1]/button[2]",
+      "visible": false,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "index": 16,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px] text-gray-400 dark:text-gray-500",
+      "name": null,
+      "value": null,
+      "text": "Tổng quan",
+      "href": "https://affiliate-scorer.vercel.app/",
+      "selector": "a.flex.flex-col.items-center.gap-0.5.px-3.py-1.5.rounded-lg.transition-colors.min-w-[56px].text-gray-400.dark:text-gray-500",
+      "xpath": "/html/body/div[2]/nav[1]/div[1]/a[1]",
+      "visible": false,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "index": 17,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px] text-gray-400 dark:text-gray-500",
+      "name": null,
+      "value": null,
+      "text": "Hộp SP",
+      "href": "https://affiliate-scorer.vercel.app/inbox",
+      "selector": "a.flex.flex-col.items-center.gap-0.5.px-3.py-1.5.rounded-lg.transition-colors.min-w-[56px].text-gray-400.dark:text-gray-500",
+      "xpath": "/html/body/div[2]/nav[1]/div[1]/a[2]",
+      "visible": false,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "index": 18,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px] text-gray-400 dark:text-gray-500",
+      "name": null,
+      "value": null,
+      "text": "Sản xuất",
+      "href": "https://affiliate-scorer.vercel.app/production",
+      "selector": "a.flex.flex-col.items-center.gap-0.5.px-3.py-1.5.rounded-lg.transition-colors.min-w-[56px].text-gray-400.dark:text-gray-500",
+      "xpath": "/html/body/div[2]/nav[1]/div[1]/a[3]",
+      "visible": false,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "index": 19,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px] text-gray-400 dark:text-gray-500",
+      "name": null,
+      "value": null,
+      "text": "Kênh",
+      "href": "https://affiliate-scorer.vercel.app/channels",
+      "selector": "a.flex.flex-col.items-center.gap-0.5.px-3.py-1.5.rounded-lg.transition-colors.min-w-[56px].text-gray-400.dark:text-gray-500",
+      "xpath": "/html/body/div[2]/nav[1]/div[1]/a[4]",
+      "visible": false,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "index": 20,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px] text-orange-600 dark:text-orange-400",
+      "name": null,
+      "value": null,
+      "text": "Thêm",
+      "href": null,
+      "selector": "button.flex.flex-col.items-center.gap-0.5.px-3.py-1.5.rounded-lg.transition-colors.min-w-[56px].text-orange-600.dark:text-orange-400",
+      "xpath": "/html/body/div[2]/nav[1]/div[1]/div[1]/button[1]",
+      "visible": false,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "index": 21,
+      "tagName": "select",
+      "type": "select-one",
+      "id": null,
+      "className": "rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none",
+      "name": null,
+      "value": null,
+      "text": "Tất cả kênhChuyên Gia Phụ Kiện Xế Hộp (Anh Long Kỹ Thuật)Công nghệ (Điện thoại & Thiết bị Điện tử) (",
+      "href": null,
+      "selector": "select.rounded-xl.border.border-gray-200.dark:border-slate-700.bg-white.dark:bg-slate-800.px-3.py-2.text-sm.focus:ring-2.focus:ring-orange-500/20.focus:border-orange-500.transition-all.outline-none",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[1]/div[2]/select[1]",
+      "visible": true,
+      "position": {
+        "x": 393.921875,
+        "y": 69.65625,
+        "width": 661,
+        "height": 38
+      }
+    },
+    {
+      "index": 22,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-primary-foreground h-9 min-h-[44px] px-4 py-2 has-[>svg]:px-3 bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400 w-full sm:w-auto",
+      "name": null,
+      "value": null,
+      "text": "Chạy Learning",
+      "href": null,
+      "selector": "button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-xl.text-sm.font-medium.transition-all.disabled:pointer-events-none.disabled:opacity-50.[&_svg]:pointer-events-none.[&_svg:not([class*='size-'])]:size-4.shrink-0.[&_svg]:shrink-0.outline-none.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:ring-[3px].aria-invalid:ring-destructive/20.dark:aria-invalid:ring-destructive/40.aria-invalid:border-destructive.text-primary-foreground.h-9.min-h-[44px].px-4.py-2.has-[>svg]:px-3.bg-orange-600.hover:bg-orange-700.dark:bg-orange-500.dark:hover:bg-orange-400.w-full.sm:w-auto",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[1]/div[2]/button[1]",
+      "visible": true,
+      "position": {
+        "x": 1066.921875,
+        "y": 66.65625,
+        "width": 148.390625,
+        "height": 44
+      }
+    },
+    {
+      "index": 23,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 bg-white dark:bg-slate-700 shadow-sm text-gray-900 dark:text-gray-50",
+      "name": null,
+      "value": null,
+      "text": "Tổng quan",
+      "href": null,
+      "selector": "button.px-4.py-2.rounded-lg.text-sm.font-medium.transition-all.whitespace-nowrap.flex.items-center.gap-1.5.bg-white.dark:bg-slate-700.shadow-sm.text-gray-900.dark:text-gray-50",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[2]/div[1]/button[1]",
+      "visible": true,
+      "position": {
+        "x": 268,
+        "y": 181.3125,
+        "width": 105.25,
+        "height": 36
+      }
+    },
+    {
+      "index": 24,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50",
+      "name": null,
+      "value": null,
+      "text": "Tài chính",
+      "href": null,
+      "selector": "button.px-4.py-2.rounded-lg.text-sm.font-medium.transition-all.whitespace-nowrap.flex.items-center.gap-1.5.text-gray-500.dark:text-gray-400.hover:text-gray-900.dark:hover:text-gray-50",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[2]/div[1]/button[2]",
+      "visible": true,
+      "position": {
+        "x": 377.25,
+        "y": 181.3125,
+        "width": 93.546875,
+        "height": 36
+      }
+    },
+    {
+      "index": 25,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50",
+      "name": null,
+      "value": null,
+      "text": "Học & Patterns",
+      "href": null,
+      "selector": "button.px-4.py-2.rounded-lg.text-sm.font-medium.transition-all.whitespace-nowrap.flex.items-center.gap-1.5.text-gray-500.dark:text-gray-400.hover:text-gray-900.dark:hover:text-gray-50",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[2]/div[1]/button[3]",
+      "visible": true,
+      "position": {
+        "x": 474.796875,
+        "y": 181.3125,
+        "width": 135.71875,
+        "height": 36
+      }
+    },
+    {
+      "index": 26,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50",
+      "name": null,
+      "value": null,
+      "text": "Playbook",
+      "href": null,
+      "selector": "button.px-4.py-2.rounded-lg.text-sm.font-medium.transition-all.whitespace-nowrap.flex.items-center.gap-1.5.text-gray-500.dark:text-gray-400.hover:text-gray-900.dark:hover:text-gray-50",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[2]/div[1]/button[4]",
+      "visible": true,
+      "position": {
+        "x": 614.515625,
+        "y": 181.3125,
+        "width": 97.109375,
+        "height": 36
+      }
+    },
+    {
+      "index": 27,
+      "tagName": "a",
+      "type": null,
+      "id": null,
+      "className": "text-sm text-orange-600 dark:text-orange-400 hover:underline",
+      "name": null,
+      "value": null,
+      "text": "Xem danh sách sản phẩm →",
+      "href": "https://affiliate-scorer.vercel.app/inbox",
+      "selector": "a.text-sm.text-orange-600.dark:text-orange-400.hover:underline",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[2]/div[2]/div[1]/div[4]/div[2]/a[1]",
+      "visible": true,
+      "position": {
+        "x": 289,
+        "y": 969.3125,
+        "width": 192.328125,
+        "height": 18
+      }
+    },
+    {
+      "index": 28,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "inline-flex items-center justify-center whitespace-nowrap font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary/90 h-6 gap-1 rounded-xl px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+      "name": null,
+      "value": null,
+      "text": "Tạo báo cáo",
+      "href": null,
+      "selector": "button.inline-flex.items-center.justify-center.whitespace-nowrap.font-medium.transition-all.disabled:pointer-events-none.disabled:opacity-50.[&_svg]:pointer-events-none.shrink-0.[&_svg]:shrink-0.outline-none.focus-visible:border-ring.focus-visible:ring-ring/50.focus-visible:ring-[3px].aria-invalid:ring-destructive/20.dark:aria-invalid:ring-destructive/40.aria-invalid:border-destructive.bg-primary.text-primary-foreground.hover:bg-primary/90.h-6.gap-1.rounded-xl.px-2.text-xs.has-[>svg]:px-1.5.[&_svg:not([class*='size-'])]:size-3",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[3]/div[1]/div[2]/div[1]/button[1]",
+      "visible": true,
+      "position": {
+        "x": 652.359375,
+        "y": 1417.8125,
+        "width": 103.640625,
+        "height": 24
+      }
+    },
+    {
+      "index": 29,
+      "tagName": "button",
+      "type": "submit",
+      "id": null,
+      "className": "inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 transition-colors disabled:opacity-50",
+      "name": null,
+      "value": null,
+      "text": "Refresh Playbook",
+      "href": null,
+      "selector": "button.inline-flex.items-center.gap-1.5.text-xs.text-gray-500.dark:text-gray-400.hover:text-gray-900.dark:hover:text-gray-50.transition-colors.disabled:opacity-50",
+      "xpath": "/html/body/div[2]/main[1]/div[1]/div[1]/div[3]/div[2]/div[1]/button[1]",
+      "visible": true,
+      "position": {
+        "x": 634.40625,
+        "y": 1698.8125,
+        "width": 121.59375,
+        "height": 16
+      }
+    }
+  ]
+}

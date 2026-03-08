@@ -36,15 +36,18 @@ const EVENTS_2026: EventSeed[] = [
 export async function POST(): Promise<NextResponse> {
   try {
     const existing = await prisma.calendarEvent.findMany({
-      select: { name: true },
+      select: { name: true, startDate: true },
     });
     const existingNames = new Set(existing.map((e) => e.name));
+    const existingDates = new Set(
+      existing.map((e) => e.startDate.toISOString().slice(0, 10))
+    );
 
     let created = 0;
     let skipped = 0;
 
     for (const ev of EVENTS_2026) {
-      if (existingNames.has(ev.name)) {
+      if (existingNames.has(ev.name) || existingDates.has(ev.startDate)) {
         skipped++;
         continue;
       }

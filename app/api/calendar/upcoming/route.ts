@@ -30,9 +30,19 @@ export async function GET(): Promise<NextResponse> {
       orderBy: { startDate: "asc" },
     });
 
+    // Deduplicate events with same startDate (keep the one with longer name for clarity)
+    const deduped = new Map<string, typeof events[number]>();
+    for (const event of events) {
+      const key = event.startDate.toISOString().slice(0, 10);
+      const existing = deduped.get(key);
+      if (!existing || event.name.length > existing.name.length) {
+        deduped.set(key, event);
+      }
+    }
+
     // Calculate daysUntil for each event
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const upcomingEvents: UpcomingEvent[] = events.map((event) => {
+    const upcomingEvents: UpcomingEvent[] = Array.from(deduped.values()).map((event) => {
       const eventStart = new Date(event.startDate);
       const eventStartDay = new Date(
         eventStart.getFullYear(),

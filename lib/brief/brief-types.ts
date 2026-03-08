@@ -63,4 +63,11 @@ export interface BriefContent {
   channel_product_match?: ChannelProductMatch[];
   event_product_boost?: EventProductBoost[];
   pattern_highlight?: string | null;
+  // V3: Advisory critique (legacy, deprecated)
+  advisory_critique?: {
+    munger: string;
+    socrates: string;
+  } | null;
+  // V4: CEO brief review — actionable decision
+  ceo_brief_review?: string | null;
 }

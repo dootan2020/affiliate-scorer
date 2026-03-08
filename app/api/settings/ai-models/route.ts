@@ -9,6 +9,7 @@ const VALID_TASK_TYPES: AiTaskType[] = [
   "weekly_report",
   "channel_profile",
   "niche_intelligence",
+  "advisor",
 ];
 
 const VALID_MODEL_PREFIXES = [

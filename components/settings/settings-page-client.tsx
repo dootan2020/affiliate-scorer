@@ -47,6 +47,7 @@ const TASK_LABELS: Record<string, { label: string; description: string }> = {
   weekly_report: { label: "Báo cáo tuần", description: "Phân tích hiệu suất hàng tuần" },
   channel_profile: { label: "Hồ sơ kênh", description: "Tạo character bible và video bible cho kênh" },
   niche_intelligence: { label: "Phân tích ngách", description: "AI tư vấn ngách phù hợp cho người mới" },
+  advisor: { label: "Cố vấn chiến lược", description: "Ban lãnh đạo AI (CMO, CFO, CTO, CEO) phân tích và ra quyết định" },
 };
 
 const DEFAULT_MODELS: Record<string, string> = {
@@ -56,6 +57,7 @@ const DEFAULT_MODELS: Record<string, string> = {
   weekly_report: "claude-haiku-4-5-20251001",
   channel_profile: "claude-sonnet-4-6",
   niche_intelligence: "claude-sonnet-4-6",
+  advisor: "claude-sonnet-4-6",
 };
 
 const TIER_ORDER: Record<string, number> = { powerful: 0, balanced: 1, fast: 2 };

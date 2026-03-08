@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/db";
 import { callAI } from "@/lib/ai/call-ai";
 import type { BriefContent } from "./brief-types";
+import { ceoBriefReview } from "@/lib/advisor/analyze-pipeline";
 import {
   buildCategoryWeights,
   buildChannelSection,
@@ -117,6 +118,22 @@ export async function generateMorningBrief(): Promise<string> {
       new_products_alert: [], upcoming_events: [], yesterday_recap: "Không thể phân tích",
       tip: "Thử lại sau", weekly_progress: "",
     };
+  }
+
+  // V3: CEO brief review — actionable decision appended to brief
+  try {
+    const briefSummary = [
+      content.greeting,
+      content.produce_today?.map((p) => `Sản xuất: ${p.product} (${p.reason})`).join("; ") ?? "",
+      content.yesterday_recap,
+      content.tip,
+    ].filter(Boolean).join("\n");
+
+    const ceoReview = await ceoBriefReview(briefSummary);
+    content.ceo_brief_review = ceoReview;
+  } catch (err) {
+    console.error("[generateMorningBrief] CEO review failed (non-blocking):", err);
+    content.ceo_brief_review = null;
   }
 
   const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());

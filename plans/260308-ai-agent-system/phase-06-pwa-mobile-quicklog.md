@@ -9,7 +9,7 @@
 - **Date:** 2026-03-08
 - **Priority:** P3
 - **Effort:** 1h
-- **Status:** Pending
+- **Status:** Complete
 - **Description:** Add PWA manifest + service worker registration to make PASTR installable on mobile home screen. Add floating action button (FAB) on mobile for quick access to `/log`. The app is already responsive — PWA just adds installability + home screen icon.
 
 ## Key Insights

@@ -9,7 +9,7 @@
 - **Date:** 2026-03-08
 - **Priority:** P2
 - **Effort:** 2.5h
-- **Status:** Pending
+- **Status:** Complete
 - **Description:** Telegram bot for capturing competitor TikTok videos while browsing mobile. Webhook handler saves to CompetitorCapture table. Nightly trend analysis cron batch-processes captures via AI to detect trending hooks/formats/angles. Results feed into ChannelMemory.trendingInsights.
 
 ## Key Insights

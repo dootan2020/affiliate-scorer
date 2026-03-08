@@ -10,7 +10,7 @@
 - **Date:** 2026-03-08
 - **Priority:** P1
 - **Effort:** 2h
-- **Status:** Pending
+- **Status:** Complete
 - **Description:** Inject ChannelMemory + per-channel learning weights + past brief history into brief generation prompt. NOT a separate AI call — pure context enrichment layer that makes existing brief generation channel-aware.
 
 ## Key Insights

@@ -10,7 +10,7 @@
 - **Date:** 2026-03-08
 - **Priority:** P1
 - **Effort:** 2h
-- **Status:** Pending
+- **Status:** Complete
 - **Description:** Agent that auto-extracts video metadata from TikTok oembed API when user logs results, classifies hookType/format/angle via lightweight AI call, and writes structured data to ContentAsset.actual* fields. Closes the biggest feedback loop gap.
 
 ## Key Insights

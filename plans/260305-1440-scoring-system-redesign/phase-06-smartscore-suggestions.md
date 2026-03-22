@@ -86,6 +86,15 @@ function computeChannelFitBonus(
   let score = 0;
 
   // Niche match (0-50)
+  // [UPDATED from review — Fix 11: Niche key format mismatch]
+  // DB niche keys (e.g., "Home & Living") may not match NICHE_CATEGORY_MAP keys
+  // (e.g., "home_living"). normalizeNicheKey() in niche-category-map.ts handles conversion.
+  // PREREQUISITE: Before Phase 06 implementation, reconcile niche keys:
+  //   1. Query distinct niche values: SELECT DISTINCT niche FROM "Channel"
+  //   2. Query distinct category values: SELECT DISTINCT category FROM "ProductIdentity"
+  //   3. Verify normalizeNicheKey(niche) produces valid NICHE_CATEGORY_MAP keys
+  //   4. Document mapping table in niche-category-map.ts
+  //   5. If mismatches found, add missing entries to NICHE_CATEGORY_MAP
   if (channelNiche && product.category) {
     if (matchesNiche(channelNiche, product.category)) {
       score += 50;
@@ -107,6 +116,7 @@ function computeChannelFitBonus(
 function computeDiversityBonus(
   tag: "proven" | "explore",
   categoryUsedCount: number,  // how many times this category already suggested
+  productId: string,          // [UPDATED from review — Fix 8] needed for seeded jitter
 ): number {
   let score = 0;
 
@@ -118,8 +128,21 @@ function computeDiversityBonus(
   else if (categoryUsedCount === 1) score += 20;  // Seen once
   else if (categoryUsedCount >= 3) score -= 20;   // Over-represented
 
-  // Random jitter (0-20) for serendipity
-  score += Math.floor(Math.random() * 20);
+  // [UPDATED from review — Fix 8: seeded random for same-day determinism]
+  // Math.random() gives different results each page load → unstable rankings.
+  // Use seeded PRNG: hash(productId + YYYY-MM-DD) for deterministic daily jitter.
+  const seed = hashCode(`${productId}-${new Date().toISOString().slice(0, 10)}`);
+  score += Math.abs(seed % 21); // 0-20 jitter, deterministic per product per day
+
+  // Helper (add to module):
+  // function hashCode(str: string): number {
+  //   let hash = 0;
+  //   for (let i = 0; i < str.length; i++) {
+  //     hash = ((hash << 5) - hash) + str.charCodeAt(i);
+  //     hash |= 0;
+  //   }
+  //   return hash;
+  // }
 
   return Math.max(0, Math.min(100, score));
 }
@@ -221,9 +244,21 @@ function computeStalenessDecay(lastSeenAt: Date | null): number {
 
 **UI indicator:** Show "Dữ liệu cũ X ngày" badge on stale products in suggestions widget.
 
+### matchesNiche() Implementation Note [UPDATED from review — Fix 13]
+
+`matchesNiche()` already exists in `lib/suggestions/niche-category-map.ts`. It uses `normalizeNicheKey()` + `NICHE_CATEGORY_MAP` lookup with string-includes fallback. Import from there — do NOT redefine.
+
+Key risk: if niche keys from DB don't normalize to valid map keys, `matchesNiche()` silently falls back to substring matching (which may produce false positives/negatives). See Fix 11 — reconcile keys before Phase 06.
+
+```typescript
+// Import in compute-smart-suggestions.ts:
+import { matchesNiche } from "@/lib/suggestions/niche-category-map";
+```
+
 ## Files to modify
-- MODIFY: `lib/suggestions/compute-smart-suggestions.ts` — new smartScore formula + selection + staleness decay
+- MODIFY: `lib/suggestions/compute-smart-suggestions.ts` — new smartScore formula + selection + staleness decay + seeded jitter
 - MODIFY: `lib/suggestions/build-suggestion-reason.ts` — update for new tag logic + stale indicator
+- VERIFY: `lib/suggestions/niche-category-map.ts` — ensure matchesNiche() handles all DB niche keys (Fix 11)
 
 ## Success Criteria
 - smartScore range wider than combinedScore sort alone

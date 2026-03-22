@@ -152,21 +152,45 @@ async function checkGlobalStatsDrift(
   };
 }
 
+// [UPDATED from review — Fix 9: preImportStats can't persist between serverless invocations]
+// import-chunk and score-batch are separate Vercel serverless invocations with no shared memory.
+// Solution: Store preImportStats in ImportBatch record (JSON field) at scoring start,
+// read back for drift check after scoring completes.
+//
+// Schema change needed: add `preImportStats Json?` field to ImportBatch model
+// OR store in existing `metadata Json?` field on ImportBatch as metadata.preImportStats
+//
 // Integration in score-batch relay
-// File: app/api/internal/score-batch/route.ts → add after scoring completes
+// File: app/api/internal/score-batch/route.ts
 
+// At SCORING START (before any products scored):
+async function savePreImportStats(batchId: string): Promise<void> {
+  const stats = await getGlobalStats();
+  await prisma.importBatch.update({
+    where: { id: batchId },
+    data: { metadata: { preImportStats: stats } },
+  });
+}
+
+// At SCORING END:
 async function onBatchScoringComplete(batchId: string): Promise<void> {
   // Check if this was a large batch
   const batch = await prisma.importBatch.findUnique({
     where: { id: batchId },
-    select: { recordCount: true },
+    select: { recordCount: true, metadata: true },
   });
 
   if (!batch || batch.recordCount < 50) return; // Skip small batches
 
+  // Read preImportStats from ImportBatch metadata (persisted across invocations)
+  const preImportStats = (batch.metadata as Record<string, unknown>)?.preImportStats as GlobalStats | undefined;
+  if (!preImportStats) {
+    console.warn(`[rescore] No preImportStats found for batch ${batchId}, skip drift check`);
+    return;
+  }
+
   // Compare pre/post global stats
   const stats = await getGlobalStats();
-  // preImportStats was saved before scoring started
   const drift = await checkGlobalStatsDrift(preImportStats, stats);
 
   if (drift.drifted) {

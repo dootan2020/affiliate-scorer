@@ -34,6 +34,36 @@ BOT 20 avg: market=42.0, content=67.8, comm=4.6%,  price=77K
 **Commission rate and marketScore are the most discriminative fields.**
 Content potential has ZERO discrimination (66 vs 68).
 
+## Pre-scoring Filter: Virtual Product Exclusion [UPDATED from review — Fix 10]
+
+Top-scored products often include non-sellable items (thank-you cards, warranty cards, vouchers, gift wrapping) that score high on commission/sales but are not real affiliate products.
+
+### Implementation
+Add a filter at pipeline start (BEFORE scoring) to flag/exclude virtual products:
+
+```typescript
+// lib/scoring/virtual-product-filter.ts
+
+const VIRTUAL_KEYWORDS = [
+  "thẻ cảm ơn", "thank you card", "phiếu bảo hành", "warranty card",
+  "voucher", "gift card", "thẻ quà tặng", "phiếu giảm giá",
+  "gói quà", "gift wrap", "bao bì", "packaging",
+  "phụ kiện đi kèm", "accessory bundle",
+];
+
+export function isVirtualProduct(name: string): boolean {
+  const lower = name.toLowerCase();
+  return VIRTUAL_KEYWORDS.some(kw => lower.includes(kw));
+}
+```
+
+### Integration points:
+1. In `lib/scoring/formula.ts` → `calculateBaseScore()`: check `isVirtualProduct(name)`, return score=0 if true
+2. In ProductIdentity: optionally add `isVirtual: Boolean @default(false)` flag for UI filtering
+3. In import pipeline: flag virtual products at import time so they never enter scoring
+
+---
+
 ## New Formula Design
 
 ### Principles
@@ -65,6 +95,10 @@ VN TikTok affiliate commission reality:
 - 25%+: exceptional (digital, courses)
 
 ```typescript
+// [UPDATED from review — Fix 5: commissionVND source clarification]
+// Product model HAS commissionVND field. However, ProductIdentity does NOT.
+// When scoring from ProductIdentity context, compute: commissionVND = price × commissionRate / 100
+// When scoring from Product context, use product.commissionVND directly.
 function scoreCommission(rate: number, commissionVND: number): number {
   // Continuous scoring instead of discrete tiers
   // Maps 0-25% rate to 0-100 score with diminishing returns
@@ -87,8 +121,14 @@ function scoreCommission(rate: number, commissionVND: number): number {
 
 ### Component 2: Trending (25%)
 ```typescript
+// [UPDATED from review — Fix 6: salesGrowth7d source clarification]
+// Product model HAS salesGrowth7d (Float?). However, ProductIdentity does NOT.
+// When scoring from ProductIdentity context: compute from 2 latest ProductSnapshot records:
+//   salesGrowth7d = ((snapshot_new.sales7d - snapshot_old.sales7d) / snapshot_old.sales7d) * 100
+// When scoring from Product context: use product.salesGrowth7d directly.
+// If neither available, fall through to sales7d/salesTotal ratio fallback.
 function scoreTrending(product: ProductModel): number {
-  // Priority 1: Real growth data
+  // Priority 1: Real growth data (from Product.salesGrowth7d or computed from snapshots)
   if (product.salesGrowth7d !== null) {
     const g = product.salesGrowth7d;
     if (g <= -30) return 0;      // Crashing
@@ -97,9 +137,12 @@ function scoreTrending(product: ProductModel): number {
     if (g <= 10) return 35;      // Slight growth
     if (g <= 30) return 50;      // Moderate growth
     if (g <= 80) return 70;      // Strong growth
-    if (g <= 200) return 90;     // Very strong
-    if (g <= 500) return 100;    // Explosive
-    return 75;                    // >500% = spike risk, might crash
+    if (g <= 200) return 85;     // Very strong
+    if (g <= 500) return 95;     // Explosive but sustained
+    // [UPDATED from review — Fix 16: spike >500% is risky, should score LOWER than strong growth]
+    // Previous: returned 75 for >500% but 70 for "strong growth" — inverted logic.
+    // >500% growth in 7d is likely a spike that crashes. Score lower than sustained growth.
+    return 55;                    // >500% = spike risk, likely crashes — lower than sustained growth
   }
 
   // Priority 2: Estimate from sales7d/salesTotal ratio
@@ -188,7 +231,9 @@ function scoreSalesVelocity(product: ProductModel): number {
 ### Full Formula
 ```typescript
 export function calculateBaseScore(product: ProductModel): BaseScoreResult {
-  const commissionScore = scoreCommission(product.commissionRate, product.commissionVND);
+  // [UPDATED from review — Fix 5] Compute commissionVND if not available directly
+  const commissionVND = product.commissionVND ?? (product.price * product.commissionRate / 100);
+  const commissionScore = scoreCommission(product.commissionRate, commissionVND);
   const trendingScore = scoreTrending(product);
   const competitionScore = scoreCompetition(product);
   const priceScore = scorePriceAppeal(product.price);
@@ -206,9 +251,21 @@ export function calculateBaseScore(product: ProductModel): BaseScoreResult {
 }
 ```
 
+## Pre-implementation: Niche Key Reconciliation [UPDATED from review — Fix 11]
+
+Before implementing formula changes, reconcile niche/category key formats:
+1. Export distinct DB category values: `SELECT DISTINCT category FROM "ProductIdentity"`
+2. Export distinct niche values from Channel settings
+3. Verify `normalizeNicheKey()` and `normalizeCategory()` in `niche-category-map.ts` produce matching keys
+4. Add missing entries to `NICHE_CATEGORY_MAP`
+5. Document the mapping table in a code comment
+
+This prevents silent failures in `matchesNiche()` (Phase 06) and category-based scoring.
+
 ## Files to modify
 - MODIFY: `lib/scoring/formula.ts` — rewrite all score functions
 - MODIFY: `lib/ai/scoring.ts` — update ScoreBreakdown type references
+- MODIFY: `lib/suggestions/niche-category-map.ts` — reconcile keys, add missing entries
 
 ## Success Criteria
 - Formula output range: 10-95 (not 46-79 like before)

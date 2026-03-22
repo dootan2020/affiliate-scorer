@@ -154,41 +154,58 @@ async function bootstrapLearningWeights(): Promise<void> {
 }
 ```
 
-### Schema Migration Required: Feedback model missing `source` field
+### Schema Status: Feedback model already has `source` field [UPDATED from review — Fix 2]
 
-Current Feedback model (prisma/schema.prisma) does NOT have:
-- `source` field — needed for implicit vs manual vs outcome feedback tracking
-- `@@unique([productId, source])` — needed for upsert in `logImplicitPositive/Negative`
+Current Feedback model (prisma/schema.prisma) ALREADY has:
+- `source String @default("manual")` field (line 151)
+- `@@unique([productId, source], name: "productId_source")` constraint (line 153)
 
-**Migration step (must run before implementing implicit feedback):**
+**No schema migration needed for `source` field.**
 
-```prisma
-// Add to model Feedback in prisma/schema.prisma:
+**However, data deduplication may be required:** If any existing rows violate the unique constraint (duplicate `[productId, source]` pairs), the constraint would have failed during the migration that added it. Before relying on upsert logic, verify data integrity:
 
-model Feedback {
-  // ... existing fields ...
-
-  source String @default("manual")  // "manual" | "implicit" | "outcome" | "quick"
-
-  // Replace existing @@index([productId]) with:
-  @@unique([productId, source], name: "productId_source")
-  @@index([overallSuccess])
-  @@index([feedbackDate])
-  @@index([campaignId])
-}
+```sql
+-- Check for duplicate productId+source pairs
+SELECT "productId", source, COUNT(*) as cnt
+FROM "Feedback"
+GROUP BY "productId", source
+HAVING COUNT(*) > 1;
 ```
 
-```bash
-pnpm prisma migrate dev --name add-feedback-source-field
+If duplicates exist, deduplicate before proceeding:
+```sql
+-- Keep only the latest feedback per productId+source
+DELETE FROM "Feedback" f1
+USING "Feedback" f2
+WHERE f1."productId" = f2."productId"
+  AND f1.source = f2.source
+  AND f1."feedbackDate" < f2."feedbackDate";
 ```
 
-**Note:** Existing Feedback rows (if any) will get `source = "manual"` via @default. The composite unique constraint replaces the plain productId index — one feedback per product per source type.
+Add this deduplication check as Step 0 of Phase 07 implementation.
+
+### Source Field Validation [UPDATED from review — Fix 15]
+
+Add Zod enum validation for the `source` field instead of relying on string literals:
+
+```typescript
+// lib/feedback/feedback-schema.ts
+import { z } from "zod";
+
+export const FeedbackSourceSchema = z.enum(["manual", "implicit", "outcome", "quick"]);
+export type FeedbackSource = z.infer<typeof FeedbackSourceSchema>;
+
+// Use in API routes that accept/create feedback:
+const body = FeedbackSourceSchema.parse(requestBody.source);
+```
+
+This prevents invalid source values from entering the DB (e.g., typos like "manaul" or "auto").
 
 ## Files to modify
-- MODIFY: `prisma/schema.prisma` — add `source` field + composite unique to Feedback model
 - MODIFY: `lib/scoring/personalize.ts` — tiered activation, category/price preference
 - CREATE: `lib/feedback/implicit-feedback.ts` — implicit signal collection
-- MODIFY: Various API routes to emit implicit feedback signals
+- CREATE: `lib/feedback/feedback-schema.ts` — Zod enum for source field [Fix 15]
+- MODIFY: Various API routes to emit implicit feedback signals + validate source with Zod
 
 ## Success Criteria
 - System starts learning after 5 feedback entries (not 30)

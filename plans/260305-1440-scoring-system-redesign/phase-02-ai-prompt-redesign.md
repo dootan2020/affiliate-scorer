@@ -107,8 +107,9 @@ SP 55 điểm — Ốp lưng iPhone silicon, giá 25K, commission 30%:
   market_demand=60, quality_trust=40, viral_potential=40, risk=80
   → Nhu cầu có nhưng cạnh tranh khốc liệt, chất lượng tạm, khó làm video hay, nhưng an toàn
 
-SP 25 điểm — Viên giảm cân thảo dược XYZ, giá 350K, commission 40%:
+SP 27 điểm — Viên giảm cân thảo dược XYZ, giá 350K, commission 40%:
   market_demand=40, quality_trust=20, viral_potential=20, risk=20
+  → aiScore = 40×0.35 + 20×0.25 + 20×0.25 + 20×0.15 = 27 [UPDATED from review — Fix 17: was "25", actual math = 27]
   → Có người tìm nhưng nhạy cảm, không rõ nguồn gốc, khó demo, rủi ro cao bị report
 `;
 ```
@@ -197,6 +198,24 @@ Estimated token savings: ~30-40% per batch (remove redundant fields).
 User switches Gemini → Claude in Settings. New SP scored by Claude, old SP by Gemini.
 Sigmoid absorbs most drift, but user doesn't know which model scored which SP.
 
+### scoringVersion Format [UPDATED from review — Fix 12]
+
+Define explicit version string format to track old vs new scoring:
+
+```typescript
+// Version format: "v{major}.{minor}-{feature}-{YYYYMMDD}"
+// Examples:
+//   "v1.0-holistic-20260301"   — old holistic prompt
+//   "v2.0-rubric-20260315"     — new rubric-anchored prompt (this redesign)
+//   "v2.1-rubric-20260401"     — minor rubric adjustment
+//
+// Stored in: Product.scoringVersion field (String?)
+// Also in: scoreBreakdown JSON as { ..., scoringVersion: "v2.0-rubric-20260315" }
+//
+// Usage: filter/query products by scoring version for comparison/audit
+const CURRENT_SCORING_VERSION = "v2.0-rubric-20260315"; // Update on each scoring change
+```
+
 ### Solution: Store model name in scoreBreakdown
 
 ```typescript
@@ -211,7 +230,7 @@ return {
   }),
   contentSuggestion: claudeItem.contentSuggestion,
   platformAdvice: claudeItem.platformAdvice,
-  scoringVersion: version,
+  scoringVersion: CURRENT_SCORING_VERSION, // [UPDATED from review — Fix 12] use defined version constant
 };
 ```
 
@@ -278,6 +297,27 @@ export async function POST(request: Request): Promise<NextResponse> {
 - MODIFY: `lib/ai/call-ai.ts` — return model name from `callAI()`
 - CREATE: `app/api/internal/rescore-model-switch/route.ts` — manual model re-score
 - MODIFY: `components/inbox/inbox-table.tsx` — tooltip showing scored-by model
+
+## Rollback Plan [UPDATED from review — Fix 14]
+
+AI prompt change is high-risk: new rubric format differs from old holistic scoring. If new prompt degrades quality, reverting requires re-scoring.
+
+### Rollback strategy:
+1. **Keep old prompt as backup**: Save current `buildScoringPrompt()` as `buildScoringPromptV1()` in same file, commented out but preservable.
+2. **Deploy Phase 02 separately**: Do NOT bundle with formula changes. Deploy prompt change alone so rollback is isolated.
+3. **Test on small batch first**: Before full deployment, score 10-20 products with new prompt and compare:
+   - Mean score in expected 45-65 range?
+   - Sub-scores adhere to rubric tiers (20/40/60/80/100)?
+   - Obvious outliers (known good products scoring <30 or known bad scoring >80)?
+4. **Rollback trigger**: If batch mean >75 or <35, or >30% of sub-scores are non-tier values, revert to V1 prompt.
+5. **If rollback needed**: Revert `buildScoringPrompt()` → re-score affected batch via `/api/internal/rescore-ai`.
+
+### Deploy order:
+```
+Day 1: Deploy Phase 02 (prompt only) → test 10-20 products → verify
+Day 2: If OK → deploy Phase 01+03 (formula + normalization)
+Day 3: Phase 05 (combined formula) + Phase 08 (migration)
+```
 
 ## Success Criteria
 - AI scoring mean per batch: 45-65 (not 70+)

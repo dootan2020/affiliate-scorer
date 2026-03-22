@@ -1,0 +1,73 @@
+"Update plan Phase 14 Scoring Redesign — fix 14 vấn đề từ review
+
+## Bối cảnh
+Plan tại plans/260305-1440-scoring-system-redesign/ đã được review kỹ và phát hiện 14 vấn đề (3 nghiêm trọng, 6 logic/design, 5 thiếu sót). Cần update plan để fix tất cả TRƯỚC KHI implement.
+
+## Vấn đề cần fix
+
+### A. NGHIÊM TRỌNG (3)
+
+1. **Global stats pollution** — Phase 05 syncIdentityScores() gọi updateGlobalStats() TRƯỚC normalize. Batch mới tự ảnh hưởng stats của chính mình.
+   → Fix: đảo thứ tự — getGlobalStats() trước, normalize bằng stats cũ, rồi mới updateGlobalStats()
+
+2. **Feedback unique constraint break** — Phase 07 thêm @@unique([productId, source]) nhưng nếu đã có duplicate data, migration fail.
+   → Fix: thêm migration script xử lý existing duplicates trước khi add constraint (merge hoặc dedupe)
+
+3. **URL + auth sai** — Phase 08 curl dùng affiliate-scorer.vercel.app, thiếu auth header.
+   → Fix: đổi thành pastr-app.netlify.app, thêm -H "x-auth-secret: $AUTH_SECRET"
+
+### B. LOGIC/DESIGN (6)
+
+4. **Sigmoid K=1.5 chưa validate** — Với data thực (mean=60.8, stddev=11.2), K=1.5 tạo phân phối quá phân cực (top→96, bottom→7).
+   → Fix: thêm step vào Phase 08: chạy simulation trên 394 products, output distribution histogram, chọn K sao cho P25≈30-35, P75≈65-70. Có thể cần K≈0.8-1.0
+
+5. **scoreCommission nhận commissionVND không tồn tại** — Schema không có field commissionVND, chỉ có commissionRate (%).
+   → Fix: tính commissionVND = price × commissionRate / 100 trước khi gọi, hoặc tính trong function
+
+6. **scoreTrending dùng salesGrowth7d không tồn tại** — Product model không có field salesGrowth7d. Growth rate phải tính từ ProductSnapshot delta.
+   → Fix: (a) tính growth từ 2 snapshots gần nhất, hoặc (b) bỏ branch này, chỉ dùng ratio sales7d/salesTotal
+
+7. **Fallback contentPotentialScore vô nghĩa** — Phase 05 fallback dùng calculateContentPotentialScore khi cả AI lẫn formula null, nhưng Phase 04 đã xác nhận metric này zero discrimination.
+   → Fix: fallback về null hoặc giá trị cố định (ví dụ 30 = 'chưa đủ data'), không dùng contentPotentialScore
+
+8. **smartScore random jitter non-deterministic** — Math.random() 0-20 khiến mỗi lần load trang cho kết quả khác.
+   → Fix: dùng seeded random (hash từ productId + YYYY-MM-DD) để deterministic trong cùng ngày nhưng vẫn có variety giữa các ngày
+
+9. **preImportStats không lưu được giữa serverless invocations** — import-chunk và score-batch là 2 invocations khác nhau, không có shared memory.
+   → Fix: lưu preImportStats vào ImportBatch record (JSON field) khi bắt đầu scoring, đọc lại khi cần checkDrift
+
+### C. THIẾU SÓT (5)
+
+10. **Virtual product filter** — Top-scored products hiện tại là non-sellable items (thank-you cards, warranty cards, vouchers). Plan không có filter nào cho virtual products.
+    → Fix: thêm filter vào ĐẦU pipeline (trước scoring), có thể gắn vào Phase 03. Filter dựa trên keyword blacklist (thẻ cảm ơn, phiếu bảo hành, voucher, v.v.) + flag trong ProductIdentity
+
+11. **Niche key format mismatch** — Known issue: DB niche keys vs category map keys không khớp. Phase 03 normalizeCategory() và Phase 06 matchesNiche() sẽ fail silently.
+    → Fix: reconcile niche keys trước Phase 03. Document mapping table giữa DB keys và category constants
+
+12. **scoringVersion tracking** — Phase 02 mention scoringVersion nhưng không define format hay khi nào bump. Cần tracking SP nào score bằng formula cũ vs mới.
+    → Fix: define version string (ví dụ 'v2.0-YYYYMMDD'), store trong scoreBreakdown JSON, add check trong Phase 08 migration
+
+13. **matchesNiche() undefined** — Phase 06 reference function nhưng không define. Đây là nơi niche key mismatch gây vấn đề.
+    → Fix: define function với clear mapping logic, handle mismatch gracefully (return false + log warning)
+
+14. **Rollback plan cho AI prompt** — Phase 02 thay đổi AI prompt nhưng không có rollback. Prompt mới cho format khác → revert cần re-score = tốn tokens.
+    → Fix: thêm rollback step: keep prompt cũ as backup, deploy Phase 02 riêng, test trên batch nhỏ (10-20 SP) trước full rollout. Nếu quality drop → revert prompt, re-score batch nhỏ only
+
+### D. MINOR (4) — fix luôn nếu gặp
+
+15. Feedback source field — thêm Zod enum validation thay vì string literal
+16. scoreTrending spike >500% return 75 nhưng 'strong growth' return 70 — ngược logic. Spike risk nên return thấp hơn 70 (ví dụ 55-60)
+17. Phase 02 anchor math: aiScore tính ra 27 không phải 25 — sửa ví dụ cho khớp
+18. plan.md Section E 'old scores NOT recomputed' mâu thuẫn với Phase 07b Trigger 3 re-normalize khi drift >3pt — clarify: 'normally not recomputed, EXCEPT when drift exceeds threshold'
+
+## Kết quả cần đạt
+- plan.md và các phase files được update với tất cả 18 fixes
+- Không thay đổi cấu trúc phases hiện tại (chỉ sửa nội dung)
+- Mỗi fix ghi rõ trong phase file tương ứng
+- Thêm note '[UPDATED from review]' cho mỗi chỗ sửa để dễ track
+
+## Ràng buộc
+- Chỉ sửa plan files trong plans/260305-1440-scoring-system-redesign/
+- Không implement code
+- Đọc schema.prisma để verify field names trước khi sửa Phase 03
+- Giữ format plan hiện tại

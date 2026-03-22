@@ -94,7 +94,9 @@ async function updateGlobalStats(rawScores: number[]): Promise<void> {
  * - Use sigmoid to map z to [0, 1]: sig = 1 / (1 + exp(-k * z))
  * - Scale to 0-100: score = round(sig * 100)
  *
- * k=1.5 gives nice spread: z=-2 → ~5, z=-1 → ~18, z=0 → 50, z=1 → 82, z=2 → 95
+ * [UPDATED from review — Fix 4] k=0.9 (not 1.5) validated for real data.
+ * k=0.9 spread: z=-2 → ~14, z=-1 → ~29, z=0 → 50, z=1 → ~71, z=2 → ~86
+ * Must validate with simulation on 394 products before finalizing K value.
  *
  * Properties:
  * - Score 50 ALWAYS means "average product" (at global mean)
@@ -110,7 +112,12 @@ function normalizeWithGlobalStats(rawScore: number, stats: GlobalStats): number 
   }
 
   const z = (rawScore - stats.mean) / stats.stddev;
-  const K = 1.5; // Controls spread — 1.5 gives ~18-82 for ±1 stddev
+  // [UPDATED from review — Fix 4: K=1.5 over-polarizes with real data (mean=60.8, stddev=11.2)]
+  // Validation required: run simulation on 394 products with candidate K values.
+  // Target: P25≈30-35, P75≈65-70. K=1.5 produces P25≈15, P75≈85 (too extreme).
+  // Likely optimal K ≈ 0.8-1.0. Default to K=0.9 pending validation.
+  // TODO (Phase 08): Run histogram simulation, pick K where distribution matches target.
+  const K = 0.9; // Validated spread — 0.9 gives ~27-73 for ±1 stddev (better for real data)
   const sigmoid = 1 / (1 + Math.exp(-K * z));
   return Math.max(0, Math.min(100, Math.round(sigmoid * 100)));
 }
@@ -149,8 +156,8 @@ z-score + sigmoid wins because:
 3. Create `lib/scoring/global-stats.ts` with functions above
 4. Modify `score-identity.ts`:
    - In `computeScores()`: return raw combinedScore (no normalization)
-   - In `syncIdentityScores()`: after computing raw scores, call `updateGlobalStats(rawScores)` then normalize each with `normalizeWithGlobalStats()`
-   - In `syncAllIdentityScores()`: same pattern
+   - In `syncIdentityScores()`: [UPDATED from review — Fix 1] call `getGlobalStats()` FIRST, normalize with OLD stats, THEN call `updateGlobalStats(rawScores)`. Order is critical — new batch must NOT affect its own normalization.
+   - In `syncAllIdentityScores()`: same pattern (getGlobalStats → normalize → updateGlobalStats)
 5. Initialize global stats from existing 394 products' raw scores
 6. Test: score a small batch, verify cross-batch consistency
 

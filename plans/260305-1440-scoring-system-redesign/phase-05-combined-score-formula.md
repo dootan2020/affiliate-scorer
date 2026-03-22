@@ -43,7 +43,7 @@ From real data analysis:
 
 import { getGlobalStats, updateGlobalStats, normalizeWithGlobalStats } from "@/lib/scoring/global-stats";
 import { calculateBaseScore } from "@/lib/scoring/formula";  // Phase 03
-import { calculateContentPotentialScore } from "@/lib/scoring/content-potential";  // Phase 04 (fallback only)
+// [UPDATED from review — Fix 7] calculateContentPotentialScore import removed — no longer used as fallback
 
 function computeRawCombinedScore(identity: IdentityWithProduct): number | null {
   // Layer 1: BASE FORMULA SCORE (no AI, pure data — from Phase 03)
@@ -81,20 +81,11 @@ function computeRawCombinedScore(identity: IdentityWithProduct): number | null {
     return baseFormulaScore;
   }
 
-  // Neither available — contentPotentialScore as last-resort fallback
-  const contentScore = calculateContentPotentialScore({
-    imageUrl: identity.imageUrl,
-    price: identity.price,
-    category: identity.category,
-    title: identity.title,
-    totalKOL: identity.product?.totalKOL ?? null,
-    totalVideos: identity.product?.totalVideos ?? null,
-    commissionRate: identity.commissionRate
-      ? Number(identity.commissionRate)
-      : (identity.product?.commissionRate ?? null),
-    description: identity.description,
-  });
-  return contentScore;
+  // [UPDATED from review — Fix 7: contentPotentialScore fallback is meaningless]
+  // Phase 04 confirmed contentPotentialScore has ZERO discrimination (avg 71, TOP=66, BOT=68).
+  // Using it as fallback would assign a misleadingly "decent" score to products with no real data.
+  // Instead, return a fixed low value indicating "insufficient data to score".
+  return 30; // Fixed value = "insufficient data", NOT contentPotentialScore
 }
 
 /** Score specific identities — with global normalization */
@@ -118,15 +109,20 @@ export async function syncIdentityScores(identityIds: string[]): Promise<number>
     };
   });
 
-  // Update global stats with this batch's raw scores
+  // [UPDATED from review — Fix 1: Global stats pollution]
+  // CRITICAL: Get global stats BEFORE updating with new batch.
+  // If we updateGlobalStats() first, the new batch affects its own normalization.
+  // Correct order: read OLD stats → normalize with OLD stats → THEN update stats.
   const rawScores = updates
     .map(u => u.rawCombined)
     .filter((s): s is number => s != null);
-  const stats = await getGlobalStats();
-  await updateGlobalStats(rawScores);
+  const stats = await getGlobalStats(); // OLD stats for normalization
 
-  // Refresh stats after update
-  const updatedStats = await getGlobalStats();
+  // Use OLD stats for normalization (not updatedStats)
+  const updatedStats = stats; // normalize against pre-batch baseline
+
+  // Update global stats AFTER normalization with new batch data
+  // (moved to after the normalize+write loop below)
 
   // Normalize and write
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
@@ -148,6 +144,10 @@ export async function syncIdentityScores(identityIds: string[]): Promise<number>
       }),
     );
   }
+
+  // [UPDATED from review — Fix 1 continued]
+  // NOW update global stats after normalization is done with old stats
+  await updateGlobalStats(rawScores);
 
   return updates.length;
 }

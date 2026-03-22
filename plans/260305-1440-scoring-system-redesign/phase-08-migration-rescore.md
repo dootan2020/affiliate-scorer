@@ -12,6 +12,39 @@
 pnpm prisma migrate dev --name add-scoring-global-stats
 ```
 
+### Step 1b: Validate Sigmoid K Parameter [UPDATED from review — Fix 4]
+
+Before finalizing normalization, run a simulation to choose optimal K:
+
+```typescript
+// scripts/validate-sigmoid-k.ts — run once before migration
+async function validateSigmoidK(): Promise<void> {
+  const identities = await prisma.productIdentity.findMany({
+    where: { marketScore: { not: null } },
+    select: { marketScore: true },
+  });
+  const rawScores = identities.map(i => Number(i.marketScore));
+  const mean = rawScores.reduce((s, v) => s + v, 0) / rawScores.length;
+  const stddev = Math.sqrt(rawScores.reduce((s, v) => s + (v - mean) ** 2, 0) / (rawScores.length - 1));
+
+  for (const K of [0.6, 0.7, 0.8, 0.9, 1.0, 1.2, 1.5]) {
+    const normalized = rawScores.map(raw => {
+      const z = (raw - mean) / stddev;
+      return Math.round((1 / (1 + Math.exp(-K * z))) * 100);
+    }).sort((a, b) => a - b);
+
+    const p25 = normalized[Math.floor(normalized.length * 0.25)];
+    const p50 = normalized[Math.floor(normalized.length * 0.50)];
+    const p75 = normalized[Math.floor(normalized.length * 0.75)];
+    console.log(`K=${K}: P25=${p25}, P50=${p50}, P75=${p75}`);
+  }
+  // Target: P25≈30-35, P75≈65-70. Pick K that matches best.
+}
+```
+
+Run: `npx tsx scripts/validate-sigmoid-k.ts`
+Expected optimal K: ~0.8-1.0 (K=1.5 produces over-polarized P25≈15, P75≈85).
+
 ### Step 2: Initialize Global Stats from Existing Data
 ```typescript
 // Run once: compute global stats from all 394 products
@@ -49,7 +82,9 @@ async function initializeGlobalStats(): Promise<void> {
 
 ### Step 3: Re-score All Identities
 ```bash
-curl -X POST https://affiliate-scorer.vercel.app/api/internal/rescore-identities
+# [UPDATED from review — Fix 3: correct URL + auth header]
+curl -X POST https://pastr-app.netlify.app/api/internal/rescore-identities \
+  -H "x-auth-secret: $AUTH_SECRET"
 ```
 This uses the updated `syncAllIdentityScores()` with new formula + global normalization.
 

@@ -90,7 +90,7 @@ Layer 3: COMBINED (blend + global normalize)
 rawScore = aiScore × 0.55 + baseFormulaScore × 0.45
 
 z = (rawScore - globalMean) / globalStdDev
-sigmoid = 1 / (1 + exp(-1.5 × z))
+sigmoid = 1 / (1 + exp(-K × z))  // [UPDATED from review — Fix 4] K≈0.8-1.0 (not 1.5), validate via simulation
 combinedScore = round(sigmoid × 100)
 ```
 - Score 50 = ALWAYS means "average product" (at global mean)
@@ -100,7 +100,7 @@ combinedScore = round(sigmoid × 100)
 ### Normalization: Global Running Statistics
 - Single-row `ScoringGlobalStats` table tracks: count, sumRaw, sumSqRaw, globalMin, globalMax
 - Each batch updates running stats incrementally (O(1) per normalize)
-- New batch does NOT change old product scores
+- New batch does NOT change old product scores (EXCEPT when drift >3pt, see Fix 18/Phase 07b)
 - Sigmoid prevents extreme outlier distortion
 
 ### When to use AI vs Formula
@@ -221,10 +221,11 @@ combinedScore = round(sigmoid(1.5 * z) * 100)
 - Updated incrementally with each batch
 - O(1) to normalize any score
 
-### When import new batch: old scores unchanged
+### When import new batch: old scores normally unchanged [UPDATED from review — Fix 18]
 - Global stats update with new data points
-- But old normalized scores are NOT recomputed
-- Drift: minimal — sigmoid is stable, mean/std shift slowly with more data
+- Old normalized scores are normally NOT recomputed
+- **EXCEPTION**: If global mean shifts >3pt after large batch (>50 SP), old scores ARE re-normalized via reactive re-scoring (Phase 07b, Trigger 3). This ensures drift doesn't accumulate.
+- Drift: minimal for small batches — sigmoid is stable, mean/std shift slowly with more data
 
 ### Edge case: batch of 3 SP
 - Uses global stats (count=394+) → well-calibrated

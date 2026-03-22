@@ -82,11 +82,12 @@ function validateBatchScores(scores: ClaudeScoreItem[]): ClaudeScoreItem[] {
     }
     // Recompute aiScore from corrected sub-scores
     const s = item.scores;
+    // Fix H5: Default 40 (below average) instead of 60 — unknown ≠ average
     item.aiScore = Math.round(
-      (s.market_demand ?? 60) * 0.35 +
-        (s.quality_trust ?? 60) * 0.25 +
-        (s.viral_potential ?? 60) * 0.25 +
-        (s.risk ?? 60) * 0.15,
+      (s.market_demand ?? 40) * 0.35 +
+        (s.quality_trust ?? 40) * 0.25 +
+        (s.viral_potential ?? 40) * 0.25 +
+        (s.risk ?? 40) * 0.15,
     );
   }
 

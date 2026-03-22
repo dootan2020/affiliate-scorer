@@ -282,7 +282,9 @@ export async function computeSmartSuggestions(
   });
 
   const now = Date.now();
-  const hasWeights = categoryWeights.size > 0;
+
+  // Fix H3: Track actual category usage counts for diversity bonus
+  const flatCategoryUsedCounts = new Map<string, number>();
 
   // Score all products with new 4-component formula
   const scored: SuggestedProduct[] = products.map((p) => {
@@ -306,24 +308,22 @@ export async function computeSmartSuggestions(
       p.lastSeenAt,
     );
 
-    // Tag: score >= 60 = proven, < 60 = explore
-    const tag: "proven" | "explore" = hasWeights
-      ? catWeight > 1.0
-        ? "proven"
-        : "explore"
-      : base >= 60
-        ? "proven"
-        : "explore";
+    // Fix H1: Always use combinedScore for tag, not catWeight
+    const tag: "proven" | "explore" = base >= 60 ? "proven" : "explore";
 
     // Category bonus from learning weights
     const categoryBonus =
       catWeight > 0 ? Math.min(100, catWeight * 50) : 0;
 
+    // Fix H3: Use actual category count for diversity bonus
+    const catUsedCount = flatCategoryUsedCounts.get(catKey) ?? 0;
+    flatCategoryUsedCounts.set(catKey, catUsedCount + 1);
+
     const smartScore = Math.round(
       base * 0.45 +
         urgency * 0.25 +
         categoryBonus * 0.20 +
-        computeDiversityBonus(tag, 0, p.id) * 0.10,
+        computeDiversityBonus(tag, catUsedCount, p.id) * 0.10,
     );
 
     const reason = buildSuggestionReason({

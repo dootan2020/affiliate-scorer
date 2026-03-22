@@ -153,10 +153,21 @@ function computeContentMixBonus(
   return Math.min(100, bonus);
 }
 
+/** Simple string hash for seeded jitter (deterministic per product per day) */
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0; // Convert to 32-bit integer
+  }
+  return hash;
+}
+
 /** Component 4: Diversity Bonus (10%) — explore mechanism */
 function computeDiversityBonus(
   tag: "proven" | "explore",
   categoryUsedCount: number,
+  productId: string,
 ): number {
   let score = 0;
   if (tag === "explore") score += 40;
@@ -165,8 +176,9 @@ function computeDiversityBonus(
   else if (categoryUsedCount === 1) score += 20;
   else if (categoryUsedCount >= 3) score -= 20;
 
-  // Random jitter for serendipity
-  score += Math.floor(Math.random() * 20);
+  // Fix #8: Seeded jitter — deterministic per product per day, varies between days
+  const seed = hashCode(`${productId}-${new Date().toISOString().slice(0, 10)}`);
+  score += Math.abs(seed % 21); // 0-20 jitter
   return Math.max(0, Math.min(100, score));
 }
 
@@ -311,7 +323,7 @@ export async function computeSmartSuggestions(
       base * 0.45 +
         urgency * 0.25 +
         categoryBonus * 0.20 +
-        computeDiversityBonus(tag, 0) * 0.10,
+        computeDiversityBonus(tag, 0, p.id) * 0.10,
     );
 
     const reason = buildSuggestionReason({

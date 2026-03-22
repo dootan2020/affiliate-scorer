@@ -99,19 +99,9 @@ function computeRawCombinedScore(identity: IdentityWithProduct): number | null {
   if (hasAI) return aiScore;
   if (hasFormula) return baseFormulaScore;
 
-  // Last resort: content potential as fallback
-  return calculateContentPotentialScore({
-    imageUrl: identity.imageUrl,
-    price: identity.price,
-    category: identity.category,
-    title: identity.title,
-    totalKOL: identity.product?.totalKOL ?? null,
-    totalVideos: identity.product?.totalVideos ?? null,
-    commissionRate: identity.commissionRate
-      ? Number(identity.commissionRate)
-      : (identity.product?.commissionRate ?? null),
-    description: identity.description,
-  });
+  // Fix #7: contentPotentialScore has ZERO discrimination (avg 71, TOP=66, BOT=68).
+  // Return fixed low value = "insufficient data to score", NOT contentPotentialScore.
+  return 30;
 }
 
 function computeContentScore(identity: IdentityWithProduct): number {

@@ -48,6 +48,9 @@ const CLAUDE_CONCURRENCY = 3;
 const PARALLEL_WRITES = 20;
 const VALID_TIERS = [20, 40, 60, 80, 100];
 
+// Fix #12: Explicit scoring version for tracking old vs new scores
+const CURRENT_SCORING_VERSION = "v2.0-rubric-20260322";
+
 /** Snap a value to the nearest valid rubric tier */
 function snapToTier(value: number): number {
   return VALID_TIERS.reduce((a, b) =>
@@ -219,7 +222,7 @@ async function mergeWithBaseScore(
       scoreBreakdown: JSON.stringify({ scoredByModel: modelUsed, error: "no_response" }),
       contentSuggestion: "",
       platformAdvice: "",
-      scoringVersion: "v2-rubric",
+      scoringVersion: CURRENT_SCORING_VERSION,
     };
   }
 

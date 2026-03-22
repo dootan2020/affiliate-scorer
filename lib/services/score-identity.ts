@@ -79,6 +79,7 @@ function computeRawCombinedScore(identity: IdentityWithProduct): number | null {
       kolOrderRate: identity.product.kolOrderRate,
       affiliateCount: identity.product.affiliateCount,
       price: identity.product.price ?? Number(identity.price) ?? 0,
+      name: identity.title,
     };
     baseFormulaScore = calculateBaseScore(input).total;
   }

@@ -122,8 +122,9 @@ SP 55 diem — Op lung iPhone silicon, gia 25K, commission 30%:
   market_demand=60, quality_trust=40, viral_potential=40, risk=80
   → Nhu cau co nhung canh tranh khoc liet, chat luong tam, kho lam video hay, nhung an toan
 
-SP 25 diem — Vien giam can thao duoc XYZ, gia 350K, commission 40%:
+SP 27 diem — Vien giam can thao duoc XYZ, gia 350K, commission 40%:
   market_demand=40, quality_trust=20, viral_potential=20, risk=20
+  → aiScore = 40*0.35 + 20*0.25 + 20*0.25 + 20*0.15 = 27
   → Co nguoi tim nhung nhay cam, khong ro nguon goc, kho demo, rui ro cao bi report`;
 
   const user = `Cham diem cho ${products.length} san pham:

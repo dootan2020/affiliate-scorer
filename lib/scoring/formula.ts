@@ -3,6 +3,7 @@
 // Removed: contentFit (redundant with AI), platform (no discrimination)
 
 import type { Product as ProductModel } from "@/lib/types/product";
+import { isVirtualProduct } from "@/lib/scoring/virtual-product-filter";
 
 export interface ScoreBreakdown {
   commission: number;
@@ -30,6 +31,7 @@ export interface BaseScoreInput {
   affiliateCount?: number | null;
   price: number;
   category?: string | null;
+  name?: string | null;
 }
 
 /** Commission Score (25%) — continuous curve for VN TikTok affiliate */
@@ -67,7 +69,7 @@ function scoreTrending(
     if (g <= 80) return 70;
     if (g <= 200) return 90;
     if (g <= 500) return 100;
-    return 75; // >500% = spike risk
+    return 55; // >500% = spike risk, likely crashes — score lower than sustained growth
   }
 
   // Priority 2: Estimate from sales7d/salesTotal ratio
@@ -152,7 +154,14 @@ const WEIGHTS = {
 
 /** Calculate base formula score from product data (no AI involved) */
 export function calculateBaseScore(input: BaseScoreInput): BaseScoreResult {
-  const commissionScore = scoreCommission(input.commissionRate, input.commissionVND);
+  // Fix #10: Virtual products (thank-you cards, vouchers) get zero score
+  if (isVirtualProduct(input.name)) {
+    return { total: 0, breakdown: { commission: 0, trending: 0, competition: 0, priceAppeal: 0, salesVelocity: 0 } };
+  }
+
+  // Fix #5: Compute commissionVND if not available directly
+  const commissionVND = input.commissionVND ?? (input.price * input.commissionRate / 100);
+  const commissionScore = scoreCommission(input.commissionRate, commissionVND);
   const trendingScore = scoreTrending(
     input.salesGrowth7d,
     input.sales7d,
@@ -207,5 +216,6 @@ export function calculateBaseScoreFromProduct(product: ProductModel): BaseScoreR
     affiliateCount: product.affiliateCount,
     price: product.price,
     category: product.category,
+    name: product.name,
   });
 }

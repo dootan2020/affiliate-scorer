@@ -330,9 +330,19 @@ Business (commission tracking, P&L, goal progress)
 | **Analytics** | `AccountDailyStat` | TikTok account stats | views, likes, comments, date |
 | | `FollowerActivity` | Active hours matrix | dayOfWeek, hour, activityLevel |
 | | `AccountInsight` | Audience insights | data JSON |
+| **Agent/Intel** | `ChannelMemory` | Per-channel learning state | winningCombos, losingCombos, usedAngles, insightSummary |
+| | `CompetitorCapture` | Competitor video analysis | tiktokUrl, detectedHookType, trendScore |
+| | `TelegramChat` | Telegram bot state | chatId, channelId |
+| | `NicheProfile` | Niche wizard results | channelId, answers, recommendations |
+| **Core** | `Shop` | Merchant trust metrics | name, trustScore, commissionReliability |
 | **Settings** | `AiModelConfig` | Per-task model config | task, provider, modelId |
 | | `ApiProvider` | Encrypted API keys | provider, encryptedKey, iv, authTag |
+| | `ScoringGlobalStats` | Normalization stats (singleton) | count, mean, stddev, globalMin, globalMax |
+| | `BackgroundTask` | Async task tracker | type, status, progress, detail |
 | | `ProductGalleryImage` | Product images | imageData (binary), mimeType |
+| **Channel** | `ChannelModelImage` | AI-generated pose images | channelId, poseType, imageData |
+
+> **Note:** This table lists key models. See `prisma/schema.prisma` for all 51 models with full field definitions.
 
 ### Key Relationships
 - `ProductIdentity` 1:N `ProductUrl` (canonical dedup)

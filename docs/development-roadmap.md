@@ -388,7 +388,7 @@ Project phases, milestones, and implementation progress.
 | v1.8.2 | Mar 7, 2026 | Niche finder + dashboard redesign | ✅ Released |
 | v1.9.0 | Mar 8, 2026 | AI Agent System (6 phases) | ✅ Released |
 | v1.10.0 | Mar 8, 2026 | Guide page expansion + advisory system | ✅ Released |
-| v1.10.1 | Mar 8, 2026 | Interactive onboarding checklist | ✅ Released |
+| v1.10.1 | Mar 22, 2026 | Interactive onboarding checklist | ✅ Released |
 | v1.12.0 | Mar 24, 2026 | Scoring system redesign | 📋 Planned |
 | v1.13.0 | Apr 7, 2026 | Testing + documentation | 📋 Planned |
 | v2.0.0 | Apr 21, 2026 | Stable release + monitoring | 📋 Planned |

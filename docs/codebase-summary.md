@@ -45,6 +45,11 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 - **Phase 7:** DONE — Character-driven content (Character Bible, Format Bank, Idea Matrix, QC)
 - **Phase 8:** DONE — Video Production System (Video Bible, Shot Library, Series Planner, Export Pack)
 - **Phase 9:** DONE — Production Deployment to Netlify (CI/CD, env config, auto-deploy)
+- **Phase 10:** DONE — Niche Intelligence wizard + Dashboard bento redesign
+- **Phase 11:** DONE — AI Agent System (6 phases: memory, personalization, analyzer, Telegram, win predictor, PWA)
+- **Phase 12:** DONE — Guide Page redesign (fixed TOC, 15 sections, AI config expansion)
+- **Phase 13:** DONE — Interactive Onboarding Checklist (7-step progress tracker)
+- **Phase 14:** PLANNED — Scoring System Redesign
 
 ## Cấu Trúc Thư Mục
 

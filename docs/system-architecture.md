@@ -339,7 +339,7 @@ This design prevents orphaned records while preserving production assets when so
 
 ### Cron Job Configuration
 
-**Vercel cron jobs (6 total) defined in `vercel.json`:**
+**Cron Schedule (6 jobs defined in `vercel.json`; Netlify requires external scheduler — see `docs/deployment-guide.md`):**
 
 | Endpoint | Schedule | Purpose | Timezone |
 |----------|----------|---------|----------|

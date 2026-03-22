@@ -270,12 +270,12 @@ Before deploying, test locally:
 # Copy example to .env.local
 cp .env.example .env.local
 
-# Fill in actual values
-# DATABASE_URL=postgresql://user:password@host/db
-# DIRECT_URL=postgresql://user:password@host/db
-# NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-# NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-# ANTHROPIC_API_KEY=sk-ant-...
+# Fill in actual values (see Canonical Reference above)
+# DATABASE_URL=postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true
+# DIRECT_URL=postgresql://...pooler.supabase.com:5432/postgres
+# ENCRYPTION_KEY=<openssl rand -hex 32>
+# AUTH_SECRET=<openssl rand -hex 32>
+# TELEGRAM_BOT_TOKEN=<optional>
 
 # Test build
 pnpm build

@@ -22,7 +22,8 @@ export async function runNightlyLearning(): Promise<NightlyLearningResult> {
   const channels = await prisma.tikTokChannel.findMany({
     where: { isActive: true },
     select: { id: true, name: true },
-    take: 10,
+    // Fix F10: Process all active channels, not just first 10
+    take: 50,
   });
 
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

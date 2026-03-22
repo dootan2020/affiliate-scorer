@@ -11,7 +11,8 @@
 
 import { prisma } from "@/lib/db";
 import { calculateContentPotentialScore } from "@/lib/scoring/content-potential";
-import { calculateBaseScore, type BaseScoreInput } from "@/lib/scoring/formula";
+import { calculateBaseScore, type BaseScoreInput, type FormulaWeights } from "@/lib/scoring/formula";
+import { getWeights } from "@/lib/scoring/weights";
 import {
   getGlobalStats,
   updateGlobalStats,
@@ -63,8 +64,16 @@ const IDENTITY_INCLUDE = {
 
 const PARALLEL_WRITES = 20;
 
+/** Fix F9: Log Promise.allSettled rejections instead of swallowing silently */
+function logRejections(results: PromiseSettledResult<unknown>[], context: string): void {
+  const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+  if (failures.length > 0) {
+    console.error(`[${context}] ${failures.length} write failures:`, failures[0].reason);
+  }
+}
+
 /** Compute raw combined score using 3-layer architecture */
-function computeRawCombinedScore(identity: IdentityWithProduct): number | null {
+function computeRawCombinedScore(identity: IdentityWithProduct, weights?: FormulaWeights): number | null {
   // Layer 1: BASE FORMULA SCORE (no AI, pure data — Phase 03)
   let baseFormulaScore: number | null = null;
   if (identity.product) {
@@ -81,7 +90,7 @@ function computeRawCombinedScore(identity: IdentityWithProduct): number | null {
       price: identity.product.price ?? (identity.price != null ? Number(identity.price) : 0),
       name: identity.title,
     };
-    baseFormulaScore = calculateBaseScore(input).total;
+    baseFormulaScore = calculateBaseScore(input, weights).total;
   }
 
   // Layer 2: AI EXPERT SCORE (rubric-anchored — Phase 02)
@@ -129,6 +138,9 @@ export async function syncIdentityScores(
 ): Promise<number> {
   if (identityIds.length === 0) return 0;
 
+  // Fix E4: Load learned weights so formula reflects learning cycle updates
+  const weights = await getWeights();
+
   const identities = await prisma.productIdentity.findMany({
     where: { id: { in: identityIds } },
     include: IDENTITY_INCLUDE,
@@ -137,7 +149,7 @@ export async function syncIdentityScores(
   const updates = identities.map((identity) => ({
     id: identity.id,
     contentPotentialScore: computeContentScore(identity),
-    rawCombined: computeRawCombinedScore(identity),
+    rawCombined: computeRawCombinedScore(identity, weights),
     inboxState: computeInboxState(identity.inboxState),
   }));
 
@@ -155,7 +167,7 @@ export async function syncIdentityScores(
   // Normalize and write
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
     const chunk = updates.slice(i, i + PARALLEL_WRITES);
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       chunk.map(({ id, contentPotentialScore, rawCombined, inboxState }) => {
         const combinedScore =
           rawCombined != null
@@ -165,13 +177,14 @@ export async function syncIdentityScores(
           where: { id },
           data: {
             contentPotentialScore,
-            marketScore: rawCombined, // Store raw for reference
+            marketScore: rawCombined,
             combinedScore,
             inboxState,
           },
         });
       }),
     );
+    logRejections(results, "syncIdentityScores");
   }
 
   return updates.length;
@@ -185,6 +198,9 @@ export async function syncIdentityScores(
 export async function syncAllIdentityScores(
   onProgress?: (done: number, total: number) => void,
 ): Promise<number> {
+  // Fix E4: Load learned weights so formula reflects learning cycle updates
+  const weights = await getWeights();
+
   const identities = await prisma.productIdentity.findMany({
     where: { inboxState: { not: "archived" } },
     include: IDENTITY_INCLUDE,
@@ -194,7 +210,7 @@ export async function syncAllIdentityScores(
   const updates = identities.map((identity) => ({
     id: identity.id,
     contentPotentialScore: computeContentScore(identity),
-    rawCombined: computeRawCombinedScore(identity),
+    rawCombined: computeRawCombinedScore(identity, weights),
     inboxState: computeInboxState(identity.inboxState),
   }));
 
@@ -213,7 +229,7 @@ export async function syncAllIdentityScores(
 
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
     const chunk = updates.slice(i, i + PARALLEL_WRITES);
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       chunk.map(({ id, contentPotentialScore, rawCombined, inboxState }) => {
         const combinedScore =
           rawCombined != null
@@ -230,6 +246,7 @@ export async function syncAllIdentityScores(
         });
       }),
     );
+    logRejections(results, "syncAllIdentityScores");
     done = Math.min(i + PARALLEL_WRITES, total);
     if (onProgress) onProgress(done, total);
   }
@@ -246,6 +263,9 @@ export async function syncSingleIdentityScore(
   combinedScore: number | null;
   inboxState: string;
 } | null> {
+  // Fix E4: Load learned weights
+  const weights = await getWeights();
+
   const identity = await prisma.productIdentity.findUnique({
     where: { id: identityId },
     include: IDENTITY_INCLUDE,
@@ -254,7 +274,7 @@ export async function syncSingleIdentityScore(
   if (!identity) return null;
 
   const contentPotentialScore = computeContentScore(identity);
-  const rawCombined = computeRawCombinedScore(identity);
+  const rawCombined = computeRawCombinedScore(identity, weights);
   const inboxState = computeInboxState(identity.inboxState);
 
   // CRITICAL: Get OLD stats FIRST, normalize, THEN update (Fix #1)

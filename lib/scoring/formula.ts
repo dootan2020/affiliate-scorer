@@ -144,7 +144,8 @@ function scoreSalesVelocity(sales7d: number | null | undefined): number {
   return 5;
 }
 
-const WEIGHTS = {
+// Fix E4: Export as DEFAULT_WEIGHTS so callers can override with learned weights
+export const DEFAULT_WEIGHTS = {
   commission: 0.25,
   trending: 0.25,
   competition: 0.2,
@@ -152,8 +153,11 @@ const WEIGHTS = {
   salesVelocity: 0.15,
 };
 
-/** Calculate base formula score from product data (no AI involved) */
-export function calculateBaseScore(input: BaseScoreInput): BaseScoreResult {
+export type FormulaWeights = typeof DEFAULT_WEIGHTS;
+
+/** Calculate base formula score from product data (no AI involved).
+ *  Pass learned weights from getWeights() to apply learning cycle updates. */
+export function calculateBaseScore(input: BaseScoreInput, weights?: FormulaWeights): BaseScoreResult {
   // Fix #10: Virtual products (thank-you cards, vouchers) get zero score
   if (isVirtualProduct(input.name)) {
     return { total: 0, breakdown: { commission: 0, trending: 0, competition: 0, priceAppeal: 0, salesVelocity: 0 } };
@@ -176,14 +180,16 @@ export function calculateBaseScore(input: BaseScoreInput): BaseScoreResult {
   const priceScore = scorePriceAppeal(input.price);
   const velocityScore = scoreSalesVelocity(input.sales7d);
 
+  // Fix E4: Use provided weights (from learning cycle) or defaults
+  const w = weights ?? DEFAULT_WEIGHTS;
   const total = Math.min(
     100,
     Math.round(
-      commissionScore * WEIGHTS.commission +
-        trendingScore * WEIGHTS.trending +
-        competitionScore * WEIGHTS.competition +
-        priceScore * WEIGHTS.priceAppeal +
-        velocityScore * WEIGHTS.salesVelocity,
+      commissionScore * w.commission +
+        trendingScore * w.trending +
+        competitionScore * w.competition +
+        priceScore * w.priceAppeal +
+        velocityScore * w.salesVelocity,
     ),
   );
 

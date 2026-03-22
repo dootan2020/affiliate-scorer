@@ -10,6 +10,7 @@ import {
   type GlobalStats,
 } from "@/lib/scoring/global-stats";
 import { calculateBaseScore, type BaseScoreInput } from "@/lib/scoring/formula";
+import { getWeights } from "@/lib/scoring/weights";
 
 type RescoreType = "normalize_only" | "formula_only" | "full_with_ai";
 
@@ -64,9 +65,10 @@ async function rescoreNormalizeOnly(
   const stats = await getGlobalStats();
   const PARALLEL = 20;
 
+  let writeErrors = 0;
   for (let i = 0; i < identities.length; i += PARALLEL) {
     const chunk = identities.slice(i, i + PARALLEL);
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       chunk.map(({ id, marketScore }) => {
         const raw = Number(marketScore);
         const normalized = normalizeWithGlobalStats(raw, stats);
@@ -76,8 +78,10 @@ async function rescoreNormalizeOnly(
         });
       }),
     );
+    writeErrors += results.filter((r) => r.status === "rejected").length;
   }
 
+  if (writeErrors > 0) console.error(`[rescore] normalize-only: ${writeErrors} write failures`);
   console.log(`[rescore] normalize-only: ${identities.length} products`);
   return { rescored: identities.length };
 }
@@ -117,6 +121,9 @@ async function rescoreFormulaOnly(
     },
   });
 
+  // Fix E4: Load learned weights so rescore reflects learning cycle updates
+  const weights = await getWeights();
+
   // Compute raw scores
   const updates = identities.map((identity) => {
     let rawCombined: number | null = null;
@@ -135,7 +142,7 @@ async function rescoreFormulaOnly(
         price: identity.product.price ?? (identity.price != null ? Number(identity.price) : 0),
         name: identity.product.name ?? identity.title,
       };
-      const baseScore = calculateBaseScore(input).total;
+      const baseScore = calculateBaseScore(input, weights).total;
       const aiScore = identity.product.aiScore;
 
       if (aiScore != null && aiScore > 0) {
@@ -161,9 +168,10 @@ async function rescoreFormulaOnly(
   }
   const PARALLEL = 20;
 
+  let formulaWriteErrors = 0;
   for (let i = 0; i < updates.length; i += PARALLEL) {
     const chunk = updates.slice(i, i + PARALLEL);
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       chunk.map(({ id, rawCombined }) => {
         const normalized =
           rawCombined != null
@@ -178,8 +186,10 @@ async function rescoreFormulaOnly(
         });
       }),
     );
+    formulaWriteErrors += results.filter((r) => r.status === "rejected").length;
   }
 
+  if (formulaWriteErrors > 0) console.error(`[rescore] formula-only: ${formulaWriteErrors} write failures`);
   console.log(`[rescore] formula-only: ${updates.length} products`);
   return { rescored: updates.length };
 }

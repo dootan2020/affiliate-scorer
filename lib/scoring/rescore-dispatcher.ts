@@ -111,6 +111,7 @@ async function rescoreFormulaOnly(
           affiliateCount: true,
           price: true,
           commissionVND: true,
+          name: true,
         },
       },
     },
@@ -132,6 +133,7 @@ async function rescoreFormulaOnly(
         kolOrderRate: identity.product.kolOrderRate,
         affiliateCount: identity.product.affiliateCount,
         price: identity.product.price ?? Number(identity.price) ?? 0,
+        name: identity.product.name ?? identity.title,
       };
       const baseScore = calculateBaseScore(input).total;
       const aiScore = identity.product.aiScore;

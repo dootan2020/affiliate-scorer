@@ -10,6 +10,8 @@ import { syncIdentityScores } from "@/lib/services/score-identity";
 import { pctChange, determineStage } from "@/lib/ai/lifecycle";
 import { updateBatchProgress, incrementBatchProgress } from "@/lib/import/update-batch-progress";
 import { fireRelay } from "@/lib/import/fire-relay";
+import { getGlobalStats } from "@/lib/scoring/global-stats";
+import { dispatchRescore, checkGlobalStatsDrift } from "@/lib/scoring/rescore-dispatcher";
 
 const SCORE_CHUNK = 150;
 const PARALLEL = 20;
@@ -26,6 +28,17 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // Reset scoringStatus to "processing" (supports retry from failed/cron)
     await updateBatchProgress(batchId, { scoringStatus: "processing" });
+
+    // Fix #9: Save preImportStats for drift check at scoring end
+    // (serverless invocations have no shared memory — persist in errorLog JSON)
+    const preStats = await getGlobalStats();
+    const existingLog = (await prisma.importBatch.findUnique({
+      where: { id: batchId }, select: { errorLog: true },
+    }))?.errorLog as Record<string, unknown> | null;
+    await prisma.importBatch.update({
+      where: { id: batchId },
+      data: { errorLog: { ...(existingLog ?? {}), preImportStats: JSON.parse(JSON.stringify(preStats)) } },
+    });
 
     // Fetch unscored products for this batch
     const unscored = await prisma.product.findMany({
@@ -158,6 +171,30 @@ export async function POST(request: Request): Promise<NextResponse> {
       });
     }
     await runLifecycle(batchId);
+
+    // Fix #9: Check global stats drift for large batches → trigger re-normalize if needed
+    const finalBatch = await prisma.importBatch.findUnique({
+      where: { id: batchId },
+      select: { recordCount: true, errorLog: true },
+    });
+    if (finalBatch && finalBatch.recordCount >= 50) {
+      const savedPreStats = (finalBatch.errorLog as Record<string, unknown>)?.preImportStats;
+      if (savedPreStats) {
+        const postStats = await getGlobalStats();
+        const drift = await checkGlobalStatsDrift(
+          savedPreStats as { count: number; mean: number; stddev: number; globalMin: number; globalMax: number },
+          postStats,
+        );
+        if (drift.drifted) {
+          console.log(`[score-batch] Global mean shifted ${drift.shift.toFixed(1)}pt — triggering re-normalize`);
+          await dispatchRescore({
+            type: "normalize_only",
+            scope: "all",
+            reason: `batch-drift: shift=${drift.shift.toFixed(1)}pt`,
+          });
+        }
+      }
+    }
 
     return NextResponse.json({ done: true, scored: productIds.length });
   } catch (error) {

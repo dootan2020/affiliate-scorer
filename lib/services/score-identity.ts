@@ -150,16 +150,16 @@ export async function syncIdentityScores(
     inboxState: computeInboxState(identity.inboxState),
   }));
 
-  // Update global stats with this batch's raw scores
+  // CRITICAL: Get OLD stats FIRST for normalization, THEN update with new batch.
+  // New batch must NOT affect its own normalization (Fix #1).
+  const stats = await getGlobalStats();
+
   const rawScores = updates
     .map((u) => u.rawCombined)
     .filter((s): s is number => s != null);
   if (rawScores.length > 0) {
     await updateGlobalStats(rawScores);
   }
-
-  // Get updated stats for normalization
-  const stats = await getGlobalStats();
 
   // Normalize and write
   for (let i = 0; i < updates.length; i += PARALLEL_WRITES) {
@@ -202,15 +202,15 @@ export async function syncAllIdentityScores(
     inboxState: computeInboxState(identity.inboxState),
   }));
 
-  // Update global stats
+  // CRITICAL: Get OLD stats FIRST, normalize, THEN update (Fix #1)
+  const stats = await getGlobalStats();
+
   const rawScores = updates
     .map((u) => u.rawCombined)
     .filter((s): s is number => s != null);
   if (rawScores.length > 0) {
     await updateGlobalStats(rawScores);
   }
-
-  const stats = await getGlobalStats();
   const total = updates.length;
   let done = 0;
 
@@ -260,12 +260,12 @@ export async function syncSingleIdentityScore(
   const rawCombined = computeRawCombinedScore(identity);
   const inboxState = computeInboxState(identity.inboxState);
 
-  // Update global stats with single raw score
+  // CRITICAL: Get OLD stats FIRST, normalize, THEN update (Fix #1)
+  const stats = await getGlobalStats();
+
   if (rawCombined != null) {
     await updateGlobalStats([rawCombined]);
   }
-
-  const stats = await getGlobalStats();
   const combinedScore =
     rawCombined != null
       ? normalizeWithGlobalStats(rawCombined, stats)

@@ -213,7 +213,7 @@ combinedScore = round(sigmoid × 100)
 ### Replace per-batch with Global z-score + Sigmoid
 ```
 z = (rawScore - globalMean) / globalStdDev
-combinedScore = round(sigmoid(1.5 * z) * 100)
+combinedScore = round(sigmoid(K * z) * 100)   // K≈0.8-1.0, validate via histogram [UPDATED from review]
 ```
 
 ### Global statistics: Running (not per-batch)

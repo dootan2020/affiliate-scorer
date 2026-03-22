@@ -29,16 +29,17 @@ export async function POST(request: Request): Promise<NextResponse> {
     // Reset scoringStatus to "processing" (supports retry from failed/cron)
     await updateBatchProgress(batchId, { scoringStatus: "processing" });
 
-    // Fix #9: Save preImportStats for drift check at scoring end
-    // (serverless invocations have no shared memory — persist in errorLog JSON)
-    const preStats = await getGlobalStats();
+    // Fix #9 + C1a: Save preImportStats only on FIRST chunk (don't overwrite on subsequent chains)
     const existingLog = (await prisma.importBatch.findUnique({
       where: { id: batchId }, select: { errorLog: true },
     }))?.errorLog as Record<string, unknown> | null;
-    await prisma.importBatch.update({
-      where: { id: batchId },
-      data: { errorLog: { ...(existingLog ?? {}), preImportStats: JSON.parse(JSON.stringify(preStats)) } },
-    });
+    if (!existingLog?.preImportStats) {
+      const preStats = await getGlobalStats();
+      await prisma.importBatch.update({
+        where: { id: batchId },
+        data: { errorLog: { ...(existingLog ?? {}), preImportStats: JSON.parse(JSON.stringify(preStats)) } },
+      });
+    }
 
     // Fetch unscored products for this batch
     const unscored = await prisma.product.findMany({

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateBody } from "@/lib/validations/validate-body";
 import { createProductionBatchSchema } from "@/lib/validations/schemas-content";
+import { logImplicitPositive } from "@/lib/feedback/implicit-feedback";
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
@@ -26,6 +27,14 @@ export async function POST(request: Request): Promise<NextResponse> {
 
       return newBatch;
     });
+
+    // Fix H8: Log implicit positive feedback for produced assets
+    const assets = await prisma.contentAsset.findMany({
+      where: { id: { in: assetIds } },
+      select: { productIdentityId: true },
+    });
+    const identityIds = [...new Set(assets.map((a) => a.productIdentityId).filter(Boolean))];
+    await Promise.allSettled(identityIds.map((id) => logImplicitPositive(id!)));
 
     return NextResponse.json({
       data: batch,

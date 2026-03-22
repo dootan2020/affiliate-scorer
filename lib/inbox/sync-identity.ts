@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { canonicalizeUrl, generateFingerprint } from "@/lib/utils/canonical-url";
 import { classifyProductDelta } from "./delta-classification";
 import type { DeltaType } from "./delta-classification";
+import { dispatchRescore } from "@/lib/scoring/rescore-dispatcher";
 
 interface SyncInput {
   productId: string;
@@ -55,6 +56,17 @@ export async function syncProductIdentity(input: SyncInput): Promise<{ identityI
       where: { id: product.identityId },
       data: updateData,
     });
+
+    // Fix H9: SURGE re-import → trigger formula rescore for this identity
+    if (delta === "SURGE") {
+      dispatchRescore({
+        type: "formula_only",
+        scope: "identityIds",
+        identityIds: [product.identityId],
+        reason: "re-import-surge",
+      }).catch((err) => console.error("[sync-identity] surge rescore failed:", err));
+    }
+
     return { identityId: product.identityId, delta };
   }
 

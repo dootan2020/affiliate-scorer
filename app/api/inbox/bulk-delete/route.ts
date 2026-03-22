@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logImplicitNegative } from "@/lib/feedback/implicit-feedback";
 
 /** POST — archive (soft-delete) multiple ProductIdentity records */
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -20,6 +21,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       where: { id: { in: ids } },
       data: { inboxState: "archived" },
     });
+
+    // Fix H8: Log implicit negative feedback for archived products
+    await Promise.allSettled(ids.map((id) => logImplicitNegative(id)));
 
     return NextResponse.json({
       message: `Đã xóa ${result.count} sản phẩm`,

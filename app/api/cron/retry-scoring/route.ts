@@ -1,16 +1,20 @@
-// GET /api/cron/retry-scoring — Vercel cron (every 5 min).
+// GET /api/cron/retry-scoring — Vercel cron (daily midnight UTC).
 // Finds batches with failed or stuck scoring and retries up to 3 times.
 export const maxDuration = 30;
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { fireRelay } from "@/lib/import/fire-relay";
+import { verifyCronAuth } from "@/lib/utils/verify-cron-auth";
 
 const MAX_SCORING_RETRIES = 3;
 const BASE_STUCK_MS = 3 * 60_000; // 3 min base
 const PER_CHUNK_STUCK_MS = 60_000; // +1 min per 150-product scoring chunk
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  if (!verifyCronAuth(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const now = new Date();
 

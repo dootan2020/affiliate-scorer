@@ -25,21 +25,21 @@ export function calculateReward(metrics: MetricsInput): number {
     reward += Math.log(1 + metrics.views) * 1.0;
   }
 
-  // Engagement (shares + saves quan trọng hơn likes)
-  if (metrics.shares) reward += metrics.shares * 0.5;
-  if (metrics.saves) reward += metrics.saves * 0.3;
+  // Engagement — all log-scale to prevent viral outlier distortion
+  if (metrics.shares) reward += Math.log(1 + metrics.shares) * 2;
+  if (metrics.saves) reward += Math.log(1 + metrics.saves) * 1.5;
   if (metrics.likes) reward += Math.log(1 + metrics.likes) * 0.3;
 
-  // Comments = intent mua
-  if (metrics.comments) reward += metrics.comments * 0.2;
+  // Comments = intent mua (log-scale)
+  if (metrics.comments) reward += Math.log(1 + metrics.comments) * 1;
 
   // Completion rate (từ extension — 0-1)
   if (metrics.completionRate) {
     reward += metrics.completionRate * 5;
   }
 
-  // Orders — weight cao nhất
-  if (metrics.orders) reward += metrics.orders * 10;
+  // Orders — log-scale, still highest weight
+  if (metrics.orders) reward += Math.log(1 + metrics.orders) * 5;
 
   // Commission (tiền thật)
   if (metrics.commissionAmount) {

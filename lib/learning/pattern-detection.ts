@@ -88,7 +88,7 @@ export async function regeneratePatterns(channelId?: string): Promise<{ patterns
       topCategory || "",
     ].filter(Boolean).join(" + ");
 
-    if (winRate >= 0.5 && groupAssets.length >= 2) {
+    if (winRate >= 0.5 && groupAssets.length >= 5) {
       results.push({
         patternType: "winning",
         label,
@@ -99,7 +99,7 @@ export async function regeneratePatterns(channelId?: string): Promise<{ patterns
         avgReward: avgGroupReward,
         winRate,
       });
-    } else if (lossRate >= 0.5 && groupAssets.length >= 2) {
+    } else if (lossRate >= 0.5 && groupAssets.length >= 5) {
       results.push({
         patternType: "losing",
         label,

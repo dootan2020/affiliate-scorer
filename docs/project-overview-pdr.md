@@ -200,7 +200,6 @@
 | Encryption | Node crypto (AES-256-GCM) | — | API key storage |
 | Toast | Sonner | 2.0 | Notification system |
 | Package Manager | pnpm | — | Strict; no npm/yarn |
-| Deployment | Netlify + @netlify/plugin-nextjs | 5.15.8 | Primary; Vercel config retained as fallback |
 
 ---
 
@@ -424,6 +423,7 @@ Business (commission tracking, P&L, goal progress)
 | Channel Detail | `/channels/[id]` | Channel profile, Character Bible, Format Bank, Idea Matrix, Video Bible, Series Planner |
 | Insights | `/insights` | Overview tab, financial tab, calendar events tab, AI intelligence section (patterns, anomalies, weekly report) |
 | Log | `/log` | Quick mode (paste URL + metrics), batch mode |
+| Playbook | `/playbook` | Winning patterns, strategies, accumulated knowledge (redirects to `/insights?tab=playbook`) |
 | Sync | `/sync` | TikTok Studio file upload + data sync |
 | Niche Finder | `/niche-finder` | 4-step niche intelligence wizard, AI analysis, auto-channel creation |
 | Advisor | `/advisor` | AI advisory system (ANALYST → CMO/CFO/CTO → CEO company hierarchy) |

@@ -101,7 +101,8 @@ export async function syncIdentityBatch(inputs: BatchSyncInput[]): Promise<numbe
         price: Math.round(item.price),
         commissionRate: item.commissionRate,
         imageUrl: item.imageUrl,
-        inboxState: item.aiScore ? "scored" : "enriched",
+        // Fix H12: aiScore is always null at import time — always "enriched"
+        inboxState: "enriched",
         marketScore: item.aiScore,
         deltaType: "NEW",
       })),

@@ -37,20 +37,23 @@ export async function syncProductIdentity(input: SyncInput): Promise<{ identityI
 
   if (product?.identityId) {
     // Đã có identity → compute delta + update metadata
+    // Fix C6: Don't overwrite marketScore — let score-identity.ts handle it exclusively
     const delta = await computeDelta(input.productId, input.sales7d);
+    const updateData: Record<string, unknown> = {
+      title: input.name,
+      shopName: input.shopName,
+      category: input.category,
+      price: Math.round(input.price),
+      commissionRate: input.commissionRate,
+      imageUrl: input.imageUrl,
+      deltaType: delta,
+      lastSeenAt: new Date(),
+    };
+    // Fix C7: Only write marketScore when we have a real value (match batch behavior)
+    if (input.aiScore != null) updateData.marketScore = input.aiScore;
     await prisma.productIdentity.update({
       where: { id: product.identityId },
-      data: {
-        title: input.name,
-        shopName: input.shopName,
-        category: input.category,
-        price: Math.round(input.price),
-        commissionRate: input.commissionRate,
-        imageUrl: input.imageUrl,
-        marketScore: input.aiScore,
-        deltaType: delta,
-        lastSeenAt: new Date(),
-      },
+      data: updateData,
     });
     return { identityId: product.identityId, delta };
   }
@@ -72,19 +75,21 @@ export async function syncProductIdentity(input: SyncInput): Promise<{ identityI
       data: { identityId: identity.id },
     });
     const delta = await computeDelta(input.productId, input.sales7d);
+    // Fix C6: Don't overwrite marketScore — let score-identity.ts handle it exclusively
+    const updateData2: Record<string, unknown> = {
+      title: input.name,
+      shopName: input.shopName,
+      category: input.category,
+      price: Math.round(input.price),
+      commissionRate: input.commissionRate,
+      imageUrl: input.imageUrl,
+      deltaType: delta,
+      lastSeenAt: new Date(),
+    };
+    if (input.aiScore != null) updateData2.marketScore = input.aiScore;
     await prisma.productIdentity.update({
       where: { id: identity.id },
-      data: {
-        title: input.name,
-        shopName: input.shopName,
-        category: input.category,
-        price: Math.round(input.price),
-        commissionRate: input.commissionRate,
-        imageUrl: input.imageUrl,
-        marketScore: input.aiScore,
-        deltaType: delta,
-        lastSeenAt: new Date(),
-      },
+      data: updateData2,
     });
     return { identityId: identity.id, delta };
   }
@@ -101,8 +106,10 @@ export async function syncProductIdentity(input: SyncInput): Promise<{ identityI
       price: Math.round(input.price),
       commissionRate: input.commissionRate,
       imageUrl: input.imageUrl,
-      inboxState: input.aiScore ? "scored" : "enriched",
-      marketScore: input.aiScore,
+      // Fix H12: aiScore is always null at import time — always "enriched"
+      inboxState: "enriched",
+      // Fix C6: Only set marketScore if we have a real value
+      ...(input.aiScore != null ? { marketScore: input.aiScore } : {}),
       deltaType: "NEW",
     },
   });

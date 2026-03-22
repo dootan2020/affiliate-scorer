@@ -78,7 +78,7 @@ function computeRawCombinedScore(identity: IdentityWithProduct): number | null {
       totalVideos: identity.product.totalVideos,
       kolOrderRate: identity.product.kolOrderRate,
       affiliateCount: identity.product.affiliateCount,
-      price: identity.product.price ?? Number(identity.price) ?? 0,
+      price: identity.product.price ?? (identity.price != null ? Number(identity.price) : 0),
       name: identity.title,
     };
     baseFormulaScore = calculateBaseScore(input).total;
@@ -177,7 +177,11 @@ export async function syncIdentityScores(
   return updates.length;
 }
 
-/** Score ALL non-archived identities with global normalization. */
+/** Score ALL non-archived identities with global normalization.
+ *  Uses 2-pass approach to fix C5: stats must be populated BEFORE normalization.
+ *  Pass 1: Compute all raw scores + update global stats from full batch.
+ *  Pass 2: Normalize all scores using populated stats + write to DB.
+ */
 export async function syncAllIdentityScores(
   onProgress?: (done: number, total: number) => void,
 ): Promise<number> {
@@ -186,6 +190,7 @@ export async function syncAllIdentityScores(
     include: IDENTITY_INCLUDE,
   });
 
+  // Pass 1: Compute all raw scores
   const updates = identities.map((identity) => ({
     id: identity.id,
     contentPotentialScore: computeContentScore(identity),
@@ -193,15 +198,16 @@ export async function syncAllIdentityScores(
     inboxState: computeInboxState(identity.inboxState),
   }));
 
-  // CRITICAL: Get OLD stats FIRST, normalize, THEN update (Fix #1)
-  const stats = await getGlobalStats();
-
+  // Pass 1b: Update global stats with ALL raw scores BEFORE normalization
   const rawScores = updates
     .map((u) => u.rawCombined)
     .filter((s): s is number => s != null);
   if (rawScores.length > 0) {
     await updateGlobalStats(rawScores);
   }
+
+  // Pass 2: Read populated stats, normalize, and write to DB
+  const stats = await getGlobalStats();
   const total = updates.length;
   let done = 0;
 

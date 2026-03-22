@@ -132,7 +132,7 @@ async function rescoreFormulaOnly(
         totalVideos: identity.product.totalVideos,
         kolOrderRate: identity.product.kolOrderRate,
         affiliateCount: identity.product.affiliateCount,
-        price: identity.product.price ?? Number(identity.price) ?? 0,
+        price: identity.product.price ?? (identity.price != null ? Number(identity.price) : 0),
         name: identity.product.name ?? identity.title,
       };
       const baseScore = calculateBaseScore(input).total;
@@ -150,15 +150,15 @@ async function rescoreFormulaOnly(
     return { id: identity.id, rawCombined };
   });
 
-  // Update global stats
+  // CRITICAL: Get stats BEFORE updating with new batch (Fix C1)
+  const stats = await getGlobalStats();
+
   const rawScores = updates
     .map((u) => u.rawCombined)
     .filter((s): s is number => s != null);
   if (rawScores.length > 0) {
     await updateGlobalStats(rawScores);
   }
-
-  const stats = await getGlobalStats();
   const PARALLEL = 20;
 
   for (let i = 0; i < updates.length; i += PARALLEL) {

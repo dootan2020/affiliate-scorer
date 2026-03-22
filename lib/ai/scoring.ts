@@ -146,20 +146,22 @@ async function fetchProducts(options: ScoreOptions): Promise<ProductModel[]> {
 }
 
 function parseClaudeResponse(text: string): ClaudeScoreItem[] {
-  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  // Fix A2: Use non-greedy regex to avoid overcapture across code blocks
+  const jsonMatch = text.match(/\[[\s\S]*?\]/);
   if (!jsonMatch) {
     throw new Error("No JSON array found in AI response");
   }
   try {
     return JSON.parse(jsonMatch[0]) as ClaudeScoreItem[];
   } catch (parseError) {
+    // Fix A1: Throw on parse failure instead of returning [] (silent cascade)
     console.error(
       "[parseClaudeResponse] JSON parse failed:",
       parseError,
       "Raw:",
       jsonMatch[0].substring(0, 200),
     );
-    return [];
+    throw new Error(`JSON parse failed: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
   }
 }
 
@@ -209,16 +211,16 @@ async function mergeWithBaseScore(
   modelUsed: string,
   usePersonalization: boolean,
 ): Promise<{
-  aiScore: number;
+  aiScore: number | null;
   scoreBreakdown: string;
   contentSuggestion: string;
   platformAdvice: string;
   scoringVersion: string;
 }> {
   if (!claudeItem) {
-    // No AI response — store null aiScore (base formula handles in score-identity)
+    // No AI response — store null so retry-scoring cron can pick it up (Fix C3)
     return {
-      aiScore: 0,
+      aiScore: null,
       scoreBreakdown: JSON.stringify({ scoredByModel: modelUsed, error: "no_response" }),
       contentSuggestion: "",
       platformAdvice: "",
@@ -240,7 +242,7 @@ async function mergeWithBaseScore(
     scoreBreakdown: buildScoreBreakdownJson(claudeItem, modelUsed),
     contentSuggestion: claudeItem.contentAngle || claudeItem.contentSuggestion || "",
     platformAdvice: claudeItem.platformAdvice || "",
-    scoringVersion: "v2-rubric",
+    scoringVersion: CURRENT_SCORING_VERSION,
   };
 }
 

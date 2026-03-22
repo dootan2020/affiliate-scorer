@@ -7,7 +7,7 @@ Project phases, milestones, and implementation progress.
 ## Project Status
 
 - **Current Version:** 1.10.1
-- **Last Updated:** 2026-03-08
+- **Last Updated:** 2026-03-22
 - **Overall Progress:** ~93% complete (13 of 14 core phases done, Guide Page & Advisory System & Onboarding Checklist live)
 
 ---
@@ -173,7 +173,7 @@ Project phases, milestones, and implementation progress.
 | Chunked import (300 products per chunk) | ✅ Done | 100% |
 | Fire-and-forget relay chain | ✅ Done | 100% |
 | Retry with exponential backoff (1s/2s/4s) | ✅ Done | 100% |
-| Auto-retry scoring cron (every 5 min) | ✅ Done | 100% |
+| Auto-retry scoring cron (daily midnight UTC) | ✅ Done | 100% |
 | Scaled stuck detection (base + per-chunk threshold) | ✅ Done | 100% |
 | Max 3 retries per batch with tracking | ✅ Done | 100% |
 | UI chunk progress display | ✅ Done | 100% |
@@ -265,7 +265,7 @@ Project phases, milestones, and implementation progress.
 
 ---
 
-### Phase 14 — Scoring System Redesign ⏳ PLANNED
+### Phase 14 — Scoring System Redesign ⏳ PLANNED (Q2 2026)
 
 **Goal:** Redesign scoring formula to improve content potential score discriminative power
 
@@ -279,6 +279,19 @@ Project phases, milestones, and implementation progress.
 
 **Plan Location:** `plans/260305-1440-scoring-system-redesign/`
 **ETA:** Mar 24, 2026 (v1.12.0)
+
+### Phase 15 — Scheduled Features (Q2–Q3 2026)
+
+**Future Roadmap Beyond Phase 14:**
+
+| Feature | Target | Priority | Notes |
+|---------|--------|----------|-------|
+| Mobile app (iOS/Android) | Q3 2026 | High | React Native or Flutter |
+| Multi-user workspace | Q2 2026 | Medium | Team collaboration features |
+| Advanced analytics dashboard | Q2 2026 | Medium | Deep-dive product insights |
+| A/B testing framework | Q3 2026 | Medium | Compare content variations |
+| Integration marketplace | Q3 2026 | Low | Third-party integrations (Shopify, Google Ads, etc.) |
+| Real-time collaboration | Q3 2026 | Low | Concurrent editing for team workspaces |
 
 ---
 
@@ -321,9 +334,9 @@ Project phases, milestones, and implementation progress.
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| API routes | 140+ | ✅ Complete |
+| API route handlers | 138 | ✅ Complete |
 | Database models | 51 | ✅ Complete |
-| UI pages | 16 | ✅ Complete (added niche-finder, guide, advisor) |
+| Page routes + special | 14 + 3 | ✅ Complete (14 routes + error/not-found/loading) |
 | Code files | 500+ | ✅ Current |
 | TypeScript strict | 100% | ✅ Enabled |
 | Test coverage | ~60% | ⚠️ In progress |
@@ -332,7 +345,7 @@ Project phases, milestones, and implementation progress.
 | Error boundaries | 8 widgets | ✅ Complete |
 | Mobile responsive | 100% | ✅ Complete |
 | AI Agent modules | 8 | ✅ Complete |
-| Cron jobs | 3 | ✅ Complete |
+| Cron endpoints | 7 (6 scheduled) | ✅ Complete |
 | PWA ready | 100% | ✅ Complete |
 
 ---
@@ -385,7 +398,7 @@ Project phases, milestones, and implementation progress.
 
 ## Success Criteria
 
-### MVP Success (Current v1.9.0)
+### MVP Success (Current v1.10.1)
 - ✅ Upload 3000+ products without timeout
 - ✅ Auto-score in background with retry
 - ✅ Generate briefs for 10+ products
@@ -395,8 +408,10 @@ Project phases, milestones, and implementation progress.
 - ✅ Telegram bot integration
 - ✅ PWA installable
 - ✅ Win prediction scoring ($0 cost)
+- ✅ Guide page redesigned (15 sections, onboarding checklist)
+- ✅ Advisory system (company hierarchy)
 
-### Next Release (v1.10.0)
+### Next Release (v1.12.0)
 - [ ] Scoring formula redesign (6 dimensions)
 - [ ] 90%+ test coverage (unit + integration)
 - [ ] < 100ms p95 API latency

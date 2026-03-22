@@ -90,16 +90,20 @@ netlify env:set NEXT_PUBLIC_SUPABASE_ANON_KEY "eyJ..."
 netlify env:set ANTHROPIC_API_KEY "sk-ant-..."
 ```
 
-### Current Live Deployment
+### Current Live Deployment (PRIMARY)
 
 - **URL:** https://pastr-app.netlify.app
+- **Platform:** Netlify with @netlify/plugin-nextjs
 - **Status:** Active
 - **Routes:** 74 generated
 - **Build Time:** ~67 seconds
 - **TypeScript Errors:** 0
 - **Auto-deploy:** Enabled (GitHub webhook)
+- **Cron Jobs:** Via Vercel configuration (see section 6 below)
 
 When you push to `master` branch, Netlify automatically rebuilds and deploys.
+
+**Note:** Netlify is primary deployment platform. Vercel config retained for multi-platform flexibility.
 
 ---
 
@@ -151,33 +155,36 @@ PASTR includes background cron jobs for learning, analytics, and resilience:
 
 | Job | Schedule | Purpose | Endpoint |
 |-----|----------|---------|----------|
-| Morning Brief | Daily | Generate daily AI brief | `/api/cron/morning-brief` |
-| Nightly Learning | 22:00 UTC | Aggregate feedback, update memory | `/api/cron/nightly-learning` |
-| Trend Analysis | 22:30 UTC | Analyze competitor captures | `/api/cron/trend-analysis` |
-| Weekly Learning | Weekly | Weekly learning cycle | `/api/cron/weekly-learning` |
-| Decay | Daily | Apply decay to learning weights | `/api/cron/decay` |
-| Retry Scoring | Every 5 min | Detect & retry failed imports | `/api/cron/retry-scoring` |
+| Morning Brief | Daily (23:00 UTC) | Generate daily AI brief | `/api/cron/morning-brief` |
+| Nightly Learning | Daily (22:00 UTC) | Aggregate feedback, update memory | `/api/cron/nightly-learning` |
+| Trend Analysis | Daily (22:30 UTC) | Analyze competitor captures | `/api/cron/trend-analysis` |
+| Weekly Report | Sunday (06:00 UTC) | Weekly analytics report | `/api/cron/weekly-report` |
+| Decay | Daily (01:00 UTC) | Apply decay to learning weights | `/api/cron/decay` |
+| Retry Scoring | Daily (00:00 UTC) | Detect & retry failed imports | `/api/cron/retry-scoring` |
 
-### Netlify Cron Setup
+### Netlify Deployment — Cron Setup
 
-Netlify does not have native cron support. Use external service:
+Netlify functions do NOT support native cron scheduling. Options:
 
-**Option A: EasyCron (Free)**
+**Option A: EasyCron (Recommended, Free)**
 1. Go to [easycron.com](https://easycron.com)
-2. Create cron job for each endpoint:
+2. Create 6 cron jobs, one per endpoint:
    ```
-   https://pastr-app.netlify.app/api/cron/nightly-learning?secret=YOUR_CRON_SECRET
+   https://pastr-app.netlify.app/api/cron/nightly-learning
    ```
-3. Set schedule (e.g., `0 22 * * *` for 22:00 UTC)
-4. Set `CRON_SECRET` env var in Netlify dashboard
+3. Set schedule per vercel.json (e.g., `0 22 * * *` for 22:00 UTC)
+4. Add `CRON_SECRET` header: `Authorization: Bearer YOUR_SECRET`
+5. Set `CRON_SECRET` env var in Netlify dashboard
 
-**Option B: GitHub Actions**
+**Option B: GitHub Actions (Recommended, No Cost)**
 ```yaml
 # .github/workflows/cron.yml
-name: Scheduled Cron Jobs
+name: Cron Jobs
 on:
   schedule:
-    - cron: '0 22 * * *'  # 22:00 UTC daily
+    - cron: '0 22 * * *'   # 22:00 UTC daily
+    - cron: '30 22 * * *'  # 22:30 UTC daily
+    - cron: '0 23 * * *'   # 23:00 UTC daily
 jobs:
   cron:
     runs-on: ubuntu-latest
@@ -187,34 +194,24 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 ```
 
-### Vercel Cron Setup
+### Vercel Cron Architecture (Fallback)
 
-Vercel has native cron support via `vercel.json`:
+If using Vercel, native cron support via `vercel.json`:
 
 ```json
 {
   "crons": [
-    {
-      "path": "/api/cron/morning-brief",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/nightly-learning",
-      "schedule": "0 22 * * *"
-    },
-    {
-      "path": "/api/cron/trend-analysis",
-      "schedule": "30 22 * * *"
-    },
-    {
-      "path": "/api/cron/retry-scoring",
-      "schedule": "*/5 * * * *"
-    }
+    { "path": "/api/cron/retry-scoring", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/decay", "schedule": "0 1 * * *" },
+    { "path": "/api/cron/nightly-learning", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/weekly-report", "schedule": "0 6 * * 0" },
+    { "path": "/api/cron/morning-brief", "schedule": "0 23 * * *" },
+    { "path": "/api/cron/trend-analysis", "schedule": "30 22 * * *" }
   ]
 }
 ```
 
-No additional configuration needed — Vercel handles scheduling automatically.
+Vercel handles scheduling automatically; no external setup needed.
 
 ### Cron Job Security
 
@@ -233,32 +230,37 @@ if (request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`
 
 ## Environment Variables
 
-### Required Variables
+### Canonical Environment Variable Reference
 
-| Variable | Purpose | Source |
-|----------|---------|--------|
-| `DATABASE_URL` | Primary PostgreSQL connection | Supabase Dashboard |
-| `DIRECT_URL` | Direct DB connection (migrations) | Supabase Dashboard |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase API endpoint | Supabase Dashboard |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | Supabase Dashboard |
-| `ANTHROPIC_API_KEY` | Claude API access | Anthropic Console |
+This is the authoritative list. All other docs reference this table.
+
+| Variable | Required | Purpose | Source |
+|----------|----------|---------|--------|
+| `DATABASE_URL` | **Yes** | PostgreSQL pooled connection (pgBouncer, port 6543) | Supabase Dashboard → Settings → Database |
+| `DIRECT_URL` | **Yes** | Direct PostgreSQL connection (port 5432, for migrations) | Supabase Dashboard → Settings → Database |
+| `ENCRYPTION_KEY` | **Yes** | 32-byte hex key for AES-256-GCM API key encryption. Generate: `openssl rand -hex 32` | Self-generated |
+| `AUTH_SECRET` | Optional | Secret for `x-auth-secret` API header. Empty = same-origin only | Self-generated |
+| `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot for competitor video capture | @BotFather on Telegram |
+| `CRON_SECRET` | Optional | Bearer token for cron job auth (Netlify external scheduler) | Self-generated |
+
+> **AI provider API keys** (Anthropic, OpenAI, Google) are managed via Settings UI and stored encrypted in database — NOT in env vars.
+>
+> **NEXT_PUBLIC_SUPABASE_URL** and **NEXT_PUBLIC_SUPABASE_ANON_KEY** are NOT in `.env.example` — the app uses Prisma (not Supabase JS client) for DB access. Only add these if using Supabase client features directly.
 
 ### How to Obtain
 
-#### Supabase Variables
-1. Go to [supabase.com](https://supabase.com)
-2. Open your project
-3. **Settings → API** — copy:
-   - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. **Settings → Database → Connection info** — copy:
-   - `Connection string` (with password) → `DATABASE_URL`
-   - `Direct connection` → `DIRECT_URL`
+#### Supabase Database Variables
+1. Go to [supabase.com](https://supabase.com) → open your project
+2. **Settings → Database → Connection info** — copy:
+   - `Connection string` (pooled, port 6543) → `DATABASE_URL`
+   - `Direct connection` (port 5432) → `DIRECT_URL`
 
-#### Anthropic API Key
-1. Go to [console.anthropic.com](https://console.anthropic.com)
-2. **Settings → API Keys**
-3. Create or copy existing key → `ANTHROPIC_API_KEY`
+#### Encryption & Auth Keys
+1. Generate ENCRYPTION_KEY: `openssl rand -hex 32`
+2. Generate AUTH_SECRET: `openssl rand -hex 32`
+
+#### AI Provider Keys
+AI provider keys (Anthropic, OpenAI, Google) are configured in **Settings → API Keys** within the app UI. They are encrypted and stored in the database — NOT as environment variables.
 
 ### Local Testing
 

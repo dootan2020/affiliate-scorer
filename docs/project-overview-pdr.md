@@ -61,7 +61,7 @@
   - **Market Score** — revenue momentum, growth rate, competition density, commission rate, trend alignment, seasonality
   - **Content Potential Score** — visual wow factor, angle diversity, available creative assets, AI-production feasibility, risk flags
 - **Multi-provider AI:** Claude (Anthropic), GPT/O3 (OpenAI), Gemini (Google) — user configures in Settings
-- **Hybrid scoring:** 60% AI score + 40% base formula score
+- **Hybrid scoring:** 55% AI score + 45% base formula score
 - **Personalization layer:** After 30+ feedbacks, applies user-specific weight adjustments
 - **Batch processing:** Scores 30 products concurrently (3 parallel batches of 10)
 
@@ -151,13 +151,40 @@
 - **Interactive UI:** Collapsible C-level detail panels, follow-up questions
 - **Cost:** ~2-5 AI calls per analysis (1 per role + CEO synthesis)
 
+### 3.15 Chunked Import System
+- **Large file handling:** Process 3000+ products without timeout
+- **Fire-and-forget relay:** Chunk imports into 300-product batches with automatic relay chain
+- **Exponential backoff retry:** (1s → 2s → 4s) with max 3 retries per batch
+- **Cron safety net:** Auto-retry stuck batches daily midnight UTC via `/api/cron/retry-scoring`
+- **Scaled stuck detection:** Dynamic threshold = BASE (3 min) + (recordCount / 150) * 1 min
+- **Atomic progress:** Per-chunk DB updates without full transactions to prevent PgBouncer conflicts
+- **UI progress:** Real-time chunk processing display with per-chunk log entries
+
+### 3.16 AI Agent System (6 Phases)
+- **Phase 1:** Channel Memory builder — contextual enrichment per channel
+- **Phase 2:** Brief personalization — auto-inject memory into generated briefs
+- **Phase 3:** Content analyzer — TikTok oembed + AI classification
+- **Phase 4:** Telegram bot integration + competitor trend analysis (22:30 UTC daily)
+- **Phase 5:** Win predictor — 6-feature formula-based success probability
+- **Phase 6:** Mobile quick-log FAB + PWA installability
+- **Nightly Learning Cron:** 22:00 UTC daily — aggregate feedback, update ChannelMemory
+- **Async Competitor Capture:** Fire-and-forget Telegram link capture for trend analysis
+
+### 3.17 Niche Intelligence Wizard
+- **4-step guided discovery:** Explore → Analyze → Create → Success
+- **10+ niche categories:** Gia dụng, Mỹ phẩm, Thời trang, Thể thao, Điện tử, Sức khỏe, Nước uống, Thực phẩm, Giáo dục, và hơn thế
+- **AI niche analysis:** Market potential (30%), competition level (25%), profit margin (25%), content difficulty (20%)
+- **Auto-channel creation:** System generates TikTok channel name, persona, Character Bible after user selects niche
+- **NicheProfile tracking:** Link created channels back to original niche selection for analytics
+
 ---
 
 ## 4. Tech Stack
 
 | Component | Technology | Version | Notes |
 |-----------|-----------|---------|-------|
-| Framework | Next.js (App Router) | 16.1 | React 19, Server Components default |
+| Deployment | Netlify + @netlify/plugin-nextjs | 5.15.8 | Primary platform, live at pastr-app.netlify.app |
+| Framework | Next.js (App Router) | 16.1 | React 19, Server Components, React Compiler enabled |
 | Language | TypeScript | strict mode | No `any`, explicit return types |
 | ORM | Prisma Client | 7.4 | Generated to `app/generated/prisma` |
 | Database | PostgreSQL | — | Hosted on Supabase (pooled + direct connections) |
@@ -173,7 +200,7 @@
 | Encryption | Node crypto (AES-256-GCM) | — | API key storage |
 | Toast | Sonner | 2.0 | Notification system |
 | Package Manager | pnpm | — | Strict; no npm/yarn |
-| Deployment | Vercel | — | Target platform |
+| Deployment | Netlify + @netlify/plugin-nextjs | 5.15.8 | Primary; Vercel config retained as fallback |
 
 ---
 
@@ -189,7 +216,7 @@ graph TB
     end
 
     subgraph Server["Next.js Server (App Router)"]
-        API["API Route Handlers (70+ endpoints)"]
+        API["API Route Handlers (138 endpoints)"]
         MW["Middleware (origin-check auth)"]
         ServerComponents["Server Components"]
     end
@@ -325,7 +352,7 @@ Business (commission tracking, P&L, goal progress)
 
 ## 7. API Endpoints
 
-### Summary: 90+ route handlers across 25 domains
+### Summary: 138 route handlers across 37 domains
 
 | Domain | Routes | Methods | Description |
 |--------|--------|---------|-------------|
@@ -384,7 +411,7 @@ Business (commission tracking, P&L, goal progress)
 
 ## 8. UI/UX Requirements
 
-### Pages (15 total)
+### Pages (14 page routes + 3 special pages)
 
 | Page | Path | Description |
 |------|------|-------------|
@@ -397,12 +424,14 @@ Business (commission tracking, P&L, goal progress)
 | Channel Detail | `/channels/[id]` | Channel profile, Character Bible, Format Bank, Idea Matrix, Video Bible, Series Planner |
 | Insights | `/insights` | Overview tab, financial tab, calendar events tab, AI intelligence section (patterns, anomalies, weekly report) |
 | Log | `/log` | Quick mode (paste URL + metrics), batch mode |
-| Playbook | `/playbook` | Winning patterns, strategies, accumulated knowledge |
 | Sync | `/sync` | TikTok Studio file upload + data sync |
-| Guide | `/guide` | User guide with flow diagram, TOC, interactive sections |
-| Settings | `/settings` | API key management, AI model configuration |
-| 404 | — | Custom not-found page (Apple-style) |
-| Error | — | Custom error page with retry |
+| Niche Finder | `/niche-finder` | 4-step niche intelligence wizard, AI analysis, auto-channel creation |
+| Advisor | `/advisor` | AI advisory system (ANALYST → CMO/CFO/CTO → CEO company hierarchy) |
+| Guide | `/guide` | User guide with TOC sidebar, 15 sections, onboarding checklist |
+| Settings | `/settings` | API key management, AI model configuration (7 task types) |
+| 404 | `/not-found` | Custom not-found page (Apple-style) |
+| Error | `/error` | Custom error page with retry |
+| Loading | `/loading` | Root loading skeleton |
 
 ### Design System
 - **Philosophy:** Apple-inspired — clean, warm, spacious, generous whitespace
@@ -468,9 +497,10 @@ Paste links → Inbox auto-populates → Score products
 ## 10. Deployment Strategy
 
 ### Hosting
-- **Platform:** Vercel (free tier target)
-- **Framework preset:** Next.js (auto-detected)
-- **Region:** [TBD — likely ap-southeast-1 for Vietnam latency]
+- **Platform:** Netlify + @netlify/plugin-nextjs (primary)
+- **Live URL:** https://pastr-app.netlify.app
+- **CI/CD:** GitHub webhook — auto-deploy on push to master
+- **Fallback:** Vercel config retained for multi-platform flexibility
 
 ### Database
 - **Provider:** Supabase (PostgreSQL)
@@ -485,13 +515,15 @@ Paste links → Inbox auto-populates → Score products
 | `DIRECT_URL` | Recommended | Direct connection for migrations |
 | `ENCRYPTION_KEY` | Yes | 32-byte hex key for API key encryption |
 | `AUTH_SECRET` | Optional | Secret for API auth header; empty = same-origin only |
+| `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot integration |
 
-> AI provider API keys (Anthropic, OpenAI, Google) are managed via the Settings UI and stored encrypted in the database — not in env vars.
+> AI provider API keys (Anthropic, OpenAI, Google) are managed via the Settings UI and stored encrypted in the database — not in env vars. See `docs/deployment-guide.md` for full environment variable reference.
 
 ### CI/CD
-- [TBD] No CI/CD pipeline currently configured
-- Build command: `pnpm build`
-- Dev command: `pnpm dev`
+- **GitHub webhook:** Auto-deploy on push to master (Netlify)
+- **Preview deployments:** PR previews via Netlify
+- **Build command:** `pnpm build`
+- **Dev command:** `pnpm dev`
 
 ### Migrations
 - Prisma Migrate for schema changes
@@ -565,6 +597,25 @@ Paste links → Inbox auto-populates → Score products
 - Version locking for VideoBible
 - UI: Video Bible editor, Series Planner, channel detail tabs
 
+### Phase 9 — Scalable Import System (COMPLETE)
+- Chunked import (300 products/chunk), fire-and-forget relay, cron retry
+
+### Phase 10 — Niche Intelligence & Dashboard Redesign (COMPLETE)
+- 4-step niche wizard, dashboard bento grid, mobile card layout, error boundaries
+
+### Phase 11 — AI Agent System (COMPLETE)
+- 6-phase agent system, Telegram bot, nightly learning, trend analysis cron
+
+### Phase 12 — Guide Page Redesign & Expansion (COMPLETE)
+- Professional docs layout, 15 sections, AI config expansion (7 task types)
+
+### Phase 13 — Interactive Onboarding Checklist (COMPLETE)
+- 7-step progress tracker with localStorage persistence
+
+### Phase 14 — Scoring System Redesign (PLANNED)
+- Improve content potential score discriminative power
+- Plan: `plans/260305-1440-scoring-system-redesign/`
+
 ### Future / Backlog
 - Chrome Extension (MV3) for one-click product capture from TikTok
 - Multi-channel expansion beyond TikTok
@@ -582,7 +633,7 @@ Paste links → Inbox auto-populates → Score products
 | Single user | No multi-user auth, no team features |
 | No scraping | Does not auto-fetch data from TikTok Shop pages; relies on manual input + file imports |
 | AI cost | Depends on user's own API keys; free tier models available (Haiku, Flash) |
-| Budget | $0/month target (Vercel free + Supabase free); scales with AI API usage only |
+| Budget | $0/month target (Netlify free + Supabase free); scales with AI API usage only |
 | Data entry | Products require manual enrichment or file import; no automatic crawling |
 
 ### Assumptions

@@ -1,7 +1,8 @@
-# Project Status — PASTR (v1.10.0)
+# Project Status — PASTR (v1.10.1)
 
-**Last Updated:** 2026-03-08
-**Overall Status:** MVP Complete, Production Ready (85/100 — from 82/100)
+**Last Updated:** 2026-03-22
+**Overall Status:** MVP Complete, Production Ready (85/100)
+**Live URL:** https://pastr-app.netlify.app
 
 ---
 
@@ -27,7 +28,15 @@
 
 ---
 
-## Recent Changes (March 5–8, 2026)
+## Recent Changes (March 8–22, 2026)
+
+### v1.10.1 — Interactive Onboarding (Mar 22)
+- **Interactive Onboarding Checklist:** 7-step progress tracker (Paste link → Upload file → Dashboard → Channel → Brief → Log → Track)
+- **localStorage Persistence:** Checklist progress survives page reloads
+- **Vietnamese diacritics fix:** Sync page processing log now renders correctly (é, ơ, ư preserved)
+- **Type safety improvements:** Advisor response types extracted into dedicated exports
+
+### v1.10.0 — Guide Page & Advisory System (Mar 8)
 
 ### Pre-Production Audit Fixes
 - **Cascade Delete Rules:** Implemented 10 critical referential integrity rules across models (Feedback→Product, ProductSnapshot→Product/Batch, ContentBrief→ProductIdentity, etc.)
@@ -97,23 +106,36 @@
 ### Production Readiness (85/100)
 
 **Strengths:**
-- All 15 pages load without error
+- All 14 page routes + 3 special pages load without error
 - Navigation structure correct across desktop/mobile
-- Data integrity enforced via cascade/setNull rules
-- Vietnamese diacritics complete
+- Data integrity enforced via cascade/setNull rules (10 critical relations)
+- Vietnamese diacritics complete (v1.10.1 fix)
+- Interactive onboarding checklist live (v1.10.1)
+- Cron jobs resilient with auto-retry (7 endpoints, 6 scheduled in vercel.json)
 
 **Weaknesses:**
-- **Settings Page Loading:** Caught in skeleton state on cold load (investigation needed)
-- **Library Product Images:** Gray placeholder images instead of actual product photos
-- **Production Page Load Time:** Brief cards slow to load (< 3s, acceptable but room for optimization)
-- **Badge "99+" Cap:** Display caps count at 99+ for large badge values (cosmetic)
+- **Settings Page Loading:** Occasional skeleton state on cold load (investigation ongoing)
+- **Library Product Images:** Gray placeholder images instead of actual product photos (low priority)
+- **Production Page Load Time:** Brief cards ~3s load (acceptable, room for optimization)
+- **Badge "99+" Cap:** Display caps at 99+ for large badge values (cosmetic)
+
+### Known Issues & Resolutions
+
+| Issue | Severity | Status | Target Fix |
+|-------|----------|--------|-----------|
+| Settings skeleton load state | Medium | 🔍 Investigating | v1.11 |
+| Library product images gray placeholders | Low | 📋 Backlog | v1.11 |
+| Production page brief load optimization | Low | 📋 Backlog | v1.11 |
+| Scoring system discriminative power | High | 📋 Phase 14 planned | v1.12 (Mar 24) |
+| Niche key format mismatch (DB vs category map) | Low | 🔄 Known | v1.12 |
+| Score label inconsistency (smartScore vs combinedScore) | Low | 🔄 Known | v1.12 |
 
 ### Technical Debt
-- Settings page skeleton loading reliability needs investigation
+- Settings page skeleton loading reliability (investigation needed)
 - Library image population (lazy-load vs preload strategy)
 - Production page performance profiling needed
-- Mobile/dark mode automated testing gaps
-- Scoring system needs redesign — content potential score has zero discriminative power
+- Mobile/dark mode automated testing gaps (60% test coverage)
+- Scoring system redesign — content potential score needs improved weights (Phase 14)
 
 ---
 
@@ -139,7 +161,7 @@
 - `/api/upload` → parses first 300 products
 - `/api/internal/import-chunk` → processes remaining chunks (fire-and-forget)
 - `/api/internal/score-batch` → triggers scoring after final chunk
-- `GET /api/cron/retry-scoring` — every 5 min, detects stuck batches and retries (max 3 times)
+- `GET /api/cron/retry-scoring` — daily midnight UTC, detects stuck batches and retries (max 3 times)
 **Benefits:** Instant response to user; cron safety net handles transient failures; scales to 3600+ products within 18 min
 
 ### 3-Layer Scoring System
@@ -188,7 +210,7 @@ concurrentLocks.delete(userId);
 
 ---
 
-## Pages & Routes (15 Total)
+## Pages & Routes (14 page routes + 3 special pages)
 
 | Page | Route | Purpose | Status |
 |------|-------|---------|--------|
@@ -196,18 +218,18 @@ concurrentLocks.delete(userId);
 | Inbox | `/inbox` | Product table/cards, filtering, detail panel | ✅ Live |
 | Production | `/production` | Brief generation, batch export, packs | ✅ Live |
 | Channels | `/channels` | Channel list, profile management | ✅ Live |
-| Channel Detail | `/channels/[id]` | Character bible, video bible, series | ✅ Live |
+| Channel Detail | `/channels/[id]` | Character bible, video bible, series, idea matrix | ✅ Live |
 | Library | `/library` | All videos, assets, performance tracking | ✅ Live |
 | Insights | `/insights` | Analytics, financial, calendar, patterns | ✅ Live |
 | Log | `/log` | Video tracking, result logging | ✅ Live |
 | Playbook | `/playbook` | Winning patterns, strategies | ✅ Live |
 | Sync (Data Import) | `/sync` | File upload, FastMoss/KaloData/TikTok Studio import | ✅ Live |
-| Settings | `/settings` | API keys, model config (7 task types), preferences | ✅ Live |
-| Advisor | `/advisor` | AI advisory system, data-driven recommendations, CEO decisions | ✅ Live |
-| Guide | `/guide` | 15-section docs with redesigned UI (fixed TOC, wider prose, larger text, mobile dropdown) | ✅ Live |
+| Settings | `/settings` | API keys, model config (7 task types), Telegram setup | ✅ Live |
+| Advisor | `/advisor` | Company hierarchy (ANALYST→CMO/CFO/CTO→CEO), data-driven recommendations | ✅ Live |
+| Guide | `/guide` | 15 sections with professional docs-style UI (fixed TOC, wider prose, larger text, onboarding checklist) | ✅ Live |
 | Niche Intelligence | `/niche-finder` | 4-step wizard for niche analysis & channel creation | ✅ Live |
-| Mobile Dashboard | Mobile view | Bottom tab bar, responsive cards | ✅ Live |
-| Error Pages | `/not-found`, etc. | Custom 404, error boundary fallback | ✅ Live |
+| Mobile Dashboard | Mobile view | Bottom tab bar, responsive cards, touch-optimized FAB | ✅ Live |
+| Error Pages | `/not-found`, `/error`, `/loading` | Custom 404, error boundary fallback, loading states | ✅ Live |
 
 ---
 
@@ -220,14 +242,13 @@ concurrentLocks.delete(userId);
 **Tracking:** AssetMetric, VideoTracking, ContentPost, Campaign
 **Learning:** Feedback, LearningLog, LearningWeightP4, UserPattern, WinPattern
 **Intelligence:** WeeklyReport, DailyBrief, NicheProfile, ChannelMemory, CompetitorCapture
-**Advisory:** AdvisorSession, AdvisorResponse
 **Integration:** TelegramChat
 **Business:** Commission, FinancialRecord, GoalP5, CalendarEvent
 **Settings:** AiModelConfig, ApiProvider
 
 ---
 
-## API Endpoints (140+)
+## API Endpoints (138 route handlers across 37 groups)
 
 **Import & Scoring:** `/api/upload`, `/api/internal/import-chunk`, `/api/internal/score-batch`, `/api/cron/retry-scoring`
 **Inbox:** `/api/inbox/paste`, `/api/inbox/list`, `/api/inbox/[id]`
@@ -247,24 +268,24 @@ concurrentLocks.delete(userId);
 
 ## Backlog & Future Phases (v2+)
 
-### Phase 13: Scoring System Redesign
+### Phase 14: Scoring System Redesign
 - **Plan:** `plans/260305-1440-scoring-system-redesign/`
 - **Goal:** Reweight scoring formula; content potential score currently has zero discriminative power
 - **Estimated:** 1–2 weeks
 
-### Phase 14: Real-Time Updates
+### Phase 15: Real-Time Updates
 - Webhooks for import completion (alternative to polling)
 - Server-sent events (SSE) for live progress updates
 
-### Phase 15: Chrome Extension
+### Phase 16: Chrome Extension
 - MV3 extension for one-click product capture
 - Direct paste from TikTok Shop
 
-### Phase 16: Multi-User Support
+### Phase 17: Multi-User Support
 - Team collaboration features
 - Shared channels, brief libraries
 
-### Phase 17: Advanced Features
+### Phase 18: Advanced Features
 - Batch prioritization (pause/resume)
 - Resumable uploads (restart from failed chunk)
 - Mobile PWA optimization
@@ -302,6 +323,18 @@ concurrentLocks.delete(userId);
 
 ## Summary
 
-PASTR is a production-ready MVP (v1.10.0, 85/100 readiness) with 51 database models and 140+ API endpoints across 12+ namespaces. All core modules functional: 3-layer scoring system, character-driven content framework (Character Bible + Video Bible), AI advisory system (ANALYST → C-levels → CEO), 6-phase AI agent system, Telegram bot integration, and chunked import architecture supporting 3600+ products. v1.10 highlights: guide page redesigned (fixed TOC sidebar, wider prose, larger text, professional docs-style UX); expanded to 15 sections; AI config extended to 7 task types. Next priority: Phase 13 (Scoring System Redesign) to improve content potential score discriminative power.
+PASTR is a production-ready MVP (v1.10.1, 85/100 readiness) with 475 source files (~53.6K LOC), 51 database models, and 138 API route handlers across 37 groups. All core modules functional: 3-layer scoring system, character-driven content framework (Character Bible + Video Bible), AI advisory system (ANALYST → C-levels → CEO), 6-phase AI agent system, Telegram bot integration, and chunked import architecture supporting 3600+ products.
 
-**Guide page redesign:** Fixed sticky TOC (lg+), orange active indicator, mobile dropdown select, wider content without container constraints, larger typography (prose-base, leading-7).
+**v1.10.1 Highlights (Mar 22):**
+- Interactive onboarding checklist (7-step progress tracker in guide page)
+- Vietnamese diacritics fix (sync page processing log)
+- Type safety improvements (advisor responses)
+
+**v1.10.0 Highlights (Mar 8):**
+- Guide page redesigned (fixed sticky TOC sidebar lg+, orange active indicator, wider prose, larger text, mobile dropdown)
+- AI Advisory System (ANALYST → [CMO, CFO, CTO] → CEO company hierarchy)
+- AI Agent System (6 phases: memory, brief personalization, content analyzer, Telegram bot, win predictor, mobile FAB)
+- Expanded to 15 guide sections; AI config extended to 7 task types
+- PWA support (installable, offline capability, mobile quick-log FAB)
+
+**Next Priority:** Phase 14 (Scoring System Redesign) to improve content potential score discriminative power. ETA: Mar 24 (v1.12)

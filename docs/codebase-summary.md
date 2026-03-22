@@ -24,9 +24,10 @@ PASTR (Paste links. Ship videos. Learn fast.) là ứng dụng AI-powered TikTok
 
 ## Thống Kê Dự Án
 
+- **Source Files:** 475 (.ts/.tsx files) ~53,600 LOC
 - **Database Models:** 51
-- **Pages:** 16 (dashboard, inbox, production, channels, library, insights, log, playbook, sync, settings, guide, advisor, niche-finder, error pages)
-- **API Endpoints:** 140+ (advisory, briefs, channels, production, inbox, learning, cron, telegram, and more)
+- **Pages:** 14 page routes + 3 special pages (error, not-found, loading)
+- **API Endpoints:** 138 route handlers across 37 groups (advisory, briefs, channels, production, inbox, learning, cron, telegram, and more)
 - **Component Files:** ~147 across 21 directories (layout, advisor, channels, production, insights, guide, inbox, products, dashboard, ai, settings, log, niche-intelligence, advisor, shared, ui)
 - **Shared Components:** PageHeader, PillTabs, EmptyState, Breadcrumb, SearchInput, StatCard, SkeletonCard, SidebarCollapsible, MobileFAB, PWAHead
 - **Design Tokens:** 25+ (colors, spacing, typography, shadows)
@@ -61,7 +62,7 @@ affiliate-scorer/
 │   ├── sync/                   # TikTok Studio import
 │   ├── settings/               # API keys, AI models
 │   ├── guide/                  # User documentation + onboarding checklist
-│   ├── api/                    # 100+ API route handlers
+│   ├── api/                    # 138 API route handlers
 │   │   ├── advisor/            # Advisory Agent System: analyze, followup, handle-request
 │   │   ├── inbox/              # Paste, list, score, retry
 │   │   ├── briefs/             # Generate, batch, regenerate
@@ -114,7 +115,7 @@ affiliate-scorer/
 │   └── validations/            # Zod schemas (content, character, video-bible, series)
 │
 ├── prisma/                     # Database
-│   └── schema.prisma           # 45+ models (added ChannelMemory, CompetitorCapture, TelegramChat)
+│   └── schema.prisma           # 51 models
 │
 ├── public/                     # PWA assets
 │   ├── manifest.json           # PWA manifest
@@ -231,11 +232,11 @@ Key model groups:
 - **Build Command:** `pnpm build` with Next.js optimization
 - **Publish Directory:** `.next`
 - **CI/CD:** GitHub webhook — auto-deploy on push to master
-- **Environment Variables:** DATABASE_URL, DIRECT_URL, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, ANTHROPIC_API_KEY
+- **Environment Variables:** See `docs/deployment-guide.md` for canonical list (DATABASE_URL, DIRECT_URL, ENCRYPTION_KEY, AUTH_SECRET, TELEGRAM_BOT_TOKEN)
 - **Build Metrics:** 74 routes, 0 TypeScript errors, 67 second deploy time
 - **Fallback:** Vercel configuration retained for multi-platform flexibility
 
-## Key API Endpoints (~140 routes across 12+ namespaces)
+## Key API Endpoints (138 route handlers across 37 groups)
 
 ### Advisory Agent System
 
@@ -273,7 +274,7 @@ Key model groups:
 | `/api/upload` | POST | Parse file, normalize, deduplicate, fire initial batch |
 | `/api/internal/import-chunk` | POST | Process 300-product chunk, fire next relay |
 | `/api/internal/score-batch` | POST | Score all products in batch |
-| `/api/cron/retry-scoring` | GET | Detect & retry failed/stuck batches every 5 min |
+| `/api/cron/retry-scoring` | GET | Detect & retry failed/stuck batches (daily midnight UTC) |
 | `/api/settings/ai-models` | GET, POST | AI model configuration for 7 task types |
 
 ### Cron Jobs (6 total)
@@ -285,7 +286,7 @@ Key model groups:
 | `/api/cron/trend-analysis` | GET | 22:30 UTC daily | Analyze competitor captures, generate insights |
 | `/api/cron/weekly-learning` | GET | Weekly | Weekly learning cycle |
 | `/api/cron/decay` | GET | Daily | Apply decay to learning weights |
-| `/api/cron/retry-scoring` | GET | Every 5 min | Safety net for failed imports |
+| `/api/cron/retry-scoring` | GET | Daily midnight UTC | Safety net for failed imports |
 
 ### AI Agents & Telegram
 

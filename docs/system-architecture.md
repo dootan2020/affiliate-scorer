@@ -14,7 +14,7 @@ graph TB
     end
 
     subgraph Server["Next.js Server (App Router)"]
-        API["API Route Handlers (140+ endpoints)"]
+        API["API Route Handlers (138 endpoints)"]
         MW["Middleware (auth + origin check)"]
         ServerComponents["Server Components"]
     end
@@ -113,6 +113,48 @@ When user confirms channel creation:
 
 ---
 
+## 2.4 Telegram Bot Webhook Integration
+
+**Endpoint:** `POST /api/telegram/webhook` — Receives messages from Telegram bot
+
+**Flow:**
+1. User sends Telegram message with product link or question
+2. Telegram API forwards to `TELEGRAM_WEBHOOK_URL` (set in settings)
+3. Handler validates Telegram signature (HMAC-SHA256)
+4. Link extraction: detects product URLs (TikTok Shop, Shopee, etc.)
+5. If product link: stores in `CompetitorCapture` for trend analysis
+6. Responds to user via Telegram (success/error message)
+
+**Key Components:**
+- `lib/agents/telegram-bot-handler.ts` — Message parsing, link extraction, competitor capture
+- `app/api/telegram/setup` — Initialize webhook URL on Telegram API
+- `app/api/telegram/webhook` — Main handler for incoming messages
+- `app/api/settings/telegram-info` — Retrieve bot configuration
+
+**Security:** HMAC signature verification prevents unauthorized requests
+
+---
+
+## 2.5 PWA (Progressive Web App) Support
+
+**Purpose:** Mobile installation without App Store, offline-first capability
+
+**Key Files:**
+- `public/manifest.json` — PWA metadata (name, icons, start_url, display: "standalone")
+- `public/sw.js` — Service Worker for offline caching
+- `app/layout.tsx` → `components/layout/pwa-head.tsx` — PWA head meta tags + install prompt
+
+**Features:**
+- Mobile FAB (floating action button) for quick-log function
+- Installable on iOS/Android home screen
+- Offline support for critical pages (caching strategy)
+- Web app icon (192x192, 512x512)
+- Splash screen support
+
+**Cron Jobs Integration:** Service Worker doesn't trigger cron; cron runs server-side on 6 schedules
+
+---
+
 ## 3. Chunked Import & Relay Architecture
 
 ### Overview
@@ -122,7 +164,7 @@ The system handles file imports up to 3000+ products by chunking across multiple
 1. **Upload Route** — Receives file, parses, deduplicates (first 300 products)
 2. **Import-Chunk Relay** — Processes remaining 300-product chunks
 3. **Scoring Relay** — Triggers batch scoring after last import chunk
-4. **Cron Retry** — Safety net; retries failed/stuck batches every 5 minutes
+4. **Cron Retry** — Safety net; retries failed/stuck batches (daily midnight UTC)
 
 ### 2.1 Import Phase
 
@@ -145,7 +187,7 @@ The system handles file imports up to 3000+ products by chunking across multiple
 
 ### 2.4 Retry-Scoring Cron Service
 
-**Endpoint:** `GET /api/cron/retry-scoring` — Every 5 minutes
+**Endpoint:** `GET /api/cron/retry-scoring` — Daily midnight UTC (`0 0 * * *`)
 
 **Logic:**
 - Detects stuck batches using scaled threshold: `BASE (3 min) + (recordCount / 150) * 1 min`
@@ -180,8 +222,8 @@ Create historical `ProductSnapshot` (for delta classification: NEW/SURGE/COOL/ST
 ### Step 5: Scoring
 
 Parallel batch scoring (max 30 concurrent):
-- **Market Score** — 60% weight (revenue, growth, competition, commission, trend, seasonality)
-- **Content Score** — 40% weight (visuals, angles, assets, AI feasibility, risk flags)
+- **AI Score** — 55% weight (market_demand 35%, quality_trust 25%, viral_potential 25%, risk 15%)
+- **Base Formula Score** — 45% weight (commission 25%, trending 25%, competition 20%, price appeal 15%, sales velocity 15%)
 
 ### Step 6: Learning Update
 
@@ -295,6 +337,21 @@ This design prevents orphaned records while preserving production assets when so
 | **Memory limit** | Avoid loading entire file into memory; stream parse |
 | **CPU throttle** | Parallel queries (not sequential) to maximize throughput |
 
+### Cron Job Configuration
+
+**Vercel cron jobs (6 total) defined in `vercel.json`:**
+
+| Endpoint | Schedule | Purpose | Timezone |
+|----------|----------|---------|----------|
+| `/api/cron/retry-scoring` | `0 0 * * *` | Midnight UTC | Detect & retry failed/stuck batches |
+| `/api/cron/decay` | `0 1 * * *` | 1 AM UTC | Apply decay to learning weights (half-life: 14 days) |
+| `/api/cron/nightly-learning` | `0 22 * * *` | 10 PM UTC | Aggregate weekly feedback, update ChannelMemory |
+| `/api/cron/weekly-report` | `0 6 * * 0` | 6 AM Sunday UTC | Generate weekly analytics report |
+| `/api/cron/morning-brief` | `0 23 * * *` | 11 PM UTC | Generate morning brief for next day |
+| `/api/cron/trend-analysis` | `30 22 * * *` | 10:30 PM UTC | Analyze competitor captures, generate insights |
+
+**Note:** 7 cron endpoints exist in `app/api/cron/` (including `weekly-learning` not in vercel.json). Netlify requires external scheduler (EasyCron or GitHub Actions) — see `docs/deployment-guide.md` for setup.
+
 ### Timeouts & Backoff
 
 | Metric | Value | Rationale |
@@ -302,7 +359,7 @@ This design prevents orphaned records while preserving production assets when so
 | Relay backoff | 1s, 2s, 4s | Exponential; avoids thundering herd |
 | Stuck threshold base | 3 min | Allows for normal processing + clock skew |
 | Stuck threshold per chunk | +1 min per 150 products | Scales with batch size |
-| Cron interval | 5 min | Frequent enough for timely retry |
+| Cron interval | Daily midnight UTC | Batch retry at off-peak hours |
 | Cron candidates | Max 5 per run | Prevents cascade failures |
 
 ---
@@ -341,29 +398,28 @@ if (status === "failed") showRetryButton();
 | `/api/upload` | POST | Parse file, normalize, deduplicate, fire initial batch |
 | `/api/internal/import-chunk` | POST | Process 300-product chunk, fire next relay |
 | `/api/internal/score-batch` | POST | Score all products in batch |
-| `/api/cron/retry-scoring` | GET | Detect & retry failed/stuck batches every 5 min |
+| `/api/cron/retry-scoring` | GET | Detect & retry failed/stuck batches (daily midnight UTC) |
 | `/api/imports/[id]/status` | GET | Poll import progress |
 
 ---
 
 ## 13. Deployment Configuration
 
-**Vercel Config** (`vercel.json`):
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/retry-scoring",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
+**Vercel Config** (`vercel.json`) — 6 cron jobs scheduled (see Section 10 for full table).
+
+**Netlify Config** (`netlify.toml`) — Primary deployment:
+```toml
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 ```
 
-**Environment Variables:**
-- `NEXT_PUBLIC_APP_URL` — For relay base URL construction
-- `VERCEL_URL` — Fallback for base URL
-- `AUTH_SECRET` — For server-to-server `x-auth-secret` header
+**Note:** Netlify does NOT support native cron. Use EasyCron or GitHub Actions to trigger cron endpoints. See `docs/deployment-guide.md` for setup.
+
+**Environment Variables:** See `docs/deployment-guide.md` for canonical list.
 
 **Build Command:** `pnpm build`
 **Dev Command:** `pnpm dev`
@@ -384,7 +440,7 @@ if (status === "failed") showRetryButton();
 
 ---
 
-## 16. AI Agent System Architecture (Phases 1-6)
+## 15. AI Agent System Architecture (Phases 1-6)
 
 ### Overview
 
@@ -588,7 +644,7 @@ User sends TikTok link in Telegram
 |----------|----------|--------|---------|
 | Nightly Learning | 22:00 UTC daily | `nightly-learning.ts` | Aggregate feedback, update ChannelMemory |
 | Trend Analysis | 22:30 UTC daily | `trend-intelligence.ts` | Analyze competitor captures, generate insights |
-| Retry Scoring | Every 5 min | existing | Safety net for failed imports |
+| Retry Scoring | Daily midnight UTC | existing | Safety net for failed imports |
 
 ### Cost Analysis (Monthly)
 
@@ -604,97 +660,126 @@ User sends TikTok link in Telegram
 
 ---
 
-## 17. Advisory Agent System — Company Hierarchy Model
-
-### Overview
-
-The Advisory Agent System transforms user questions into structured decisions through a company hierarchy pipeline. Unlike the previous 4-persona system (GROK, SOCRATES, LIBRARIAN, MUNGER), the new architecture organizes analysis by organizational roles: data gathering → parallel analysis → executive decision.
+## 16. Advisory Agent System — Company Hierarchy Model
 
 **Pipeline:** ANALYST (data) → [CMO, CFO, CTO parallel] → CEO (decision)
 
-### Step 1: ANALYST — Data Aggregation
+**Code:** `lib/advisor/analyze-pipeline.ts` (orchestration), `lib/advisor/gather-advisor-data.ts` (data), `lib/advisor/c-level-roles.ts` (role definitions)
 
-**Role:** Queries top 10 products, winning/losing patterns, channel memory, system metrics. Formats into readable briefing for decision-makers.
+**ANALYST** — 8 parallel DB queries via `Promise.all()`: top 10 products by combinedScore, 5 winning patterns (sampleSize≥2), 3 losing patterns, 5 channel memories, + 4 aggregate counts (total/scored/briefed/published).
 
-**Code:** `lib/advisor/gather-advisor-data.ts` — Parallel queries via `Promise.all()` to avoid sequential DB hits.
+**C-Level Analysis** — CMO (marketing), CFO (financial), CTO (execution) run in parallel. Each receives ANALYST briefing + user question.
 
-### Step 2: C-Level Analysis (Parallel)
+**CEO** — Synthesizes non-error C-level responses into 1 decision with action steps. If a role failed, CEO gets note listing which roles failed.
 
-Three roles analyze the ANALYST briefing independently, each providing their perspective:
+**Token Limits:** C-levels: 1024 each. CEO: 1200. `ceoBriefReview()`: 512 (lightweight, skips ANALYST + C-levels).
 
-#### CMO, CFO, CTO — Parallel C-Level Analysis
+**API:** `POST /api/advisor/analyze` (full pipeline), `POST /api/advisor/followup` (same pipeline). Request: `{ question, context? }`. Response: `{ ceoDecision, cLevelResponses[], analystBriefing, question, timestamp }`.
 
-**CMO (Chief Marketing Officer):** Content strategy, format trends, audience insights, growth opportunities.
-
-**CFO (Chief Financial Officer):** ROI analysis, opportunity cost, financial risk, efficiency metrics.
-
-**CTO (Chief Technical Officer):** Execution feasibility, workflow optimization, technical risks.
-
-**Parallel Execution:** All 3 roles execute simultaneously via `Promise.all()` → faster than sequential analysis.
-
-### Step 3: CEO — Decision Synthesis
-
-**Role:** Synthesize C-level perspectives into 1 final decision with clear action steps (today).
-
-**Output:** Decision statement + reasoning + numbered action steps (max 200 words, tiếng Việt, no theory).
-
-**Code:** `lib/advisor/analyze-pipeline.ts` — Builds synthesis prompt from C-level responses, calls AI CEO role.
-
-### Full Pipeline Orchestration
-
-**Flow:** ANALYST data → [CMO, CFO, CTO parallel] → CEO decision
-
-**Code:** `lib/advisor/analyze-pipeline.ts` — Orchestrates all 3 steps, returns structured result with CEO decision, C-level responses, and analyst briefing.
-
-### API Endpoints
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/advisor/analyze` | POST | Run full pipeline: ANALYST → C-levels → CEO |
-| `/api/advisor/followup` | POST | Follow-up question (same pipeline) |
-
-**Example Request:** `{ question: "Nên focus vào ngách nào tháng này?", context: "3 kênh TikTok khác ngành" }`
-
-**Response:** `{ ceoDecision, cLevelResponses[], analystBriefing, question, timestamp }`
-
-### Morning Brief Integration
-
-**Function:** `ceoBriefReview(briefSummary: string)` — Lightweight CEO review (skips ANALYST + C-levels). Used for morning brief generation.
-
-**Speed:** Faster than full pipeline (single AI call vs 5 calls total).
-
-### UI & Database Integration
-
-**Component:** `components/advisor/advisor-page-client.tsx` — CEO decision displayed prominently, expandable C-level details, role badges with icons.
-
-**Database Queries:** ProductIdentity (top 10), UserPattern (winning/losing), ChannelMemory (latest 5), system counts.
-
-### Performance & Optimization
-
-| Aspect | Strategy |
-|--------|----------|
-| **DB queries** | Parallel `Promise.all()` in gatherAdvisorData |
-| **C-level analysis** | Parallel `Promise.all()` for CMO, CFO, CTO |
-| **Token limits** | C-levels: 1024 tokens; CEO: 1200 tokens |
-| **Context reuse** | ANALYST data passed to all C-levels → no redundancy |
-| **Caching** | None (real-time DB queries every request) |
-| **Timeout** | Per-role AI calls have individual error handling |
-
-### Error Handling
-
-**Partial failures:**
-- If ANALYST fails → proceed with empty data briefing
-- If 1 C-level fails → CEO synthesis with 2 successful responses + failure note
-- If CEO fails → return last successful pipeline state
-
-**Retry logic:**
-- No automatic retries (single attempt per pipeline)
-- Errors logged for debugging
-- User can retry entire pipeline by submitting question again
+**Error Handling:** ANALYST fail → empty briefing fallback. 1 C-level fail → CEO synthesizes remaining + failure note. CEO fail → return last state. No retries; user can resubmit.
 
 ---
 
-## 15. Future Improvements
+## 17. Scoring System — Detailed Architecture
+
+### 17.1 3-Layer Scoring Pipeline
+
+```
+Layer 1: Base Formula Score (no AI, pure data) → 0-100
+Layer 2: AI Expert Score (rubric-anchored, 4 criteria) → 0-100
+Layer 3: Combined = aiScore × 0.55 + baseFormula × 0.45 → Z-score sigmoid normalize → 0-100
+```
+
+**Code:** `lib/services/score-identity.ts` — orchestrates all 3 layers.
+
+**Fallback logic:** If AI unavailable → use base formula only. If neither → use Content Potential Score as last resort.
+
+### 17.2 Base Formula Score (5 Components)
+
+**Code:** `lib/scoring/formula.ts`
+
+| Component | Weight | Range | Key Logic |
+|-----------|--------|-------|-----------|
+| Commission | 25% | 0-100 | Piecewise linear: 0-3% → 0-21, 3-7% → 21-53, 7-12% → 53-88, 12-20% → 88-100. VND bonus: 20K-100K/sale = +5 |
+| Trending | 25% | 0-100 | Priority 1: salesGrowth7d tiers (-30% → 0, +200% → 100, >500% → 75 spike flag). Priority 2: sales7d/salesTotal ratio |
+| Competition | 20% | 0-100 | KOL count (≤3 = 100, >100 = 10) - video saturation penalty (>1000 = -20) + kolOrderRate bonus (>60% = +15) |
+| Price Appeal | 15% | 0-100 | VN TikTok sweet spot: 80K-200K VND = 100. Below 30K or above 1.5M VND = 15-20 |
+| Sales Velocity | 15% | 0-100 | 7-day absolute volume: ≥10K = 100, 0 = 5 |
+
+**Formula:** `total = MIN(100, ROUND(commission×0.25 + trending×0.25 + competition×0.20 + price×0.15 + velocity×0.15))`
+
+### 17.3 AI Expert Score (4 Rubric Criteria)
+
+**Code:** `lib/ai/scoring.ts`, `lib/ai/prompts.ts`
+
+| Criterion | Weight | Tiers | Description |
+|-----------|--------|-------|-------------|
+| Market Demand | 35% | {20,40,60,80,100} | Trending, search volume, pain point severity |
+| Quality & Trust | 25% | {20,40,60,80,100} | Brand trust, reviews, certifications |
+| Viral Potential | 25% | {20,40,60,80,100} | Visual wow, demo-ability, emotional trigger |
+| Risk | 15% | {20,40,60,80,100} | Medical claims, return rate, sensitivity |
+
+**Batch processing:** 30 products per Claude call, 3 concurrent batches, 20 parallel DB writes.
+
+**Validation:** Scores snap to nearest valid tier {20,40,60,80,100}. Batch mean checked against 40-70 range (warns if outside).
+
+**Calibration anchors** (in prompt): Rice cooker = 85, Phone case = 55, Diet pills = 25.
+
+### 17.4 Content Potential Score (6 Dimensions)
+
+**Code:** `lib/scoring/content-potential.ts`
+
+| Dimension | Max Points | Logic |
+|-----------|-----------|-------|
+| 3-Second Wow Factor | 20 | Has image +8, price tiers (+2 to +12) |
+| Content Angle Count | 20 | Category → angle count (4-7), score = MIN(20, angles×3) |
+| AI-Friendly Creation | 20 | Category lookup (6-16 points per category) |
+| UGC Availability | 20 | KOL count tiers (0-18) + totalVideos/100 bonus |
+| Commission Motivation | 10 | Commission rate tiers (1-10 points) |
+| Risk Penalty | 10 | Starts at 10, -3 per health/medical keyword match |
+
+**Normalization:** `(score / maxScore) × 100`, clamped 0-100.
+
+### 17.5 Normalization & Known Issues
+
+**Global Z-Score** (`lib/scoring/global-stats.ts`): Welford's algorithm → sigmoid `1/(1+exp(-z))` where `z=(raw-mean)/stddev`. Score 50 = average. 80+ = top 10%. Cold start (<10 products): raw clamp.
+
+**Known Issues (Phase 14 Baseline):**
+
+- **Content potential score lacks discriminative power** — category-based lookup produces similar scores for different products in same category
+- **aiScore=0 still produces combinedScore** — falls back to base formula only (no AI component)
+- **Virtual/duplicate products** — products without real sales data can score high on price appeal + low competition
+- **Spike risk flag** — >500% growth scores 75 instead of 100, but no further penalty
+- **Personalization threshold lowered** — from 30 to 5 feedbacks for BASIC tier; may be too aggressive
+
+---
+
+## 18. Learning Engine — Data Flow & Architecture
+
+**Reward formula** (`lib/learning/reward-score.ts`): `log(1+views)×1.0 + shares×0.5 + saves×0.3 + log(1+likes)×0.3 + comments×0.2 + completionRate×5 + orders×10 + log(1+commission/1000)×2`. Orders (×10) strongest signal; views/likes log-scaled.
+
+**LearningWeightP4** — 5 scopes: `hook_type`, `format`, `angle`, `category`, `price_range`. Weight = `avgReward × log(1+sampleCount)` (quality × quantity). Dual writes: channel-specific + global (`channelId=""`).
+
+**Decay** (`lib/learning/decay.ts`): `weight *= 0.5^(days/14)`. Half-life 14 days. Skip if <24h since last update.
+
+**Explore/Exploit** (`lib/learning/explore-exploit.ts`): Hooks: 7 exploit (top weight) + 3 explore (sampleCount<3). Formats: 2 exploit + 1 explore.
+
+**Personalization Tiers** (`lib/scoring/personalize.ts`):
+
+| Tier | Feedbacks | Formula |
+|------|-----------|---------|
+| None | <5 | No adjustment |
+| BASIC | 5-14 | `base×0.9 + categoryBonus×0.1` |
+| STANDARD | 15-29 | `base×0.8 + catBonus×0.1 + priceBonus×0.1` |
+| FULL | 30+ | `base×0.5 + historicalMatch×0.3 + contentType×0.1 + audience×0.1` |
+
+**Nightly cycle** (`/api/cron/nightly-learning`, 22:00 UTC): Process 10 channels → regenerate patterns → build ChannelMemory (winning/losing combos, used angles/hooks, AI insight if ≥3 videos) → regenerate global patterns.
+
+**Win/Loss** (`lib/learning/win-loss-analysis.ts`): Win = reward > avg×1.5. Loss = reward < avg×0.5. Pattern detection: group by (hook, format, category); winRate ≥50% with ≥2 samples → winning pattern.
+
+---
+
+## 19. Future Improvements
 
 - **Webhook callbacks** instead of polling (requires client-side event listener)
 - **Server-sent events (SSE)** for real-time progress updates

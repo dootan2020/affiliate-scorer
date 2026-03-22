@@ -60,6 +60,44 @@ export function UploadDropzone(): JSX.Element {
 - **Apple-inspired design** — xem `docs/design-guidelines.md` cho chi tiết
 - Dark mode qua Tailwind `darkMode: "class"` + `next-themes`
 
+## Common UI Component Patterns
+
+### Textarea
+```tsx
+<textarea className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-sans focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none placeholder-gray-400" rows={4} placeholder="Nhập dữ liệu..." />
+```
+
+### Select/Dropdown
+```tsx
+<select className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-sans focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none bg-white">
+  <option>Chọn tùy chọn</option>
+</select>
+```
+
+### DatePicker (Input type="date")
+```tsx
+<input type="date" className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none" />
+```
+
+### Responsive Layout Grid
+```tsx
+// 1 column mobile, 2 columns tablet, 3+ columns desktop
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  {/* Cards */}
+</div>
+```
+
+### Responsive Table (Mobile-first)
+```tsx
+// Desktop: full table, Mobile: card list
+<div className="hidden md:block overflow-x-auto">
+  {/* Full table for md+ */}
+</div>
+<div className="md:hidden space-y-4">
+  {/* Card list for mobile */}
+</div>
+```
+
 ## Error Handling
 
 - **Try-catch** cho mọi async operation
@@ -384,3 +422,77 @@ export function WidgetWrapper({ children, title }: Props) {
 - **Inbox:** `flex flex-col md:table` (cards on mobile, table on desktop)
 - **Sidebar:** `hidden lg:block` (mobile stacks below, desktop is side nav)
 - **Buttons:** `w-full md:w-auto` (full width on mobile, auto on desktop)
+
+### Cron Job Pattern
+
+**Auth check** via `verifyCronAuth()` (`lib/utils/verify-cron-auth.ts`):
+
+```typescript
+// Every cron route MUST verify auth as first step
+export async function GET(request: Request): Promise<NextResponse> {
+  if (!verifyCronAuth(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  try {
+    // ... batch processing logic
+    return NextResponse.json({ checked, retried, skipped });
+  } catch (error) {
+    console.error("Cron [job-name] error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unknown" },
+      { status: 500 },
+    );
+  }
+}
+```
+
+**Rules:**
+- Always `GET` method (Vercel cron sends GET)
+- Auth: `Authorization: Bearer <CRON_SECRET>` header; dev mode allows if no secret set
+- Response: always JSON with metrics (`{ checked, retried, skipped }`)
+- Error: try-catch wrapping entire handler; log with `console.error`
+- Middleware whitelists `/api/cron/*` in `PUBLIC_API_PATHS`
+
+### Chunked Import Relay Pattern
+
+**Code:** `lib/import/fire-relay.ts`
+
+```typescript
+// Fire-and-forget with exponential backoff
+const MAX_RETRIES = 3;
+const BACKOFF_MS = [1000, 2000, 4000]; // 1s, 2s, 4s
+
+// Auth: passes x-auth-secret header for middleware
+// Retry: only on 5xx; 4xx errors are not retried
+// Safety net: /api/cron/retry-scoring catches failures
+fireRelay("/api/internal/import-chunk", { batchId, offset }, "chunk-2");
+```
+
+**Rules:**
+- Relay chain: `/api/upload` → `/api/internal/import-chunk` (repeats) → `/api/internal/score-batch`
+- `x-auth-secret` header for server-to-server auth (middleware checks this)
+- Only retry on 5xx HTTP errors; 4xx = don't retry (client error)
+- Must be awaited (Vercel freezes function after `after()` returns)
+- Update `ImportBatch.errorLog` on failure for debugging
+
+### PWA Service Worker Convention
+
+**Code:** `public/sw.js`, `public/manifest.json`
+
+```javascript
+// Caching strategy: Network-first for API, cache-first for static
+self.addEventListener('fetch', (event) => {
+  if (event.request.url.includes('/api/')) return; // API = always fresh
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
+  );
+});
+```
+
+**Rules:**
+- `manifest.json`: `display: "standalone"`, `orientation: "portrait-primary"`
+- Service worker: `skipWaiting()` on install, `clients.claim()` on activate
+- API routes: never cached (always network)
+- Static assets: cache-first (serve from cache, else fetch)
+- No precache list — only cache on-demand hits
+- PWA meta tags injected via `components/layout/pwa-head.tsx`

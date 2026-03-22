@@ -4,6 +4,133 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 
 ---
 
+## [1.10.1] — 2026-03-22 — Onboarding Checklist & Final Polish
+
+### Added
+
+- **Interactive Onboarding Checklist** — 7-step progress tracker embedded in guide page
+  - Steps: Paste link, Upload file, View dashboard, Create channel, Generate brief, Log results, Track performance
+  - localStorage persistence, expandable with time estimates + tips
+  - Direct navigation links to app pages for quick onboarding
+  - Progress bar + percentage display
+- **Vietnamese diacritics fix** — Sync page processing log now displays correctly (é, ơ, ư characters preserved)
+- **Type safety improvements** — Extract advisor response types into dedicated export
+
+### Changed
+
+- **Onboarding UX** — Added checklist to quick-start guide section for improved first-time user experience
+- **Sync page** — Fixed diacritic rendering in processing log output
+- **Type exports** — Reorganized advisor types for better reusability
+
+### Fixed
+
+- Vietnamese text rendering (é, ơ, ư) in sync page processing output
+- Onboarding checklist localStorage safety checks
+- Guide page quick-start navigation flow
+
+### Production Readiness: 85/100
+**Status:** MVP fully featured, ready for user beta testing
+
+---
+
+## [1.10.0] — 2026-03-08 — Guide Page Redesign & Advisory System
+
+### Added
+
+- **Guide Page Redesign** — Professional docs-style UI redesign
+  - Fixed sticky TOC sidebar (lg+ breakpoint) with orange active indicator
+  - Wider content area (removed max-w container constraint)
+  - Larger typography (prose-base, leading-7) for readability
+  - Mobile TOC dropdown (select instead of hidden sidebar)
+- **Advisory System** — Company hierarchy decision-making engine
+  - ANALYST role: Gathers real DB data (products, patterns, channels, metrics)
+  - CMO role: Content strategy, audience insights, positioning, growth recommendations
+  - CFO role: ROI analysis, opportunity cost, financial risk, efficiency metrics
+  - CTO role: Execution feasibility, workflow optimization, technical risks
+  - CEO role: Final decision synthesis, clear action steps
+  - Collapsible C-level detail panels in UI, follow-up question support
+- **Guide Sections 10–12:**
+  - Section 10: Kênh TikTok (channel creation, Character Bible customization, Video Bible basics)
+  - Section 11: Cố vấn AI (ANALYST→CMO/CFO/CTO→CEO hierarchy, interactive workflow)
+  - Section 12: Telegram Bot (setup, competitor capture, trend integration)
+- **AI Config Expansion** — Task types 4→7
+  - Original: Content Brief, Channel Profile, Character Bible, Video Bible
+  - New: Niche Analysis, Trend Intelligence, Win Prediction
+  - Consolidated preset comparison table (single unified table vs separate charts)
+  - Cost & token usage guidance per task type
+
+### Changed
+
+- **Guide TOC** — Now fixed sidebar on desktop, collapsed dropdown on mobile
+- **Content Area** — Wider prose for better readability (removed max-w-6xl constraint)
+- **Typography** — Larger default font size, improved line height
+- **Settings UI** — Task type selection expanded from 4 to 7 types
+- **API advisor endpoints** — `analyze`, `followup`, `handle-advisor-request`
+- **Database** — Added ChannelMemory, CompetitorCapture, TelegramChat models
+
+### Fixed
+
+- Guide TOC accessibility (keyboard navigation, screen reader support)
+- TOC scroll-spy accuracy (fixed with independent scroll contexts)
+- Guide page image proxy (direct serve for 500fd.com images)
+- Calendar event deduplication in upcoming widget
+- Past events exclusion from upcoming widget
+- Settings page load state reliability
+
+### Production Readiness: 85/100
+**Strengths:** All 16 pages complete, guide fully redesigned, advisory system operational
+**Known Issues:** Settings skeleton loading occasional delay, library images gray placeholders (low priority)
+
+---
+
+## [1.9.0] — 2026-03-08 — AI Agent System & Telegram Bot Integration
+
+### Added
+
+- **AI Agent System (6 phases):**
+  - Phase 1: Channel Memory builder — contextual enrichment per channel
+  - Phase 2: Brief personalization — auto-inject memory into generated briefs
+  - Phase 3: Content analyzer — TikTok oembed + AI classification
+  - Phase 4: Telegram bot integration + competitor trend analysis
+  - Phase 5: Win predictor — 6-feature formula-based success probability
+  - Phase 6: Mobile quick-log FAB + PWA installability
+- **Telegram Bot Integration** — Link parsing, competitor capture, async trend analysis
+  - `/api/telegram/setup` — Initialize webhook URL
+  - `/api/telegram/webhook` — Receive and process messages
+  - Competitor capture for trend analysis cron (22:30 UTC daily)
+- **Nightly Learning Cron** — 22:00 UTC daily
+  - Aggregate weekly feedback, update ChannelMemory, decay weights
+- **Trend Analysis Cron** — 22:30 UTC daily
+  - Analyze competitor captures, generate insights, feed into morning brief
+- **PWA Support** — Installable mobile app
+  - `public/manifest.json` — PWA metadata
+  - `public/sw.js` — Service Worker for offline caching
+  - Mobile FAB for quick-log function
+- **Database Models (3 new, 2 extended):**
+  - `ChannelMemory` — Channel-specific context + content patterns
+  - `CompetitorCapture` — Competitor links from Telegram
+  - `TelegramChat` — Bot user mapping
+
+### Changed
+
+- **Cron architecture** — Vercel-based scheduling (vercel.json) vs Netlify
+- **Brief generation** — Now injects ChannelMemory context (Phase 2)
+- **Morning brief** — Lightweight CEO review function for efficiency
+- **Settings** — New Telegram configuration UI
+
+### Fixed
+
+- TikTok URL regex now includes `vt.tiktok.com` short links
+- Calendar event deduplication fixed
+- Upcoming widget past-event filtering
+
+### Cost Impact
+- ~$5–10/month for 6 cron jobs + AI calls
+- Win predictor: 6-feature formula (no AI cost)
+- Telegram: serverless webhook only
+
+---
+
 ## [1.8.2] — 2026-03-05 to 2026-03-07 — Niche Intelligence & Dashboard Redesign + Production Readiness Audit
 
 ### Added
@@ -344,7 +471,7 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
   - Shared HTTP relay with 3 automatic retries
   - Auth header support (`x-auth-secret`) for server-to-server validation
   - Background execution; caller returns immediately
-- **Auto-Retry Scoring Cron** — Vercel cron every 5 minutes
+- **Auto-Retry Scoring Cron** — Vercel cron daily midnight UTC (`0 0 * * *`)
   - Detects failed/stuck import batches with scaled timeout threshold
   - Base threshold: 3 min + (1 min per 150-product scoring chunk)
   - Max 3 scoring retries per batch (tracked in `errorLog.scoringRetryCount`)
@@ -369,7 +496,7 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 
 - **Vercel Configuration** — New `vercel.json` with cron schedule
   - Path: `/api/cron/retry-scoring`
-  - Schedule: `*/5 * * * *` (every 5 minutes)
+  - Schedule: `0 0 * * *` (daily midnight UTC)
 - **API Endpoints** — 4 new internal endpoints
   - `/api/internal/import-chunk` — Relay for remaining chunks
   - `/api/internal/score-batch` — Trigger batch scoring
@@ -472,7 +599,7 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 
 - Added 3 new models (ChannelMemory, CompetitorCapture, TelegramChat)
 - Extended 2 existing models (ContentAsset, UserPattern)
-- Total models: 45+
+- Total models: 51
 
 ### API Additions
 
@@ -484,109 +611,29 @@ Tất cả thay đổi quan trọng của PASTR (AffiliateScorer) được ghi n
 
 ---
 
-## [1.10.0] — 2026-03-08 — Advisory Agent System Restructure (Company Hierarchy)
+## [1.10.0] — 2026-03-08 — Guide Page Redesign, Advisory System & AI Config
 
-### Changed
+> *Note: This version combines two concurrent development streams — Guide Page redesign and Advisory System restructure — that were shipped together.*
 
-- **Advisory Agent Architecture Refactor** — Transitioned from 4 independent personas (GROK, SOCRATES, LIBRARIAN, MUNGER) to company hierarchy model:
-  - **ANALYST** (runs first) — Data aggregation role; queries DB for products, patterns, channels; prepares briefing for decision-makers
-  - **CMO, CFO, CTO** (run in parallel) — Analysis roles; each provides independent perspective:
-    - CMO: Content strategy, audience insight, positioning, growth recommendations
-    - CFO: ROI analysis, opportunity cost, financial risk assessment, efficiency metrics
-    - CTO: Execution feasibility, workflow optimization, technical blockers, risk mitigation
-  - **CEO** (runs last) — Decision maker role; synthesizes all perspectives; provides 1 clear decision + action steps
+### Advisory System — Company Hierarchy Restructure
 
-### API Changes
+- **Architecture refactor** — From 4 independent personas (GROK, SOCRATES, LIBRARIAN, MUNGER) to company hierarchy:
+  - ANALYST (data gathering) → [CMO, CFO, CTO] (parallel analysis) → CEO (decision synthesis)
+- **New modules:** `lib/advisor/c-level-roles.ts`, `analyze-pipeline.ts`, `gather-advisor-data.ts`
+- **API:** `POST /api/advisor/analyze`, `POST /api/advisor/followup`
+- **UI:** CEO decision prominent at top, expandable C-level panels, role badges (CMO: violet, CFO: emerald, CTO: blue, CEO: amber)
+- **Morning Brief integration:** `ceoBriefReview()` for lightweight CEO review
+- **Performance:** C-levels run in `Promise.all()`; ANALYST data reused across all roles
 
-- `/api/advisor/analyze` — POST with question + optional context → returns full pipeline result with CEO decision prominent
-- `/api/advisor/followup` — POST for follow-up questions using same pipeline
-- Response structure now includes:
-  - `ceoDecision` — Top-level decision (✅ Decision, 📝 Reason, 👉 Next Steps)
-  - `cLevelResponses[]` — Expandable C-level analysis details (CMO, CFO, CTO)
-  - `analystBriefing` — Data context and key metrics
-  - `question`, `timestamp` — Request metadata
+### Guide Page Redesign
 
-### Data Gathering
-
-- **New module:** `lib/advisor/gather-advisor-data.ts`
-  - Queries ProductIdentity (top 10 by score + delta type)
-  - Queries UserPattern (winning/losing patterns with win rates)
-  - Queries ChannelMemory (channel performance + insights)
-  - Gathers metrics: total products, scored, briefed, published videos
-  - Formats into compact data briefing for ANALYST role
-
-### UI Updates
-
-- **Advisor page redesign** — CEO decision displayed prominently at top
-- Expandable C-level section below with individual role analysis
-- Historical context support for multi-turn conversations
-- Loading indicators show analysis stage (analyst → c-levels → ceo)
-- Visual role badges with semantic colors (CMO: violet, CFO: emerald, CTO: blue, CEO: amber)
-
-### Files Added
-
-- `lib/advisor/c-level-roles.ts` — Role definitions, system prompts for 5 personas
-- `lib/advisor/analyze-pipeline.ts` — Orchestration logic: ANALYST → [CMO,CFO,CTO] → CEO
-- `lib/advisor/gather-advisor-data.ts` — DB queries and data formatting
-- `app/api/advisor/analyze/route.ts` — Main analysis endpoint
-- `app/api/advisor/followup/route.ts` — Follow-up question endpoint
-- `app/api/advisor/handle-advisor-request.ts` — Shared request validation + error handling
-- `components/advisor/advisor-page-client.tsx` — Client component with full UI
-- `app/advisor/page.tsx` — Server component wrapper
-
-### Files Modified
-
-- `lib/advisor/personas.ts` — Kept for backward compatibility; new system doesn't use
-- `lib/advisor/analyze.ts` — Legacy; superceded by analyze-pipeline.ts
-
-### Morning Brief Integration
-
-- **New function:** `ceoBriefReview()` in analyze-pipeline.ts
-- Used by morning brief generation to get CEO quick review instead of MUNGER+SOCRATES critique
-- Lighter weight: skip data gathering, just review brief summary → 2-3 sentences actionable
-- Maintains single CEO voice for brief decisions
-
-### Cost & Performance
-
-- **Token optimization:** ANALYST gathers data once, passes to all C-levels → no redundant queries
-- **Parallel execution:** CMO, CFO, CTO run in Promise.all() → faster analysis
-- **Max tokens:** C-levels capped at 1024; CEO at 1200 for final synthesis
-- **Data freshness:** Real DB queries every request (no caching) → always current context
-
----
-
-## [1.10.0] — 2026-03-08 — Guide Page Redesign & Advisory System
-
-### Added
-
-- **Guide Page UI Redesign**
-  - Fixed TOC sidebar (sticky, always visible on lg+ breakpoint)
-  - Wider content area (removed max-w-6xl constraint for full-width prose)
-  - Larger typography (prose-base, leading-7 for better readability)
-  - Linear TOC with orange active indicator (left border, colored background)
-  - Mobile TOC dropdown select (replaces hidden sidebar on <lg)
-  - 3 new sections: Kênh TikTok (10), Cố vấn AI (11), Telegram Bot (12)
-
-- **Guide Section 10: Kênh TikTok** — Channel profile setup, Character Bible, Video Bible, best practices
-- **Guide Section 11: Cố vấn AI** — ANALYST → CMO/CFO/CTO → CEO decision hierarchy, workflow
-- **Guide Section 12: Telegram Bot** — Bot setup, competitor link capture, trend analysis integration
-
-- **AI Config Section** — Expanded 4→7 task types, consolidated preset comparison table
-- **FAQ Section** — 2 new entries on advisor decision logic and Telegram bot automation
-
-### Changed
-
-- **Guide page layout** — TOC fixed + content area wider (no container constraint)
-- **Guide navigation** — 15 total sections (was 13), clearer visual hierarchy
-- **TOC styling** — Orange active indicator instead of blue, better visual contrast
-- **Mobile UX** — Dropdown select instead of collapsible nav for TOC navigation
-
-### Technical Updates
-
-- New component: `guide-toc.tsx` with GuideToc + GuideTocMobile variants
-- Updated: `guide-page-client.tsx` with flex layout (sidebar + content)
-- Intersection observer for dynamic TOC highlight on scroll
-- Orange color tokens: orange-500, orange-700, orange-50, orange-400, orange-950 in Tailwind
+- Fixed sticky TOC sidebar (lg+ breakpoint) with orange active indicator
+- Wider content area (removed max-w-6xl constraint)
+- Larger typography (prose-base, leading-7)
+- Mobile TOC dropdown select
+- 3 new sections: Kênh TikTok (10), Cố vấn AI (11), Telegram Bot (12)
+- AI Config expanded 4→7 task types with consolidated preset comparison table
+- 2 new FAQ entries (advisor logic, Telegram automation)
 
 ---
 

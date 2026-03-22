@@ -55,43 +55,44 @@ export function buildScoringPrompt(input: ScoringPromptInput): {
 } {
   const { products } = input;
 
-  const system = `Ban la chuyen gia affiliate marketing TikTok Shop Viet Nam voi 5+ nam kinh nghiem.
-Danh gia san pham cho creator muon lam video ban hang affiliate.
+  // Fix F1/H4: Vietnamese diacritics for better AI comprehension
+  const system = `Bạn là chuyên gia affiliate marketing TikTok Shop Việt Nam với 5+ năm kinh nghiệm.
+Đánh giá sản phẩm cho creator muốn làm video bán hàng affiliate.
 
-QUAN TRONG: Cham diem CHINH XAC theo rubric duoi day. Dung cho diem cao qua de dang.
-Diem trung binh nen khoang 50-60. Chi SP that su xuat sac moi dat 80+.
+QUAN TRỌNG: Chấm điểm CHÍNH XÁC theo rubric dưới đây. Đừng cho điểm cao quá dễ dàng.
+Điểm trung bình nên khoảng 50-60. Chỉ SP thật sự xuất sắc mới đạt 80+.
 
-## Rubric cham diem (moi tieu chi 1-5 sao):
+## Rubric chấm điểm (mỗi tiêu chí 1-5 sao):
 
-### 1. Nhu cau thi truong (market_demand) — SP co nguoi muon mua khong?
-20: SP ngach rat hep, it ai can, khong trending
-40: Co nhu cau nhung khong noi bat, thi truong bao hoa
-60: Nhu cau on, co tim kiem, phu hop mot segment
-80: Nhu cau cao, dang hot, nhieu nguoi tim kiem
-100: Viral potential, giai quyet pain point pho bien, trending manh
+### 1. Nhu cầu thị trường (market_demand) — SP có người muốn mua không?
+20: SP ngách rất hẹp, ít ai cần, không trending
+40: Có nhu cầu nhưng không nổi bật, thị trường bão hòa
+60: Nhu cầu ổn, có tìm kiếm, phù hợp một segment
+80: Nhu cầu cao, đang hot, nhiều người tìm kiếm
+100: Viral potential, giải quyết pain point phổ biến, trending mạnh
 
-### 2. Chat luong & uy tin (quality_trust) — SP co dang tin khong?
-20: Khong ro nguon goc, mo ta so sai, co dau hieu hang kem chat luong
-40: SP tam duoc nhung khong noi bat, review trung binh
-60: SP on, co thuong hieu nho, mo ta ro rang
-80: SP tot, thuong hieu uy tin, review tot, co chung nhan
-100: SP xuat sac, top thuong hieu, best-seller nganh
+### 2. Chất lượng & uy tín (quality_trust) — SP có đáng tin không?
+20: Không rõ nguồn gốc, mô tả sơ sài, có dấu hiệu hàng kém chất lượng
+40: SP tạm được nhưng không nổi bật, review trung bình
+60: SP ổn, có thương hiệu nhỏ, mô tả rõ ràng
+80: SP tốt, thương hiệu uy tín, review tốt, có chứng nhận
+100: SP xuất sắc, top thương hiệu, best-seller ngành
 
-### 3. Tiem nang viral (viral_potential) — De lam video hay khong?
-20: Nham chan, kho demo, khong co wow factor
-40: Co the demo nhung video se binh thuong
-60: Co goc content hap dan, before/after kha
-80: De viral — reaction manh, transformation ro, visual dep
-100: Chac chan viral — wow factor cuc manh, trigger cam xuc
+### 3. Tiềm năng viral (viral_potential) — Dễ làm video hay không?
+20: Nhàm chán, khó demo, không có wow factor
+40: Có thể demo nhưng video sẽ bình thường
+60: Có góc content hấp dẫn, before/after khá
+80: Dễ viral — reaction mạnh, transformation rõ, visual đẹp
+100: Chắc chắn viral — wow factor cực mạnh, trigger cảm xúc
 
-### 4. Rui ro (risk) — Ban SP nay co rui ro gi?
-20: Rui ro cao — claim y te, de hoan, chat cam, de bi report
-40: Co rui ro — SP nhay cam, ty le hoan cao, canh tranh gia khoc liet
-60: Rui ro trung binh — SP binh thuong, khong van de lon
-80: Rui ro thap — SP an toan, it hoan, category on dinh
-100: Gan nhu khong rui ro — SP thiet yeu, repeat purchase, uy tin cao
+### 4. Rủi ro (risk) — Bán SP này có rủi ro gì?
+20: Rủi ro cao — claim y tế, dễ hoàn, chất cấm, dễ bị report
+40: Có rủi ro — SP nhạy cảm, tỷ lệ hoàn cao, cạnh tranh giá khốc liệt
+60: Rủi ro trung bình — SP bình thường, không vấn đề lớn
+80: Rủi ro thấp — SP an toàn, ít hoàn, category ổn định
+100: Gần như không rủi ro — SP thiết yếu, repeat purchase, uy tín cao
 
-Tra ve JSON array, KHONG text them. Moi SP:`;
+Trả về JSON array, KHÔNG text thêm. Mỗi SP:`;
 
   const outputFormat = `[{
   "id": "product_id",
@@ -102,30 +103,30 @@ Tra ve JSON array, KHONG text them. Moi SP:`;
     "risk": 60
   },
   "aiScore": 58,
-  "reason": "1-2 cau giai thich diem so",
-  "contentAngle": "Goc video hay nhat cho SP nay"
+  "reason": "1-2 câu giải thích điểm số",
+  "contentAngle": "Góc video hay nhất cho SP này"
 }]
 
-QUAN TRONG:
-- aiScore = TRUNG BINH CO TRONG SO: market_demand*0.35 + quality_trust*0.25 + viral_potential*0.25 + risk*0.15
-- Moi tieu chi CHI cho 20/40/60/80/100 (5 muc, khong so le)
-- Diem TRUNG BINH cua toan batch nen khoang 50-60, KHONG phai 70-80`;
+QUAN TRỌNG:
+- aiScore = TRUNG BÌNH CÓ TRỌNG SỐ: market_demand*0.35 + quality_trust*0.25 + viral_potential*0.25 + risk*0.15
+- Mỗi tiêu chí CHỈ cho 20/40/60/80/100 (5 mức, không số lẻ)
+- Điểm TRUNG BÌNH của toàn batch nên khoảng 50-60, KHÔNG phải 70-80`;
 
   const anchorExamples = `
-VI DU THAM KHAO (de calibrate diem):
+VÍ DỤ THAM KHẢO (để calibrate điểm):
 
-SP 85 diem — Noi chien khong dau Xiaomi 5.5L, gia 890K, commission 15%:
+SP 85 điểm — Nồi chiên không dầu Xiaomi 5.5L, giá 890K, commission 15%:
   market_demand=80, quality_trust=80, viral_potential=100, risk=80
-  → Nhu cau cao, thuong hieu Xiaomi uy tin, de demo truoc/sau, an toan
+  → Nhu cầu cao, thương hiệu Xiaomi uy tín, dễ demo trước/sau, an toàn
 
-SP 55 diem — Op lung iPhone silicon, gia 25K, commission 30%:
+SP 55 điểm — Ốp lưng iPhone silicon, giá 25K, commission 30%:
   market_demand=60, quality_trust=40, viral_potential=40, risk=80
-  → Nhu cau co nhung canh tranh khoc liet, chat luong tam, kho lam video hay, nhung an toan
+  → Nhu cầu có nhưng cạnh tranh khốc liệt, chất lượng tạm, khó làm video hay, nhưng an toàn
 
-SP 27 diem — Vien giam can thao duoc XYZ, gia 350K, commission 40%:
+SP 27 điểm — Viên giảm cân thảo dược XYZ, giá 350K, commission 40%:
   market_demand=40, quality_trust=20, viral_potential=20, risk=20
   → aiScore = 40*0.35 + 20*0.25 + 20*0.25 + 20*0.15 = 27
-  → Co nguoi tim nhung nhay cam, khong ro nguon goc, kho demo, rui ro cao bi report`;
+  → Có người tìm nhưng nhạy cảm, không rõ nguồn gốc, khó demo, rủi ro cao bị report`;
 
   const user = `Cham diem cho ${products.length} san pham:
 
@@ -146,9 +147,9 @@ export function buildLearningPrompt(input: LearningPromptInput): {
 } {
   const { feedbackSummary, currentWeights, previousPatterns } = input;
 
-  const system = `Ban la AI phan tich hieu suat affiliate marketing tai Viet Nam.
-Phan tich du lieu feedback thuc te de tim patterns va de xuat dieu chinh trong so scoring.
-Luon tra ve JSON hop le.`;
+  const system = `Bạn là AI phân tích hiệu suất affiliate marketing tại Việt Nam.
+Phân tích dữ liệu feedback thực tế để tìm patterns và đề xuất điều chỉnh trọng số scoring.
+Luôn trả về JSON hợp lệ.`;
 
   const user = `Phan tich du lieu feedback sau va de xuat cai thien:
 
@@ -183,9 +184,9 @@ export function buildRecommendPrompt(input: RecommendPromptInput): {
 } {
   const { productName, category, price, commissionRate, platform } = input;
 
-  const system = `Ban la chuyen gia content marketing affiliate tai Viet Nam.
-De xuat chien luoc noi dung cu the de quang ba san pham hieu qua.
-Luon tra ve JSON hop le.`;
+  const system = `Bạn là chuyên gia content marketing affiliate tại Việt Nam.
+Đề xuất chiến lược nội dung cụ thể để quảng bá sản phẩm hiệu quả.
+Luôn trả về JSON hợp lệ.`;
 
   const user = `De xuat chien luoc noi dung cho san pham:
 - Ten: ${productName}

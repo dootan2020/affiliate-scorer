@@ -46,5 +46,6 @@ export function calculateReward(metrics: MetricsInput): number {
     reward += Math.log(1 + metrics.commissionAmount / 1000) * 2;
   }
 
-  return Math.round(reward * 100) / 100;
+  // Fix E2: Cap reward to prevent viral video distortion (e.g. 39,000+ score)
+  return Math.min(100, Math.round(reward * 100) / 100);
 }

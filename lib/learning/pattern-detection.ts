@@ -51,7 +51,8 @@ export async function regeneratePatterns(channelId?: string): Promise<{ patterns
   const results: PatternResult[] = [];
 
   for (const [key, groupAssets] of groups) {
-    if (groupAssets.length < 2) continue; // Cần ít nhất 2 assets
+    // Fix E3: Minimum 5 assets for statistically meaningful patterns (was 2)
+    if (groupAssets.length < 5) continue;
 
     const [hookType, format] = key.split("::");
     const rewards = groupAssets.map((a) => Number(a.metrics[0]?.rewardScore || 0));

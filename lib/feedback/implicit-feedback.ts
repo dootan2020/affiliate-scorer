@@ -76,9 +76,12 @@ export async function logImplicitNegative(
 
 /** Auto-populate LearningWeightP4 when feedback reaches BASIC threshold */
 async function checkAndBootstrapWeights(): Promise<void> {
+  // Fix F12: Use threshold boundaries instead of exact count
+  // (bulk operations can skip exact counts like 5, 15, 30)
   const count = await prisma.feedback.count();
+  if (count < 5 || count > 30) return;
   const TIER_BOUNDARIES = [5, 15, 30];
-  if (!TIER_BOUNDARIES.includes(count)) return;
+  if (!TIER_BOUNDARIES.some((t) => count >= t && count < t + 3)) return;
 
   const successFeedbacks = await prisma.feedback.findMany({
     where: { overallSuccess: "success" },

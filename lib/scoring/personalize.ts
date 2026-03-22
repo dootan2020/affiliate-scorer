@@ -107,7 +107,8 @@ function computeCategoryPreference(
   let total = 0;
   for (const fb of cached.successFeedbacks) {
     total++;
-    if (fb.product.category.toLowerCase() === catLower) matches++;
+    // Fix M2/F4: Guard against null category
+    if (fb.product.category?.toLowerCase() === catLower) matches++;
   }
   if (total === 0) return 50;
   // Higher ratio = stronger preference. Scale 0-100

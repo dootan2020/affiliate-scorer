@@ -31,9 +31,10 @@ export async function applyDecay(): Promise<{ updated: number; skipped: number }
     const decayFactor = Math.pow(0.5, daysSince / halfLife);
     const decayedWeight = Number(w.weight) * decayFactor;
 
+    // Fix E1: Update lastRewardAt to prevent double-exponential decay
     await prisma.learningWeightP4.update({
       where: { id: w.id },
-      data: { weight: decayedWeight },
+      data: { weight: decayedWeight, lastRewardAt: new Date() },
     });
     updated++;
   }

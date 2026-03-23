@@ -47,11 +47,9 @@ export async function loginFastMoss(email: string, password: string): Promise<Co
   const page = context.pages()[0] || await context.newPage();
 
   try {
-    log('Navigating to FastMoss...');
-    const startUrl = usePersistent
-      ? `${FASTMOSS_URL}/vi/e-commerce/search?region=VN`
-      : `${FASTMOSS_URL}/en`;
-    await page.goto(startUrl, { waitUntil: 'networkidle', timeout: 60000 });
+    // Login via English page (stable selectors), then switch to VN for region cookies
+    log('Navigating to FastMoss (English for login)...');
+    await page.goto(`${FASTMOSS_URL}/en`, { waitUntil: 'networkidle', timeout: 60000 });
     await page.waitForTimeout(5000);
     log(`Page loaded. URL: ${page.url()}`);
 
@@ -83,6 +81,34 @@ export async function loginFastMoss(email: string, password: string): Promise<Co
 
     const cookies = await context.cookies();
     forceVNCookies(cookies);
+
+    // CRITICAL: Switch to VN region — subscription is per-region (Pro VN ≠ Pro US)
+    log('Switching to Vietnam region to activate VN subscription...');
+    await context.addCookies([
+      { name: 'region', value: 'VN', domain: '.fastmoss.com', path: '/' },
+      { name: 'NEXT_LOCALE', value: 'vi', domain: '.fastmoss.com', path: '/' },
+    ]);
+    await page.goto(`${FASTMOSS_URL}/vi/e-commerce/search?region=VN`, {
+      waitUntil: 'domcontentloaded', timeout: 30000,
+    }).catch(() => log('Warning: VN navigation timeout'));
+    await page.waitForTimeout(3000);
+
+    // Verify subscription tier
+    try {
+      const tierInfo = await page.evaluate(async () => {
+        const res = await fetch('/api/user/index/userInfo?region=VN&_time=' + Math.floor(Date.now()/1000) + '&cnonce=99999');
+        const j = await res.json() as { data?: { level?: number; expire_at?: number; email?: string; region?: string } };
+        return j.data;
+      });
+      log(`Tier: level=${tierInfo?.level} expire=${tierInfo?.expire_at} region=${tierInfo?.region} email=${tierInfo?.email}`);
+      if (tierInfo?.level && tierInfo.level > 1) {
+        log('PRO TIER CONFIRMED!');
+      } else {
+        log('Free tier (level=1). If you have Pro VN subscription, contact FastMoss support.');
+      }
+    } catch {
+      log('Could not verify tier (non-fatal)');
+    }
 
     log(`Extracted ${cookies.length} cookies (region=VN forced).`);
     return cookies.map(castCookie);

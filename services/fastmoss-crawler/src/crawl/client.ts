@@ -23,7 +23,17 @@ function buildCookieHeader(): string {
   if (!cookies || cookies.length === 0) {
     throw new CrawlerError('No cookies found. Please run the login command first.');
   }
-  return cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+  let cookieStr = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+  // Force region=VN in cookie string (subscription is per-region)
+  if (!cookieStr.includes('region=VN')) {
+    cookieStr = cookieStr.replace(/region=[^;]+/, 'region=VN');
+    if (!cookieStr.includes('region=')) cookieStr += '; region=VN';
+  }
+  if (!cookieStr.includes('NEXT_LOCALE=vi')) {
+    cookieStr = cookieStr.replace(/NEXT_LOCALE=[^;]+/, 'NEXT_LOCALE=vi');
+    if (!cookieStr.includes('NEXT_LOCALE=')) cookieStr += '; NEXT_LOCALE=vi';
+  }
+  return cookieStr;
 }
 
 async function rateLimit(): Promise<void> {

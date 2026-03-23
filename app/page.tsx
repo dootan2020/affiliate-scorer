@@ -9,6 +9,7 @@ import { UpcomingEventsWidget } from "@/components/dashboard/upcoming-events-wid
 import { DashboardEmptyState } from "@/components/dashboard/dashboard-empty-state";
 import { OnboardingChecklist } from "@/components/niche-intelligence/onboarding-checklist";
 import { WidgetErrorBoundary } from "@/components/dashboard/widget-error-boundary";
+import { FastMossSyncWidget } from "@/components/dashboard/fastmoss-sync-widget";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -81,12 +82,15 @@ export default async function DashboardPage(): Promise<React.ReactElement> {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <WidgetErrorBoundary name="Winning Patterns">
           <WinningPatternsWidget />
         </WidgetErrorBoundary>
         <WidgetErrorBoundary name="Sự kiện">
           <UpcomingEventsWidget />
+        </WidgetErrorBoundary>
+        <WidgetErrorBoundary name="FastMoss">
+          <FastMossSyncWidget />
         </WidgetErrorBoundary>
       </div>
     </div>

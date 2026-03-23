@@ -158,17 +158,27 @@ async function paginateAntd(page: Page, maxPages: number): Promise<void> {
   }
 }
 
-// ── Ranking pages ─────────────────────────────────────────────────────────────
+// ── Ranking pages (global, no category filter) ──────────────────────────────
 
 const RANKING_PAGES = [
   { path: '/vi/e-commerce/saleslist?region=VN', label: 'saleRank' },
-  { path: '/vi/e-commerce/hotlist?region=VN', label: 'popRank' },
+  // Skip popRank — returns identical data to saleRank
   { path: '/vi/e-commerce/newProducts?region=VN', label: 'newProduct' },
   { path: '/vi/e-commerce/hotvideo?region=VN', label: 'videoRank' },
 ];
 
-// Category IDs: Home, Beauty, F&B, Women, Electronics, Health, Men, Kitchen
-const SEARCH_CATEGORIES = [10, 14, 24, 2, 16, 25, 3, 11];
+// ── Per-category ranking endpoints (category filter via l1_cid) ─────────────
+
+const CATEGORY_RANKING_TEMPLATES = [
+  { pathTemplate: '/vi/e-commerce/saleslist?region=VN&l1_cid={cat}', label: 'saleRank' },
+  { pathTemplate: '/vi/e-commerce/newProducts?region=VN&l1_cid={cat}', label: 'newProduct' },
+  { pathTemplate: '/vi/e-commerce/hotvideo?region=VN&l1_cid={cat}', label: 'hotVideo' },
+];
+
+// All 28 L1 category codes for VN market
+const ALL_L1_CATEGORIES = [
+  2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30,
+];
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -192,7 +202,7 @@ export async function crawlProducts(
   const maxPages = options.maxPages ?? 5;
   const captured = setupInterceptor(page);
 
-  // ── Phase 1: Ranking pages ──────────────────────────────────────────────
+  // ── Phase 1: Global ranking pages (no category filter) ─────────────────
   const rankingPages = options.endpointFilter
     ? RANKING_PAGES.filter((rp) => rp.label === options.endpointFilter)
     : RANKING_PAGES;
@@ -202,19 +212,21 @@ export async function crawlProducts(
     await paginateAntd(page, maxPages);
   }
 
-  // ── Phase 2: Search pages per category ─────────────────────────────────
-  if (!options.endpointFilter || options.endpointFilter === 'search') {
-    const cats =
-      options.categories && options.categories.length > 0
-        ? options.categories
-        : SEARCH_CATEGORIES;
+  // ── Phase 2: Per-category ranking (l1_cid filter) ─────────────────────
+  // This is the main scale lever: 28 categories × 3 endpoints = 84 URLs
+  const cats = options.categories && options.categories.length > 0
+    ? options.categories
+    : ALL_L1_CATEGORIES;
 
+  const templates = options.endpointFilter
+    ? CATEGORY_RANKING_TEMPLATES.filter((t) => t.label === options.endpointFilter)
+    : CATEGORY_RANKING_TEMPLATES;
+
+  for (const tmpl of templates) {
+    log(`${tmpl.label} across ${cats.length} categories...`);
     for (const cat of cats) {
-      log(`Search category ${cat}...`);
-      await navigateAndWait(
-        page,
-        `/vi/e-commerce/search?region=VN&category=${cat}`
-      );
+      const path = tmpl.pathTemplate.replace('{cat}', String(cat));
+      await navigateAndWait(page, path);
       await paginateAntd(page, maxPages);
     }
   }

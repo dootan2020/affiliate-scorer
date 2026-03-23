@@ -151,6 +151,43 @@ async function crawlEndpoint(
   return products;
 }
 
+// ── Search endpoint — supports category filter, up to 5000 results ───────────
+
+const SEARCH_CATEGORIES = [10, 14, 24, 2, 16, 25, 3, 11]; // Home, Beauty, F&B, Women, Electronics, Health, Men, Kitchen
+
+async function crawlSearchByCategory(
+  categoryCode: number,
+  maxPages: number,
+): Promise<CrawledProduct[]> {
+  const products: CrawledProduct[] = [];
+  log(`[search] category=${categoryCode} starting...`);
+
+  for (let page = 1; page <= maxPages; page++) {
+    const items = await paginatedGet('/api/goods/search', page, {
+      category: categoryCode,
+      order: '2,2', // sort by sold_count desc
+    }, (json) => {
+      const data = json['data'] as Record<string, unknown> | undefined;
+      if (!data) return [];
+      const list = data['product_list'];
+      return Array.isArray(list) ? list : [];
+    });
+
+    if (items.length === 0) {
+      log(`[search] category=${categoryCode} page=${page} — no more results`);
+      break;
+    }
+
+    const normalized = (items as RankListItem[]).map((item) =>
+      normalize(item, 'search', categoryCode)
+    );
+    products.push(...normalized);
+    log(`[search] category=${categoryCode} page=${page} — ${normalized.length} products (total: ${products.length})`);
+  }
+
+  return products;
+}
+
 // ── Semaphore for bounded concurrency ─────────────────────────────────────────
 
 function createSemaphore(max: number) {
@@ -198,7 +235,8 @@ export interface CrawlProductsOptions {
 }
 
 export async function crawlProducts(options: CrawlProductsOptions = {}): Promise<CrawledProduct[]> {
-  const maxPages = options.maxPages ?? 10;
+  // FastMoss free tier: only page 1 returns real VN data, page 2+ returns fake US filler
+  const maxPages = options.maxPages ?? 1;
   const endpointFilter = options.endpointFilter;
   // Note: categories param is now used for LOCAL filtering only (not sent to API)
   const categoryFilter = options.categories;
@@ -224,6 +262,20 @@ export async function crawlProducts(options: CrawlProductsOptions = {}): Promise
     log(`Endpoint ${endpoint.name} done — ${allProducts.length} total products so far`);
   }
 
+  // Phase 2: Search endpoint — per-category crawl (supports category filter)
+  if (!endpointFilter || endpointFilter === 'search') {
+    const searchCategories = categoryFilter && categoryFilter.length > 0
+      ? categoryFilter
+      : SEARCH_CATEGORIES;
+    log(`Starting search across ${searchCategories.length} categories...`);
+    const sem = createSemaphore(MAX_CONCURRENT);
+    const searchBatches = await Promise.all(
+      searchCategories.map((cat) => sem(() => crawlSearchByCategory(cat, maxPages)))
+    );
+    for (const batch of searchBatches) allProducts.push(...batch);
+    log(`Search done — ${allProducts.length} total products`);
+  }
+
   // Dedup by product_id
   const deduped = new Map<string, CrawledProduct>();
   for (const p of allProducts) {
@@ -245,6 +297,14 @@ export async function crawlProducts(options: CrawlProductsOptions = {}): Promise
     log(`Category filter [${categoryFilter.join(',')}]: ${result.length} products after filtering`);
   }
 
-  log(`Crawl complete. ${result.length} unique products (from ${allProducts.length} raw).`);
+  // Log per-category breakdown
+  const catCounts = new Map<string, number>();
+  for (const p of result) {
+    const catName = p.category_name[0] || 'Unknown';
+    catCounts.set(catName, (catCounts.get(catName) ?? 0) + 1);
+  }
+  log(`Crawl complete. ${result.length} unique VN products (from ${allProducts.length} raw).`);
+  log(`Per-category: ${Array.from(catCounts.entries()).map(([k, v]) => `${k}=${v}`).join(', ')}`);
+
   return result;
 }

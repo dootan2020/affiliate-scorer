@@ -10,55 +10,42 @@ function log(message: string): void {
 }
 
 export async function loginFastMoss(email: string, password: string): Promise<Cookie[]> {
-  log('Launching headless browser...');
-  const browser = await chromium.launch({ headless: true });
+  // FastMoss uses Tencent Cloud EdgeOne WAF — headless Chromium gets HTTP 567.
+  // Must use headed mode with real Chrome channel to bypass bot detection.
+  log('Launching Chrome (headed — required to bypass WAF)...');
+  const browser = await chromium.launch({
+    headless: false,
+    channel: 'chrome', // Use installed Chrome, not bundled Chromium
+    args: ['--disable-blink-features=AutomationControlled'],
+  });
   const context = await browser.newContext({
-    userAgent:
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    locale: 'vi-VN',
+    locale: 'en-US',
     timezoneId: 'Asia/Ho_Chi_Minh',
   });
   const page = await context.newPage();
 
   try {
-    log(`Navigating to ${FASTMOSS_URL} ...`);
-    await page.goto(FASTMOSS_URL, { waitUntil: 'domcontentloaded', timeout: LOGIN_TIMEOUT });
+    log('Navigating to FastMoss (English)...');
+    await page.goto(`${FASTMOSS_URL}/en`, { waitUntil: 'networkidle', timeout: 60000 });
 
-    // Wait for the page to settle
-    await page.waitForTimeout(2000);
+    // Wait for WAF challenge to resolve + page JS to render
+    await page.waitForTimeout(5000);
+    log(`Page loaded. URL: ${page.url()}`);
 
-    // Find and click the login/sign-in button to open modal
+    // Take debug screenshot
+    await page.screenshot({ path: 'data/debug-login.png' }).catch(() => {});
+
+    // Find and click the "Log in" span in top navbar
     log('Looking for login button...');
-    const loginButtonSelectors = [
-      'text=Log in',
-      'text=Login',
-      'text=Sign in',
-      'text=登录',
-      '[data-testid="login-btn"]',
-      'button:has-text("Log")',
-      'a:has-text("Log in")',
-      '.login-btn',
-      '.sign-in',
-    ];
-
-    let loginButtonFound = false;
-    for (const selector of loginButtonSelectors) {
-      try {
-        const el = page.locator(selector).first();
-        if (await el.isVisible({ timeout: 2000 })) {
-          await el.click();
-          loginButtonFound = true;
-          log(`Clicked login button with selector: ${selector}`);
-          await page.waitForTimeout(1500);
-          break;
-        }
-      } catch {
-        // try next selector
-      }
-    }
-
-    if (!loginButtonFound) {
-      log('Login button not found, checking if already on login page or modal...');
+    const loginBtn = page.locator('span:text-is("Log in")').first();
+    if (await loginBtn.isVisible({ timeout: 5000 })) {
+      await loginBtn.click();
+      log('Clicked "Log in" button');
+      await page.waitForTimeout(3000);
+      // Take screenshot after login modal opens
+      await page.screenshot({ path: 'data/debug-login-modal.png' }).catch(() => {});
+    } else {
+      log('Login button not visible — may already be on login form');
     }
 
     // Fill email field
@@ -71,6 +58,7 @@ export async function loginFastMoss(email: string, password: string): Promise<Co
       'input[placeholder*="邮箱"]',
       'input[autocomplete="email"]',
       'input[autocomplete="username"]',
+      'input[type="text"]', // FastMoss may use plain text input
     ];
 
     let emailFilled = false;

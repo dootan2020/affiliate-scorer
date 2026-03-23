@@ -1,0 +1,17 @@
+{
+  "apps": [{
+    "name": "fastmoss-crawler",
+    "script": "npx",
+    "args": "tsx src/index.ts schedule --interval 12",
+    "cwd": ".",
+    "autorestart": true,
+    "max_restarts": 5,
+    "restart_delay": 60000,
+    "env": {
+      "NODE_ENV": "production"
+    },
+    "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
+    "error_file": "./data/pm2-error.log",
+    "out_file": "./data/pm2-out.log"
+  }]
+}

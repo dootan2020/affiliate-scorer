@@ -482,6 +482,25 @@ model ProductIdentity {
   personalRating Int?
   personalTags   Json @default("[]")
 
+  // FastMoss enrichment
+  fastmossProductId  String?   @unique // FastMoss internal product ID (19-digit string)
+  viralIndex         Int?              // 0-100, from goods/v3/base
+  popularityIndex    Int?              // 0-100, from goods/v3/base
+  countryRank        Int?              // Rank within VN
+  categoryRank       Int?              // Rank within category
+  day28SoldCount     Int?              // 28-day sales (reduces 7d noise)
+  day28Revenue       Decimal?  @db.Decimal(15, 2) // 28-day revenue in VND
+  relateAuthorCount  Int?              // Total KOLs promoting
+  relateVideoCount   Int?              // Total videos
+  relateLiveCount    Int?              // Total livestreams
+  soldCountIncRate   String?           // Sales growth rate "38.1%"
+  productRating      Decimal?  @db.Decimal(3, 1)  // Product rating 0.0-5.0
+  fastmossCategory   String?           // Full category path
+  fastmossCategoryId Int?              // L1 category code (10=Home, 14=Beauty)
+  stockCount         Int?              // Stock quantity
+  isPromoted         Boolean   @default(false)
+  lastFastmossSync   DateTime?
+
   // Timestamps
   firstSeenAt DateTime @default(now())
   lastSeenAt  DateTime @default(now())
@@ -501,6 +520,7 @@ model ProductIdentity {
   @@index([inboxState])
   @@index([combinedScore(sort: Desc)])
   @@index([deltaType])
+  @@index([fastmossCategoryId])
 }
 
 model ProductUrl {
@@ -1420,4 +1440,39 @@ model TelegramChat {
   activeChannelId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// ─── FASTMOSS CRAWLER ───
+
+model FastMossCategory {
+  id          String   @id @default(cuid())
+  code        Int
+  name        String
+  nameVi      String?
+  parentCode  Int?
+  level       Int      // 1, 2, or 3
+  rank        Int      @default(0)
+  productCount Int     @default(0)
+  region      String   @default("VN")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([code, region])
+  @@index([parentCode])
+  @@index([level, region])
+}
+
+model FastMossSyncLog {
+  id           String    @id @default(cuid())
+  syncType     String    // "products" | "categories" | "market"
+  status       String    // "running" | "completed" | "failed"
+  recordCount  Int       @default(0)
+  newCount     Int       @default(0)
+  updatedCount Int       @default(0)
+  errorCount   Int       @default(0)
+  duration     Int?      // seconds
+  errorLog     String?
+  metadata     Json?
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
 }

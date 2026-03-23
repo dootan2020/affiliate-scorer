@@ -109,6 +109,7 @@ export interface CrawlOptions {
 
 export interface ScheduleOptions {
   interval: number;
+  headed?: boolean;
 }
 
 export class SessionExpiredError extends Error {

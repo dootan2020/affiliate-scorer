@@ -3,3 +3,6 @@ data/
 .env
 dist/
 *.log
+
+# Playwright persistent browser profile (contains login session — never commit)
+data/browser-profile/

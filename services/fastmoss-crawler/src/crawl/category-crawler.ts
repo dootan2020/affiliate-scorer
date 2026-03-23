@@ -1,98 +1,101 @@
-// FastMoss category tree crawler
-import { apiGet } from './client.js';
+// FastMoss category tree — intercepts filterInfo API response during page navigation
+import type { Page } from 'playwright';
 import type { Category } from '../types.js';
+import { FASTMOSS_URL } from './browser-context.js';
 
 function log(message: string): void {
   console.log(`[${new Date().toISOString()}] [category-crawler] ${message}`);
 }
 
-interface RawCategory {
-  category_id?: number;
-  id?: number;
-  code?: number;
-  category_name?: string;
-  name?: string;
-  parent_id?: number | null;
-  parent_code?: number | null;
-  level?: number;
+interface RawL3 {
+  c_code?: string | number;
+  c_name?: string;
   rank?: number;
-  children?: RawCategory[];
-  sub_list?: RawCategory[];
   [key: string]: unknown;
 }
 
-function flattenTree(
-  items: RawCategory[],
-  parentCode: number | null = null,
-  level: number = 1
-): Category[] {
-  const result: Category[] = [];
-
-  for (const item of items) {
-    const code = Number(item.category_id ?? item.id ?? item.code ?? 0);
-    const name = String(item.category_name ?? item.name ?? '');
-    const rank = Number(item.rank ?? 0);
-
-    result.push({
-      code,
-      name,
-      parentCode,
-      level,
-      rank,
-    });
-
-    const children = item.children ?? item.sub_list;
-    if (Array.isArray(children) && children.length > 0) {
-      result.push(...flattenTree(children, code, level + 1));
-    }
-  }
-
-  return result;
+interface RawL2 extends RawL3 {
+  sub?: RawL3[];
 }
 
-export async function crawlCategories(): Promise<Category[]> {
-  log('Fetching category tree from /api/goods/filterInfo...');
+interface RawL1 extends RawL3 {
+  sub?: RawL2[];
+}
 
-  const json = await apiGet('/api/goods/filterInfo', {
-    params: { region: 'VN' },
-  });
+interface FilterInfoData {
+  category?: RawL1[];
+  [key: string]: unknown;
+}
 
-  const data = json['data'] as Record<string, unknown> | undefined;
-  if (!data) {
-    log('No data in filterInfo response');
-    return [];
-  }
+/**
+ * Navigate to the search page and capture the filterInfo API call that carries
+ * the full category tree. Returns a flat list of all categories (L1/L2/L3).
+ */
+export async function crawlCategories(page: Page): Promise<Category[]> {
+  log('Setting up interceptor for /api/goods/filterInfo...');
 
-  // The category tree may be nested under different keys
-  let rawCategories: RawCategory[] = [];
+  const categories: Category[] = [];
+  let resolved = false;
 
-  const possibleKeys = ['category_list', 'categories', 'list', 'items', 'tree'];
-  for (const key of possibleKeys) {
-    const candidate = data[key];
-    if (Array.isArray(candidate) && candidate.length > 0) {
-      rawCategories = candidate as RawCategory[];
-      log(`Found categories under key "${key}" — ${rawCategories.length} root items`);
-      break;
-    }
-  }
+  const handler = async (response: import('playwright').Response): Promise<void> => {
+    if (!response.url().includes('/api/goods/filterInfo')) return;
+    if (resolved) return;
+    try {
+      const json = (await response.json()) as { code?: number | string; data?: FilterInfoData };
+      const data = json.data;
+      if (!data?.category) return;
 
-  // If nested directly as array in data
-  if (rawCategories.length === 0 && Array.isArray(data)) {
-    rawCategories = data as unknown as RawCategory[];
-  }
+      resolved = true;
 
-  if (rawCategories.length === 0) {
-    log('Warning: Could not find category list in filterInfo response. Checking all keys...');
-    for (const [key, value] of Object.entries(data)) {
-      if (Array.isArray(value) && value.length > 0) {
-        log(`Trying key "${key}" with ${value.length} items`);
-        rawCategories = value as RawCategory[];
-        break;
+      for (const l1 of data.category) {
+        categories.push({
+          code: Number(l1.c_code ?? 0),
+          name: String(l1.c_name ?? ''),
+          parentCode: null,
+          level: 1,
+          rank: Number(l1.rank ?? 0),
+        });
+
+        for (const l2 of l1.sub ?? []) {
+          categories.push({
+            code: Number(l2.c_code ?? 0),
+            name: String(l2.c_name ?? ''),
+            parentCode: Number(l1.c_code ?? 0),
+            level: 2,
+            rank: Number(l2.rank ?? 0),
+          });
+
+          for (const l3 of l2.sub ?? []) {
+            categories.push({
+              code: Number(l3.c_code ?? 0),
+              name: String(l3.c_name ?? ''),
+              parentCode: Number(l2.c_code ?? 0),
+              level: 3,
+              rank: Number(l3.rank ?? 0),
+            });
+          }
+        }
       }
-    }
+      log(`Captured filterInfo: ${categories.length} categories`);
+    } catch { /* ignore parse errors */ }
+  };
+
+  page.on('response', handler);
+
+  try {
+    log('Navigating to search page to trigger filterInfo call...');
+    await page.goto(`${FASTMOSS_URL}/vi/e-commerce/search?region=VN`, {
+      waitUntil: 'networkidle',
+      timeout: 30_000,
+    }).catch(() => log('Navigation timeout — checking captured data anyway'));
+    await page.waitForTimeout(3000);
+  } finally {
+    page.off('response', handler);
   }
 
-  const flat = flattenTree(rawCategories);
-  log(`Flattened ${flat.length} categories from tree`);
-  return flat;
+  if (categories.length === 0) {
+    log('Warning: no categories captured — filterInfo may not have been called.');
+  }
+
+  return categories;
 }

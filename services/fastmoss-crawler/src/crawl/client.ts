@@ -4,7 +4,9 @@ import { SessionExpiredError, CrawlerError } from '../types.js';
 
 const BASE_URL = 'https://www.fastmoss.com';
 const DELAY_MS = 1000;
-const PAGE_SIZES = [50, 20, 10];
+// FastMoss ranking endpoints cap at 5-10 items regardless of pagesize
+// Start at 10 to avoid getting garbage data from larger pagesize requests
+const PAGE_SIZES = [10];
 
 let lastRequestTime = 0;
 

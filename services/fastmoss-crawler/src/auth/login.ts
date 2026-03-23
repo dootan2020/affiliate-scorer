@@ -199,8 +199,27 @@ export async function loginFastMoss(email: string, password: string): Promise<Co
       }
     }
 
+    // Navigate to VN dashboard to set region=VN + NEXT_LOCALE cookies
+    log('Switching to Vietnam region...');
+    await page.goto('https://www.fastmoss.com/vi/e-commerce/search?region=VN', {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    }).catch(() => {
+      log('Warning: VN navigation timeout, continuing with cookie extraction');
+    });
+    await page.waitForTimeout(2000);
+
     const cookies = await context.cookies();
-    log(`Login successful. Extracted ${cookies.length} cookies.`);
+
+    // Ensure region=VN and NEXT_LOCALE=vi are set
+    const regionCookie = cookies.find(c => c.name === 'region');
+    const localeCookie = cookies.find(c => c.name === 'NEXT_LOCALE');
+    if (regionCookie) regionCookie.value = 'VN';
+    else cookies.push({ name: 'region', value: 'VN', domain: '.fastmoss.com', path: '/', expires: -1, httpOnly: false, secure: false, sameSite: 'Lax' as const });
+    if (localeCookie) localeCookie.value = 'vi';
+    else cookies.push({ name: 'NEXT_LOCALE', value: 'vi', domain: '.fastmoss.com', path: '/', expires: -1, httpOnly: false, secure: false, sameSite: 'Lax' as const });
+
+    log(`Login successful. Extracted ${cookies.length} cookies (region=VN forced).`);
 
     // Cast playwright cookies to our Cookie type
     return cookies.map((c) => ({

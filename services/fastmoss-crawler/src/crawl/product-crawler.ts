@@ -116,20 +116,18 @@ const ENDPOINTS: EndpointConfig[] = [
   },
 ];
 
-// ── Crawl single endpoint for one category ────────────────────────────────────
+// ── Crawl single endpoint (no category filter — triggers MAG_AUTH_3011) ──────
 
-async function crawlEndpointCategory(
+async function crawlEndpoint(
   endpoint: EndpointConfig,
-  categoryId: number,
-  maxPages: number
+  maxPages: number,
 ): Promise<CrawledProduct[]> {
   const products: CrawledProduct[] = [];
-  log(`[${endpoint.name}] category=${categoryId} starting...`);
+  log(`[${endpoint.name}] starting (no category filter — avoids rate limit)...`);
 
   for (let page = 1; page <= maxPages; page++) {
     const params: Record<string, string | number | boolean> = {
       ...endpoint.extraParams,
-      category_id: categoryId,
     };
 
     const items = await paginatedGet(endpoint.path, page, params, (json) => {
@@ -139,15 +137,15 @@ async function crawlEndpointCategory(
     });
 
     if (items.length === 0) {
-      log(`[${endpoint.name}] category=${categoryId} page=${page} — no more results`);
+      log(`[${endpoint.name}] page=${page} — no more results`);
       break;
     }
 
     const normalized = (items as RankListItem[]).map((item) =>
-      normalize(item, endpoint.name, categoryId)
+      normalize(item, endpoint.name, 0)
     );
     products.push(...normalized);
-    log(`[${endpoint.name}] category=${categoryId} page=${page} — ${normalized.length} products`);
+    log(`[${endpoint.name}] page=${page} — ${normalized.length} products (total: ${products.length})`);
   }
 
   return products;
@@ -200,9 +198,10 @@ export interface CrawlProductsOptions {
 }
 
 export async function crawlProducts(options: CrawlProductsOptions = {}): Promise<CrawledProduct[]> {
-  const categories = options.categories ?? DEFAULT_CATEGORIES;
   const maxPages = options.maxPages ?? 10;
   const endpointFilter = options.endpointFilter;
+  // Note: categories param is now used for LOCAL filtering only (not sent to API)
+  const categoryFilter = options.categories;
 
   const endpoints = endpointFilter
     ? ENDPOINTS.filter((e) => e.name === endpointFilter)
@@ -212,24 +211,40 @@ export async function crawlProducts(options: CrawlProductsOptions = {}): Promise
     throw new Error(`Unknown endpoint: ${endpointFilter}. Valid: ${ENDPOINTS.map((e) => e.name).join('|')}`);
   }
 
-  const sem = createSemaphore(MAX_CONCURRENT);
   const allProducts: CrawledProduct[] = [];
 
+  // Crawl each endpoint WITHOUT category filter (avoids MAG_AUTH_3011)
+  // Category filtering happens locally after crawl
   for (const endpoint of endpoints) {
-    log(`Starting endpoint: ${endpoint.name} across ${categories.length} categories`);
+    log(`Starting endpoint: ${endpoint.name} (${maxPages} pages)`);
 
-    const tasks = categories.map((categoryId) =>
-      sem(() => crawlEndpointCategory(endpoint, categoryId, maxPages))
-    );
-
-    const results = await Promise.all(tasks);
-    for (const batch of results) {
-      allProducts.push(...batch);
-    }
+    const batch = await crawlEndpoint(endpoint, maxPages);
+    allProducts.push(...batch);
 
     log(`Endpoint ${endpoint.name} done — ${allProducts.length} total products so far`);
   }
 
-  log(`Crawl complete. Total products: ${allProducts.length}`);
-  return allProducts;
+  // Dedup by product_id
+  const deduped = new Map<string, CrawledProduct>();
+  for (const p of allProducts) {
+    if (!deduped.has(p.product_id)) deduped.set(p.product_id, p);
+  }
+
+  let result = Array.from(deduped.values());
+
+  // Local region filter — only keep VN products
+  const beforeRegionFilter = result.length;
+  result = result.filter(p => p.region === 'VN');
+  if (result.length < beforeRegionFilter) {
+    log(`Region filter VN: ${result.length} products (removed ${beforeRegionFilter - result.length} non-VN)`);
+  }
+
+  // Local category filtering (if specified)
+  if (categoryFilter && categoryFilter.length > 0) {
+    result = result.filter(p => categoryFilter.includes(p.category_id));
+    log(`Category filter [${categoryFilter.join(',')}]: ${result.length} products after filtering`);
+  }
+
+  log(`Crawl complete. ${result.length} unique products (from ${allProducts.length} raw).`);
+  return result;
 }

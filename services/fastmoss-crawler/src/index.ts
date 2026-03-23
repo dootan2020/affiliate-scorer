@@ -59,17 +59,19 @@ program
   .option(
     '--categories <codes>',
     'Category codes (comma-separated)',
-    '10,14,24,2,25,16,3,11'
+    ''
   )
-  .option('--max-pages <n>', 'Max pages per category per endpoint', '10')
+  .option('--max-pages <n>', 'Max pages per endpoint', '10')
   .option('--dry-run', 'Print data without syncing to PASTR', false)
   .option(
     '--endpoint <name>',
     'Specific endpoint (saleRank|popRank|newProduct|videoRank)'
   )
   .action(async (opts: { categories: string; maxPages: string; dryRun: boolean; endpoint?: string }) => {
+    const catStr = opts.categories.trim();
     const options: CrawlOptions = {
-      categories: opts.categories.split(',').map((s) => parseInt(s.trim(), 10)).filter(Boolean),
+      // Empty = no filter (crawl all VN products, ranking endpoints don't return category_id)
+      categories: catStr ? catStr.split(',').map((s) => parseInt(s.trim(), 10)).filter(Boolean) : [],
       maxPages: parseInt(opts.maxPages, 10) || 10,
       dryRun: opts.dryRun,
       endpoint: opts.endpoint,

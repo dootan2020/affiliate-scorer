@@ -131,10 +131,10 @@ program
   .option('--endpoint <name>', 'Only crawl one endpoint (saleRank|popRank|newProduct|videoRank|search)')
   .option('--dry-run', 'Print data without syncing to PASTR', false)
   .action(async (opts: { headed: boolean; maxPages: string; categories: string; endpoint?: string; dryRun: boolean }) => {
-    const { context, page } = await createBrowserContext({ headed: opts.headed });
+    const session = await createBrowserContext({ headed: opts.headed });
 
     try {
-      const loggedIn = await ensureLoggedIn(page);
+      const loggedIn = await ensureLoggedIn(session.page);
       if (!loggedIn) {
         console.error('Not logged in. Run: npx tsx src/index.ts login');
         process.exit(1);
@@ -147,7 +147,7 @@ program
 
       log(`Starting crawl — maxPages=${opts.maxPages}, headed=${opts.headed}, dryRun=${opts.dryRun}`);
 
-      const products = await crawlProducts(page, {
+      const products = await crawlProducts(session.page, {
         maxPages: parseInt(opts.maxPages, 10) || 5,
         categories,
         endpointFilter: opts.endpoint,
@@ -169,7 +169,7 @@ program
       console.error(`Crawl failed: ${err instanceof Error ? err.message : String(err)}`);
       process.exit(1);
     } finally {
-      await context.close();
+      await session.close();
     }
   });
 
@@ -181,17 +181,17 @@ program
   .option('--headed', 'Show browser window', false)
   .option('--sync', 'Sync categories to PASTR after crawling', false)
   .action(async (opts: { headed: boolean; sync: boolean }) => {
-    const { context, page } = await createBrowserContext({ headed: opts.headed });
+    const session = await createBrowserContext({ headed: opts.headed });
 
     try {
-      const loggedIn = await ensureLoggedIn(page);
+      const loggedIn = await ensureLoggedIn(session.page);
       if (!loggedIn) {
         console.error('Not logged in. Run: npx tsx src/index.ts login');
         process.exit(1);
       }
 
       log('Crawling categories...');
-      const categories = await crawlCategories(page);
+      const categories = await crawlCategories(session.page);
       log(`Fetched ${categories.length} categories`);
 
       for (const cat of categories) {
@@ -206,7 +206,7 @@ program
       console.error(`Categories crawl failed: ${err instanceof Error ? err.message : String(err)}`);
       process.exit(1);
     } finally {
-      await context.close();
+      await session.close();
     }
   });
 
@@ -218,17 +218,17 @@ program
   .option('--headed', 'Show browser window', false)
   .option('--dry-run', 'Print data without syncing', false)
   .action(async (opts: { headed: boolean; dryRun: boolean }) => {
-    const { context, page } = await createBrowserContext({ headed: opts.headed });
+    const session = await createBrowserContext({ headed: opts.headed });
 
     try {
-      const loggedIn = await ensureLoggedIn(page);
+      const loggedIn = await ensureLoggedIn(session.page);
       if (!loggedIn) {
         console.error('Not logged in. Run: npx tsx src/index.ts login');
         process.exit(1);
       }
 
       log('Crawling market overview...');
-      const overview = await crawlMarketOverview(page);
+      const overview = await crawlMarketOverview(session.page);
 
       if (opts.dryRun) {
         console.log(JSON.stringify(overview, null, 2));
@@ -239,7 +239,7 @@ program
       console.error(`Market crawl failed: ${err instanceof Error ? err.message : String(err)}`);
       process.exit(1);
     } finally {
-      await context.close();
+      await session.close();
     }
   });
 

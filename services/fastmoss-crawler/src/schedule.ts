@@ -19,10 +19,10 @@ export interface ScheduleOptions {
 async function runFullCrawl(headed: boolean): Promise<void> {
   log('=== Starting scheduled crawl run ===');
 
-  const { context, page } = await createBrowserContext({ headed });
+  const session = await createBrowserContext({ headed });
 
   try {
-    const loggedIn = await ensureLoggedIn(page);
+    const loggedIn = await ensureLoggedIn(session.page);
     if (!loggedIn) {
       log('ERROR: Not logged in. Run "login" command first, then restart scheduler.');
       return;
@@ -31,7 +31,7 @@ async function runFullCrawl(headed: boolean): Promise<void> {
     // Step 1: categories
     try {
       log('Step 1/3: Crawling categories...');
-      const categories = await crawlCategories(page);
+      const categories = await crawlCategories(session.page);
       log(`Categories crawled: ${categories.length}`);
       if (categories.length > 0) {
         await syncCategories(categories);
@@ -43,7 +43,7 @@ async function runFullCrawl(headed: boolean): Promise<void> {
     // Step 2: products
     try {
       log('Step 2/3: Crawling products...');
-      const products = await crawlProducts(page);
+      const products = await crawlProducts(session.page);
       log(`Products crawled: ${products.length}`);
       if (products.length > 0) {
         await syncProducts(products);
@@ -55,13 +55,13 @@ async function runFullCrawl(headed: boolean): Promise<void> {
     // Step 3: market overview
     try {
       log('Step 3/3: Crawling market overview...');
-      const market = await crawlMarketOverview(page);
+      const market = await crawlMarketOverview(session.page);
       await syncMarket(market);
     } catch (err) {
       log(`Market crawl error: ${err instanceof Error ? err.message : String(err)}`);
     }
   } finally {
-    await context.close();
+    await session.close();
     log('Browser context closed.');
   }
 

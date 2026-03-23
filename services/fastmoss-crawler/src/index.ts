@@ -51,6 +51,119 @@ program
     }
   });
 
+// ── import-cookies ────────────────────────────────────────────────────────────
+// Extract cookies from Chrome via CDP (Chrome DevTools Protocol).
+// Steps: 1) Close Chrome, 2) Reopen with --remote-debugging-port=9222,
+//        3) Login FastMoss Pro, 4) Run this command.
+// CDP gives ALL cookies including httpOnly — no DPAPI/v20 decryption needed.
+
+program
+  .command('import-cookies')
+  .description('Import Pro cookies from Chrome via CDP (port 9222)')
+  .option('--port <port>', 'Chrome CDP port', '9222')
+  .option('--file <path>', 'Or import from JSON file instead of CDP')
+  .action(async (opts: { port: string; file?: string }) => {
+    const { chromium } = await import('playwright');
+    let cookies: Array<{ name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite: string }>;
+
+    if (opts.file) {
+      // File-based import (fallback)
+      const fs = await import('fs');
+      if (!fs.existsSync(opts.file)) {
+        console.error(`File not found: ${opts.file}`);
+        process.exit(1);
+      }
+      cookies = JSON.parse(fs.readFileSync(opts.file, 'utf-8'));
+      log(`Loaded ${cookies.length} cookies from ${opts.file}`);
+    } else {
+      // CDP-based import (preferred — gets httpOnly cookies)
+      const cdpUrl = `http://localhost:${opts.port}`;
+      log(`Connecting to Chrome CDP at ${cdpUrl}...`);
+      log('(Chrome must be running with --remote-debugging-port=' + opts.port + ')');
+
+      let browser;
+      try {
+        browser = await chromium.connectOverCDP(cdpUrl);
+      } catch {
+        console.error(`\nCannot connect to Chrome CDP on port ${opts.port}.`);
+        console.error('\nSteps to enable CDP:');
+        console.error('  1. Close ALL Chrome windows');
+        console.error('  2. Open terminal and run:');
+        console.error(`     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --remote-debugging-port=${opts.port}`);
+        console.error('  3. Login to FastMoss Pro at https://www.fastmoss.com/vi/dashboard');
+        console.error('  4. Run this command again');
+        process.exit(1);
+      }
+
+      const context = browser.contexts()[0];
+      if (!context) {
+        console.error('No browser context found');
+        process.exit(1);
+      }
+
+      // Navigate to FastMoss VN to ensure cookies are set
+      const page = context.pages().find(p => p.url().includes('fastmoss')) || context.pages()[0];
+      if (page && !page.url().includes('fastmoss')) {
+        log('Navigating to FastMoss VN...');
+        await page.goto('https://www.fastmoss.com/vi/e-commerce/search?region=VN', {
+          waitUntil: 'domcontentloaded', timeout: 30000,
+        }).catch(() => log('Navigation timeout — extracting cookies anyway'));
+        await page.waitForTimeout(3000);
+      }
+
+      // Extract ALL cookies (including httpOnly)
+      cookies = (await context.cookies('https://www.fastmoss.com')).map(c => ({
+        name: c.name,
+        value: c.value,
+        domain: c.domain,
+        path: c.path,
+        expires: c.expires,
+        httpOnly: c.httpOnly,
+        secure: c.secure,
+        sameSite: (c.sameSite || 'Lax') as string,
+      }));
+
+      log(`Extracted ${cookies.length} cookies from Chrome (including httpOnly)`);
+
+      // Don't close — it's the user's Chrome
+    }
+
+    // Force VN region
+    const setOrAdd = (name: string, value: string) => {
+      const existing = cookies.find(c => c.name === name);
+      if (existing) existing.value = value;
+      else cookies.push({ name, value, domain: '.fastmoss.com', path: '/', expires: -1, httpOnly: false, secure: false, sameSite: 'Lax' });
+    };
+    setOrAdd('region', 'VN');
+    setOrAdd('NEXT_LOCALE', 'vi');
+
+    // Save encrypted
+    saveCookies(cookies);
+    log(`Saved ${cookies.length} cookies (region=VN forced)`);
+
+    // Verify tier
+    const cookieStr = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+    try {
+      const res = await fetch('https://www.fastmoss.com/api/user/index/userInfo?region=VN&_time=' + Math.floor(Date.now() / 1000) + '&cnonce=12345678', {
+        headers: { Cookie: cookieStr, 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', Accept: 'application/json' },
+      });
+      const json = await res.json() as { code: string | number; data?: { level?: number; expire_at?: number; email?: string; region?: string } };
+      if (json.code === 'MSG_30001') {
+        log('WARNING: Not logged in (MSG_30001). Make sure you are logged into FastMoss in Chrome.');
+      } else {
+        const d = json.data;
+        log(`Tier: level=${d?.level} | expire=${d?.expire_at} | region=${d?.region} | email=${d?.email}`);
+        if (d?.level && d.level > 1) {
+          log('PRO TIER CONFIRMED! Crawler will get full data.');
+        } else {
+          log('Free tier detected. If you have Pro, try browsing fastmoss.com/vi/account/center in Chrome first.');
+        }
+      }
+    } catch (err) {
+      log(`Could not verify tier: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  });
+
 // ── crawl ─────────────────────────────────────────────────────────────────────
 
 program

@@ -36,9 +36,15 @@ export async function createBrowserContext(
 }
 
 /**
- * Check if the current page session has a valid Pro login via localStorage.
+ * Check if the current page session has a valid login.
+ * Navigates to FastMoss first if needed (localStorage requires a page context).
  */
 export async function ensureLoggedIn(page: Page): Promise<boolean> {
+  // Must be on a FastMoss page to read localStorage
+  if (!page.url().includes('fastmoss.com')) {
+    await navigateToVN(page);
+  }
+
   const isLoggedIn = await page.evaluate(() => {
     try {
       const store = localStorage.getItem('auth-store');

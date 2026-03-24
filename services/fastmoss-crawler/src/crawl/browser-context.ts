@@ -1,10 +1,11 @@
-// Browser context — connects to user's real Chrome via CDP or launches Playwright
+// Browser context — Playwright persistent profile with Chrome channel
+// Note: Chrome's default user-data-dir CANNOT be used with Playwright (Chrome blocks it).
+// We use a separate profile in data/browser-profile/ — user must login there once.
 import { chromium } from 'playwright';
-import type { Browser, BrowserContext, Page } from 'playwright';
+import type { BrowserContext, Page } from 'playwright';
 
 const USER_DATA_DIR = './data/browser-profile';
 const FASTMOSS_URL = 'https://www.fastmoss.com';
-const DEFAULT_CDP_PORT = 9222;
 
 export type { BrowserContext, Page };
 
@@ -19,54 +20,29 @@ function log(msg: string): void {
 }
 
 /**
- * Connect to user's real Chrome via CDP (preferred — gets Pro tier).
- * Falls back to Playwright persistent context if CDP not available.
+ * Launch Playwright with persistent Chrome profile.
+ * Uses `channel: 'chrome'` to run the installed Chrome binary (bypasses Tencent WAF).
+ * Session persists in data/browser-profile/ across runs.
  */
 export async function createBrowserContext(
-  options: { headed?: boolean; cdpPort?: number } = {}
+  options: { headed?: boolean } = {}
 ): Promise<BrowserSession> {
-  const port = options.cdpPort ?? DEFAULT_CDP_PORT;
+  log(`Launching Chrome (${options.headed ? 'headed' : 'headless'})...`);
 
-  // Try CDP connection first
-  try {
-    const cdpUrl = `http://localhost:${port}`;
-    log(`Connecting to Chrome CDP at ${cdpUrl}...`);
-    const browser = await chromium.connectOverCDP(cdpUrl, { timeout: 5000 });
-    const context = browser.contexts()[0];
-    if (!context) throw new Error('No browser context');
-
-    // Use existing page or create new tab
-    let page = context.pages().find(p => p.url().includes('fastmoss'));
-    if (!page) {
-      page = await context.newPage();
-    }
-
-    log(`Connected to Chrome CDP (${context.pages().length} tabs)`);
-    return {
-      context,
-      page,
-      close: async () => {
-        // Don't close user's Chrome — just disconnect
-        // Close any tabs we created (except the one user had open)
-        log('Disconnecting from Chrome (browser stays open)');
-      },
-    };
-  } catch {
-    log(`CDP not available on port ${port} — falling back to Playwright`);
-  }
-
-  // Fallback: Playwright persistent context
   const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
     headless: !options.headed,
     channel: 'chrome',
-    args: ['--disable-blink-features=AutomationControlled'],
+    args: [
+      '--disable-blink-features=AutomationControlled',
+      '--no-first-run',
+      '--no-default-browser-check',
+    ],
     viewport: { width: 1280, height: 800 },
     locale: 'vi-VN',
     timezoneId: 'Asia/Ho_Chi_Minh',
   });
 
   const page = context.pages()[0] || (await context.newPage());
-  log('Launched Playwright persistent context (free tier — use CDP for Pro)');
   return {
     context,
     page,
@@ -75,15 +51,15 @@ export async function createBrowserContext(
 }
 
 /**
- * Check login + tier. Returns { loggedIn, level, expire }.
+ * Check login + tier. Returns { loggedIn, level }.
  */
-export async function checkAuth(page: Page): Promise<{ loggedIn: boolean; level: number; expire: number }> {
+export async function checkAuth(page: Page): Promise<{ loggedIn: boolean; level: number }> {
   if (!page.url().includes('fastmoss.com')) {
     await navigateToVN(page);
   }
 
-  const result = await page.evaluate(async () => {
-    // Check localStorage first
+  return page.evaluate(async () => {
+    // Check localStorage
     let uid = 0;
     try {
       const store = localStorage.getItem('auth-store');
@@ -93,26 +69,19 @@ export async function checkAuth(page: Page): Promise<{ loggedIn: boolean; level:
       }
     } catch { /* ignore */ }
 
-    if (uid === 0) return { loggedIn: false, level: 0, expire: 0 };
+    if (uid === 0) return { loggedIn: false, level: 0 };
 
-    // Check tier via API
+    // Check tier
     try {
       const res = await fetch('/api/user/index/userInfo?region=VN&_time=' + Math.floor(Date.now() / 1000) + '&cnonce=99999');
-      const j = await res.json() as { data?: { level?: number; expire_at?: number } };
-      return {
-        loggedIn: true,
-        level: j.data?.level ?? 0,
-        expire: j.data?.expire_at ?? 0,
-      };
+      const j = await res.json() as { data?: { level?: number } };
+      return { loggedIn: true, level: j.data?.level ?? 0 };
     } catch {
-      return { loggedIn: uid > 0, level: 0, expire: 0 };
+      return { loggedIn: uid > 0, level: 0 };
     }
   });
-
-  return result;
 }
 
-/** Backwards compat */
 export async function ensureLoggedIn(page: Page): Promise<boolean> {
   const auth = await checkAuth(page);
   return auth.loggedIn;

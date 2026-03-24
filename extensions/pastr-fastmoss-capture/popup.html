@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { width: 340px; padding: 16px; font-family: -apple-system, system-ui, sans-serif; background: #f9fafb; color: #111827; }
+    h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .section { background: white; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .stat-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+    .stat-value { font-weight: 600; color: #2563eb; }
+    .stat-label { color: #6b7280; }
+    input, select { width: 100%; padding: 7px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px; margin: 3px 0; outline: none; }
+    input:focus, select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.1); }
+    button { width: 100%; padding: 10px; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; margin: 3px 0; transition: all .15s; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-secondary { background: #f3f4f6; color: #374151; }
+    .btn-secondary:hover { background: #e5e7eb; }
+    .progress { background: #e5e7eb; border-radius: 6px; height: 6px; margin: 6px 0; overflow: hidden; }
+    .progress-bar { background: #2563eb; height: 100%; transition: width .3s; border-radius: 6px; }
+    .hidden { display: none; }
+    .status { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 6px; }
+    .green { color: #059669; }
+    .config-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+    .config-row label { font-size: 12px; color: #6b7280; white-space: nowrap; min-width: 80px; }
+    .config-row select, .config-row input { flex: 1; margin: 0; }
+  </style>
+</head>
+<body>
+  <h2>📡 PASTR FastMoss Capture</h2>
+
+  <!-- Stats -->
+  <div class="section">
+    <div class="stat-row"><span class="stat-label">Buffered</span><span class="stat-value" id="buffered">0</span></div>
+    <div class="stat-row"><span class="stat-label">Total captured</span><span class="stat-value" id="total">0</span></div>
+    <div class="stat-row"><span class="stat-label">Syncs</span><span class="stat-value" id="syncs">0</span></div>
+    <div class="stat-row"><span class="stat-label">Last sync</span><span class="stat-value" id="lastSync">-</span></div>
+  </div>
+
+  <!-- Crawl Progress (shown when crawl is active) -->
+  <div class="section hidden" id="crawlProgress">
+    <div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value" id="crawlPhase">-</span></div>
+    <div class="stat-row"><span class="stat-label">Category</span><span class="stat-value" id="crawlCat">-</span></div>
+    <div class="stat-row"><span class="stat-label">Page</span><span class="stat-value" id="crawlPage">-</span></div>
+    <div class="stat-row"><span class="stat-label">Captured</span><span class="stat-value" id="crawlCaptured">0</span></div>
+    <div class="progress"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+  </div>
+
+  <!-- Crawl Controls -->
+  <div class="section">
+    <div class="config-row" id="maxPagesRow">
+      <label>Max pages/cat</label>
+      <select id="maxPages">
+        <option value="5">5 (fast)</option>
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="30" selected>30 (default)</option>
+        <option value="50">50 (deep)</option>
+      </select>
+    </div>
+    <button class="btn-primary" id="startCrawl">🚀 Start Auto-Crawl</button>
+    <button class="btn-danger hidden" id="stopCrawl">⏹ Stop Crawl</button>
+  </div>
+
+  <!-- Config & Manual Sync -->
+  <div class="section">
+    <input type="password" id="secret" placeholder="PASTR Auth Secret" />
+    <button class="btn-secondary" id="saveConfig">Save Config</button>
+    <button class="btn-secondary" id="syncNow">📤 Sync Now</button>
+  </div>
+
+  <div class="status" id="status">Browse FastMoss to capture data passively</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

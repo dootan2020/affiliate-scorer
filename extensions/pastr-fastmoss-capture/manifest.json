@@ -6,15 +6,19 @@
   "permissions": ["storage", "tabs"],
   "host_permissions": ["https://www.fastmoss.com/*", "https://affiliate-scorer.vercel.app/*"],
   "background": { "service_worker": "background.js" },
-  "content_scripts": [{
-    "matches": ["https://www.fastmoss.com/*"],
-    "js": ["content.js"],
-    "run_at": "document_start"
-  }],
-  "web_accessible_resources": [{
-    "resources": ["injected.js"],
-    "matches": ["https://www.fastmoss.com/*"]
-  }],
+  "content_scripts": [
+    {
+      "matches": ["https://www.fastmoss.com/*"],
+      "js": ["injected.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.fastmoss.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }

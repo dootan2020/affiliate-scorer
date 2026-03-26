@@ -1,12 +1,12 @@
-// Inject fetch interceptor into page context (main world)
-const script = document.createElement('script');
-script.src = chrome.runtime.getURL('injected.js');
-script.onload = () => script.remove();
-(document.head || document.documentElement).appendChild(script);
+// Bridge: MAIN world (injected.js) → ISOLATED world (this) → background.js
+// Uses postMessage for reliable cross-world communication
 
-// Listen for captured data from page context
-window.addEventListener('__PASTR_CAPTURE__', (event) => {
-  const { url, body, timestamp } = event.detail;
+window.addEventListener('message', (event) => {
+  // Only accept messages from the same page
+  if (event.source !== window) return;
+  if (event.data?.type !== '__PASTR_CAPTURE__') return;
+
+  const { url, body, timestamp } = event.data;
   const data = body?.data;
   if (!data) return;
 

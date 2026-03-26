@@ -20,12 +20,12 @@
       try {
         const clone = response.clone();
         const body = await clone.json();
-        if (body.code === 200 || String(body.code).startsWith('MAG_AUTH')) {
-          window.dispatchEvent(new CustomEvent('__PASTR_CAPTURE__', {
-            detail: { url, body, timestamp: Date.now() }
-          }));
+        if (body.code == 200 || String(body.code).startsWith('MAG_AUTH')) {
+          window.postMessage({
+            type: '__PASTR_CAPTURE__', url, body, timestamp: Date.now()
+          }, '*');
         }
-      } catch {}
+      } catch (e) { /* ignore non-JSON responses */ }
     }
     return response;
   };
@@ -42,12 +42,12 @@
       this.addEventListener('load', function() {
         try {
           const body = JSON.parse(this.responseText);
-          if (body.code === 200 || String(body.code).startsWith('MAG_AUTH')) {
-            window.dispatchEvent(new CustomEvent('__PASTR_CAPTURE__', {
-              detail: { url: this._pastrUrl, body, timestamp: Date.now() }
-            }));
+          if (body.code == 200 || String(body.code).startsWith('MAG_AUTH')) {
+            window.postMessage({
+              type: '__PASTR_CAPTURE__', url: this._pastrUrl, body, timestamp: Date.now()
+            }, '*');
           }
-        } catch {}
+        } catch (e) { /* ignore non-JSON responses */ }
       });
     }
     return origSend.apply(this, args);

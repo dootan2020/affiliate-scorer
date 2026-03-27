@@ -238,6 +238,7 @@ export function InboxTable({
               <ColHeader field="delta" label="Delta" sort={sort} onSort={onSort} className="text-left hidden md:table-cell" />
               <ColHeader field="content" label="Content" sort={sort} onSort={onSort} className="text-right hidden sm:table-cell" />
               <ColHeader field="price" label="Giá" sort={sort} onSort={onSort} className="text-right" />
+              <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider pb-3 pt-4 px-4 hidden sm:table-cell">Comm%</th>
               <ColHeader field="sales7d" label="Bán 7d" sort={sort} onSort={onSort} className="text-right hidden lg:table-cell" />
               <ColHeader field="kol" label="KOL" sort={sort} onSort={onSort} className="text-right hidden lg:table-cell" />
               <th className="pb-3 pt-4 px-4 w-8" />
@@ -251,7 +252,10 @@ export function InboxTable({
                 ?? (item.productIdExternal ? `SP #${item.productIdExternal.slice(-8)}` : null)
                 ?? "(Chưa bổ sung)";
               const contentScore = item.contentPotentialScore ? parseFloat(item.contentPotentialScore) : null;
+              const commRate = item.commissionRate ? parseFloat(item.commissionRate) : null;
               const isSelected = selectedIds.has(item.id);
+              const isDimmed = aiScore === null || aiScore < 50;
+              const isHighlight = item.deltaType === "SURGE" || item.deltaType === "NEW";
 
               return (
                 <tr
@@ -259,6 +263,14 @@ export function InboxTable({
                   className={cn(
                     "hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors group",
                     isSelected && "bg-orange-50/50 dark:bg-orange-950/10",
+                    isDimmed && !isSelected && "opacity-60",
+                    isHighlight && !isSelected && !isDimmed && (
+                      item.deltaType === "SURGE"
+                        ? "bg-rose-50/30 dark:bg-rose-950/10"
+                        : "bg-emerald-50/30 dark:bg-emerald-950/10"
+                    ),
+                    aiScore !== null && aiScore >= 70 && "border-l-2 border-l-emerald-500",
+                    aiScore !== null && aiScore >= 85 && "border-l-2 border-l-rose-500",
                   )}
                 >
                   {/* Checkbox */}
@@ -317,6 +329,23 @@ export function InboxTable({
                     {item.price !== null ? (
                       <span className="text-sm text-gray-700 dark:text-gray-300 tabular-nums">
                         {formatVND(item.price)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                    )}
+                  </td>
+                  {/* Commission */}
+                  <td className="py-3.5 px-4 text-right hidden sm:table-cell whitespace-nowrap">
+                    {commRate !== null ? (
+                      <span className={cn(
+                        "text-sm tabular-nums",
+                        commRate >= 10
+                          ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                          : commRate < 5
+                            ? "text-gray-400 dark:text-gray-500"
+                            : "text-gray-700 dark:text-gray-300"
+                      )}>
+                        {commRate.toFixed(1)}%
                       </span>
                     ) : (
                       <span className="text-xs text-gray-400 dark:text-gray-500">—</span>

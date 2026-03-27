@@ -48,6 +48,12 @@ function buildFilters(params: URLSearchParams): PIWhere {
   if (priceMin) conditions.push({ price: { gte: parseInt(priceMin, 10) } });
   if (priceMax) conditions.push({ price: { lte: parseInt(priceMax, 10) } });
 
+  // Commission minimum
+  const minCommission = params.get("minCommission");
+  if (minCommission) {
+    conditions.push({ commissionRate: { gte: parseFloat(minCommission) } });
+  }
+
   // Score range
   const scoreMin = params.get("scoreMin");
   const scoreMax = params.get("scoreMax");

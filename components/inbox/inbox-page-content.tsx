@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle, Inbox, ChevronLeft, ChevronRight,
-  Search, X, SlidersHorizontal, Sparkles, RefreshCw, Archive, ChevronRight as ChevRight,
+  Search, X, Sparkles, RefreshCw, Archive, ChevronRight as ChevRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
@@ -29,12 +29,24 @@ const STATE_TABS = [
 const DELTA_OPTIONS = ["NEW", "SURGE", "COOL", "STABLE", "REAPPEAR"];
 
 const PRICE_RANGES = [
-  { label: "Dưới 50K", min: 0, max: 50000 },
-  { label: "50K–200K", min: 50000, max: 200000 },
-  { label: "200K–500K", min: 200000, max: 500000 },
-  { label: "500K–1M", min: 500000, max: 1000000 },
-  { label: "Trên 1M", min: 1000000, max: undefined },
+  { label: "Dưới 100K", min: 0, max: 100000 },
+  { label: "100K–500K", min: 100000, max: 500000 },
+  { label: "Trên 500K", min: 500000, max: undefined },
 ];
+
+const COMMISSION_OPTIONS = [
+  { label: "Tất cả", value: "" },
+  { label: "≥5%", value: "5" },
+  { label: "≥8%", value: "8" },
+  { label: "≥10%", value: "10" },
+  { label: "≥15%", value: "15" },
+];
+
+interface NicheCategory {
+  code: number;
+  name: string;
+  nameVi: string | null;
+}
 
 const SCORE_RANGES = [
   { label: "0–30", min: 0, max: 30 },
@@ -94,7 +106,9 @@ export function InboxPageContent(): React.ReactElement {
     searchParams.get("delta")?.split(",").filter(Boolean) ?? []
   );
   const [priceRange, setPriceRange] = useState<{ min?: number; max?: number } | null>(null);
+  const [minCommission, setMinCommission] = useState(searchParams.get("minCommission") || "");
   const [scoreRange, setScoreRange] = useState<{ min?: number; max?: number } | null>(null);
+  const [nicheCategories, setNicheCategories] = useState<NicheCategory[]>([]);
   const [sort, setSort] = useState<SortState>({
     field: searchParams.get("sort") || "score",
     order: (searchParams.get("order") as "asc" | "desc") || "desc",
@@ -114,7 +128,6 @@ export function InboxPageContent(): React.ReactElement {
   // UI state
   const [enrichId, setEnrichId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [showFilters, setShowFilters] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
@@ -128,11 +141,12 @@ export function InboxPageContent(): React.ReactElement {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Count active filters (nicheCode counted separately — shown as breadcrumb, not in filter panel)
   const activeFilterCount =
+    (nicheCode ? 1 : 0) +
     selectedCategories.length +
     selectedDeltas.length +
     (priceRange ? 1 : 0) +
+    (minCommission ? 1 : 0) +
     (scoreRange ? 1 : 0);
 
   // Fetch items
@@ -149,6 +163,7 @@ export function InboxPageContent(): React.ReactElement {
       if (selectedDeltas.length > 0) params.set("delta", selectedDeltas.join(","));
       if (priceRange?.min != null) params.set("priceMin", priceRange.min.toString());
       if (priceRange?.max != null) params.set("priceMax", priceRange.max.toString());
+      if (minCommission) params.set("minCommission", minCommission);
       if (scoreRange?.min != null) params.set("scoreMin", scoreRange.min.toString());
       if (scoreRange?.max != null) params.set("scoreMax", scoreRange.max.toString());
       params.set("sort", sort.field);
@@ -183,7 +198,7 @@ export function InboxPageContent(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, debouncedSearch, selectedCategories, selectedDeltas, priceRange, scoreRange, sort, page, pageSize, router, categories.length, nicheCode, nicheName]);
+  }, [activeTab, debouncedSearch, selectedCategories, selectedDeltas, priceRange, minCommission, scoreRange, sort, page, pageSize, router, categories.length, nicheCode, nicheName]);
 
   useEffect(() => {
     fetchItems();
@@ -197,6 +212,13 @@ export function InboxPageContent(): React.ReactElement {
         if (json.data) setCategories(json.data);
       })
       .catch(() => { /* categories optional */ });
+    // Load niche categories (FastMossCategory with Vietnamese names)
+    fetch("/api/fastmoss/categories?region=VN")
+      .then((r) => r.json())
+      .then((json: { categories?: NicheCategory[] }) => {
+        if (json.categories) setNicheCategories(json.categories);
+      })
+      .catch(() => { /* optional */ });
   }, []);
 
   // --- Handlers ---
@@ -219,6 +241,7 @@ export function InboxPageContent(): React.ReactElement {
     setSelectedCategories([]);
     setSelectedDeltas([]);
     setPriceRange(null);
+    setMinCommission("");
     setScoreRange(null);
     setSearch("");
     setNicheCode(null);
@@ -372,108 +395,144 @@ export function InboxPageContent(): React.ReactElement {
         <PasteLinkModal onComplete={fetchItems} />
       </div>
 
-      {/* Search + Filter toggle */}
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            ref={searchRef}
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm kiếm sản phẩm..."
-            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-10 pr-9 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-        <Button
-          variant={showFilters || activeFilterCount > 0 ? "default" : "secondary"}
-          onClick={() => setShowFilters((v) => !v)}
-          className="relative"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          <span className="hidden sm:inline">Lọc</span>
-          {activeFilterCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-              {activeFilterCount}
-            </span>
-          )}
-        </Button>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          ref={searchRef}
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Tìm kiếm sản phẩm..."
+          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-10 pr-9 py-2.5 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      {/* Filter dropdowns */}
-      {showFilters && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 space-y-3">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {/* Category */}
-            <FilterDropdown
-              label="Danh mục"
-              options={categories}
-              selected={selectedCategories}
-              onToggle={toggleCategory}
-            />
-            {/* Delta */}
-            <FilterDropdown
-              label="Delta"
-              options={DELTA_OPTIONS}
-              selected={selectedDeltas}
-              onToggle={toggleDelta}
-            />
-            {/* Price range */}
-            <div>
-              <label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium mb-1 block">Giá</label>
-              <select
-                value={priceRange ? `${priceRange.min ?? ""}-${priceRange.max ?? ""}` : ""}
-                onChange={(e) => {
-                  if (!e.target.value) { setPriceRange(null); return; }
-                  const found = PRICE_RANGES.find((r) => `${r.min}-${r.max ?? ""}` === e.target.value);
-                  if (found) setPriceRange({ min: found.min, max: found.max });
-                  setPage(1);
-                }}
-                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none"
-              >
-                <option value="">Tất cả</option>
-                {PRICE_RANGES.map((r) => (
-                  <option key={r.label} value={`${r.min}-${r.max ?? ""}`}>{r.label}</option>
-                ))}
-              </select>
-            </div>
-            {/* Score range */}
-            <div>
-              <label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium mb-1 block">Điểm</label>
-              <select
-                value={scoreRange ? `${scoreRange.min}-${scoreRange.max}` : ""}
-                onChange={(e) => {
-                  if (!e.target.value) { setScoreRange(null); return; }
-                  const found = SCORE_RANGES.find((r) => `${r.min}-${r.max}` === e.target.value);
-                  if (found) setScoreRange(found);
-                  setPage(1);
-                }}
-                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none"
-              >
-                <option value="">Tất cả</option>
-                {SCORE_RANGES.map((r) => (
-                  <option key={r.label} value={`${r.min}-${r.max}`}>{r.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          {activeFilterCount > 0 && (
-            <div className="flex items-center justify-end">
-              <button onClick={resetFilters} className="text-xs text-orange-600 dark:text-orange-400 hover:underline">
-                Xóa tất cả bộ lọc
-              </button>
-            </div>
+      {/* Always-visible filter bar */}
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1">
+        {/* Niche category dropdown */}
+        <select
+          value={nicheCode ?? ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (!val) { setNicheCode(null); setNicheName(""); }
+            else {
+              const code = parseInt(val, 10);
+              setNicheCode(code);
+              const cat = nicheCategories.find((c) => c.code === code);
+              setNicheName(cat?.nameVi ?? cat?.name ?? "");
+            }
+            setPage(1);
+          }}
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm outline-none whitespace-nowrap min-w-[120px]",
+            nicheCode
+              ? "border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300"
+              : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300"
           )}
+        >
+          <option value="">Ngách</option>
+          {nicheCategories.map((c) => (
+            <option key={c.code} value={c.code}>{c.nameVi ?? c.name}</option>
+          ))}
+        </select>
+
+        {/* Price range */}
+        <select
+          value={priceRange ? `${priceRange.min ?? ""}-${priceRange.max ?? ""}` : ""}
+          onChange={(e) => {
+            if (!e.target.value) { setPriceRange(null); setPage(1); return; }
+            const found = PRICE_RANGES.find((r) => `${r.min}-${r.max ?? ""}` === e.target.value);
+            if (found) { setPriceRange({ min: found.min, max: found.max }); setPage(1); }
+          }}
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm outline-none whitespace-nowrap",
+            priceRange
+              ? "border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300"
+              : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300"
+          )}
+        >
+          <option value="">Giá</option>
+          {PRICE_RANGES.map((r) => (
+            <option key={r.label} value={`${r.min}-${r.max ?? ""}`}>{r.label}</option>
+          ))}
+        </select>
+
+        {/* Commission min */}
+        <select
+          value={minCommission}
+          onChange={(e) => { setMinCommission(e.target.value); setPage(1); }}
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm outline-none whitespace-nowrap",
+            minCommission
+              ? "border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300"
+              : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300"
+          )}
+        >
+          {COMMISSION_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.value ? o.label : "Comm%"}</option>
+          ))}
+        </select>
+
+        {/* Delta toggle pills */}
+        <div className="flex items-center gap-1 shrink-0">
+          {DELTA_OPTIONS.map((d) => (
+            <button
+              key={d}
+              onClick={() => { toggleDelta(d); setPage(1); }}
+              className={cn(
+                "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap",
+                selectedDeltas.includes(d)
+                  ? d === "SURGE" ? "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
+                  : d === "NEW" ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                  : "bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300"
+                  : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700"
+              )}
+            >
+              {d}
+            </button>
+          ))}
         </div>
-      )}
+
+        {/* Score min */}
+        <select
+          value={scoreRange ? `${scoreRange.min}-${scoreRange.max}` : ""}
+          onChange={(e) => {
+            if (!e.target.value) { setScoreRange(null); setPage(1); return; }
+            const found = SCORE_RANGES.find((r) => `${r.min}-${r.max}` === e.target.value);
+            if (found) { setScoreRange(found); setPage(1); }
+          }}
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm outline-none whitespace-nowrap",
+            scoreRange
+              ? "border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300"
+              : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300"
+          )}
+        >
+          <option value="">Điểm</option>
+          {SCORE_RANGES.map((r) => (
+            <option key={r.label} value={`${r.min}-${r.max}`}>{r.label}</option>
+          ))}
+        </select>
+
+        {/* Clear all */}
+        {activeFilterCount > 0 && (
+          <button
+            onClick={resetFilters}
+            className="shrink-0 text-xs text-orange-600 dark:text-orange-400 hover:underline whitespace-nowrap px-2"
+          >
+            Xóa lọc ({activeFilterCount})
+          </button>
+        )}
+      </div>
 
       {/* State Tabs */}
       <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-xl p-1 overflow-x-auto scrollbar-none">

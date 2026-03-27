@@ -468,6 +468,22 @@ async function handleXlsxExport(payload) {
 const EXPORT_RENDER_WAIT = 5000;
 const EXPORT_TIMEOUT = 30000;
 const EXPORT_CRAWL_DELAY = 8000;
+const CATEGORY_MASTER_TIMEOUT = 90000; // 90s max per category
+
+/** Race a promise against a timeout. Returns { value, timedOut } */
+function withTimeout(promise, ms, label) {
+  return new Promise(resolve => {
+    let done = false;
+    const timer = setTimeout(() => {
+      if (!done) { done = true; resolve({ value: null, timedOut: true, label }); }
+    }, ms);
+    promise.then(value => {
+      if (!done) { done = true; clearTimeout(timer); resolve({ value, timedOut: false }); }
+    }).catch(err => {
+      if (!done) { done = true; clearTimeout(timer); resolve({ value: null, timedOut: false, error: err }); }
+    });
+  });
+}
 
 async function startExportCrawl(options) {
   if (exportCrawlState.active) return;
@@ -479,8 +495,8 @@ async function startExportCrawl(options) {
   exportCrawlState.captured = 0;
   exportCrawlState.errors = 0;
 
-  startKeepAlive(); // Prevent MV3 service worker termination
-  console.log(`[PASTR] Export crawl started: ${exportCrawlState.totalCategories} categories`);
+  startKeepAlive();
+  console.log(`[PASTR] ══ Export crawl started: ${exportCrawlState.totalCategories} categories ══`);
 
   let tab;
   try {
@@ -491,6 +507,7 @@ async function startExportCrawl(options) {
     exportCrawlState.tabId = tab.id;
     await waitForTabLoad(tab.id);
     await delay(3000);
+    console.log('[PASTR] Initial tab ready');
   } catch (err) {
     console.error('[PASTR] Failed to open tab:', err);
     exportCrawlState.active = false;
@@ -502,61 +519,41 @@ async function startExportCrawl(options) {
     for (let ci = 0; ci < exportCrawlState.categories.length && exportCrawlState.active; ci++) {
       exportCrawlState.currentCategoryIndex = ci;
       const catCode = exportCrawlState.categories[ci];
+      const label = `[${ci + 1}/${exportCrawlState.totalCategories}] cat=${catCode}`;
 
-      try {
-        console.log(`[PASTR] Export ${ci + 1}/${exportCrawlState.totalCategories}: category ${catCode}`);
+      console.log(`[PASTR] ── ${label}: START ──`);
 
-        // Verify tab still exists
-        try { await chrome.tabs.get(exportCrawlState.tabId); } catch {
-          console.warn('[PASTR] Tab lost, reopening...');
-          const newTab = await chrome.tabs.create({
-            url: 'https://www.fastmoss.com/vi/e-commerce/search?region=VN',
-            active: false,
-          });
-          exportCrawlState.tabId = newTab.id;
-          await waitForTabLoad(newTab.id);
-          await delay(3000);
-        }
+      // Master timeout: entire category must complete in 90s
+      const catResult = await withTimeout(
+        processOneCategory(catCode, label),
+        CATEGORY_MASTER_TIMEOUT,
+        `master-${catCode}`
+      );
 
-        // Navigate to category search page
-        const url = `https://www.fastmoss.com/vi/e-commerce/search?region=VN&l1_cid=${catCode}`;
-        await navigateTab(exportCrawlState.tabId, url);
-        // Reconnect keepalive port (navigation kills content script + old port)
-        tryConnectPort();
-        await delay(EXPORT_RENDER_WAIT);
-
-        // Click export button
-        const clicked = await clickExportButton(exportCrawlState.tabId);
-        if (!clicked) {
-          console.warn(`[PASTR] Export button not found for category ${catCode}, skipping`);
-          exportCrawlState.errors++;
-          continue;
-        }
-
-        // Handle possible confirm dialog
-        await delay(2000);
-        await dismissConfirmDialog(exportCrawlState.tabId);
-
-        // Wait for XLSX_EXPORT message
-        const exportResult = await waitForExport(EXPORT_TIMEOUT);
-        if (exportResult) {
-          console.log(`[PASTR] ✓ Category ${catCode}: ${exportResult.recordCount || 0} products (new: ${exportResult.newCount || 0})`);
-        } else {
-          console.warn(`[PASTR] ✗ Export timeout for category ${catCode}`);
-          exportCrawlState.errors++;
-        }
-
-        updateBadge();
-      } catch (err) {
-        console.error(`[PASTR] ✗ Category ${catCode} error:`, err?.message || err);
+      if (catResult.timedOut) {
+        console.error(`[PASTR] ✗ ${label}: MASTER TIMEOUT (${CATEGORY_MASTER_TIMEOUT/1000}s) — skipping`);
         exportCrawlState.errors++;
-        // Continue to next category
+        // Clean up any dangling waitForExport
+        if (exportCrawlState.waitingForExport) {
+          exportCrawlState.waitingForExport = false;
+          if (exportCrawlState.exportResolve) {
+            exportCrawlState.exportResolve(null);
+            exportCrawlState.exportResolve = null;
+          }
+        }
+      } else if (catResult.error) {
+        console.error(`[PASTR] ✗ ${label}: ERROR — ${catResult.error?.message || catResult.error}`);
+        exportCrawlState.errors++;
       }
 
-      if (exportCrawlState.active) await delay(EXPORT_CRAWL_DELAY);
+      updateBadge();
+      if (exportCrawlState.active) {
+        console.log(`[PASTR] ${label}: waiting ${EXPORT_CRAWL_DELAY/1000}s before next...`);
+        await delay(EXPORT_CRAWL_DELAY);
+      }
     }
 
-    console.log(`[PASTR] Export crawl complete: ${exportCrawlState.captured} captured, ${exportCrawlState.errors} errors`);
+    console.log(`[PASTR] ══ Export crawl COMPLETE: ${exportCrawlState.captured} captured, ${exportCrawlState.errors} errors ══`);
   } finally {
     exportCrawlState.active = false;
     stopKeepAlive();
@@ -568,40 +565,98 @@ async function startExportCrawl(options) {
   }
 }
 
+/** Process a single category — all steps with individual timeouts */
+async function processOneCategory(catCode, label) {
+  // 1. Verify tab
+  console.log(`[PASTR] ${label}: checking tab...`);
+  try { await chrome.tabs.get(exportCrawlState.tabId); } catch {
+    console.warn(`[PASTR] ${label}: tab lost, reopening...`);
+    const newTab = await chrome.tabs.create({
+      url: 'https://www.fastmoss.com/vi/e-commerce/search?region=VN',
+      active: false,
+    });
+    exportCrawlState.tabId = newTab.id;
+    await waitForTabLoad(newTab.id);
+    await delay(2000);
+  }
+
+  // 2. Navigate
+  console.log(`[PASTR] ${label}: navigating...`);
+  const navUrl = `https://www.fastmoss.com/vi/e-commerce/search?region=VN&l1_cid=${catCode}`;
+  const nav = await withTimeout(
+    navigateTab(exportCrawlState.tabId, navUrl),
+    20000, 'navigate'
+  );
+  if (nav.timedOut) throw new Error('navigate timeout');
+  tryConnectPort();
+  console.log(`[PASTR] ${label}: page loaded, rendering ${EXPORT_RENDER_WAIT/1000}s...`);
+  await delay(EXPORT_RENDER_WAIT);
+
+  // 3. Click export
+  console.log(`[PASTR] ${label}: clicking export button...`);
+  const click = await withTimeout(
+    clickExportButton(exportCrawlState.tabId),
+    10000, 'click'
+  );
+  if (click.timedOut) throw new Error('click timeout');
+  if (!click.value) {
+    console.warn(`[PASTR] ${label}: export button not found`);
+    exportCrawlState.errors++;
+    return;
+  }
+  console.log(`[PASTR] ${label}: export button clicked`);
+
+  // 4. Dismiss confirm dialog (if any)
+  await delay(2000);
+  await withTimeout(dismissConfirmDialog(exportCrawlState.tabId), 5000, 'dialog');
+
+  // 5. Wait for blob
+  console.log(`[PASTR] ${label}: waiting for XLSX blob (max ${EXPORT_TIMEOUT/1000}s)...`);
+  const exportResult = await waitForExport(EXPORT_TIMEOUT);
+  if (exportResult) {
+    console.log(`[PASTR] ✓ ${label}: ${exportResult.recordCount || 0} products (new: ${exportResult.newCount || 0})`);
+  } else {
+    console.warn(`[PASTR] ✗ ${label}: export timeout — no blob received`);
+    exportCrawlState.errors++;
+  }
+}
+
 function stopExportCrawl() {
   exportCrawlState.active = false;
+  // Clean up waiting promise
+  if (exportCrawlState.waitingForExport && exportCrawlState.exportResolve) {
+    exportCrawlState.exportResolve(null);
+    exportCrawlState.waitingForExport = false;
+    exportCrawlState.exportResolve = null;
+  }
   if (exportCrawlState.tabId) {
     try { chrome.tabs.remove(exportCrawlState.tabId); } catch {}
     exportCrawlState.tabId = null;
   }
+  stopKeepAlive();
   updateBadge();
 }
 
 async function clickExportButton(tabId) {
-  try {
-    const [result] = await chrome.scripting.executeScript({
-      target: { tabId },
-      world: 'MAIN',
-      func: () => {
-        // Strategy 1: text match
-        const buttons = Array.from(document.querySelectorAll('button'));
-        let btn = buttons.find(b =>
-          b.textContent?.includes('Xuất dữ liệu') ||
-          b.textContent?.includes('Export')
-        );
-        // Strategy 2: aria label
-        if (!btn) btn = document.querySelector('button[aria-label*="Xuất"], button[aria-label*="Export"]');
-        // Strategy 3: download icon (Ant Design)
-        if (!btn) btn = buttons.find(b =>
-          b.querySelector('.anticon-download') ||
-          b.querySelector('svg[data-icon="download"]')
-        );
-        if (btn && !btn.disabled) { btn.click(); return true; }
-        return false;
-      },
-    });
-    return result?.result === true;
-  } catch { return false; }
+  const [result] = await chrome.scripting.executeScript({
+    target: { tabId },
+    world: 'MAIN',
+    func: () => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      let btn = buttons.find(b =>
+        b.textContent?.includes('Xuất dữ liệu') ||
+        b.textContent?.includes('Export')
+      );
+      if (!btn) btn = document.querySelector('button[aria-label*="Xuất"], button[aria-label*="Export"]');
+      if (!btn) btn = buttons.find(b =>
+        b.querySelector('.anticon-download') ||
+        b.querySelector('svg[data-icon="download"]')
+      );
+      if (btn && !btn.disabled) { btn.click(); return true; }
+      return false;
+    },
+  });
+  return result?.result === true;
 }
 
 async function dismissConfirmDialog(tabId) {
@@ -624,12 +679,14 @@ function waitForExport(timeoutMs) {
   return new Promise(resolve => {
     exportCrawlState.waitingForExport = true;
     exportCrawlState.exportResolve = resolve;
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (exportCrawlState.waitingForExport) {
         exportCrawlState.waitingForExport = false;
         exportCrawlState.exportResolve = null;
         resolve(null);
       }
     }, timeoutMs);
+    // Store timer so stopExportCrawl can clean up
+    exportCrawlState._exportTimer = timer;
   });
 }

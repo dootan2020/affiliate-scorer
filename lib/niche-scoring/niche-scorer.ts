@@ -9,34 +9,79 @@ import { evaluateKillCriteria } from "./kill-criteria";
 import { computeOpportunityScores } from "./opportunity-score";
 import { computeFitScore } from "./fit-score";
 
+function fmtK(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(Math.round(n));
+}
+
+/**
+ * Generate data-specific highlights — each niche gets unique bullets with real numbers.
+ */
 function generateHighlights(
+  stats: CategoryStats,
   breakdown: ScoreBreakdown,
-  newSurgeRatio: number,
   hasProfile: boolean
 ): string[] {
   const h: string[] = [];
-  if (breakdown.demandSignal > 70) h.push("Nhu cầu thị trường cao");
-  if (breakdown.supplyGap > 70)
-    h.push("Ít cạnh tranh, nhiều cơ hội");
-  if (breakdown.unitEconomics > 70)
-    h.push("Hoa hồng cao, ít video cần thiết");
-  if (newSurgeRatio > 0.3) h.push("Thị trường đang tăng trưởng");
-  if (hasProfile && breakdown.fitScore > 70)
-    h.push("Phù hợp với phong cách nội dung của bạn");
+
+  // Data-specific highlights with actual numbers
+  if (breakdown.unitEconomics > 60 && stats.revPerOrder > 0) {
+    h.push(`Rev/đơn ${fmtK(stats.revPerOrder)} — ít video cần thiết`);
+  }
+  if (stats.avgCommission >= 10) {
+    h.push(`Commission TB ${stats.avgCommission.toFixed(1)}% — mức cao`);
+  }
+  if (breakdown.demandSignal > 60 && stats.totalKOL > 50) {
+    h.push(`${stats.totalKOL.toLocaleString("vi-VN")} KOL đang bán — thị trường proven`);
+  }
+  if (breakdown.supplyGap > 60) {
+    const vpk = stats.totalKOL > 0 ? stats.totalVideos / stats.totalKOL : 0;
+    h.push(`${vpk.toFixed(1)} video/KOL — ít cạnh tranh`);
+  }
+  if (stats.newSurgeRatio > 0.3) {
+    h.push(
+      `${Math.round(stats.newSurgeRatio * 100)}% SP mới/tăng trưởng`
+    );
+  }
+  if (stats.avgPrice > 0 && stats.avgPrice < 200_000) {
+    h.push(`Giá TB ${fmtK(stats.avgPrice)} — dễ convert`);
+  }
+  if (hasProfile && breakdown.fitScore > 70) {
+    h.push("Phù hợp phong cách nội dung của bạn");
+  }
+
   return h.slice(0, 3);
 }
 
+/**
+ * Generate data-specific risk bullets with numbers.
+ */
 function generateRisks(
+  stats: CategoryStats,
   breakdown: ScoreBreakdown,
-  avgCommission: number,
-  newSurgeRatio: number,
   feasibilityRatio: number
 ): string[] {
   const r: string[] = [];
-  if (breakdown.supplyGap < 30) r.push("Cạnh tranh cao");
-  if (avgCommission < 8) r.push("Hoa hồng thấp");
-  if (newSurgeRatio < 0.1) r.push("Thị trường bão hòa");
-  if (feasibilityRatio < 0.5) r.push("Cần nhiều video/ngày");
+
+  if (breakdown.supplyGap < 30) {
+    const vpk = stats.totalKOL > 0 ? stats.totalVideos / stats.totalKOL : 0;
+    r.push(`${vpk.toFixed(1)} video/KOL — cạnh tranh cao`);
+  }
+  if (stats.avgCommission < 8) {
+    r.push(`Commission chỉ ${stats.avgCommission.toFixed(1)}%`);
+  }
+  if (stats.newSurgeRatio < 0.1) {
+    r.push("Thị trường bão hòa, ít SP mới");
+  }
+  if (feasibilityRatio < 0.5 && feasibilityRatio > 0) {
+    const videosDay = Math.round(1 / (feasibilityRatio * 30));
+    r.push(`Cần ~${videosDay > 100 ? "100+" : videosDay} video/ngày`);
+  }
+  if (stats.withSales < 30) {
+    r.push(`Chỉ ${stats.withSales} SP có doanh số`);
+  }
+
   return r.slice(0, 2);
 }
 
@@ -143,19 +188,10 @@ export function scoreNiches(
       kill,
       highlights: kill.killed
         ? []
-        : generateHighlights(
-            breakdown,
-            stats.newSurgeRatio,
-            profile !== null
-          ),
+        : generateHighlights(stats, breakdown, profile !== null),
       risks: kill.killed
         ? kill.reasons
-        : generateRisks(
-            breakdown,
-            stats.avgCommission,
-            stats.newSurgeRatio,
-            feasibility
-          ),
+        : generateRisks(stats, breakdown, feasibility),
       tags: tagNames,
     };
   });

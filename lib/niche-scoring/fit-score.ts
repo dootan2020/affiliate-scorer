@@ -46,8 +46,9 @@ export function computeFitScore(
   }
 
   // --- Buy product modifier ---
+  // Heavy penalty: can't demo without buying the product
   if (!profile.buyProduct && hasTag("demo_required")) {
-    score -= 25; // Can't demo without buying
+    score -= 40;
   }
 
   // --- Experience modifiers ---

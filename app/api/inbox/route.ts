@@ -21,11 +21,18 @@ function buildFilters(params: URLSearchParams): PIWhere {
     });
   }
 
-  // Category — comma-separated multi-select
+  // Category — comma-separated multi-select (text names)
   const category = params.get("category");
   if (category) {
     const cats = category.split(",").map((c) => c.trim()).filter(Boolean);
     if (cats.length > 0) conditions.push({ category: { in: cats } });
+  }
+
+  // Niche code — fastmossCategoryId (numeric, from niche-finder)
+  const nicheCode = params.get("nicheCode");
+  if (nicheCode) {
+    const code = parseInt(nicheCode, 10);
+    if (!isNaN(code)) conditions.push({ fastmossCategoryId: code });
   }
 
   // Delta type — comma-separated multi-select

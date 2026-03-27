@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface NicheSummary {
@@ -24,7 +24,6 @@ export type SortKey = keyof Pick<
 
 interface Props {
   niches: NicheSummary[];
-  selectedCode: number | null;
   sortKey: SortKey;
   sortAsc: boolean;
   onSort: (key: SortKey) => void;
@@ -76,10 +75,10 @@ function SortHeader({
   );
 }
 
-export function NicheSummaryTable({ niches, selectedCode, sortKey, sortAsc, onSort, onSelect }: Props): React.ReactElement {
+export function NicheSummaryTable({ niches, sortKey, sortAsc, onSort, onSelect }: Props): React.ReactElement {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px]">
+      <table className="w-full min-w-[780px]">
         <thead>
           <tr className="border-b border-gray-100 dark:border-slate-800">
             <th className="text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider pb-3 px-3">
@@ -95,6 +94,7 @@ export function NicheSummaryTable({ niches, selectedCode, sortKey, sortAsc, onSo
             <th className="text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider pb-3 px-3">
               Đánh giá
             </th>
+            <th className="text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider pb-3 px-3 w-20" />
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-slate-800/60">
@@ -102,12 +102,7 @@ export function NicheSummaryTable({ niches, selectedCode, sortKey, sortAsc, onSo
             <tr
               key={niche.categoryCode}
               onClick={() => onSelect(niche.categoryCode)}
-              className={cn(
-                "cursor-pointer transition-colors",
-                selectedCode === niche.categoryCode
-                  ? "bg-orange-50 dark:bg-orange-950/20"
-                  : "hover:bg-gray-50/70 dark:hover:bg-slate-800/40"
-              )}
+              className="cursor-pointer hover:bg-gray-50/70 dark:hover:bg-slate-800/40 transition-colors"
             >
               <td className="py-3 px-3 text-sm font-medium text-gray-900 dark:text-gray-50">
                 {niche.categoryName}
@@ -141,6 +136,11 @@ export function NicheSummaryTable({ niches, selectedCode, sortKey, sortAsc, onSo
               </td>
               <td className="py-3 px-3 text-center">
                 <VerdictBadge verdict={niche.verdict} />
+              </td>
+              <td className="py-3 px-3 text-right">
+                <span className="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 font-medium hover:underline">
+                  Xem SP <ArrowRight className="w-3 h-3" />
+                </span>
               </td>
             </tr>
           ))}

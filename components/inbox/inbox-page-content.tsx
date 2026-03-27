@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle, Inbox, ChevronLeft, ChevronRight,
-  Search, X, SlidersHorizontal, Sparkles, RefreshCw, Archive,
+  Search, X, SlidersHorizontal, Sparkles, RefreshCw, Archive, ChevronRight as ChevRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { dispatchSuggestionEvent } from "@/lib/events/suggestion-events";
@@ -75,6 +75,14 @@ export function InboxPageContent(): React.ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Niche filter (from niche-finder navigation)
+  const [nicheCode, setNicheCode] = useState<number | null>(
+    searchParams.get("nicheCode") ? parseInt(searchParams.get("nicheCode")!, 10) : null
+  );
+  const [nicheName, setNicheName] = useState(
+    searchParams.get("nicheName") ? decodeURIComponent(searchParams.get("nicheName")!) : ""
+  );
+
   // State from URL params
   const [activeTab, setActiveTab] = useState(searchParams.get("state") || "");
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -120,7 +128,7 @@ export function InboxPageContent(): React.ReactElement {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Count active filters
+  // Count active filters (nicheCode counted separately — shown as breadcrumb, not in filter panel)
   const activeFilterCount =
     selectedCategories.length +
     selectedDeltas.length +
@@ -133,6 +141,8 @@ export function InboxPageContent(): React.ReactElement {
     setFetchError(null);
     try {
       const params = new URLSearchParams();
+      if (nicheCode) params.set("nicheCode", nicheCode.toString());
+      if (nicheName) params.set("nicheName", nicheName);
       if (activeTab) params.set("state", activeTab);
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (selectedCategories.length > 0) params.set("category", selectedCategories.join(","));
@@ -173,7 +183,7 @@ export function InboxPageContent(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, debouncedSearch, selectedCategories, selectedDeltas, priceRange, scoreRange, sort, page, pageSize, router, categories.length]);
+  }, [activeTab, debouncedSearch, selectedCategories, selectedDeltas, priceRange, scoreRange, sort, page, pageSize, router, categories.length, nicheCode, nicheName]);
 
   useEffect(() => {
     fetchItems();
@@ -211,6 +221,8 @@ export function InboxPageContent(): React.ReactElement {
     setPriceRange(null);
     setScoreRange(null);
     setSearch("");
+    setNicheCode(null);
+    setNicheName("");
     setPage(1);
   }
 
@@ -324,14 +336,37 @@ export function InboxPageContent(): React.ReactElement {
 
   return (
     <div className="space-y-4">
+      {/* Niche breadcrumb (when navigated from niche-finder) */}
+      {nicheCode && (
+        <div className="flex items-center gap-2 text-sm">
+          <button
+            onClick={() => { setNicheCode(null); setNicheName(""); setPage(1); }}
+            className="text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+          >
+            Hộp sản phẩm
+          </button>
+          <ChevRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
+          <span className="inline-flex items-center gap-1.5 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 rounded-full px-3 py-1 text-xs font-medium">
+            {nicheName || `Ngách #${nicheCode}`}
+            {total > 0 && <span className="text-orange-500 dark:text-orange-400">({total} SP)</span>}
+            <button
+              onClick={() => { setNicheCode(null); setNicheName(""); setPage(1); }}
+              className="ml-0.5 hover:text-orange-900 dark:hover:text-orange-200"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-[32px] font-semibold tracking-tight text-gray-900 dark:text-gray-50">
-            Hộp sản phẩm
+            {nicheCode ? nicheName || "Ngách" : "Hộp sản phẩm"}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {totalAll > 0 ? `${totalAll} sản phẩm` : "Dán links sản phẩm — tự nhận diện, dedupe, score"}
+            {totalAll > 0 ? `${total > 0 ? total : totalAll} sản phẩm` : "Dán links sản phẩm — tự nhận diện, dedupe, score"}
           </p>
         </div>
         <PasteLinkModal onComplete={fetchItems} />

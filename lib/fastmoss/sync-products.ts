@@ -250,7 +250,7 @@ async function processChunk(
           });
           return "updated";
         } else {
-          await prisma.productIdentity.create({
+          const newIdentity = await prisma.productIdentity.create({
             data: {
               fastmossProductId: productId,
               inboxState: "enriched",
@@ -258,6 +258,23 @@ async function processChunk(
               ...data,
             },
           });
+
+          // Try to link with existing Product by title+shopName match
+          const title = data.title as string | undefined;
+          const shopName = data.shopName as string | undefined;
+          if (title && shopName) {
+            const existingProduct = await prisma.product.findFirst({
+              where: { name: title, shopName, identityId: null },
+              select: { id: true },
+            });
+            if (existingProduct) {
+              await prisma.product.update({
+                where: { id: existingProduct.id },
+                data: { identityId: newIdentity.id },
+              });
+            }
+          }
+
           return "new";
         }
       } catch (err) {

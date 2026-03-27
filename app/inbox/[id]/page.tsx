@@ -65,7 +65,12 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
     notFound();
   }
 
-  const product = identity.product;
+  let product = identity.product;
+
+  // If no linked Product, try to find and link one by URL or title match
+  if (!product) {
+    product = await tryLinkProduct(identity);
+  }
 
   // If we have a linked Product, show the full detail page
   if (product) {
@@ -74,6 +79,50 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
 
   // No linked Product — show identity-only view (FastMoss-only items)
   return renderIdentityOnly(identity);
+}
+
+// ---------------------------------------------------------------------------
+// Try to find and link an existing Product to this ProductIdentity
+// ---------------------------------------------------------------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function tryLinkProduct(identity: any): Promise<any | null> {
+  // Strategy 1: Match by tiktokUrl from ProductUrl records
+  const tiktokUrl = identity.urls?.find(
+    (u: { urlType: string }) => u.urlType === "tiktokshop"
+  )?.url;
+  if (tiktokUrl) {
+    const byUrl = await prisma.product.findFirst({
+      where: { tiktokUrl, identityId: null },
+    });
+    if (byUrl) {
+      // Link them permanently
+      await prisma.product.update({
+        where: { id: byUrl.id },
+        data: { identityId: identity.id },
+      });
+      return byUrl;
+    }
+  }
+
+  // Strategy 2: Match by title + shopName (exact)
+  if (identity.title && identity.shopName) {
+    const byName = await prisma.product.findFirst({
+      where: {
+        name: identity.title,
+        shopName: identity.shopName,
+        identityId: null,
+      },
+    });
+    if (byName) {
+      await prisma.product.update({
+        where: { id: byName.id },
+        data: { identityId: identity.id },
+      });
+      return byName;
+    }
+  }
+
+  return null;
 }
 
 // ---------------------------------------------------------------------------

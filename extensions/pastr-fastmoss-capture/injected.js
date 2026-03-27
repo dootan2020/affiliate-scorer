@@ -81,5 +81,35 @@
     return origSend.call(this, body, ...rest);
   };
 
+  // === BLOB INTERCEPTION (for XLSX export capture) ===
+  const origCreateObjectURL = URL.createObjectURL;
+  URL.createObjectURL = function(obj) {
+    const url = origCreateObjectURL.call(this, obj);
+
+    // Detect XLSX/spreadsheet blobs (export downloads)
+    if (obj instanceof Blob && obj.size > 5000 && obj.size < 10_000_000 && (
+      obj.type.includes('spreadsheet') ||
+      obj.type.includes('excel') ||
+      obj.type.includes('xlsx') ||
+      obj.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      (obj.type === 'application/octet-stream' && obj.size > 10000)
+    )) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        window.postMessage({
+          type: '__PASTR_EXPORT__',
+          dataUrl: reader.result,
+          size: obj.size,
+          mimeType: obj.type,
+          timestamp: Date.now(),
+        }, '*');
+      };
+      reader.readAsDataURL(obj);
+      console.log(`[PASTR] XLSX blob intercepted (${(obj.size / 1024).toFixed(1)} KB)`);
+    }
+
+    return url;
+  };
+
   console.log('[PASTR] FastMoss capture active');
 })();

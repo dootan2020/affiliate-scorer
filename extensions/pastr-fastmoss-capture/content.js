@@ -13,6 +13,20 @@ function getPageCategoryId() {
 window.addEventListener('message', (event) => {
   // Only accept messages from the same page
   if (event.source !== window) return;
+
+  // Handle XLSX export blob from MAIN world
+  if (event.data?.type === '__PASTR_EXPORT__') {
+    chrome.runtime.sendMessage({
+      type: 'XLSX_EXPORT',
+      payload: {
+        dataUrl: event.data.dataUrl,
+        size: event.data.size,
+        timestamp: event.data.timestamp,
+      }
+    });
+    return;
+  }
+
   if (event.data?.type !== '__PASTR_CAPTURE__') return;
 
   const { url, body, timestamp } = event.data;

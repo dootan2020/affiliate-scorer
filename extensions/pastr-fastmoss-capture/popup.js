@@ -55,6 +55,25 @@ function loadStats() {
         statusEl.className = 'status';
       }
     }
+
+    // Export crawl state
+    const ec = stats.exportCrawlState;
+    if (ec) {
+      const exportIdle = document.getElementById('exportIdle');
+      const exportProgress = document.getElementById('exportProgress');
+      if (ec.active) {
+        exportIdle.classList.add('hidden');
+        exportProgress.classList.remove('hidden');
+        document.getElementById('exportCat').textContent = `${ec.currentCategoryIndex + 1}/${ec.totalCategories}`;
+        document.getElementById('exportCaptured').textContent = `${ec.captured} SP`;
+        document.getElementById('exportErrors').textContent = ec.errors;
+        const pct = ec.totalCategories > 0 ? (ec.currentCategoryIndex / ec.totalCategories) * 100 : 0;
+        document.getElementById('exportBar').style.width = `${Math.min(100, pct)}%`;
+      } else {
+        exportIdle.classList.remove('hidden');
+        exportProgress.classList.add('hidden');
+      }
+    }
   });
 }
 
@@ -107,6 +126,21 @@ document.getElementById('startCrawl').addEventListener('click', () => {
 document.getElementById('stopCrawl').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'STOP_CRAWL' });
   document.getElementById('status').textContent = 'Stopping...';
+  document.getElementById('status').className = 'status';
+  setTimeout(loadStats, 1000);
+});
+
+// Export crawl controls
+document.getElementById('startExport').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'START_EXPORT_CRAWL', options: {} });
+  document.getElementById('status').textContent = 'Starting export crawl...';
+  document.getElementById('status').className = 'status green';
+  setTimeout(loadStats, 1000);
+});
+
+document.getElementById('stopExport').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'STOP_EXPORT_CRAWL' });
+  document.getElementById('status').textContent = 'Stopping export...';
   document.getElementById('status').className = 'status';
   setTimeout(loadStats, 1000);
 });

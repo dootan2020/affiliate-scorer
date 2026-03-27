@@ -25,6 +25,19 @@ let crawlState = {
   captured: 0,
 };
 
+// Export crawl state
+let exportCrawlState = {
+  active: false,
+  tabId: null,
+  categories: [...ALL_L1_CATEGORIES],
+  currentCategoryIndex: 0,
+  totalCategories: ALL_L1_CATEGORIES.length,
+  captured: 0,
+  errors: 0,
+  waitingForExport: false,
+  exportResolve: null,
+};
+
 // Ranking endpoints to crawl per category
 const RANKING_ENDPOINTS = [
   { path: 'saleslist', label: 'saleslist' },
@@ -63,6 +76,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
+  if (msg.type === 'XLSX_EXPORT') {
+    // If export crawl is waiting, resolve the promise
+    if (exportCrawlState.waitingForExport && exportCrawlState.exportResolve) {
+      exportCrawlState.waitingForExport = false;
+      const resolve = exportCrawlState.exportResolve;
+      exportCrawlState.exportResolve = null;
+      handleXlsxExport(msg.payload).then(resolve);
+    } else {
+      // Manual export (not during crawl)
+      handleXlsxExport(msg.payload).then(result => sendResponse(result));
+    }
+    return true;
+  }
+
+  if (msg.type === 'START_EXPORT_CRAWL') {
+    startExportCrawl(msg.options || {});
+    sendResponse({ ok: true });
+    return true;
+  }
+
+  if (msg.type === 'STOP_EXPORT_CRAWL') {
+    stopExportCrawl();
+    sendResponse({ ok: true });
+    return true;
+  }
+
   if (msg.type === 'GET_STATS') {
     sendResponse({
       buffered: Object.keys(productBuffer).length,
@@ -77,6 +116,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         totalCategories: crawlState.totalCategories,
         phase: crawlState.phase,
         captured: crawlState.captured,
+      },
+      exportCrawlState: {
+        active: exportCrawlState.active,
+        currentCategoryIndex: exportCrawlState.currentCategoryIndex,
+        totalCategories: exportCrawlState.totalCategories,
+        captured: exportCrawlState.captured,
+        errors: exportCrawlState.errors,
       },
     });
     return true;
@@ -323,4 +369,180 @@ function waitForTabLoad(tabId) {
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ═══ XLSX EXPORT UPLOAD ═══
+async function handleXlsxExport(payload) {
+  const secret = await getConfig('pastr_auth_secret');
+  if (!secret) return { ok: false, error: 'No auth secret' };
+
+  const url = (await getConfig('pastr_url')) || PASTR_URL;
+
+  // Convert dataURL to blob
+  const res = await fetch(payload.dataUrl);
+  const blob = await res.blob();
+
+  // Upload as multipart form
+  const formData = new FormData();
+  formData.append('file', blob, `fastmoss-export-${Date.now()}.xlsx`);
+
+  // Attach category context from export crawl state
+  if (exportCrawlState.active) {
+    const catCode = exportCrawlState.categories[exportCrawlState.currentCategoryIndex];
+    if (catCode) formData.append('category_code', String(catCode));
+  }
+
+  try {
+    const syncRes = await fetch(`${url}/api/fastmoss/sync-xlsx`, {
+      method: 'POST',
+      headers: { 'x-auth-secret': secret },
+      body: formData,
+    });
+    const result = await syncRes.json();
+    console.log('[PASTR] XLSX sync:', result);
+
+    syncCount++;
+    lastSyncTime = Date.now();
+    captureCount += result.recordCount || 0;
+    if (exportCrawlState.active) exportCrawlState.captured += result.newCount || 0;
+
+    updateBadge();
+    return { ok: true, ...result };
+  } catch (err) {
+    console.error('[PASTR] XLSX sync error:', err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
+// ═══ EXPORT CRAWL ═══
+const EXPORT_RENDER_WAIT = 5000;
+const EXPORT_TIMEOUT = 30000;
+const EXPORT_CRAWL_DELAY = 8000;
+
+async function startExportCrawl(options) {
+  if (exportCrawlState.active) return;
+
+  exportCrawlState.active = true;
+  exportCrawlState.categories = options.categories || [...ALL_L1_CATEGORIES];
+  exportCrawlState.currentCategoryIndex = 0;
+  exportCrawlState.totalCategories = exportCrawlState.categories.length;
+  exportCrawlState.captured = 0;
+  exportCrawlState.errors = 0;
+
+  const tab = await chrome.tabs.create({
+    url: 'https://www.fastmoss.com/vi/e-commerce/search?region=VN',
+    active: false,
+  });
+  exportCrawlState.tabId = tab.id;
+  await waitForTabLoad(tab.id);
+  await delay(3000);
+
+  try {
+    for (let ci = 0; ci < exportCrawlState.categories.length && exportCrawlState.active; ci++) {
+      exportCrawlState.currentCategoryIndex = ci;
+      const catCode = exportCrawlState.categories[ci];
+
+      // Navigate to category search page
+      const url = `https://www.fastmoss.com/vi/e-commerce/search?region=VN&l1_cid=${catCode}`;
+      await navigateTab(exportCrawlState.tabId, url);
+      await delay(EXPORT_RENDER_WAIT);
+
+      // Click export button
+      const clicked = await clickExportButton(exportCrawlState.tabId);
+      if (!clicked) {
+        console.warn(`[PASTR] Export button not found for category ${catCode}`);
+        exportCrawlState.errors++;
+        continue;
+      }
+
+      // Handle possible confirm dialog
+      await delay(2000);
+      await dismissConfirmDialog(exportCrawlState.tabId);
+
+      // Wait for XLSX_EXPORT message
+      const exportResult = await waitForExport(EXPORT_TIMEOUT);
+      if (exportResult) {
+        console.log(`[PASTR] Category ${catCode}: ${exportResult.recordCount || 0} products`);
+      } else {
+        console.warn(`[PASTR] Export timeout for category ${catCode}`);
+        exportCrawlState.errors++;
+      }
+
+      updateBadge();
+      if (exportCrawlState.active) await delay(EXPORT_CRAWL_DELAY);
+    }
+  } finally {
+    exportCrawlState.active = false;
+    if (exportCrawlState.tabId) {
+      try { chrome.tabs.remove(exportCrawlState.tabId); } catch {}
+      exportCrawlState.tabId = null;
+    }
+    updateBadge();
+  }
+}
+
+function stopExportCrawl() {
+  exportCrawlState.active = false;
+  if (exportCrawlState.tabId) {
+    try { chrome.tabs.remove(exportCrawlState.tabId); } catch {}
+    exportCrawlState.tabId = null;
+  }
+  updateBadge();
+}
+
+async function clickExportButton(tabId) {
+  try {
+    const [result] = await chrome.scripting.executeScript({
+      target: { tabId },
+      world: 'MAIN',
+      func: () => {
+        // Strategy 1: text match
+        const buttons = Array.from(document.querySelectorAll('button'));
+        let btn = buttons.find(b =>
+          b.textContent?.includes('Xuất dữ liệu') ||
+          b.textContent?.includes('Export')
+        );
+        // Strategy 2: aria label
+        if (!btn) btn = document.querySelector('button[aria-label*="Xuất"], button[aria-label*="Export"]');
+        // Strategy 3: download icon (Ant Design)
+        if (!btn) btn = buttons.find(b =>
+          b.querySelector('.anticon-download') ||
+          b.querySelector('svg[data-icon="download"]')
+        );
+        if (btn && !btn.disabled) { btn.click(); return true; }
+        return false;
+      },
+    });
+    return result?.result === true;
+  } catch { return false; }
+}
+
+async function dismissConfirmDialog(tabId) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      world: 'MAIN',
+      func: () => {
+        const modal = document.querySelector('.ant-modal-confirm, .ant-modal');
+        if (modal) {
+          const okBtn = modal.querySelector('.ant-btn-primary, button:last-child');
+          if (okBtn) okBtn.click();
+        }
+      },
+    });
+  } catch {}
+}
+
+function waitForExport(timeoutMs) {
+  return new Promise(resolve => {
+    exportCrawlState.waitingForExport = true;
+    exportCrawlState.exportResolve = resolve;
+    setTimeout(() => {
+      if (exportCrawlState.waitingForExport) {
+        exportCrawlState.waitingForExport = false;
+        exportCrawlState.exportResolve = null;
+        resolve(null);
+      }
+    }, timeoutMs);
+  });
 }

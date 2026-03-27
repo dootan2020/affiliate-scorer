@@ -86,9 +86,19 @@ export async function POST(): Promise<NextResponse> {
         if (dup.product) continue;
 
         // Copy FastMoss data to primary if primary is missing it
+        // Note: fastmossProductId is unique — only copy if primary has none
         const updates: Record<string, unknown> = {};
-        if (!primary.fastmossProductId && dup.fastmossProductId)
+        if (
+          !primary.fastmossProductId &&
+          dup.fastmossProductId
+        ) {
+          // Clear dup's fastmossProductId first to avoid unique constraint
+          await prisma.productIdentity.update({
+            where: { id: dup.id },
+            data: { fastmossProductId: null },
+          });
           updates.fastmossProductId = dup.fastmossProductId;
+        }
         if (!primary.day28SoldCount && dup.day28SoldCount)
           updates.day28SoldCount = dup.day28SoldCount;
         if (!primary.relateAuthorCount && dup.relateAuthorCount)
@@ -127,6 +137,16 @@ export async function POST(): Promise<NextResponse> {
         await prisma.productUrl.updateMany({
           where: { productIdentityId: dup.id },
           data: { productIdentityId: primary.id },
+        });
+
+        // Clear unique fields on dup before delete to avoid constraint issues
+        await prisma.productIdentity.update({
+          where: { id: dup.id },
+          data: {
+            fastmossProductId: null,
+            fingerprintHash: null,
+            canonicalUrl: null,
+          },
         });
 
         // Delete the duplicate

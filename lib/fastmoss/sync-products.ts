@@ -79,8 +79,10 @@ function normalizeProduct(raw: any): {
   const category = catNames[0] || undefined;
   const fastmossCategory = catNames.length > 0 ? catNames.join(" > ") : undefined;
 
-  // --- Category ID: from raw.category_id, raw.first_cid, or look up from L1 name
-  let fastmossCategoryId: number | undefined = toInt(raw.category_id ?? raw.first_cid ?? raw.l1_cid);
+  // --- Category ID: from raw fields or _crawl_category_id (injected by extension)
+  let fastmossCategoryId: number | undefined = toInt(
+    raw.category_id ?? raw.first_cid ?? raw.l1_cid ?? raw._crawl_category_id
+  );
   if (!fastmossCategoryId && category) {
     fastmossCategoryId = CATEGORY_NAME_TO_CODE[category];
   }

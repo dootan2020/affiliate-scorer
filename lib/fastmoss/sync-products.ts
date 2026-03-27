@@ -133,17 +133,54 @@ function normalizeProduct(raw: any): {
   };
 }
 
-/** Parse price from formatted string "230.000₫" or number → number | null
- *  Vietnamese prices use dots as thousand separators: 230.000 = 230,000 VND */
+/** Parse VND price from formatted string or number.
+ *  Vietnamese: dots = thousand separators ("230.000₫" = 230,000 VND).
+ *  Ambiguity: "36603.965" → is dot a thousands or decimal separator?
+ *  Rule: single dot with ≤3 digits left = thousands ("222.605" → 222605)
+ *        single dot with >3 digits left = decimal ("36603.965" → 36603) */
 function parsePrice(val: unknown): number | null {
   if (val == null) return null;
-  if (typeof val === "number") return val;
-  // Strip ALL non-digit characters (dots, commas, currency symbols, spaces)
-  // This correctly handles VND thousand separators: "230.000₫" → "230000" → 230000
-  const digits = String(val).replace(/\D/g, "");
+  if (typeof val === "number") return sanitizeVndPrice(Math.round(val));
+
+  let str = String(val).trim();
+  // Strip currency symbols and whitespace
+  str = str.replace(/[₫đ$€¥\s]/gi, "").replace(/^Rp/i, "");
+  if (!str) return null;
+
+  // Strip commas (always thousand separators)
+  str = str.replace(/,/g, "");
+
+  // Handle dots: detect thousand separator vs decimal
+  const dotCount = (str.match(/\./g) || []).length;
+  if (dotCount >= 2) {
+    // Multiple dots → all thousand separators: "1.234.567" → 1234567
+    str = str.replace(/\./g, "");
+  } else if (dotCount === 1) {
+    const [left, right] = str.split(".");
+    if (right.length === 3 && left.length <= 3) {
+      // "222.605" → thousand separator (short left + 3 right digits)
+      str = left + right;
+    } else {
+      // "36603.965" → decimal (long left part), truncate decimal
+      str = left;
+    }
+  }
+
+  const digits = str.replace(/\D/g, "");
   if (!digits) return null;
   const num = parseInt(digits, 10);
-  return isNaN(num) ? null : num;
+  return isNaN(num) ? null : sanitizeVndPrice(num);
+}
+
+/** Cap: TikTok VN products realistically max ~10M VND.
+ *  Values > 10M likely come from API returning price × 1000 (millidong). */
+function sanitizeVndPrice(price: number): number | null {
+  if (price <= 0) return null;
+  if (price > 10_000_000) {
+    const corrected = Math.round(price / 1000);
+    return corrected >= 100 && corrected <= 10_000_000 ? corrected : null;
+  }
+  return price;
 }
 
 /** Parse commission from "5%", "-", or number → number | null */

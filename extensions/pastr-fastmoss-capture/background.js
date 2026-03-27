@@ -235,6 +235,8 @@ async function startCrawl(options) {
   crawlState.phase = 'search';
   crawlState.captured = 0;
 
+  startKeepAlive(); // Prevent MV3 service worker termination
+
   // Open background tab for crawling
   const tab = await chrome.tabs.create({ url: 'https://www.fastmoss.com/vi', active: false });
   crawlState.tabId = tab.id;
@@ -312,6 +314,7 @@ async function startCrawl(options) {
     await flushToServer();
   } finally {
     crawlState.active = false;
+    stopKeepAlive();
     if (crawlState.tabId) {
       try { chrome.tabs.remove(crawlState.tabId); } catch {}
       crawlState.tabId = null;
@@ -369,6 +372,19 @@ function waitForTabLoad(tabId) {
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ═══ MV3 KEEPALIVE ═══
+// Service workers die after ~30s idle. Periodic API call prevents termination.
+let keepAliveInterval = null;
+function startKeepAlive() {
+  stopKeepAlive();
+  keepAliveInterval = setInterval(() => {
+    chrome.runtime.getPlatformInfo(() => {});
+  }, 25000);
+}
+function stopKeepAlive() {
+  if (keepAliveInterval) { clearInterval(keepAliveInterval); keepAliveInterval = null; }
 }
 
 // ═══ XLSX EXPORT UPLOAD ═══
@@ -429,50 +445,85 @@ async function startExportCrawl(options) {
   exportCrawlState.captured = 0;
   exportCrawlState.errors = 0;
 
-  const tab = await chrome.tabs.create({
-    url: 'https://www.fastmoss.com/vi/e-commerce/search?region=VN',
-    active: false,
-  });
-  exportCrawlState.tabId = tab.id;
-  await waitForTabLoad(tab.id);
-  await delay(3000);
+  startKeepAlive(); // Prevent MV3 service worker termination
+  console.log(`[PASTR] Export crawl started: ${exportCrawlState.totalCategories} categories`);
+
+  let tab;
+  try {
+    tab = await chrome.tabs.create({
+      url: 'https://www.fastmoss.com/vi/e-commerce/search?region=VN',
+      active: false,
+    });
+    exportCrawlState.tabId = tab.id;
+    await waitForTabLoad(tab.id);
+    await delay(3000);
+  } catch (err) {
+    console.error('[PASTR] Failed to open tab:', err);
+    exportCrawlState.active = false;
+    stopKeepAlive();
+    return;
+  }
 
   try {
     for (let ci = 0; ci < exportCrawlState.categories.length && exportCrawlState.active; ci++) {
       exportCrawlState.currentCategoryIndex = ci;
       const catCode = exportCrawlState.categories[ci];
 
-      // Navigate to category search page
-      const url = `https://www.fastmoss.com/vi/e-commerce/search?region=VN&l1_cid=${catCode}`;
-      await navigateTab(exportCrawlState.tabId, url);
-      await delay(EXPORT_RENDER_WAIT);
+      try {
+        console.log(`[PASTR] Export ${ci + 1}/${exportCrawlState.totalCategories}: category ${catCode}`);
 
-      // Click export button
-      const clicked = await clickExportButton(exportCrawlState.tabId);
-      if (!clicked) {
-        console.warn(`[PASTR] Export button not found for category ${catCode}`);
+        // Verify tab still exists
+        try { await chrome.tabs.get(exportCrawlState.tabId); } catch {
+          console.warn('[PASTR] Tab lost, reopening...');
+          const newTab = await chrome.tabs.create({
+            url: 'https://www.fastmoss.com/vi/e-commerce/search?region=VN',
+            active: false,
+          });
+          exportCrawlState.tabId = newTab.id;
+          await waitForTabLoad(newTab.id);
+          await delay(3000);
+        }
+
+        // Navigate to category search page
+        const url = `https://www.fastmoss.com/vi/e-commerce/search?region=VN&l1_cid=${catCode}`;
+        await navigateTab(exportCrawlState.tabId, url);
+        await delay(EXPORT_RENDER_WAIT);
+
+        // Click export button
+        const clicked = await clickExportButton(exportCrawlState.tabId);
+        if (!clicked) {
+          console.warn(`[PASTR] Export button not found for category ${catCode}, skipping`);
+          exportCrawlState.errors++;
+          continue;
+        }
+
+        // Handle possible confirm dialog
+        await delay(2000);
+        await dismissConfirmDialog(exportCrawlState.tabId);
+
+        // Wait for XLSX_EXPORT message
+        const exportResult = await waitForExport(EXPORT_TIMEOUT);
+        if (exportResult) {
+          console.log(`[PASTR] ✓ Category ${catCode}: ${exportResult.recordCount || 0} products (new: ${exportResult.newCount || 0})`);
+        } else {
+          console.warn(`[PASTR] ✗ Export timeout for category ${catCode}`);
+          exportCrawlState.errors++;
+        }
+
+        updateBadge();
+      } catch (err) {
+        console.error(`[PASTR] ✗ Category ${catCode} error:`, err?.message || err);
         exportCrawlState.errors++;
-        continue;
+        // Continue to next category
       }
 
-      // Handle possible confirm dialog
-      await delay(2000);
-      await dismissConfirmDialog(exportCrawlState.tabId);
-
-      // Wait for XLSX_EXPORT message
-      const exportResult = await waitForExport(EXPORT_TIMEOUT);
-      if (exportResult) {
-        console.log(`[PASTR] Category ${catCode}: ${exportResult.recordCount || 0} products`);
-      } else {
-        console.warn(`[PASTR] Export timeout for category ${catCode}`);
-        exportCrawlState.errors++;
-      }
-
-      updateBadge();
       if (exportCrawlState.active) await delay(EXPORT_CRAWL_DELAY);
     }
+
+    console.log(`[PASTR] Export crawl complete: ${exportCrawlState.captured} captured, ${exportCrawlState.errors} errors`);
   } finally {
     exportCrawlState.active = false;
+    stopKeepAlive();
     if (exportCrawlState.tabId) {
       try { chrome.tabs.remove(exportCrawlState.tabId); } catch {}
       exportCrawlState.tabId = null;

@@ -203,10 +203,47 @@ async function startCrawl(options) {
 
       // Phase 1: Search pages for current category
       crawlState.phase = 'search';
-      for (let page = 1; page <= crawlState.maxPages && crawlState.active; page++) {
+
+      // Page 1: navigate to the search URL (SPA loads and makes first API call)
+      crawlState.currentPage = 1;
+      const searchUrl = `https://www.fastmoss.com/vi/e-commerce/search?region=VN&page=1&l1_cid=${catCode}`;
+      await navigateTab(crawlState.tabId, searchUrl);
+      await delay(CRAWL_PAGE_DELAY + 2000); // Extra wait for page 1 to capture API call
+
+      // Pages 2+: replay the captured API call with different page numbers
+      // (FastMoss SPA ignores URL page param on navigation, so we call API directly)
+      for (let page = 2; page <= crawlState.maxPages && crawlState.active; page++) {
         crawlState.currentPage = page;
-        const url = `https://www.fastmoss.com/vi/e-commerce/search?region=VN&page=${page}&l1_cid=${catCode}`;
-        await navigateTab(crawlState.tabId, url);
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: crawlState.tabId },
+            world: 'MAIN',
+            func: async (pageNum) => {
+              const last = window.__pastrLastSearch;
+              if (!last) return false;
+              try {
+                if (last.method === 'POST' && last.body) {
+                  const body = JSON.parse(last.body);
+                  body.page = pageNum;
+                  await fetch(last.url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                  });
+                } else {
+                  // GET request: replace page param in URL
+                  const u = new URL(last.url, location.origin);
+                  u.searchParams.set('page', String(pageNum));
+                  await fetch(u.toString());
+                }
+                return true;
+              } catch { return false; }
+            },
+            args: [page],
+          });
+        } catch (e) {
+          console.warn(`[PASTR] executeScript page ${page} failed:`, e.message);
+        }
         await delay(CRAWL_PAGE_DELAY);
       }
 

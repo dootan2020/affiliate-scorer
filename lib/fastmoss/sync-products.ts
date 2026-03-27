@@ -133,13 +133,16 @@ function normalizeProduct(raw: any): {
   };
 }
 
-/** Parse price from formatted string "99,000₫" or number → number | null */
+/** Parse price from formatted string "230.000₫" or number → number | null
+ *  Vietnamese prices use dots as thousand separators: 230.000 = 230,000 VND */
 function parsePrice(val: unknown): number | null {
   if (val == null) return null;
   if (typeof val === "number") return val;
-  // Strip currency symbols, commas, spaces
-  const cleaned = String(val).replace(/[^\d.]/g, "");
-  const num = parseFloat(cleaned);
+  // Strip ALL non-digit characters (dots, commas, currency symbols, spaces)
+  // This correctly handles VND thousand separators: "230.000₫" → "230000" → 230000
+  const digits = String(val).replace(/\D/g, "");
+  if (!digits) return null;
+  const num = parseInt(digits, 10);
   return isNaN(num) ? null : num;
 }
 

@@ -77,12 +77,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === 'XLSX_EXPORT') {
-    // If export crawl is waiting, resolve the promise
     if (exportCrawlState.waitingForExport && exportCrawlState.exportResolve) {
+      // Resolve waitForExport IMMEDIATELY to unblock crawl loop
+      // (old code: upload first, then resolve — caused 10-30s hang or timeout)
       exportCrawlState.waitingForExport = false;
       const resolve = exportCrawlState.exportResolve;
       exportCrawlState.exportResolve = null;
-      handleXlsxExport(msg.payload).then(resolve);
+      resolve({ received: true, size: msg.payload.size });
+
+      // Upload in background — don't block the crawl loop
+      handleXlsxExport(msg.payload).then(result => {
+        if (result?.ok) {
+          console.log(`[PASTR] ↑ Upload done: ${result.recordCount || 0} records (new: ${result.newCount || 0})`);
+        } else {
+          console.warn(`[PASTR] ↑ Upload failed:`, result?.error || 'unknown');
+        }
+      }).catch(err => console.error('[PASTR] ↑ Upload error:', err?.message));
     } else {
       // Manual export (not during crawl)
       handleXlsxExport(msg.payload).then(result => sendResponse(result));
@@ -404,17 +414,17 @@ function stopKeepAlive() {
 }
 
 function tryConnectPort() {
-  // Connect to the active crawl tab (if any) — port keeps worker alive
+  // Connect to the active crawl tab — port keeps service worker alive.
+  // Suppress 'Could not establish connection' — content script may not be ready yet.
   const tabId = exportCrawlState.tabId || crawlState.tabId;
   if (!tabId) return;
   try {
+    if (keepAlivePort) { try { keepAlivePort.disconnect(); } catch {} keepAlivePort = null; }
     keepAlivePort = chrome.tabs.connect(tabId, { name: 'keepalive' });
     keepAlivePort.onDisconnect.addListener(() => {
       keepAlivePort = null;
-      // Reconnect if crawl still active
-      if (exportCrawlState.active || crawlState.active) {
-        setTimeout(tryConnectPort, 1000);
-      }
+      // Suppress the expected lastError from navigation disconnects
+      void chrome.runtime.lastError;
     });
   } catch {
     keepAlivePort = null;
@@ -454,7 +464,8 @@ async function handleXlsxExport(payload) {
     syncCount++;
     lastSyncTime = Date.now();
     captureCount += result.recordCount || 0;
-    if (exportCrawlState.active) exportCrawlState.captured += result.newCount || 0;
+    // Update captured with recordCount (total processed), not just newCount
+    if (exportCrawlState.active) exportCrawlState.captured += result.recordCount || 0;
 
     updateBadge();
     return { ok: true, ...result };
@@ -598,9 +609,9 @@ async function processOneCategory(catCode, label) {
     clickExportButton(exportCrawlState.tabId),
     10000, 'click'
   );
-  if (click.timedOut) throw new Error('click timeout');
+  if (click.timedOut) throw new Error('click export button timeout');
   if (!click.value) {
-    console.warn(`[PASTR] ${label}: export button not found`);
+    console.warn(`[PASTR] ${label}: export button not found (category may have 0 products or button disabled)`);
     exportCrawlState.errors++;
     return;
   }
@@ -610,13 +621,13 @@ async function processOneCategory(catCode, label) {
   await delay(2000);
   await withTimeout(dismissConfirmDialog(exportCrawlState.tabId), 5000, 'dialog');
 
-  // 5. Wait for blob
+  // 5. Wait for blob (resolves immediately when blob arrives, upload runs in background)
   console.log(`[PASTR] ${label}: waiting for XLSX blob (max ${EXPORT_TIMEOUT/1000}s)...`);
   const exportResult = await waitForExport(EXPORT_TIMEOUT);
-  if (exportResult) {
-    console.log(`[PASTR] ✓ ${label}: ${exportResult.recordCount || 0} products (new: ${exportResult.newCount || 0})`);
+  if (exportResult?.received) {
+    console.log(`[PASTR] ✓ ${label}: blob received (${((exportResult.size || 0) / 1024).toFixed(0)} KB), uploading in background...`);
   } else {
-    console.warn(`[PASTR] ✗ ${label}: export timeout — no blob received`);
+    console.warn(`[PASTR] ✗ ${label}: no blob received within ${EXPORT_TIMEOUT/1000}s`);
     exportCrawlState.errors++;
   }
 }

@@ -81,81 +81,82 @@ export async function POST(): Promise<NextResponse> {
         identities.find((i) => i.product !== null) ?? identities[0];
       const duplicates = identities.filter((i) => i.id !== primary.id);
 
-      for (const dup of duplicates) {
-        // Skip if this duplicate is also linked to a different Product
-        if (dup.product) continue;
-
-        // Copy FastMoss data to primary if primary is missing it
-        // Note: fastmossProductId is unique — only copy if primary has none
-        const updates: Record<string, unknown> = {};
-        if (
-          !primary.fastmossProductId &&
-          dup.fastmossProductId
-        ) {
-          // Clear dup's fastmossProductId first to avoid unique constraint
-          await prisma.productIdentity.update({
-            where: { id: dup.id },
-            data: { fastmossProductId: null },
-          });
-          updates.fastmossProductId = dup.fastmossProductId;
-        }
-        if (!primary.day28SoldCount && dup.day28SoldCount)
-          updates.day28SoldCount = dup.day28SoldCount;
-        if (!primary.relateAuthorCount && dup.relateAuthorCount)
-          updates.relateAuthorCount = dup.relateAuthorCount;
-        if (!primary.relateVideoCount && dup.relateVideoCount)
-          updates.relateVideoCount = dup.relateVideoCount;
-        if (!primary.viralIndex && dup.viralIndex)
-          updates.viralIndex = dup.viralIndex;
-        if (!primary.popularityIndex && dup.popularityIndex)
-          updates.popularityIndex = dup.popularityIndex;
-        if (!primary.fastmossCategoryId && dup.fastmossCategoryId)
-          updates.fastmossCategoryId = dup.fastmossCategoryId;
-        if (!primary.fastmossCategory && dup.fastmossCategory)
-          updates.fastmossCategory = dup.fastmossCategory;
-        if (!primary.imageUrl && dup.imageUrl)
-          updates.imageUrl = dup.imageUrl;
-        if (!primary.countryRank && dup.countryRank)
-          updates.countryRank = dup.countryRank;
-        if (!primary.categoryRank && dup.categoryRank)
-          updates.categoryRank = dup.categoryRank;
-
-        if (Object.keys(updates).length > 0) {
-          await prisma.productIdentity.update({
-            where: { id: primary.id },
-            data: updates,
-          });
-        }
-
-        // Reassign any InboxItems pointing to the duplicate
-        await prisma.inboxItem.updateMany({
-          where: { productIdentityId: dup.id },
-          data: { productIdentityId: primary.id },
-        });
-
-        // Reassign any ProductUrls
-        await prisma.productUrl.updateMany({
-          where: { productIdentityId: dup.id },
-          data: { productIdentityId: primary.id },
-        });
-
-        // Clear unique fields on dup before delete to avoid constraint issues
-        await prisma.productIdentity.update({
-          where: { id: dup.id },
-          data: {
-            fastmossProductId: null,
-            fingerprintHash: null,
-            canonicalUrl: null,
-          },
-        });
-
-        // Delete the duplicate
+      for (const dupItem of duplicates) {
         try {
-          await prisma.productIdentity.delete({ where: { id: dup.id } });
+          // Skip if this duplicate is also linked to a different Product
+          if (dupItem.product) continue;
+
+          // Verify dup still exists (may have been deleted in prior iteration)
+          const exists = await prisma.productIdentity.findUnique({
+            where: { id: dupItem.id },
+            select: { id: true },
+          });
+          if (!exists) continue;
+
+          // Copy FastMoss data to primary if primary is missing it
+          const updates: Record<string, unknown> = {};
+          if (!primary.fastmossProductId && dupItem.fastmossProductId) {
+            await prisma.productIdentity.update({
+              where: { id: dupItem.id },
+              data: { fastmossProductId: null },
+            });
+            updates.fastmossProductId = dupItem.fastmossProductId;
+          }
+          if (!primary.day28SoldCount && dupItem.day28SoldCount)
+            updates.day28SoldCount = dupItem.day28SoldCount;
+          if (!primary.relateAuthorCount && dupItem.relateAuthorCount)
+            updates.relateAuthorCount = dupItem.relateAuthorCount;
+          if (!primary.relateVideoCount && dupItem.relateVideoCount)
+            updates.relateVideoCount = dupItem.relateVideoCount;
+          if (!primary.viralIndex && dupItem.viralIndex)
+            updates.viralIndex = dupItem.viralIndex;
+          if (!primary.popularityIndex && dupItem.popularityIndex)
+            updates.popularityIndex = dupItem.popularityIndex;
+          if (!primary.fastmossCategoryId && dupItem.fastmossCategoryId)
+            updates.fastmossCategoryId = dupItem.fastmossCategoryId;
+          if (!primary.fastmossCategory && dupItem.fastmossCategory)
+            updates.fastmossCategory = dupItem.fastmossCategory;
+          if (!primary.imageUrl && dupItem.imageUrl)
+            updates.imageUrl = dupItem.imageUrl;
+          if (!primary.countryRank && dupItem.countryRank)
+            updates.countryRank = dupItem.countryRank;
+          if (!primary.categoryRank && dupItem.categoryRank)
+            updates.categoryRank = dupItem.categoryRank;
+
+          if (Object.keys(updates).length > 0) {
+            await prisma.productIdentity.update({
+              where: { id: primary.id },
+              data: updates,
+            });
+          }
+
+          // Reassign any InboxItems pointing to the duplicate
+          await prisma.inboxItem.updateMany({
+            where: { productIdentityId: dupItem.id },
+            data: { productIdentityId: primary.id },
+          });
+
+          // Reassign any ProductUrls
+          await prisma.productUrl.updateMany({
+            where: { productIdentityId: dupItem.id },
+            data: { productIdentityId: primary.id },
+          });
+
+          // Clear unique fields on dup before delete
+          await prisma.productIdentity.update({
+            where: { id: dupItem.id },
+            data: {
+              fastmossProductId: null,
+              fingerprintHash: null,
+              canonicalUrl: null,
+            },
+          });
+
+          // Delete the duplicate
+          await prisma.productIdentity.delete({ where: { id: dupItem.id } });
           merged++;
         } catch (err) {
-          // If delete fails due to remaining relations, skip
-          console.warn(`[dedup] Could not delete ${dup.id}:`, err);
+          console.warn(`[dedup] Skip dup ${dupItem.id}:`, err);
         }
       }
     }

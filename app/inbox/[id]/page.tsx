@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Sparkles, Video, Radio, Users, History } from "lucide-react";
+import { Sparkles, Video, Radio, Users, History, ArrowLeft, ExternalLink } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
@@ -44,16 +44,17 @@ export async function generateMetadata({ params }: InboxDetailPageProps): Promis
 export default async function InboxDetailPage({ params }: InboxDetailPageProps): Promise<React.ReactElement> {
   const { id } = await params;
 
+  // Try ProductIdentity first (primary path for inbox items)
   const identity = await prisma.productIdentity.findUnique({
     where: { id },
-    select: { product: { select: { id: true } }, title: true },
+    include: {
+      product: true,
+      urls: { select: { url: true, urlType: true } },
+    },
   });
 
-  let productId: string;
-
-  if (identity?.product?.id) {
-    productId = identity.product.id;
-  } else if (!identity) {
+  // Fallback: maybe id is a Product ID
+  if (!identity) {
     const productWithIdentity = await prisma.product.findUnique({
       where: { id },
       select: { identityId: true },
@@ -62,28 +63,37 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
       redirect(`/inbox/${productWithIdentity.identityId}`);
     }
     notFound();
-  } else {
-    productId = id;
   }
 
-  const [product, totalProducts] = await Promise.all([
-    prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        snapshots: {
-          orderBy: { snapshotDate: "desc" },
-          take: 5,
-          select: {
-            id: true, price: true, commissionRate: true,
-            sales7d: true, salesTotal: true, totalKOL: true,
-            totalVideos: true, kolOrderRate: true, snapshotDate: true,
-          },
-        },
+  const product = identity.product;
+
+  // If we have a linked Product, show the full detail page
+  if (product) {
+    return renderFullDetail(identity, product);
+  }
+
+  // No linked Product — show identity-only view (FastMoss-only items)
+  return renderIdentityOnly(identity);
+}
+
+// ---------------------------------------------------------------------------
+// Full detail page when Product exists
+// ---------------------------------------------------------------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function renderFullDetail(identity: any, product: any): Promise<React.ReactElement> {
+  const [snapshots, totalProducts] = await Promise.all([
+    prisma.productSnapshot.findMany({
+      where: { productId: product.id },
+      orderBy: { snapshotDate: "desc" },
+      take: 5,
+      select: {
+        id: true, price: true, commissionRate: true,
+        sales7d: true, salesTotal: true, totalKOL: true,
+        totalVideos: true, kolOrderRate: true, snapshotDate: true,
       },
     }),
     prisma.product.count(),
   ]);
-  if (!product) notFound();
 
   const similarSelect = {
     id: true, name: true, price: true, commissionRate: true, commissionVND: true,
@@ -119,7 +129,7 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
   ]);
   const recommendations = await getChannelRecommendations(product.id, confidence.level);
 
-  const prevSnapshot = product.snapshots[0] ?? null;
+  const prevSnapshot = snapshots[0] ?? null;
   const badges = computeBadges(
     {
       price: product.price, commissionRate: product.commissionRate,
@@ -273,16 +283,16 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
       </div>
 
       {/* Snapshot History */}
-      {product.snapshots.length > 0 && (
+      {snapshots.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm dark:shadow-slate-800/50 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <History className="w-4 h-4 text-gray-400" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Lịch sử thay đổi ({product.snapshots.length} lần cập nhật)
+              Lịch sử thay đổi ({snapshots.length} lần cập nhật)
             </p>
           </div>
           <div className="space-y-3">
-            {product.snapshots.map((snap) => (
+            {snapshots.map((snap) => (
               <div key={snap.id} className="flex items-center justify-between text-sm border-b border-gray-50 dark:border-slate-800 pb-3 last:border-0">
                 <span className="text-xs text-gray-400 dark:text-gray-500">
                   {new Date(snap.snapshotDate).toLocaleDateString("vi-VN")}
@@ -303,12 +313,187 @@ export default async function InboxDetailPage({ params }: InboxDetailPageProps):
   );
 }
 
+// ---------------------------------------------------------------------------
+// Identity-only view (no linked Product — FastMoss-crawled items)
+// ---------------------------------------------------------------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderIdentityOnly(identity: any): React.ReactElement {
+  const price = identity.price ?? 0;
+  const commission = Number(identity.commissionRate ?? 0);
+  const revPerOrder = Math.round((price * commission) / 100);
+
+  const tiktokUrl = identity.urls?.find((u: { urlType: string }) => u.urlType === "tiktokshop")?.url ?? null;
+  const fastmossUrl = identity.urls?.find((u: { urlType: string }) => u.urlType === "fastmoss")?.url ?? null;
+
+  return (
+    <PageContainer>
+    <div className="space-y-6">
+      <Breadcrumb items={[
+        { label: "Hộp sản phẩm", href: "/inbox" },
+        ...(identity.fastmossCategory ? [{ label: identity.fastmossCategory }] : []),
+        { label: identity.title ?? "Sản phẩm" },
+      ]} />
+
+      {/* Header */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
+        <div className="flex items-start gap-4">
+          {identity.imageUrl ? (
+            <img
+              src={identity.imageUrl}
+              alt={identity.title ?? ""}
+              className="w-20 h-20 rounded-xl object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-xl bg-gray-100 dark:bg-slate-800 shrink-0" />
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-50 line-clamp-2">
+              {identity.title ?? "Không có tên"}
+            </h1>
+            {identity.shopName && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {identity.shopName}
+              </p>
+            )}
+            {identity.fastmossCategory && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                {identity.fastmossCategory}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {tiktokUrl && (
+                <a href={tiktokUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 hover:underline">
+                  TikTok Shop <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {fastmossUrl && (
+                <a href={fastmossUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                  FastMoss <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <MetricCard label="Giá" value={price > 0 ? formatVND(price) : "—"} />
+        <MetricCard label="Commission" value={commission > 0 ? `${commission.toFixed(1)}%` : "—"} />
+        <MetricCard label="Rev/Đơn" value={revPerOrder > 0 ? formatVND(revPerOrder) : "—"} />
+        <MetricCard label="Sales 28d" value={identity.day28SoldCount != null ? formatNumber(identity.day28SoldCount) : "—"} />
+      </div>
+
+      {/* FastMoss Data */}
+      {(identity.relateAuthorCount != null || identity.relateVideoCount != null) && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <CompetitionStat icon={<Users className="w-5 h-5 text-orange-500" />} value={identity.relateAuthorCount ?? 0} label="KOL" />
+          <CompetitionStat icon={<Video className="w-5 h-5 text-pink-500" />} value={identity.relateVideoCount ?? 0} label="Video" />
+          <CompetitionStat icon={<Radio className="w-5 h-5 text-red-500" />} value={identity.relateLiveCount ?? 0} label="Livestream" />
+        </div>
+      )}
+
+      {/* Rankings */}
+      {(identity.viralIndex != null || identity.popularityIndex != null || identity.countryRank != null) && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-3">Xếp hạng FastMoss</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            {identity.viralIndex != null && (
+              <div>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{identity.viralIndex}</p>
+                <p className="text-xs text-gray-500">Viral Index</p>
+              </div>
+            )}
+            {identity.popularityIndex != null && (
+              <div>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{identity.popularityIndex}</p>
+                <p className="text-xs text-gray-500">Popularity</p>
+              </div>
+            )}
+            {identity.countryRank != null && (
+              <div>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">#{identity.countryRank}</p>
+                <p className="text-xs text-gray-500">VN Rank</p>
+              </div>
+            )}
+            {identity.categoryRank != null && (
+              <div>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">#{identity.categoryRank}</p>
+                <p className="text-xs text-gray-500">Category Rank</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Scores */}
+      {(identity.marketScore != null || identity.combinedScore != null) && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-3">Điểm đánh giá</p>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            {identity.marketScore != null && (
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">{Number(identity.marketScore).toFixed(1)}</p>
+                <p className="text-xs text-gray-500">Market Score</p>
+              </div>
+            )}
+            {identity.contentPotentialScore != null && (
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">{Number(identity.contentPotentialScore).toFixed(1)}</p>
+                <p className="text-xs text-gray-500">Content Potential</p>
+              </div>
+            )}
+            {identity.combinedScore != null && (
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">{Number(identity.combinedScore).toFixed(1)}</p>
+                <p className="text-xs text-gray-500">Combined</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Personal Notes */}
+      {identity.personalNotes && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">Ghi chú</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{identity.personalNotes}</p>
+        </div>
+      )}
+
+      {/* Back */}
+      <Link
+        href="/inbox"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-orange-600 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Quay lại Hộp sản phẩm
+      </Link>
+    </div>
+    </PageContainer>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared components
+// ---------------------------------------------------------------------------
 function CompetitionStat({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }): React.ReactElement {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-800/50 p-4 text-center">
       <div className="mx-auto mb-1 w-fit">{icon}</div>
       <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">{formatNumber(value)}</p>
       <p className="text-xs text-gray-400">{label}</p>
+    </div>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }): React.ReactElement {
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-4 text-center">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+      <p className="text-lg font-semibold text-gray-900 dark:text-gray-50">{value}</p>
     </div>
   );
 }

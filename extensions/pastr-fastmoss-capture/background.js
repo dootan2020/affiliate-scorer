@@ -375,16 +375,50 @@ function delay(ms) {
 }
 
 // ═══ MV3 KEEPALIVE ═══
-// Service workers die after ~30s idle. Periodic API call prevents termination.
-let keepAliveInterval = null;
+// setInterval does NOT prevent MV3 service worker termination.
+// Use chrome.alarms (survives worker restarts) + port connections (active event).
+let keepAlivePort = null;
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'keepalive') {
+    // This listener firing IS the keepalive — it wakes/keeps the worker
+    console.log('[PASTR] keepalive ping');
+  }
+});
+
 function startKeepAlive() {
-  stopKeepAlive();
-  keepAliveInterval = setInterval(() => {
-    chrome.runtime.getPlatformInfo(() => {});
-  }, 25000);
+  // Alarm: fires every 24s (minimum Chrome allows is ~0.0167 min ≈ 1s, but <1min may be throttled)
+  chrome.alarms.create('keepalive', { periodInMinutes: 0.4 });
+
+  // Also open a long-lived port to the crawl tab's content script
+  // Port connections keep the service worker alive as long as the port is open
+  tryConnectPort();
 }
+
 function stopKeepAlive() {
-  if (keepAliveInterval) { clearInterval(keepAliveInterval); keepAliveInterval = null; }
+  chrome.alarms.clear('keepalive');
+  if (keepAlivePort) {
+    try { keepAlivePort.disconnect(); } catch {}
+    keepAlivePort = null;
+  }
+}
+
+function tryConnectPort() {
+  // Connect to the active crawl tab (if any) — port keeps worker alive
+  const tabId = exportCrawlState.tabId || crawlState.tabId;
+  if (!tabId) return;
+  try {
+    keepAlivePort = chrome.tabs.connect(tabId, { name: 'keepalive' });
+    keepAlivePort.onDisconnect.addListener(() => {
+      keepAlivePort = null;
+      // Reconnect if crawl still active
+      if (exportCrawlState.active || crawlState.active) {
+        setTimeout(tryConnectPort, 1000);
+      }
+    });
+  } catch {
+    keepAlivePort = null;
+  }
 }
 
 // ═══ XLSX EXPORT UPLOAD ═══
@@ -487,6 +521,8 @@ async function startExportCrawl(options) {
         // Navigate to category search page
         const url = `https://www.fastmoss.com/vi/e-commerce/search?region=VN&l1_cid=${catCode}`;
         await navigateTab(exportCrawlState.tabId, url);
+        // Reconnect keepalive port (navigation kills content script + old port)
+        tryConnectPort();
         await delay(EXPORT_RENDER_WAIT);
 
         // Click export button

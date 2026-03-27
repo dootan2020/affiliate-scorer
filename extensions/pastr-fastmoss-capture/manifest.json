@@ -3,7 +3,7 @@
   "name": "PASTR FastMoss Capture",
   "version": "1.0.0",
   "description": "Capture FastMoss product data for PASTR affiliate scoring",
-  "permissions": ["storage", "tabs", "scripting"],
+  "permissions": ["storage", "tabs", "scripting", "alarms"],
   "host_permissions": ["https://www.fastmoss.com/*", "https://affiliate-scorer.vercel.app/*"],
   "background": { "service_worker": "background.js" },
   "content_scripts": [

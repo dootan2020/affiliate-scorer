@@ -1,6 +1,14 @@
 // Bridge: MAIN world (injected.js) → ISOLATED world (this) → background.js
 // Uses postMessage for reliable cross-world communication
 
+// Accept keepalive port from background — keeps service worker alive during crawl
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === 'keepalive') {
+    // Just hold the port open — its existence keeps the service worker alive
+    port.onDisconnect.addListener(() => {});
+  }
+});
+
 /** Extract l1_cid from current page URL (auto-crawl pages have ?l1_cid=X) */
 function getPageCategoryId() {
   try {

@@ -1,42 +1,26 @@
 // POST /api/inbox/dedup — batch link unlinked ProductIdentity with matching Products
-// Also merges duplicate ProductIdentity records (FastMoss + original import)
+// Call multiple times until linked=0 + merged=0
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+
+const BATCH_LIMIT = 50; // Process max 50 per call to stay under Vercel timeout
 
 export async function POST(): Promise<NextResponse> {
   try {
     let linked = 0;
     let merged = 0;
+    const errors: string[] = [];
 
-    // --- Step 1: Link Products that have no identityId to matching ProductIdentity ---
-    // Find all Products without a linked ProductIdentity
+    // --- Step 1: Link Products → matching ProductIdentity (by title+shopName) ---
     const unlinkedProducts = await prisma.product.findMany({
-      where: { identityId: null },
-      select: { id: true, name: true, shopName: true, tiktokUrl: true },
+      where: { identityId: null, shopName: { not: null } },
+      select: { id: true, name: true, shopName: true },
+      take: BATCH_LIMIT,
     });
 
     for (const product of unlinkedProducts) {
-      // Strategy 1: Match by tiktokUrl
-      if (product.tiktokUrl) {
-        const match = await prisma.productIdentity.findFirst({
-          where: {
-            urls: { some: { url: product.tiktokUrl } },
-            product: null, // not already linked
-          },
-          select: { id: true },
-        });
-        if (match) {
-          await prisma.product.update({
-            where: { id: product.id },
-            data: { identityId: match.id },
-          });
-          linked++;
-          continue;
-        }
-      }
-
-      // Strategy 2: Match by title + shopName
-      if (product.name && product.shopName) {
+      if (!product.name || !product.shopName) continue;
+      try {
         const match = await prisma.productIdentity.findFirst({
           where: {
             title: product.name,
@@ -51,77 +35,79 @@ export async function POST(): Promise<NextResponse> {
             data: { identityId: match.id },
           });
           linked++;
-          continue;
         }
+      } catch (err) {
+        errors.push(`link ${product.id}: ${String(err).slice(0, 80)}`);
       }
     }
 
-    // --- Step 2: Merge duplicate ProductIdentity records ---
-    // Find ProductIdentity records that share the same title+shopName
-    // but one is linked to a Product and the other isn't
-    const duplicateIdentities = await prisma.$queryRaw<
-      Array<{ title: string; shop_name: string; cnt: bigint }>
+    // --- Step 2: Find and merge duplicate ProductIdentity (same title+shop) ---
+    const dupGroups = await prisma.$queryRaw<
+      Array<{ title: string; shop_name: string }>
     >`
-      SELECT title, "shopName" as shop_name, COUNT(*) as cnt
+      SELECT title, "shopName" as shop_name
       FROM "ProductIdentity"
       WHERE title IS NOT NULL AND "shopName" IS NOT NULL
       GROUP BY title, "shopName"
       HAVING COUNT(*) > 1
+      LIMIT ${BATCH_LIMIT}
     `;
 
-    for (const dup of duplicateIdentities) {
-      const identities = await prisma.productIdentity.findMany({
-        where: { title: dup.title, shopName: dup.shop_name },
-        include: { product: { select: { id: true } } },
-        orderBy: { createdAt: "asc" },
-      });
+    for (const group of dupGroups) {
+      try {
+        const identities = await prisma.productIdentity.findMany({
+          where: { title: group.title, shopName: group.shop_name },
+          select: {
+            id: true,
+            fastmossProductId: true,
+            day28SoldCount: true,
+            relateAuthorCount: true,
+            relateVideoCount: true,
+            viralIndex: true,
+            popularityIndex: true,
+            fastmossCategoryId: true,
+            fastmossCategory: true,
+            imageUrl: true,
+            countryRank: true,
+            categoryRank: true,
+            product: { select: { id: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        });
 
-      // Find the "primary" one — either linked to Product, or the oldest
-      const primary =
-        identities.find((i) => i.product !== null) ?? identities[0];
-      const duplicates = identities.filter((i) => i.id !== primary.id);
+        // Primary: linked to Product, or oldest
+        const primary =
+          identities.find((i) => i.product !== null) ?? identities[0];
+        const dups = identities.filter(
+          (i) => i.id !== primary.id && !i.product
+        );
 
-      for (const dupItem of duplicates) {
-        try {
-          // Skip if this duplicate is also linked to a different Product
-          if (dupItem.product) continue;
-
-          // Verify dup still exists (may have been deleted in prior iteration)
-          const exists = await prisma.productIdentity.findUnique({
-            where: { id: dupItem.id },
-            select: { id: true },
-          });
-          if (!exists) continue;
-
-          // Copy FastMoss data to primary if primary is missing it
+        for (const dup of dups) {
+          // Merge FastMoss data to primary
           const updates: Record<string, unknown> = {};
-          if (!primary.fastmossProductId && dupItem.fastmossProductId) {
+          const fields = [
+            "day28SoldCount",
+            "relateAuthorCount",
+            "relateVideoCount",
+            "viralIndex",
+            "popularityIndex",
+            "fastmossCategoryId",
+            "fastmossCategory",
+            "imageUrl",
+            "countryRank",
+            "categoryRank",
+          ] as const;
+          for (const f of fields) {
+            if (!primary[f] && dup[f]) updates[f] = dup[f];
+          }
+          // Handle fastmossProductId specially (unique field)
+          if (!primary.fastmossProductId && dup.fastmossProductId) {
             await prisma.productIdentity.update({
-              where: { id: dupItem.id },
+              where: { id: dup.id },
               data: { fastmossProductId: null },
             });
-            updates.fastmossProductId = dupItem.fastmossProductId;
+            updates.fastmossProductId = dup.fastmossProductId;
           }
-          if (!primary.day28SoldCount && dupItem.day28SoldCount)
-            updates.day28SoldCount = dupItem.day28SoldCount;
-          if (!primary.relateAuthorCount && dupItem.relateAuthorCount)
-            updates.relateAuthorCount = dupItem.relateAuthorCount;
-          if (!primary.relateVideoCount && dupItem.relateVideoCount)
-            updates.relateVideoCount = dupItem.relateVideoCount;
-          if (!primary.viralIndex && dupItem.viralIndex)
-            updates.viralIndex = dupItem.viralIndex;
-          if (!primary.popularityIndex && dupItem.popularityIndex)
-            updates.popularityIndex = dupItem.popularityIndex;
-          if (!primary.fastmossCategoryId && dupItem.fastmossCategoryId)
-            updates.fastmossCategoryId = dupItem.fastmossCategoryId;
-          if (!primary.fastmossCategory && dupItem.fastmossCategory)
-            updates.fastmossCategory = dupItem.fastmossCategory;
-          if (!primary.imageUrl && dupItem.imageUrl)
-            updates.imageUrl = dupItem.imageUrl;
-          if (!primary.countryRank && dupItem.countryRank)
-            updates.countryRank = dupItem.countryRank;
-          if (!primary.categoryRank && dupItem.categoryRank)
-            updates.categoryRank = dupItem.categoryRank;
 
           if (Object.keys(updates).length > 0) {
             await prisma.productIdentity.update({
@@ -130,34 +116,32 @@ export async function POST(): Promise<NextResponse> {
             });
           }
 
-          // Reassign any InboxItems pointing to the duplicate
+          // Reassign relations
           await prisma.inboxItem.updateMany({
-            where: { productIdentityId: dupItem.id },
+            where: { productIdentityId: dup.id },
             data: { productIdentityId: primary.id },
           });
-
-          // Reassign any ProductUrls
           await prisma.productUrl.updateMany({
-            where: { productIdentityId: dupItem.id },
+            where: { productIdentityId: dup.id },
             data: { productIdentityId: primary.id },
           });
 
-          // Clear unique fields on dup before delete
+          // Clear unique fields then delete
           await prisma.productIdentity.update({
-            where: { id: dupItem.id },
+            where: { id: dup.id },
             data: {
               fastmossProductId: null,
               fingerprintHash: null,
               canonicalUrl: null,
             },
           });
-
-          // Delete the duplicate
-          await prisma.productIdentity.delete({ where: { id: dupItem.id } });
+          await prisma.productIdentity.delete({ where: { id: dup.id } });
           merged++;
-        } catch (err) {
-          console.warn(`[dedup] Skip dup ${dupItem.id}:`, err);
         }
+      } catch (err) {
+        errors.push(
+          `merge ${group.title}: ${String(err).slice(0, 80)}`
+        );
       }
     }
 
@@ -165,8 +149,10 @@ export async function POST(): Promise<NextResponse> {
       success: true,
       linked,
       merged,
-      scanned: unlinkedProducts.length,
-      duplicateGroups: duplicateIdentities.length,
+      scannedProducts: unlinkedProducts.length,
+      dupGroupsFound: dupGroups.length,
+      errors: errors.length > 0 ? errors : undefined,
+      done: linked === 0 && merged === 0 && unlinkedProducts.length === 0 && dupGroups.length === 0,
     });
   } catch (error) {
     console.error("[inbox/dedup] error:", error);

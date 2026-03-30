@@ -521,6 +521,7 @@ model ProductIdentity {
   @@index([combinedScore(sort: Desc)])
   @@index([deltaType])
   @@index([fastmossCategoryId])
+  @@index([title, shopName])
 }
 
 model ProductUrl {

@@ -1,9 +1,9 @@
-// POST /api/inbox/dedup — batch link unlinked ProductIdentity with matching Products
-// Call multiple times until linked=0 + merged=0
+// POST /api/inbox/dedup — incremental link + merge dedup
+// Call repeatedly until done=true. Each call processes max 10 records.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-const BATCH_LIMIT = 50; // Process max 50 per call to stay under Vercel timeout
+const BATCH = 10;
 
 export async function POST(): Promise<NextResponse> {
   try {
@@ -13,9 +13,9 @@ export async function POST(): Promise<NextResponse> {
 
     // --- Step 1: Link Products → matching ProductIdentity (by title+shopName) ---
     const unlinkedProducts = await prisma.product.findMany({
-      where: { identityId: null, shopName: { not: null } },
+      where: { identityId: null, shopName: { not: null }, name: { not: "" } },
       select: { id: true, name: true, shopName: true },
-      take: BATCH_LIMIT,
+      take: BATCH,
     });
 
     for (const product of unlinkedProducts) {
@@ -41,7 +41,7 @@ export async function POST(): Promise<NextResponse> {
       }
     }
 
-    // --- Step 2: Find and merge duplicate ProductIdentity (same title+shop) ---
+    // --- Step 2: Merge duplicate ProductIdentity (same title+shop) ---
     const dupGroups = await prisma.$queryRaw<
       Array<{ title: string; shop_name: string }>
     >`
@@ -50,7 +50,7 @@ export async function POST(): Promise<NextResponse> {
       WHERE title IS NOT NULL AND "shopName" IS NOT NULL
       GROUP BY title, "shopName"
       HAVING COUNT(*) > 1
-      LIMIT ${BATCH_LIMIT}
+      LIMIT ${BATCH}
     `;
 
     for (const group of dupGroups) {
@@ -75,7 +75,6 @@ export async function POST(): Promise<NextResponse> {
           orderBy: { createdAt: "asc" },
         });
 
-        // Primary: linked to Product, or oldest
         const primary =
           identities.find((i) => i.product !== null) ?? identities[0];
         const dups = identities.filter(
@@ -83,7 +82,6 @@ export async function POST(): Promise<NextResponse> {
         );
 
         for (const dup of dups) {
-          // Merge FastMoss data to primary
           const updates: Record<string, unknown> = {};
           const fields = [
             "day28SoldCount",
@@ -100,7 +98,6 @@ export async function POST(): Promise<NextResponse> {
           for (const f of fields) {
             if (!primary[f] && dup[f]) updates[f] = dup[f];
           }
-          // Handle fastmossProductId specially (unique field)
           if (!primary.fastmossProductId && dup.fastmossProductId) {
             await prisma.productIdentity.update({
               where: { id: dup.id },
@@ -116,7 +113,6 @@ export async function POST(): Promise<NextResponse> {
             });
           }
 
-          // Reassign relations
           await prisma.inboxItem.updateMany({
             where: { productIdentityId: dup.id },
             data: { productIdentityId: primary.id },
@@ -126,7 +122,6 @@ export async function POST(): Promise<NextResponse> {
             data: { productIdentityId: primary.id },
           });
 
-          // Clear unique fields then delete
           await prisma.productIdentity.update({
             where: { id: dup.id },
             data: {
@@ -145,14 +140,39 @@ export async function POST(): Promise<NextResponse> {
       }
     }
 
+    // Count remaining work for progress tracking
+    const [remainingUnlinked, remainingDups] = await Promise.all([
+      prisma.product.count({
+        where: { identityId: null, shopName: { not: null }, name: { not: "" } },
+      }),
+      prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) as count FROM (
+          SELECT title, "shopName"
+          FROM "ProductIdentity"
+          WHERE title IS NOT NULL AND "shopName" IS NOT NULL
+          GROUP BY title, "shopName"
+          HAVING COUNT(*) > 1
+        ) sub
+      `,
+    ]);
+
+    const remainingDupCount = Number(remainingDups[0]?.count ?? 0);
+    const done =
+      linked === 0 &&
+      merged === 0 &&
+      unlinkedProducts.length === 0 &&
+      dupGroups.length === 0;
+
     return NextResponse.json({
       success: true,
       linked,
       merged,
-      scannedProducts: unlinkedProducts.length,
-      dupGroupsFound: dupGroups.length,
+      remaining: {
+        unlinked: remainingUnlinked,
+        dupGroups: remainingDupCount,
+      },
+      done,
       errors: errors.length > 0 ? errors : undefined,
-      done: linked === 0 && merged === 0 && unlinkedProducts.length === 0 && dupGroups.length === 0,
     });
   } catch (error) {
     console.error("[inbox/dedup] error:", error);

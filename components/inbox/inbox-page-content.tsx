@@ -136,17 +136,30 @@ export function InboxPageContent(): React.ReactElement {
 
   // Niche recommendations
   const [recommendations, setRecommendations] = useState<RecommendedProduct[]>([]);
+  const [recHasMore, setRecHasMore] = useState(false);
+  const [recLoadingMore, setRecLoadingMore] = useState(false);
 
-  useEffect(() => {
-    if (!nicheCode) { setRecommendations([]); return; }
+  const fetchRecommendations = useCallback((offset: number, append: boolean) => {
+    if (!nicheCode) return;
     const profile = loadProfileFromStorage();
-    const params = new URLSearchParams({ nicheCode: nicheCode.toString() });
+    const params = new URLSearchParams({ nicheCode: nicheCode.toString(), offset: offset.toString() });
     if (profile) params.set("profile", encodeURIComponent(JSON.stringify(profile)));
+    if (append) setRecLoadingMore(true);
     fetch(`/api/inbox/recommend?${params}`)
       .then((r) => r.json())
-      .then((data) => setRecommendations(data.recommendations ?? []))
-      .catch(() => setRecommendations([]));
+      .then((data) => {
+        const items = data.recommendations ?? [];
+        setRecommendations((prev) => append ? [...prev, ...items] : items);
+        setRecHasMore(data.hasMore ?? false);
+      })
+      .catch(() => { if (!append) setRecommendations([]); })
+      .finally(() => setRecLoadingMore(false));
   }, [nicheCode]);
+
+  useEffect(() => {
+    if (!nicheCode) { setRecommendations([]); setRecHasMore(false); return; }
+    fetchRecommendations(0, false);
+  }, [nicheCode, fetchRecommendations]);
 
   // Debounce search
   useEffect(() => {
@@ -403,6 +416,9 @@ export function InboxPageContent(): React.ReactElement {
         <ProductRecommendationCards
           recommendations={recommendations}
           onSelectProduct={(id) => router.push(`/inbox/${id}`)}
+          hasMore={recHasMore}
+          loadingMore={recLoadingMore}
+          onLoadMore={() => fetchRecommendations(recommendations.length, true)}
         />
       )}
 

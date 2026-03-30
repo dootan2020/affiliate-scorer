@@ -31,7 +31,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    const limit = Math.min(parseInt(searchParams.get("limit") ?? "5", 10) || 5, 10);
+    const limit = Math.min(parseInt(searchParams.get("limit") ?? "5", 10) || 5, 20);
+    const offset = Math.max(parseInt(searchParams.get("offset") ?? "0", 10) || 0, 0);
+    const minScore = parseInt(searchParams.get("minScore") ?? "30", 10);
 
     // Pre-filter top 200 by combinedScore for performance
     const products = await prisma.productIdentity.findMany({
@@ -72,9 +74,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return { product: p, ...result };
     });
 
-    // Sort by score desc, take top N
+    // Sort by score desc, apply offset + limit
     scored.sort((a, b) => b.score - a.score);
-    const topN = scored.slice(0, limit);
+    const eligible = scored.filter((s) => s.score >= minScore);
+    const topN = eligible.slice(offset, offset + limit);
+    const hasMore = offset + limit < eligible.length && (eligible[offset + limit]?.score ?? 0) >= minScore;
 
     // Apply tag diversity constraint
     diversifyTags(topN);
@@ -96,7 +100,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       secondaryTags: s.secondaryTags,
     }));
 
-    return NextResponse.json({ recommendations });
+    return NextResponse.json({ recommendations, hasMore });
   } catch (err) {
     console.error("[inbox/recommend] Error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

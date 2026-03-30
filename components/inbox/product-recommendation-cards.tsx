@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Package, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { scoreColor, scoreBgClass } from "@/lib/niche-scoring/score-colors";
+import { ProductImage } from "@/components/products/product-image";
 import { cn } from "@/lib/utils";
 
 // --- Types ---
@@ -31,11 +32,14 @@ export interface RecommendedProduct {
 interface Props {
   recommendations: RecommendedProduct[];
   onSelectProduct: (id: string) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
 }
 
 // --- Component ---
 
-export function ProductRecommendationCards({ recommendations, onSelectProduct }: Props): React.ReactElement | null {
+export function ProductRecommendationCards({ recommendations, onSelectProduct, onLoadMore, hasMore, loadingMore }: Props): React.ReactElement | null {
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -88,6 +92,24 @@ export function ProductRecommendationCards({ recommendations, onSelectProduct }:
               onSelect={onSelectProduct}
             />
           ))}
+          {hasMore && onLoadMore && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onLoadMore(); }}
+              disabled={loadingMore}
+              className={cn(
+                "flex-shrink-0 w-[120px] sm:w-[140px] flex flex-col items-center justify-center gap-2",
+                "bg-gray-50 dark:bg-slate-800/60 rounded-xl p-3.5",
+                "hover:bg-gray-100 dark:hover:bg-slate-700/60 transition-colors",
+                "border border-dashed border-gray-200 dark:border-slate-600 snap-start",
+                loadingMore && "opacity-50",
+              )}
+            >
+              <Plus className="w-5 h-5 text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                {loadingMore ? "Đang tải..." : "Xem thêm"}
+              </span>
+            </button>
+          )}
         </div>
       )}
     </section>
@@ -96,7 +118,7 @@ export function ProductRecommendationCards({ recommendations, onSelectProduct }:
 
 // --- Card ---
 
-const RANK_LABELS = ["🥇", "🥈", "🥉", "#4", "#5"];
+const RANK_MEDALS = ["🥇", "🥈", "🥉"];
 
 function RecommendCard({
   product,
@@ -120,7 +142,7 @@ function RecommendCard({
       {/* Rank + Score */}
       <div className="flex items-center justify-between mb-2.5">
         <span className="text-xs font-bold text-orange-500">
-          {RANK_LABELS[rank - 1] ?? `#${rank}`}
+          {RANK_MEDALS[rank - 1] ?? `#${rank}`}
         </span>
         <span
           className={cn(
@@ -135,17 +157,7 @@ function RecommendCard({
 
       {/* Image + Title */}
       <div className="flex items-start gap-2.5 mb-2">
-        {product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt=""
-            className="w-12 h-12 rounded-lg object-cover shrink-0"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-            <Package className="w-5 h-5 text-gray-300 dark:text-gray-500" />
-          </div>
-        )}
+        <ProductImage src={product.imageUrl} alt={product.title || ""} size={48} noPreview />
         <div className="min-w-0">
           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-50 line-clamp-2 leading-tight">
             {product.title || "Chưa có tên"}

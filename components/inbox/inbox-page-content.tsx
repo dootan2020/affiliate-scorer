@@ -13,6 +13,8 @@ import { QuickEnrichModal } from "@/components/inbox/quick-enrich-modal";
 import { InboxTable, type InboxIdentity, type SortState } from "@/components/inbox/inbox-table";
 import { PasteLinkModal } from "@/components/inbox/paste-link-modal";
 import { cn } from "@/lib/utils";
+import { ProductRecommendationCards, type RecommendedProduct } from "@/components/inbox/product-recommendation-cards";
+import { loadProfileFromStorage } from "@/components/niche-finder/niche-profile-form";
 
 // --- Constants ---
 
@@ -131,6 +133,20 @@ export function InboxPageContent(): React.ReactElement {
   const [bulkLoading, setBulkLoading] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Niche recommendations
+  const [recommendations, setRecommendations] = useState<RecommendedProduct[]>([]);
+
+  useEffect(() => {
+    if (!nicheCode) { setRecommendations([]); return; }
+    const profile = loadProfileFromStorage();
+    const params = new URLSearchParams({ nicheCode: nicheCode.toString() });
+    if (profile) params.set("profile", encodeURIComponent(JSON.stringify(profile)));
+    fetch(`/api/inbox/recommend?${params}`)
+      .then((r) => r.json())
+      .then((data) => setRecommendations(data.recommendations ?? []))
+      .catch(() => setRecommendations([]));
+  }, [nicheCode]);
 
   // Debounce search
   useEffect(() => {
@@ -380,6 +396,14 @@ export function InboxPageContent(): React.ReactElement {
             </button>
           </span>
         </div>
+      )}
+
+      {/* Niche product recommendations */}
+      {nicheCode && recommendations.length > 0 && (
+        <ProductRecommendationCards
+          recommendations={recommendations}
+          onSelectProduct={(id) => router.push(`/inbox/${id}`)}
+        />
       )}
 
       {/* Header */}

@@ -157,11 +157,9 @@ export async function POST(): Promise<NextResponse> {
     ]);
 
     const remainingDupCount = Number(remainingDups[0]?.count ?? 0);
-    const done =
-      linked === 0 &&
-      merged === 0 &&
-      unlinkedProducts.length === 0 &&
-      dupGroups.length === 0;
+    // done=true when this round made no progress — remaining records
+    // exist but don't match (different title/shopName), so retrying won't help
+    const done = linked === 0 && merged === 0;
 
     return NextResponse.json({
       success: true,
